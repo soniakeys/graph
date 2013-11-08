@@ -27,7 +27,7 @@
 // data.  This is done with a Go map.
 //
 // This package explores an alternative, a simple network of linked structs,
-// no interfaces, no maps.  It turns out to run 10 to 15 times faster.
+// no interfaces, no maps.  It turns out to run several times faster.
 // That sounds significant but surely for many applications it wouldn't matter.
 // Much more significant would seem to be the difference in coding effort.
 // To use this package you can't simply read the docs and code to an API,
