@@ -153,7 +153,6 @@ func (s *tent) Pop() interface{} {
 		return nil
 	}
 	last := len(t) - 1
-	r := t[last]
 	*s = t[:last]
-	return r
+	return t[last]
 }
