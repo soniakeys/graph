@@ -12,8 +12,8 @@ import (
 
 var s = rand.New(rand.NewSource(59))
 
-// generate random graph and end points to test
-func r(nNodes, nEdges int, seed int64) (g *Graph, start, end int) {
+// generate random directed graph and end points to test
+func r(nNodes, nArcs int, seed int64) (g *Graph, start, end int) {
 	s.Seed(seed)
 	// generate random coordinates
 	type xy struct{ x, y float64 }
@@ -34,16 +34,13 @@ func r(nNodes, nEdges int, seed int64) (g *Graph, start, end int) {
 			nearest = d
 		}
 	}
-	//	c2 := coords[end]
-	//	fmt.Println("start", start, "end", end,
-	//		"dist", math.Hypot(c2.x-c1.x, c2.y-c1.y))
 	// graph
 	g = New(nNodes)
-	// edges
+	// arcs
 	var tooFar, dup int
-	for i := 0; i < nEdges; {
-		if tooFar == nEdges || dup == nEdges {
-			panic(fmt.Sprint("tooFar", tooFar, "dup", dup, "nEdges", nEdges,
+	for i := 0; i < nArcs; {
+		if tooFar == nArcs || dup == nArcs {
+			panic(fmt.Sprint("tooFar", tooFar, "dup", dup, "nArcs", nArcs,
 				"nNodes", nNodes, "seed", seed))
 		}
 		n1 := s.Intn(nNodes)
