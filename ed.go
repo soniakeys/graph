@@ -1,136 +1,169 @@
 // Copyright 2013 Sonia Keys
 // License MIT: http://opensource.org/licenses/MIT
 
-// Ed implements Dijkstra's shortest path algorithm.
+// Ed implements Dijkstra's single shortest path algorithm.
 //
-// This is a stripped down version of github.com/soniakeys/graph.  It serves
-// a couple of purposes.  One purpose is understanding the algorithm.
-// This package shows it in a slightly simpler form that might be a little
-// easier to figure out.  Another purpose is exploring the overhead of making
-// the package reusable, memory efficient, and goroutine safe.
-//
-// Graph.DijkstraShortest path is designed to reusable by operating through
-// interfaces rather than directly on structs.  A user of the the package has
-// to implement interfaces of the package but does not have to adapt the code
-// of the package.  This is best for usability but has some small runtime cost.
-//
-// A greater cost in graph comes from its minimal use of memory.  The algorithm
-// requires some bookkeeping information per node, but not all data is needed
-// for all nodes at all times.  Graph attempts to allocate data only as
-// needed, but there is overhead involved in maintaining and traversing
-// these extra pointers.
-//
-// Finally, graph is goroutine safe.  Multiple searches can be run
-// concurrently on a single graph.  For this, the algorithm must maintain
-// the bookkeeping data per search.  To do this without bothering the user
-// of the package requires associating the user's nodes with the bookkeeping
-// data.  This is done with a Go map.
-//
-// This package explores an alternative, a simple network of linked structs,
-// no interfaces, no maps.  It turns out to run several times faster.
-// That sounds significant but surely for many applications it wouldn't matter.
-// Much more significant would seem to be the difference in coding effort.
-// To use this package you can't simply read the docs and code to an API,
-// you must edit the code and adapt it to your application.
-// If your application needs concurrent searches on the same graph, you
-// are on your own to solve the problem.
+// The data representation is fixed and holds no more information than what
+// is needed to run the search algorithm.  To search your own data you must
+// create a graph using the types of this package, run the search, and use
+// the result to navigate your data.  The types here use integer node IDs.
+// If your data uses something else you must devise a translation to integer
+// node IDs.
 package ed
 
-import "container/heap"
+import (
+	"container/heap"
+)
 
-// Node implements a node or vertex in the graph.  You must use this
-// defintion as a template and adapt the application specific data and
-// perhaps the graph representation to your application.
+// Graph reprsentation is a slice of nodes, linked to each other by adjacency
+// lists.
+type Graph struct {
+	Nodes         []Node
+	ndVis, arcVis int // instrumentation
+}
+
+// Half is a half arc, representing a "neighbor" of a node.
+type Half struct {
+	To        int // index in graph slice
+	ArcWeight float64
+}
+
+// Each Nodes has an adjacency list and bookeeping data needed for Dijktra's
+// algorithm.
 type Node struct {
-	Name string // application specific
-
-	Neighbors []Neighbor // graph representation
-
+	Nbs []Half // adjacency list, "neighbors"
+	nx  int    // index in graph slice, "node id"
 	// fields used for nodes visited in shortest path computation
-	done     bool
-	prevNode *Node   // path back to start
-	prevEdge float64 // distance from prev node to the node of this struct
+	done       bool
+	prevFrom   int     // path back to start
+	prevWeight float64 // weight of arc from prev node
 	// fields used for nodes in the tentative set
 	dist float64 // tentative path distance
 	n    int     // number of nodes in path
 	rx   int     // heap.Remove index
 }
 
-// String satisfies fmt.Stringer
-func (n *Node) String() string {
-	return n.Name
-}
-
-// Reset prepares a node to be searched again.  The graph can be searched
-// once without preparation, but before another search you must traverse
-// the graph and call this function on each node.  Note there is no predefined
-// mechanism for this.  You must implement some collection that holds all
-// nodes in the graph and allows iteration over them.  (A slice or map
-// should do.)
-func (n *Node) Reset() {
-	n.n = 0
-	n.done = false
-}
-
-// Neighbor represents a directed edge.  It can be adapted as needed for
-// your application.
-type Neighbor struct {
-	Edge float64
-	Node *Node
-}
-
 type tent []*Node
 
-// ShortestPath runs Dijkstra's shortest path algorithm, returning the
-// shortest path from start to end.  Bookkeeping data is stored in the
-// nodes and so only a singe search can be run at a time.  Before a
-// subsequent search, call Reset as described in the documentation for
-// that function.
-func ShortestPath(start, end *Node) ([]Neighbor, float64) {
-	var t tent // tentative set, heap
+// New constructs and initializes a graph with n nodes.
+func New(n int) *Graph {
+	Nodes := make([]Node, n)
+	for i := range Nodes {
+		Nodes[i].nx = i
+	}
+	return &Graph{Nodes: Nodes}
+}
+
+// SetArcs sets the adjacency list for a node, replacing the existing list.
+// SetArcs panics if argument from is not a valid index for the nodes of the
+// graph.  No validation is performed on argument to.
+func (g *Graph) SetArcs(from int, to []Half) {
+	g.Nodes[from].Nbs = to
+}
+
+// AddArcSimple adds an arc to a graph safely, validating the arguments and
+// maintaining the the graph as a "simple" graph, that is, with no self-loops
+// and with no multiple arcs from one node to another.
+//
+// AddArcSimple returns true if 1) node indexes from and to.To are valid indexes
+// for the graph and not equal to each other, 2) if to.ArcWeight is non-negative
+// (and non-NaN), and 3) if the the arc is not already in the graph.  Otherwise
+// the graph is not modified and the function returns false.
+func (g *Graph) AddArcSimple(from int, to Half) bool {
+	if from < 0 || from >= len(g.Nodes) || to.To < 0 || to.To >= len(g.Nodes) {
+		return false
+	}
+	if !(to.ArcWeight >= 0) { // inverse test to catch NaNs
+		return false
+	}
+	Nbs := &g.Nodes[from].Nbs
+	if from == to.To {
+		return false // disallow loops
+	}
+	for _, nb := range *Nbs {
+		if nb.To == to.To {
+			return false // disallow parallel arcs
+		}
+	}
+	*Nbs = append(*Nbs, to)
+	return true
+}
+
+// instrumentation
+func (g *Graph) na() (int, int) {
+	return g.ndVis, g.arcVis
+}
+
+// ShortestPath runs Dijkstra's shortest path algorithm, returning the single
+// shortest path from start to end.  Searches can be run consecutively but not
+// concurrently.
+func (g *Graph) ShortestPath(start, end int) ([]Half, float64) {
+	//	fmt.Println("start", start, "end", end)
+	if start == end {
+		return []Half{{end, 0}}, 0
+	}
+	// reset g from any previous run
+	g.ndVis = 0
+	g.arcVis = 0
+	for i := range g.Nodes {
+		g.Nodes[i].n = 0
+		g.Nodes[i].done = false
+	}
+
 	current := start
-	current.n = 1       // path length 1 for start node
-	current.done = true // mark start done.  it skips the heap.
+	cn := &g.Nodes[current]
+	cn.n = 1       // path length 1 for start node
+	cn.done = true // mark start done.  it skips the heap.
+	var t tent
 	for {
-		for _, nb := range current.Neighbors {
-			nd := nb.Node
-			if nd.done {
+		//		fmt.Println("current", current)
+		for _, nb := range cn.Nbs {
+			//			fmt.Printf("  nb %#v\n", nb)
+			g.arcVis++
+			if nb.To == end {
+				// search complete
+				// recover path by tracing prev links
+				i := cn.n
+				dist := cn.dist + nb.ArcWeight
+				path := make([]Half, i+1)
+				path[i] = nb
+				for n := current; i > 0; n = cn.prevFrom {
+					cn = &g.Nodes[n]
+					i--
+					path[i] = Half{n, cn.prevWeight}
+				}
+				return path, dist // success
+			}
+			hn := &g.Nodes[nb.To]
+			if hn.done {
+				//				fmt.Println("    done")
 				continue // skip nodes already done
 			}
-			dist := current.dist + nb.Edge
-			visited := nd.n > 0
-			if visited && dist >= nd.dist {
+			dist := cn.dist + nb.ArcWeight
+			visited := hn.n > 0
+			if visited && dist >= hn.dist {
 				continue // it's no better
 			}
 			// the path through current to this node is shortest so far.
 			// record new path data for this node and update tentative set.
-			nd.dist = dist
-			nd.n = current.n + 1
-			nd.prevNode = current
-			nd.prevEdge = nb.Edge
+			hn.dist = dist
+			hn.n = cn.n + 1
+			hn.prevFrom = current
+			hn.prevWeight = nb.ArcWeight
 			if visited {
-				heap.Fix(&t, nd.rx)
+				heap.Fix(&t, hn.rx)
 			} else {
-				heap.Push(&t, nd)
+				heap.Push(&t, hn)
 			}
 		}
-		if current == end { // search complete
-			// recover path by tracing prev links
-			i := current.n
-			path := make([]Neighbor, i)
-			for n := current; n != nil; {
-				i--
-				path[i] = Neighbor{n.prevEdge, n}
-				n = n.prevNode
-			}
-			return path, current.dist // success
-		}
+		g.ndVis++
 		if len(t) == 0 {
 			return nil, 0 // failure. no more reachable nodes
 		}
 		// new current is node with smallest tentative distance
-		current = heap.Pop(&t).(*Node)
-		current.done = true
+		cn = heap.Pop(&t).(*Node)
+		cn.done = true
+		current = cn.nx
 	}
 }
 

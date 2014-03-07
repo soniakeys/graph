@@ -4,111 +4,129 @@
 package ed
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
-	"sort"
 	"testing"
 )
 
-type xy struct {
-	x, y float64
-	n    *Node
-}
-type xyList []xy
+var s = rand.New(rand.NewSource(59))
 
-func (l xyList) Len() int           { return len(l) }
-func (l xyList) Less(i, j int) bool { return l[i].n.Name < l[j].n.Name }
-func (l xyList) Swap(i, j int)      { l[i], l[j] = l[j], l[i] }
-
-// generate a random graph
-func r(nNodes, nEdges int) (all xyList, start, end *Node) {
-	s := rand.New(rand.NewSource(59))
-	// generate unique node names
-	nameMap := map[string]bool{}
-	name := make([]byte, int(math.Log(float64(nNodes))/3)+1)
-	for len(nameMap) < nNodes {
-		for i := range name {
-			name[i] = 'A' + byte(s.Intn(26))
+// generate random graph and end points to test
+func r(nNodes, nEdges int, seed int64) (g *Graph, start, end int) {
+	s.Seed(seed)
+	// generate random coordinates
+	type xy struct{ x, y float64 }
+	coords := make([]xy, nNodes)
+	for i := range coords {
+		coords[i].x = s.Float64()
+		coords[i].y = s.Float64()
+	}
+	// random start
+	start = s.Intn(nNodes)
+	// end is point at distance nearest target distance
+	const target = .3
+	nearest := 2.
+	c1 := coords[start]
+	for i, c2 := range coords {
+		if d := math.Abs(target - math.Hypot(c2.x-c1.x, c2.y-c1.y)); d < nearest {
+			end = i
+			nearest = d
 		}
-		nameMap[string(name)] = true
 	}
-	// sort for repeatability
-	nodes := make(xyList, nNodes)
-	i := 0
-	for n := range nameMap {
-		nodes[i].n = &Node{Name: n}
-		i++
-	}
-	sort.Sort(nodes)
-	// now assign random coordinates.
-	for i := range nodes {
-		nodes[i].x = s.Float64()
-		nodes[i].y = s.Float64()
-	}
-	// generate edges.
+	//	c2 := coords[end]
+	//	fmt.Println("start", start, "end", end,
+	//		"dist", math.Hypot(c2.x-c1.x, c2.y-c1.y))
+	// graph
+	g = New(nNodes)
+	// edges
+	var tooFar, dup int
 	for i := 0; i < nEdges; {
-		n1 := &nodes[s.Intn(nNodes)]
-		n2 := &nodes[s.Intn(nNodes)]
-		dist := math.Hypot(n2.x-n1.x, n2.y-n1.y)
-		if dist > s.Float64()*math.Sqrt2 {
+		if tooFar == nEdges || dup == nEdges {
+			panic(fmt.Sprint("tooFar", tooFar, "dup", dup, "nEdges", nEdges,
+				"nNodes", nNodes, "seed", seed))
+		}
+		n1 := s.Intn(nNodes)
+		n2 := s.Intn(nNodes)
+		c1 := &coords[n1]
+		c2 := &coords[n2]
+		dist := math.Hypot(c2.x-c1.x, c2.y-c1.y)
+		if dist > s.ExpFloat64() { // favor near nodes
+			tooFar++
 			continue
 		}
-		n1.n.Neighbors = append(n1.n.Neighbors, Neighbor{dist, n2.n})
-		switch i {
-		case 0:
-			start = n1.n
-		case 1:
-			end = n2.n
+		if !g.AddArcSimple(n1, Half{n2, dist}) { // only count additions
+			dup++
+			continue
 		}
 		i++
 	}
-	return nodes, start, end
+	return
+}
+
+func Test100(t *testing.T) {
+	g, start, end := r(100, 200, 62)
+	t.Log(g.ShortestPath(start, end))
+	n, a := g.na()
+	t.Log("NV AV:", n, a)
+	t.Log(g.ShortestPath(start, end))
+	n, a = g.na()
+	t.Log("NV AV:", n, a)
 }
 
 func Benchmark100(b *testing.B) {
-	// 100 nodes
-	all, start, end := r(100, 200)
+	// 100 nodes, 200 edges
+	g, start, end := r(100, 200, 62)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		ShortestPath(start, end)
-		for _, n := range all {
-			n.n.Reset()
-		}
+		g.ShortestPath(start, end)
 	}
+}
+
+func Test1e3(t *testing.T) {
+	g, start, end := r(1000, 3000, 66)
+	t.Log(g.ShortestPath(start, end))
+	n, a := g.na()
+	t.Log("NV AV:", n, a)
 }
 
 func Benchmark1e3(b *testing.B) {
-	// 1000 nodes
-	all, start, end := r(1000, 3000)
+	// 1000 nodes, 3000 edges
+	g, start, end := r(1000, 3000, 66)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		ShortestPath(start, end)
-		for _, n := range all {
-			n.n.Reset()
-		}
+		g.ShortestPath(start, end)
 	}
+}
+
+func Test1e4(t *testing.T) {
+	g, start, end := r(1e4, 5e4, 59)
+	t.Log(g.ShortestPath(start, end))
+	n, a := g.na()
+	t.Log("NV AV:", n, a)
 }
 
 func Benchmark1e4(b *testing.B) {
-	// 10k nodes
-	all, start, end := r(1e4, 5e4)
+	// 10k nodes, 100k edges
+	g, start, end := r(1e4, 5e4, 59)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		ShortestPath(start, end)
-		for _, n := range all {
-			n.n.Reset()
-		}
+		g.ShortestPath(start, end)
 	}
 }
 
+func Test1e5(t *testing.T) {
+	g, start, end := r(1e5, 1e6, 59)
+	t.Log(g.ShortestPath(start, end))
+	n, a := g.na()
+	t.Log("NV AV:", n, a)
+}
+
 func Benchmark1e5(b *testing.B) {
-	// 100k nodes
-	all, start, end := r(1e5, 1e6)
+	// 100k nodes, 1m edges
+	g, start, end := r(1e5, 1e6, 59)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		ShortestPath(start, end)
-		for _, n := range all {
-			n.n.Reset()
-		}
+		g.ShortestPath(start, end)
 	}
 }
