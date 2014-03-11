@@ -13,7 +13,7 @@ import (
 var s = rand.New(rand.NewSource(59))
 
 // generate random directed graph and end points to test
-func r(nNodes, nArcs int, seed int64) (g *Graph, start, end int) {
+func r(nNodes, nArcs int, seed int64) (g Graph, start, end int) {
 	s.Seed(seed)
 	// generate random coordinates
 	type xy struct{ x, y float64 }
@@ -64,11 +64,9 @@ func r(nNodes, nArcs int, seed int64) (g *Graph, start, end int) {
 func Test100(t *testing.T) {
 	g, start, end := r(100, 200, 62)
 	t.Log(g.ShortestPath(start, end))
-	n, a := g.na()
-	t.Log("NV AV:", n, a)
+	t.Log("NV AV:", ndVis, arcVis)
 	t.Log(g.ShortestPath(start, end))
-	n, a = g.na()
-	t.Log("NV AV:", n, a)
+	t.Log("NV AV:", ndVis, arcVis)
 }
 
 func Benchmark100(b *testing.B) {
@@ -83,8 +81,7 @@ func Benchmark100(b *testing.B) {
 func Test1e3(t *testing.T) {
 	g, start, end := r(1000, 3000, 66)
 	t.Log(g.ShortestPath(start, end))
-	n, a := g.na()
-	t.Log("NV AV:", n, a)
+	t.Log("NV AV:", ndVis, arcVis)
 }
 
 func Benchmark1e3(b *testing.B) {
@@ -99,8 +96,7 @@ func Benchmark1e3(b *testing.B) {
 func Test1e4(t *testing.T) {
 	g, start, end := r(1e4, 5e4, 59)
 	t.Log(g.ShortestPath(start, end))
-	n, a := g.na()
-	t.Log("NV AV:", n, a)
+	t.Log("NV AV:", ndVis, arcVis)
 }
 
 func Benchmark1e4(b *testing.B) {
@@ -115,8 +111,7 @@ func Benchmark1e4(b *testing.B) {
 func Test1e5(t *testing.T) {
 	g, start, end := r(1e5, 1e6, 59)
 	t.Log(g.ShortestPath(start, end))
-	n, a := g.na()
-	t.Log("NV AV:", n, a)
+	t.Log("NV AV:", ndVis, arcVis)
 }
 
 func Benchmark1e5(b *testing.B) {
