@@ -79,6 +79,9 @@ func Benchmark100(b *testing.B) {
 }
 
 func Test1e3(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
 	g, start, end := r(1000, 3000, 66)
 	t.Log(g.ShortestPath(start, end))
 	t.Log("NV AV:", ndVis, arcVis)
@@ -94,6 +97,9 @@ func Benchmark1e3(b *testing.B) {
 }
 
 func Test1e4(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
 	g, start, end := r(1e4, 5e4, 59)
 	t.Log(g.ShortestPath(start, end))
 	t.Log("NV AV:", ndVis, arcVis)
@@ -109,6 +115,9 @@ func Benchmark1e4(b *testing.B) {
 }
 
 func Test1e5(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
 	g, start, end := r(1e5, 1e6, 59)
 	t.Log(g.ShortestPath(start, end))
 	t.Log("NV AV:", ndVis, arcVis)

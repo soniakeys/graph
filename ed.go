@@ -25,7 +25,7 @@ type Half struct {
 	ArcWeight float64
 }
 
-// Each Nodes has an adjacency list and bookeeping data needed for Dijktra's
+// Each Node has an adjacency list and bookeeping data needed for Dijktra's
 // algorithm.
 type Node struct {
 	Nbs []Half // adjacency list, "neighbors"
@@ -92,7 +92,6 @@ func (g Graph) AddArcSimple(from int, to Half) bool {
 // shortest path from start to end.  Searches can be run consecutively but not
 // concurrently.
 func (g Graph) ShortestPath(start, end int) ([]Half, float64) {
-	//	fmt.Println("start", start, "end", end)
 	if start == end {
 		return []Half{{end, 0}}, 0
 	}
@@ -110,9 +109,7 @@ func (g Graph) ShortestPath(start, end int) ([]Half, float64) {
 	cn.done = true // mark start done.  it skips the heap.
 	var t tent
 	for {
-		//		fmt.Println("current", current)
 		for _, nb := range cn.Nbs {
-			//			fmt.Printf("  nb %#v\n", nb)
 			arcVis++
 			if nb.To == end {
 				// search complete
@@ -130,7 +127,6 @@ func (g Graph) ShortestPath(start, end int) ([]Half, float64) {
 			}
 			hn := &g[nb.To]
 			if hn.done {
-				//				fmt.Println("    done")
 				continue // skip nodes already done
 			}
 			dist := cn.dist + nb.ArcWeight
