@@ -172,9 +172,6 @@ func (s *tent) Push(x interface{}) {
 }
 func (s *tent) Pop() interface{} {
 	t := *s
-	if len(t) == 0 {
-		return nil
-	}
 	last := len(t) - 1
 	*s = t[:last]
 	return t[last]
