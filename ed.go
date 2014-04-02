@@ -1,7 +1,18 @@
-// Copyright 2013 Sonia Keys
+// Copyright 2014 Sonia Keys
 // License MIT: http://opensource.org/licenses/MIT
 
+// Ed is a simple and fast graph library.
+//
+// For goals of speed and simplicity, Ed uses zero-based integer node IDs
+// and omits interfaces that would accomodate user data or user implemented
+// behavior.
+//
+// To use Ed functions, you typically create a data structure parallel
+// to your application data, call an Ed function, and use the result to
+// navigate your application data.
 package ed
+
+// file ed.go contains definitions common to different search functions
 
 // Half is a half arc, representing a "neighbor" of a node.
 //

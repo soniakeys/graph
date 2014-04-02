@@ -1,34 +1,42 @@
 // Copyright 2013 Sonia Keys
 // License MIT: http://opensource.org/licenses/MIT
 
-// Ed implements Dijkstra's single shortest path algorithm.
-//
-// The data representation is fixed and holds no more information than what
-// is needed to run the search algorithm.  To search your own data you must
-// create a graph using the types of this package, run the search, and use
-// the result to navigate your data.  The types here use integer node IDs.
-// If your data uses something else you must devise a translation to integer
-// node IDs.
 package ed
 
 import (
 	"container/heap"
 )
 
+// A Dijkstra object allows shortest path searches using Dijkstra's algorithm.
 type Dijkstra struct {
-	g   [][]Half
-	dat []ndDat
+	g   [][]Half // graph supplied by user.  this is not modified.
+	dat []ndDat  // working data for the algorithm
 	// instrumentation
 	ndVis, arcVis int
 }
 
-// New creates a Dijkstra struct that allows shortest path searches.
+// NewDijkstra creates a Dijkstra struct that allows shortest path searches.
 //
 // Argument g is the graph to be searched, as an adjacency list where node
 // IDs correspond to the slice indexes of g.  Each []Half element of g
-// represents the neighbors of a node.  To represent an undirected graph,
-// create reciprocal Halfs with identical ArcWeights.
-// Nodes cannot be added or removed to a Dijkstra object.
+// represents the neighbors of a node.  All Half.To fields must contain
+// a node ID greater than or equal to zero and strictly less than len(g).
+// As usual for Dijkstra's algorithm, arc weights must be non-negative.
+//
+// The algorithm conceptually works for directed and undirected graphs but
+// the adjacency list structure is inherently directed.  To represent an
+// undirected graph, create reciprocal Halfs with identical arc weights.
+//
+// Loops (arcs from a node to itself) are allowed but will not affect the
+// result.  Parallel arcs (multiple arcs between the same two nodes) are
+// also allowed; the algorithm will find the shortest one.  Generally though,
+// you should create simple graphs (graphs with no loops or parallel arcs)
+// where convenient, for best performance.
+//
+// The graph g will not be modified by any Dijkstra methods.  New initializes
+// the Dijkstra object for the length (number of nodes) of g.  If you add
+// nodes to your graph, abandon any previously created Dijkstra object and
+// call New again.
 func New(g [][]Half) *Dijkstra {
 	dat := make([]ndDat, len(g))
 	for i := range dat {
@@ -58,8 +66,18 @@ func (d *Dijkstra) na() (int, int) {
 }
 
 // SingleShortestPath runs Dijkstra's shortest path algorithm, returning
-// the single shortest path from start to end.  Searches can be run
-// consecutively but not concurrently.
+// the single shortest path from start to end.
+//
+// Searches on a single Dijkstra object can be run consecutively but not
+// concurrently.  Searches can be run concurrently however, on Dijkstra
+// objects obtained with separate calls to New, even with the same graph
+// argument to New.
+//
+// The slice result represents the found path with a sequence of half arcs.
+// For the first element, representing the start node, the arc length is
+// meaningless and will always be 0.  If no path exists from start to end
+// the slice result will be nil.  The total path length, as the sum of the
+// arc lengths, is also returned.
 func (d *Dijkstra) SingleShortestPath(start, end int) ([]Half, float64) {
 	if start == end {
 		return []Half{{end, 0}}, 0
