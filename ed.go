@@ -15,24 +15,39 @@ import (
 	"container/heap"
 )
 
-// Graph reprsentation is a slice of nodes, linked to each other by adjacency
-// lists.
-type Graph struct {
-	Nodes         []Node
-	ndVis, arcVis int // instrumentation
+type Dijkstra struct {
+	g   [][]Half
+	dat []ndDat
+	// instrumentation
+	ndVis, arcVis int
+}
+
+// New creates a Dijkstra struct that allows shortest path searches.
+//
+// Argument g is the graph to be searched, as an adjacency list where node
+// IDs correspond to the slice indexes of g.  Each []Half element of g
+// represents the neighbors of a node.  To represent an undirected graph,
+// create reciprocal Halfs with identical ArcWeights.
+// Nodes cannot be added or removed to a Dijkstra object.
+func New(g [][]Half) *Dijkstra {
+	dat := make([]ndDat, len(g))
+	for i := range dat {
+		dat[i].nx = i
+	}
+	return &Dijkstra{g: g, dat: dat}
 }
 
 // Half is a half arc, representing a "neighbor" of a node.
+//
+// Halfs can be composed to form an adjacency list.
 type Half struct {
 	To        int // index in graph slice
 	ArcWeight float64
 }
 
-// Each Nodes has an adjacency list and bookeeping data needed for Dijktra's
-// algorithm.
-type Node struct {
-	Nbs []Half // adjacency list, "neighbors"
-	nx  int    // index in graph slice, "node id"
+// ndDat. per node bookeeping data needed for Dijktra's algorithm.
+type ndDat struct {
+	nx int // index in graph slice, "node id"
 	// fields used for nodes visited in shortest path computation
 	done       bool
 	prevFrom   int     // path back to start
@@ -43,83 +58,36 @@ type Node struct {
 	rx   int     // heap.Remove index
 }
 
-type tent []*Node
-
-// New constructs and initializes a graph with n nodes.
-func New(n int) *Graph {
-	Nodes := make([]Node, n)
-	for i := range Nodes {
-		Nodes[i].nx = i
-	}
-	return &Graph{Nodes: Nodes}
-}
-
-// SetArcs sets the adjacency list for a node, replacing the existing list.
-// SetArcs panics if argument from is not a valid index for the nodes of the
-// graph.  No validation is performed on argument to.
-func (g *Graph) SetArcs(from int, to []Half) {
-	g.Nodes[from].Nbs = to
-}
-
-// AddArcSimple adds an arc to a graph safely, validating the arguments and
-// maintaining the the graph as a "simple" graph, that is, with no self-loops
-// and with no multiple arcs from one node to another.
-//
-// AddArcSimple returns true if 1) node indexes from and to.To are valid indexes
-// for the graph and not equal to each other, 2) if to.ArcWeight is non-negative
-// (and non-NaN), and 3) if the the arc is not already in the graph.  Otherwise
-// the graph is not modified and the function returns false.
-func (g *Graph) AddArcSimple(from int, to Half) bool {
-	if from < 0 || from >= len(g.Nodes) || to.To < 0 || to.To >= len(g.Nodes) {
-		return false
-	}
-	if !(to.ArcWeight >= 0) { // inverse test to catch NaNs
-		return false
-	}
-	Nbs := &g.Nodes[from].Nbs
-	if from == to.To {
-		return false // disallow loops
-	}
-	for _, nb := range *Nbs {
-		if nb.To == to.To {
-			return false // disallow parallel arcs
-		}
-	}
-	*Nbs = append(*Nbs, to)
-	return true
-}
+type tent []*ndDat
 
 // instrumentation
-func (g *Graph) na() (int, int) {
-	return g.ndVis, g.arcVis
+func (d *Dijkstra) na() (int, int) {
+	return d.ndVis, d.arcVis
 }
 
-// ShortestPath runs Dijkstra's shortest path algorithm, returning the single
-// shortest path from start to end.  Searches can be run consecutively but not
-// concurrently.
-func (g *Graph) ShortestPath(start, end int) ([]Half, float64) {
-	//	fmt.Println("start", start, "end", end)
+// SingleShortestPath runs Dijkstra's shortest path algorithm, returning
+// the single shortest path from start to end.  Searches can be run
+// consecutively but not concurrently.
+func (d *Dijkstra) SingleShortestPath(start, end int) ([]Half, float64) {
 	if start == end {
 		return []Half{{end, 0}}, 0
 	}
-	// reset g from any previous run
-	g.ndVis = 0
-	g.arcVis = 0
-	for i := range g.Nodes {
-		g.Nodes[i].n = 0
-		g.Nodes[i].done = false
+	// reset from any previous run
+	d.ndVis = 0
+	d.arcVis = 0
+	for i := range d.dat {
+		d.dat[i].n = 0
+		d.dat[i].done = false
 	}
 
 	current := start
-	cn := &g.Nodes[current]
+	cn := &d.dat[current]
 	cn.n = 1       // path length 1 for start node
 	cn.done = true // mark start done.  it skips the heap.
 	var t tent
 	for {
-		//		fmt.Println("current", current)
-		for _, nb := range cn.Nbs {
-			//			fmt.Printf("  nb %#v\n", nb)
-			g.arcVis++
+		for _, nb := range d.g[current] {
+			d.arcVis++
 			if nb.To == end {
 				// search complete
 				// recover path by tracing prev links
@@ -128,15 +96,14 @@ func (g *Graph) ShortestPath(start, end int) ([]Half, float64) {
 				path := make([]Half, i+1)
 				path[i] = nb
 				for n := current; i > 0; n = cn.prevFrom {
-					cn = &g.Nodes[n]
+					cn = &d.dat[n]
 					i--
 					path[i] = Half{n, cn.prevWeight}
 				}
 				return path, dist // success
 			}
-			hn := &g.Nodes[nb.To]
+			hn := &d.dat[nb.To]
 			if hn.done {
-				//				fmt.Println("    done")
 				continue // skip nodes already done
 			}
 			dist := cn.dist + nb.ArcWeight
@@ -156,12 +123,12 @@ func (g *Graph) ShortestPath(start, end int) ([]Half, float64) {
 				heap.Push(&t, hn)
 			}
 		}
-		g.ndVis++
+		d.ndVis++
 		if len(t) == 0 {
 			return nil, 0 // failure. no more reachable nodes
 		}
 		// new current is node with smallest tentative distance
-		cn = heap.Pop(&t).(*Node)
+		cn = heap.Pop(&t).(*ndDat)
 		cn.done = true
 		current = cn.nx
 	}
@@ -176,7 +143,7 @@ func (t tent) Swap(i, j int) {
 	t[j].rx = j
 }
 func (s *tent) Push(x interface{}) {
-	nd := x.(*Node)
+	nd := x.(*ndDat)
 	nd.rx = len(*s)
 	*s = append(*s, nd)
 }
