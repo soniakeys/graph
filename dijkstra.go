@@ -37,14 +37,6 @@ func New(g [][]Half) *Dijkstra {
 	return &Dijkstra{g: g, dat: dat}
 }
 
-// Half is a half arc, representing a "neighbor" of a node.
-//
-// Halfs can be composed to form an adjacency list.
-type Half struct {
-	To        int // index in graph slice
-	ArcWeight float64
-}
-
 // ndDat. per node bookeeping data needed for Dijktra's algorithm.
 type ndDat struct {
 	nx int // index in graph slice, "node id"
