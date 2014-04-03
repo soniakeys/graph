@@ -117,11 +117,11 @@ func (a *AStar) AStarM(start, end int, h func(int) float64) ([]Half, float64) {
 	p.f = h(start) // total path estimate is estimate from start
 	p.n = 1        // path length is 1 node
 
-    // difference from AStarA:
-    // instead of a bit to mark a reached node, there are two states,
-    // open and closed. open marks nodes "open" for exploration.
-    // nodes are marked open as they are reached, then marked
-    // closed as they are found to be on the best path.
+	// difference from AStarA:
+	// instead of a bit to mark a reached node, there are two states,
+	// open and closed. open marks nodes "open" for exploration.
+	// nodes are marked open as they are reached, then marked
+	// closed as they are found to be on the best path.
 	p.state = open
 
 	oh := openHeap{p}
@@ -141,19 +141,19 @@ func (a *AStar) AStarM(start, end int, h func(int) float64) ([]Half, float64) {
 			return path, dist
 		}
 
-        // difference from AStarA:
-        // move nodes to closed list as they are found to be best so far.
+		// difference from AStarA:
+		// move nodes to closed list as they are found to be best so far.
 		bestPath.state = closed
 
 		for _, nb := range a.g[bestNode] {
 			ed := nb.ArcWeight
 			nd := nb.To
 
-            // difference from AStarA:
-            // Monotonicity means that f cannot be improved.
-            if a.r[nd].state == closed {
-                continue
-            }
+			// difference from AStarA:
+			// Monotonicity means that f cannot be improved.
+			if a.r[nd].state == closed {
+				continue
+			}
 
 			g := bestPath.g + ed
 			if alt := &a.r[nd]; alt.state == open {
@@ -174,8 +174,8 @@ func (a *AStar) AStarM(start, end int, h func(int) float64) ([]Half, float64) {
 				alt.f = g + h(nd)
 				alt.n = bestPath.n + 1
 
-                // difference from AStarA:
-                // we know alt was on the heap because we found it marked open
+				// difference from AStarA:
+				// we know alt was on the heap because we found it marked open
 				heap.Fix(&oh, alt.rx)
 			} else {
 				// bestNode being reached for the first time.

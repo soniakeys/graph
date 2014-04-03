@@ -9,8 +9,8 @@ import (
 	"github.com/soniakeys/ed"
 )
 
-func ExampleGraph_ShortestPath() {
-	d := ed.New([][]ed.Half{
+func ExampleDijkstra_SingleShortestPath() {
+	d := ed.NewDijkstra([][]ed.Half{
 		0: {{1, 7}, {2, 9}, {5, 14}},
 		1: {{2, 10}, {3, 15}},
 		2: {{3, 11}, {5, 2}},
@@ -20,7 +20,7 @@ func ExampleGraph_ShortestPath() {
 	})
 	p, l := d.SingleShortestPath(2, 4)
 	if p == nil {
-		fmt.Println("No path from start node to end node")
+		fmt.Println("No path")
 		return
 	}
 	fmt.Println("Shortest path:", p)
