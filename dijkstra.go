@@ -9,9 +9,10 @@ import (
 
 // A Dijkstra object allows shortest path searches using Dijkstra's algorithm.
 type Dijkstra struct {
-	g   [][]Half // graph supplied by user.  this is not modified.
-	dat []ndDat  // working data for the algorithm
-	// instrumentation
+	g   [][]Half   // graph supplied by user.  this is not modified.
+	dat []ndDat    // working data for the algorithm
+	f   []FromHalf // return value for AllPaths
+	// test instrumentation
 	ndVis, arcVis int
 }
 
@@ -38,21 +39,19 @@ type Dijkstra struct {
 // nodes to your graph, abandon any previously created Dijkstra object and
 // call New again.
 func New(g [][]Half) *Dijkstra {
+	f := make([]FromHalf, len(g))
 	dat := make([]ndDat, len(g))
 	for i := range dat {
+		f[i].From = -1
 		dat[i].nx = i
 	}
-	return &Dijkstra{g: g, dat: dat}
+	return &Dijkstra{f: f, g: g, dat: dat}
 }
 
-// ndDat. per node bookeeping data needed for Dijktra's algorithm.
+// ndDat. per node bookeeping data used for Dijktra's algorithm.
 type ndDat struct {
-	nx int // index in graph slice, "node id"
-	// fields used for nodes visited in shortest path computation
-	done       bool
-	prevFrom   int     // path back to start
-	prevWeight float64 // weight of arc from prev node
-	// fields used for nodes in the tentative set
+	nx   int // index in graph slice, "node id"
+	done bool
 	dist float64 // tentative path distance
 	n    int     // number of nodes in path
 	rx   int     // heap.Remove index
@@ -82,12 +81,34 @@ func (d *Dijkstra) SingleShortestPath(start, end int) ([]Half, float64) {
 	if start == end {
 		return []Half{{end, 0}}, 0
 	}
+	d.search(start, end)
+	dd := d.dat[end]
+	if !dd.done {
+		return nil, 0
+	}
+	p := make([]Half, dd.n)
+	nd := dd.nx
+	for i := len(p) - 1; i >= 0; i-- {
+		f := &d.f[nd]
+		p[i] = Half{nd, f.ArcWeight}
+		nd = f.From
+	}
+	return p, dd.dist
+}
+
+func (d *Dijkstra) AllShortestPaths(start int) []FromHalf {
+	d.search(start, -1)
+	return nil
+}
+
+func (d *Dijkstra) search(start, end int) {
 	// reset from any previous run
 	d.ndVis = 0
 	d.arcVis = 0
 	for i := range d.dat {
 		d.dat[i].n = 0
 		d.dat[i].done = false
+		d.f[i] = FromHalf{-1, 0}
 	}
 
 	current := start
@@ -95,23 +116,9 @@ func (d *Dijkstra) SingleShortestPath(start, end int) ([]Half, float64) {
 	cn.n = 1       // path length 1 for start node
 	cn.done = true // mark start done.  it skips the heap.
 	var t tent
-	for {
+	for current != end {
 		for _, nb := range d.g[current] {
 			d.arcVis++
-			if nb.To == end {
-				// search complete
-				// recover path by tracing prev links
-				i := cn.n
-				dist := cn.dist + nb.ArcWeight
-				path := make([]Half, i+1)
-				path[i] = nb
-				for n := current; i > 0; n = cn.prevFrom {
-					cn = &d.dat[n]
-					i--
-					path[i] = Half{n, cn.prevWeight}
-				}
-				return path, dist // success
-			}
 			hn := &d.dat[nb.To]
 			if hn.done {
 				continue // skip nodes already done
@@ -125,8 +132,7 @@ func (d *Dijkstra) SingleShortestPath(start, end int) ([]Half, float64) {
 			// record new path data for this node and update tentative set.
 			hn.dist = dist
 			hn.n = cn.n + 1
-			hn.prevFrom = current
-			hn.prevWeight = nb.ArcWeight
+			d.f[nb.To] = FromHalf{current, nb.ArcWeight}
 			if visited {
 				heap.Fix(&t, hn.rx)
 			} else {
@@ -135,7 +141,7 @@ func (d *Dijkstra) SingleShortestPath(start, end int) ([]Half, float64) {
 		}
 		d.ndVis++
 		if len(t) == 0 {
-			return nil, 0 // failure. no more reachable nodes
+			return // no more reachable nodes
 		}
 		// new current is node with smallest tentative distance
 		cn = heap.Pop(&t).(*ndDat)

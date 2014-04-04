@@ -21,3 +21,8 @@ type Half struct {
 	To        int // node ID, usable as a slice index
 	ArcWeight float64
 }
+
+type FromHalf struct {
+	From      int
+	ArcWeight float64
+}
