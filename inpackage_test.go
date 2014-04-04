@@ -70,7 +70,7 @@ arc:
 
 func Test100(t *testing.T) {
 	g, start, end := r(100, 200, 62)
-	d := New(g)
+	d := NewDijkstra(g)
 	t.Log(d.SingleShortestPath(start, end))
 	n, a := d.na()
 	t.Log("NV AV:", n, a)
@@ -82,7 +82,7 @@ func Test100(t *testing.T) {
 func Benchmark100(b *testing.B) {
 	// 100 nodes, 200 edges
 	g, start, end := r(100, 200, 62)
-	d := New(g)
+	d := NewDijkstra(g)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		d.SingleShortestPath(start, end)
@@ -94,7 +94,7 @@ func Test1e3(t *testing.T) {
 		t.Skip()
 	}
 	g, start, end := r(1000, 3000, 66)
-	d := New(g)
+	d := NewDijkstra(g)
 	t.Log(d.SingleShortestPath(start, end))
 	n, a := d.na()
 	t.Log("NV AV:", n, a)
@@ -103,7 +103,7 @@ func Test1e3(t *testing.T) {
 func Benchmark1e3(b *testing.B) {
 	// 1000 nodes, 3000 edges
 	g, start, end := r(1000, 3000, 66)
-	d := New(g)
+	d := NewDijkstra(g)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		d.SingleShortestPath(start, end)
@@ -115,7 +115,7 @@ func Test1e4(t *testing.T) {
 		t.Skip()
 	}
 	g, start, end := r(1e4, 5e4, 59)
-	d := New(g)
+	d := NewDijkstra(g)
 	t.Log(d.SingleShortestPath(start, end))
 	n, a := d.na()
 	t.Log("NV AV:", n, a)
@@ -124,7 +124,7 @@ func Test1e4(t *testing.T) {
 func Benchmark1e4(b *testing.B) {
 	// 10k nodes, 100k edges
 	g, start, end := r(1e4, 5e4, 59)
-	d := New(g)
+	d := NewDijkstra(g)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		d.SingleShortestPath(start, end)
@@ -136,7 +136,7 @@ func Test1e5(t *testing.T) {
 		t.Skip()
 	}
 	g, start, end := r(1e5, 1e6, 59)
-	d := New(g)
+	d := NewDijkstra(g)
 	t.Log(d.SingleShortestPath(start, end))
 	n, a := d.na()
 	t.Log("NV AV:", n, a)
@@ -145,7 +145,7 @@ func Test1e5(t *testing.T) {
 func Benchmark1e5(b *testing.B) {
 	// 100k nodes, 1m edges
 	g, start, end := r(1e5, 1e6, 59)
-	d := New(g)
+	d := NewDijkstra(g)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		d.SingleShortestPath(start, end)

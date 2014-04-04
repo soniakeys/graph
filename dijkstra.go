@@ -38,7 +38,7 @@ type Dijkstra struct {
 // the Dijkstra object for the length (number of nodes) of g.  If you add
 // nodes to your graph, abandon any previously created Dijkstra object and
 // call New again.
-func New(g [][]Half) *Dijkstra {
+func NewDijkstra(g [][]Half) *Dijkstra {
 	f := make([]FromHalf, len(g))
 	dat := make([]ndDat, len(g))
 	for i := range dat {
