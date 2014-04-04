@@ -5,13 +5,13 @@ package ed
 
 import (
 	"container/heap"
+	"math"
 )
 
 // A Dijkstra object allows shortest path searches using Dijkstra's algorithm.
 type Dijkstra struct {
-	g   [][]Half   // graph supplied by user.  this is not modified.
-	dat []ndDat    // working data for the algorithm
-	f   []FromHalf // return value for AllPaths
+	Graph  [][]Half
+	Result []DijkstraResult
 	// test instrumentation
 	ndVis, arcVis int
 }
@@ -39,22 +39,23 @@ type Dijkstra struct {
 // nodes to your graph, abandon any previously created Dijkstra object and
 // call New again.
 func NewDijkstra(g [][]Half) *Dijkstra {
-	f := make([]FromHalf, len(g))
-	dat := make([]ndDat, len(g))
+	r := make([]DijkstraResult, len(g))
 	for i := range dat {
-		f[i].From = -1
-		dat[i].nx = i
+		r[i].nx = i
 	}
-	return &Dijkstra{f: f, g: g, dat: dat}
+	return &Dijkstra{
+		Graph:  g,
+		Result: r,
+	}
 }
 
-// ndDat. per node bookeeping data used for Dijktra's algorithm.
-type ndDat struct {
-	nx   int // index in graph slice, "node id"
-	done bool
-	dist float64 // tentative path distance
-	n    int     // number of nodes in path
-	rx   int     // heap.Remove index
+type DijkstraResult struct {
+	PathLen  int
+	PathDist float64
+	FromTree FromHalf
+	nx       int // index in graph slice, "node id"
+	fx       int // heap.Fix index
+	done     bool
 }
 
 type tent []*ndDat
@@ -82,57 +83,64 @@ func (d *Dijkstra) SingleShortestPath(start, end int) ([]Half, float64) {
 		return []Half{{end, 0}}, 0
 	}
 	d.search(start, end)
-	dd := d.dat[end]
-	if !dd.done {
-		return nil, 0
-	}
-	p := make([]Half, dd.n)
-	nd := dd.nx
-	for i := len(p) - 1; i >= 0; i-- {
-		f := &d.f[nd]
-		p[i] = Half{nd, f.ArcWeight}
-		nd = f.From
-	}
-	return p, dd.dist
+	return d.PathTo(end)
 }
 
-func (d *Dijkstra) AllShortestPaths(start int) []FromHalf {
-	d.search(start, -1)
-	return nil
+func (d *Dijkstra) PathTo(end int) ([]Half, float64) {
+	n := d.PathLen[end]
+	if n == 0 {
+		return nil, math.Inf(1)
+	}
+	p := make([]Half, n)
+	dist := 0.
+	for n--; n >= 0; n-- {
+		f := d.FromTree[end]
+		p[n] = Half{end, f.ArcWeight}
+		dist += f.ArcWeight
+		end = f.From
+	}
+	return p, dist
 }
 
-func (d *Dijkstra) search(start, end int) {
+func (d *Dijkstra) AllShortestPaths(start int) int {
+	return d.search(start, -1)
+}
+
+// returns number of nodes reached (= number of shortest paths found)
+func (d *Dijkstra) search(start, end int) int {
 	// reset from any previous run
 	d.ndVis = 0
 	d.arcVis = 0
 	for i := range d.dat {
-		d.dat[i].n = 0
+		d.PathLen[i] = 0
+		d.PathDist[i] = 0
 		d.dat[i].done = false
-		d.f[i] = FromHalf{-1, 0}
+		d.FromTree[i] = FromHalf{-1, 0}
 	}
 
 	current := start
+	d.PathLen[current] = 1 // path length 1 for start node
 	cn := &d.dat[current]
-	cn.n = 1       // path length 1 for start node
 	cn.done = true // mark start done.  it skips the heap.
+	nDone := 1
 	var t tent
 	for current != end {
-		for _, nb := range d.g[current] {
+		for _, nb := range d.Graph[current] {
 			d.arcVis++
 			hn := &d.dat[nb.To]
 			if hn.done {
 				continue // skip nodes already done
 			}
-			dist := cn.dist + nb.ArcWeight
-			visited := hn.n > 0
-			if visited && dist >= hn.dist {
+			dist := d.PathDist[current] + nb.ArcWeight
+			visited := d.PathLen[nb.To] > 0
+			if visited && dist >= d.PathDist[nb.To] {
 				continue // it's no better
 			}
 			// the path through current to this node is shortest so far.
 			// record new path data for this node and update tentative set.
-			hn.dist = dist
-			hn.n = cn.n + 1
-			d.f[nb.To] = FromHalf{current, nb.ArcWeight}
+			d.PathDist[nb.To] = dist
+			d.PathLen[nb.To] = d.PathLen[current] + 1
+			d.FromTree[nb.To] = FromHalf{current, nb.ArcWeight}
 			if visited {
 				heap.Fix(&t, hn.rx)
 			} else {
@@ -141,13 +149,15 @@ func (d *Dijkstra) search(start, end int) {
 		}
 		d.ndVis++
 		if len(t) == 0 {
-			return // no more reachable nodes
+			return nDone // no more reachable nodes. AllPaths normal return
 		}
 		// new current is node with smallest tentative distance
 		cn = heap.Pop(&t).(*ndDat)
 		cn.done = true
+		nDone++
 		current = cn.nx
 	}
+	return -1 // normal return for single shortest path search
 }
 
 // tent implements container/heap

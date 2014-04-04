@@ -29,3 +29,21 @@ func ExampleDijkstra_SingleShortestPath() {
 	// Shortest path: [{2 0} {3 11} {4 6}]
 	// Path length: 17
 }
+
+func ExampleDijkstra_AllShortestPaths() {
+	g := [][]ed.Half{
+		0: {{1, 7}, {2, 9}, {5, 14}},
+		1: {{2, 10}, {3, 15}},
+		2: {{3, 11}, {5, 2}},
+		3: {{4, 6}},
+		4: {{5, 9}},
+		5: nil,
+	}
+	d := ed.NewDijkstra(g)
+	fmt.Println(d.AllShortestPaths(2), "paths found:")
+	for n := range g {
+		p, dist := d.PathTo(n)
+		fmt.Printf("%d: %v dist: %g\n", n, p, dist)
+	}
+	// Output:
+}
