@@ -9,10 +9,14 @@ import (
 )
 
 // A Dijkstra object allows shortest path searches using Dijkstra's algorithm.
+//
+// Construct with NewDijkstra.  NoPath is used as a distance result when no
+// path or no arc exists.  It is initialized to +Inf by NewDijkstra but you
+// can assign a different valule to this field if you like.
 type Dijkstra struct {
 	Graph  [][]Half
 	Result []DijkstraResult
-	NoPath float64
+	NoPath float64 // initialized to +Inf by NewDijkstra.
 	// test instrumentation
 	ndVis, arcVis int
 }
@@ -39,6 +43,11 @@ type Dijkstra struct {
 // the Dijkstra object for the length (number of nodes) of g.  If you add
 // nodes to your graph, abandon any previously created Dijkstra object and
 // call New again.
+//
+// Searches on a single Dijkstra object can be run consecutively but not
+// concurrently.  Searches can be run concurrently however, on Dijkstra
+// objects obtained with separate calls to New, even with the same graph
+// argument to New.
 func NewDijkstra(g [][]Half) *Dijkstra {
 	r := make([]DijkstraResult, len(g))
 	for i := range r {
@@ -51,43 +60,60 @@ func NewDijkstra(g [][]Half) *Dijkstra {
 	}
 }
 
+// DijkstraResult contains results for a single node.  A Dijkstra object
+// contains a DijkstraResult slice parallel to the input graph.
+//
+// Following an AllShortestPaths search, PathDist will contain the path
+// distance as the sum of arc weights for the found shortest path from the
+// start node to the node corresponding to the Dijkstra result.  If the node
+// is not reachable, PathDist will be Dijkstra.NoPath.
+//
+// The FromTree fields for all reachable nodes represent a spanning
+// tree encoding all shortest paths.  The structure is an "inverse
+// arborescence", "in-tree", or "spaghetti stack."  For unreachable nodes
+// FromTree.From will be -1, FromTree.ArcWeight will be Dijkstra.NoPath.
+// See Dijkstra.PathTo for convenient decoding of this structure.
+//
+// PathLen will contain the number of nodes in the found shortest path, or
+// 0 if the node is unreachable.  Testing PathLen == 0 is the simplest test
+// of whether a node is reachable.  Note that in the case where there are
+// multiple paths with same minimum PathDist, PathLen contains only the length
+// of the path encoded by FromTree.  Other paths of minimum distance may have
+// fewer nodes.
+//
+// Following a SingleShortestPath search, results are only valid along the
+// found path.  Results for other nodes are meaningless.
 type DijkstraResult struct {
-	PathLen  int
-	PathDist float64
-	FromTree FromHalf
-	nx       int // slice index, "node id"
-	fx       int // heap.Fix index
-	done     bool
+	PathDist float64  // sum of arc weights
+	FromTree FromHalf // encodes shortest path
+	PathLen  int      // number of nodes
+
+	nx   int // slice index, "node id"
+	fx   int // heap.Fix index
+	done bool
 }
 
 type tent []*DijkstraResult
 
-// instrumentation
-func (d *Dijkstra) na() (int, int) {
-	return d.ndVis, d.arcVis
-}
-
 // SingleShortestPath runs Dijkstra's shortest path algorithm, returning
-// the single shortest path from start to end.
+// a single shortest path from start to end.
 //
-// Searches on a single Dijkstra object can be run consecutively but not
-// concurrently.  Searches can be run concurrently however, on Dijkstra
-// objects obtained with separate calls to New, even with the same graph
-// argument to New.
-//
-// The slice result represents the found path with a sequence of half arcs.
-// For the first element, representing the start node, the arc length is
-// meaningless and will always be 0.  If no path exists from start to end
-// the slice result will be nil.  The total path length, as the sum of the
-// arc lengths, is also returned.
+// Returned is the path and distance as returned by Dijkstra.PathTo.
 func (d *Dijkstra) SingleShortestPath(start, end int) ([]Half, float64) {
-	if start == end {
-		return []Half{{end, 0}}, 0
-	}
 	d.search(start, end)
 	return d.PathTo(end)
 }
 
+// PathTo decodes Dijkstra.Result, recovering the found path from start to
+// end, where start was an argument to SingleShortestPath or AllShortestPaths
+// and end is the argument to this method.
+//
+// The slice result represents the found path with a sequence of half arcs.
+// If no path exists from start to end the slice result will be nil.
+// For the first element, representing the start node, the arc weight is
+// meaningless and will be Dijkstra.NoPath.  The total path distance is also
+// returned.  Path distance is the sum of arc weights, excluding of couse
+// the meaningless arc weight of the first Half.
 func (d *Dijkstra) PathTo(end int) ([]Half, float64) {
 	n := d.Result[end].PathLen
 	if n == 0 {
@@ -95,13 +121,16 @@ func (d *Dijkstra) PathTo(end int) ([]Half, float64) {
 	}
 	p := make([]Half, n)
 	dist := 0.
-	for n--; n >= 0; n-- {
+	for {
+		n--
 		f := &d.Result[end].FromTree
 		p[n] = Half{end, f.ArcWeight}
+		if n == 0 {
+			return p, dist
+		}
 		dist += f.ArcWeight
 		end = f.From
 	}
-	return p, dist
 }
 
 func (d *Dijkstra) AllShortestPaths(start int) int {
@@ -118,7 +147,7 @@ func (d *Dijkstra) search(start, end int) int {
 		r.done = false
 		r.PathLen = 0
 		r.PathDist = d.NoPath
-		r.FromTree = FromHalf{-1, 0}
+		r.FromTree = FromHalf{-1, d.NoPath}
 	}
 
 	current := start

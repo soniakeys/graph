@@ -73,8 +73,7 @@ func Test100(t *testing.T) {
 	g, start, end := r(100, 200, 62)
 	d := NewDijkstra(g)
 	p1, l1 := d.SingleShortestPath(start, end)
-	n, a := d.na()
-	t.Log("NV AV:", n, a)
+	t.Log("NV AV:", d.ndVis, d.arcVis)
 	// test that repeating same search on same d gives same result
 	p2, l2 := d.SingleShortestPath(start, end)
 	if len(p1) != len(p2) || l1 != l2 {
@@ -104,8 +103,7 @@ func Test1e3(t *testing.T) {
 	g, start, end := r(1000, 3000, 66)
 	d := NewDijkstra(g)
 	d.SingleShortestPath(start, end)
-	n, a := d.na()
-	t.Log("NV AV:", n, a)
+	t.Log("NV AV:", d.ndVis, d.arcVis)
 }
 
 func Benchmark1e3(b *testing.B) {
@@ -125,8 +123,7 @@ func Test1e4(t *testing.T) {
 	g, start, end := r(1e4, 5e4, 59)
 	d := NewDijkstra(g)
 	d.SingleShortestPath(start, end)
-	n, a := d.na()
-	t.Log("NV AV:", n, a)
+	t.Log("NV AV:", d.ndVis, d.arcVis)
 }
 
 func Benchmark1e4(b *testing.B) {
@@ -146,8 +143,7 @@ func Test1e5(t *testing.T) {
 	g, start, end := r(1e5, 1e6, 59)
 	d := NewDijkstra(g)
 	d.SingleShortestPath(start, end)
-	n, a := d.na()
-	t.Log("NV AV:", n, a)
+	t.Log("NV AV:", d.ndVis, d.arcVis)
 }
 
 func Benchmark1e5(b *testing.B) {
