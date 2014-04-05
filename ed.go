@@ -14,7 +14,8 @@ package ed
 
 // file ed.go contains definitions common to different search functions
 
-// Half is a half arc, representing a "neighbor" of a node.
+// Half is a half arc, representing a directed weighted arc and the "neighbor"
+// node that the arc leads to.
 //
 // Halfs can be composed to form an adjacency list.
 type Half struct {
@@ -22,6 +23,8 @@ type Half struct {
 	ArcWeight float64
 }
 
+// FromHalf is a half arc, representing a directed weighted arc and the
+// "neighbor" node that the arc originates from.
 type FromHalf struct {
 	From      int
 	ArcWeight float64

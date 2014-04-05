@@ -95,10 +95,11 @@ type DijkstraResult struct {
 
 type tent []*DijkstraResult
 
-// SingleShortestPath runs Dijkstra's shortest path algorithm, returning
-// a single shortest path from start to end.
+// SingleShortestPath finds a single shortest path from start to end.
 //
 // Returned is the path and distance as returned by Dijkstra.PathTo.
+// The function terminates the algorithm as soon as the shortest path to
+// end is found.  It does not explore the remainder of the graph.
 func (d *Dijkstra) SingleShortestPath(start, end int) ([]Half, float64) {
 	d.search(start, end)
 	return d.PathTo(end)
@@ -133,6 +134,9 @@ func (d *Dijkstra) PathTo(end int) ([]Half, float64) {
 	}
 }
 
+// AllShortestPaths finds shortest paths from start to all nodes reachable
+// from start.  Results are in d.Result; individual paths can be decoded
+// with DijkstraResult.PathTo.
 func (d *Dijkstra) AllShortestPaths(start int) int {
 	return d.search(start, -1)
 }
