@@ -12,6 +12,7 @@ import (
 type Dijkstra struct {
 	Graph  [][]Half
 	Result []DijkstraResult
+	NoPath float64
 	// test instrumentation
 	ndVis, arcVis int
 }
@@ -40,12 +41,13 @@ type Dijkstra struct {
 // call New again.
 func NewDijkstra(g [][]Half) *Dijkstra {
 	r := make([]DijkstraResult, len(g))
-	for i := range dat {
+	for i := range r {
 		r[i].nx = i
 	}
 	return &Dijkstra{
 		Graph:  g,
 		Result: r,
+		NoPath: math.Inf(1),
 	}
 }
 
@@ -53,12 +55,12 @@ type DijkstraResult struct {
 	PathLen  int
 	PathDist float64
 	FromTree FromHalf
-	nx       int // index in graph slice, "node id"
+	nx       int // slice index, "node id"
 	fx       int // heap.Fix index
 	done     bool
 }
 
-type tent []*ndDat
+type tent []*DijkstraResult
 
 // instrumentation
 func (d *Dijkstra) na() (int, int) {
@@ -87,14 +89,14 @@ func (d *Dijkstra) SingleShortestPath(start, end int) ([]Half, float64) {
 }
 
 func (d *Dijkstra) PathTo(end int) ([]Half, float64) {
-	n := d.PathLen[end]
+	n := d.Result[end].PathLen
 	if n == 0 {
-		return nil, math.Inf(1)
+		return nil, d.NoPath
 	}
 	p := make([]Half, n)
 	dist := 0.
 	for n--; n >= 0; n-- {
-		f := d.FromTree[end]
+		f := &d.Result[end].FromTree
 		p[n] = Half{end, f.ArcWeight}
 		dist += f.ArcWeight
 		end = f.From
@@ -111,40 +113,42 @@ func (d *Dijkstra) search(start, end int) int {
 	// reset from any previous run
 	d.ndVis = 0
 	d.arcVis = 0
-	for i := range d.dat {
-		d.PathLen[i] = 0
-		d.PathDist[i] = 0
-		d.dat[i].done = false
-		d.FromTree[i] = FromHalf{-1, 0}
+	for i := range d.Result {
+		r := &d.Result[i]
+		r.done = false
+		r.PathLen = 0
+		r.PathDist = d.NoPath
+		r.FromTree = FromHalf{-1, 0}
 	}
 
 	current := start
-	d.PathLen[current] = 1 // path length 1 for start node
-	cn := &d.dat[current]
-	cn.done = true // mark start done.  it skips the heap.
-	nDone := 1
+	cr := &d.Result[current]
+	cr.PathLen = 1  // path length 1 for start node
+	cr.PathDist = 0 // distance at start is 0
+	cr.done = true  // mark start done.  it skips the heap.
+	nDone := 1      // accumulated for a return value
 	var t tent
 	for current != end {
 		for _, nb := range d.Graph[current] {
 			d.arcVis++
-			hn := &d.dat[nb.To]
-			if hn.done {
+			hr := &d.Result[nb.To]
+			if hr.done {
 				continue // skip nodes already done
 			}
-			dist := d.PathDist[current] + nb.ArcWeight
-			visited := d.PathLen[nb.To] > 0
-			if visited && dist >= d.PathDist[nb.To] {
+			dist := cr.PathDist + nb.ArcWeight
+			visited := hr.PathLen > 0
+			if visited && dist >= hr.PathDist {
 				continue // it's no better
 			}
 			// the path through current to this node is shortest so far.
 			// record new path data for this node and update tentative set.
-			d.PathDist[nb.To] = dist
-			d.PathLen[nb.To] = d.PathLen[current] + 1
-			d.FromTree[nb.To] = FromHalf{current, nb.ArcWeight}
+			hr.PathDist = dist
+			hr.PathLen = cr.PathLen + 1
+			hr.FromTree = FromHalf{current, nb.ArcWeight}
 			if visited {
-				heap.Fix(&t, hn.rx)
+				heap.Fix(&t, hr.fx)
 			} else {
-				heap.Push(&t, hn)
+				heap.Push(&t, hr)
 			}
 		}
 		d.ndVis++
@@ -152,25 +156,25 @@ func (d *Dijkstra) search(start, end int) int {
 			return nDone // no more reachable nodes. AllPaths normal return
 		}
 		// new current is node with smallest tentative distance
-		cn = heap.Pop(&t).(*ndDat)
-		cn.done = true
+		cr = heap.Pop(&t).(*DijkstraResult)
+		cr.done = true
 		nDone++
-		current = cn.nx
+		current = cr.nx
 	}
 	return -1 // normal return for single shortest path search
 }
 
 // tent implements container/heap
 func (t tent) Len() int           { return len(t) }
-func (t tent) Less(i, j int) bool { return t[i].dist < t[j].dist }
+func (t tent) Less(i, j int) bool { return t[i].PathDist < t[j].PathDist }
 func (t tent) Swap(i, j int) {
 	t[i], t[j] = t[j], t[i]
-	t[i].rx = i
-	t[j].rx = j
+	t[i].fx = i
+	t[j].fx = j
 }
 func (s *tent) Push(x interface{}) {
-	nd := x.(*ndDat)
-	nd.rx = len(*s)
+	nd := x.(*DijkstraResult)
+	nd.fx = len(*s)
 	*s = append(*s, nd)
 }
 func (s *tent) Pop() interface{} {

@@ -29,7 +29,8 @@ func r(nNodes, nArcs int, seed int64) (g [][]Half, start, end int) {
 	nearest := 2.
 	c1 := coords[start]
 	for i, c2 := range coords {
-		if d := math.Abs(target - math.Hypot(c2.x-c1.x, c2.y-c1.y)); d < nearest {
+		d := math.Abs(target - math.Hypot(c2.x-c1.x, c2.y-c1.y))
+		if d < nearest {
 			end = i
 			nearest = d
 		}
@@ -71,12 +72,19 @@ arc:
 func Test100(t *testing.T) {
 	g, start, end := r(100, 200, 62)
 	d := NewDijkstra(g)
-	t.Log(d.SingleShortestPath(start, end))
+	p1, l1 := d.SingleShortestPath(start, end)
 	n, a := d.na()
 	t.Log("NV AV:", n, a)
-	t.Log(d.SingleShortestPath(start, end))
-	n, a = d.na()
-	t.Log("NV AV:", n, a)
+	// test that repeating same search on same d gives same result
+	p2, l2 := d.SingleShortestPath(start, end)
+	if len(p1) != len(p2) || l1 != l2 {
+		t.Fatal("len")
+	}
+	for i, h := range p1 {
+		if p2[i] != h {
+			t.Fatal("path")
+		}
+	}
 }
 
 func Benchmark100(b *testing.B) {
@@ -95,7 +103,7 @@ func Test1e3(t *testing.T) {
 	}
 	g, start, end := r(1000, 3000, 66)
 	d := NewDijkstra(g)
-	t.Log(d.SingleShortestPath(start, end))
+	d.SingleShortestPath(start, end)
 	n, a := d.na()
 	t.Log("NV AV:", n, a)
 }
@@ -116,7 +124,7 @@ func Test1e4(t *testing.T) {
 	}
 	g, start, end := r(1e4, 5e4, 59)
 	d := NewDijkstra(g)
-	t.Log(d.SingleShortestPath(start, end))
+	d.SingleShortestPath(start, end)
 	n, a := d.na()
 	t.Log("NV AV:", n, a)
 }
@@ -137,7 +145,7 @@ func Test1e5(t *testing.T) {
 	}
 	g, start, end := r(1e5, 1e6, 59)
 	d := NewDijkstra(g)
-	t.Log(d.SingleShortestPath(start, end))
+	d.SingleShortestPath(start, end)
 	n, a := d.na()
 	t.Log("NV AV:", n, a)
 }
