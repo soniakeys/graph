@@ -23,6 +23,12 @@ type Half struct {
 	ArcWeight float64
 }
 
+// An adjacency list represents a graph as a list of neighbors for each node.
+// Node IDs correspond to slice indexes of the AdjacencyList. Each neighbor
+// list is a []Half where Half.To fields contain a node ID greater than or
+// equal to zero and strictly less than len() of the AdjacencyList.
+type AdjacencyList [][]Half
+
 // FromHalf is a half arc, representing a directed weighted arc and the
 // "neighbor" node that the arc originates from.
 type FromHalf struct {

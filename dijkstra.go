@@ -14,7 +14,7 @@ import (
 // path or no arc exists.  It is initialized to +Inf by NewDijkstra but you
 // can assign a different valule to this field if you like.
 type Dijkstra struct {
-	Graph  [][]Half
+	Graph  AdjacencyList
 	Result []DijkstraResult
 	NoPath float64 // initialized to +Inf by NewDijkstra.
 	// test instrumentation
@@ -23,10 +23,7 @@ type Dijkstra struct {
 
 // NewDijkstra creates a Dijkstra struct that allows shortest path searches.
 //
-// Argument g is the graph to be searched, as an adjacency list where node
-// IDs correspond to the slice indexes of g.  Each []Half element of g
-// represents the neighbors of a node.  All Half.To fields must contain
-// a node ID greater than or equal to zero and strictly less than len(g).
+// Argument g is the graph to be searched, as an adjacency list.
 // As usual for Dijkstra's algorithm, arc weights must be non-negative.
 //
 // The algorithm conceptually works for directed and undirected graphs but
@@ -39,16 +36,16 @@ type Dijkstra struct {
 // you should create simple graphs (graphs with no loops or parallel arcs)
 // where convenient, for best performance.
 //
-// The graph g will not be modified by any Dijkstra methods.  New initializes
-// the Dijkstra object for the length (number of nodes) of g.  If you add
-// nodes to your graph, abandon any previously created Dijkstra object and
-// call New again.
+// The graph g will not be modified by any Dijkstra methods.  NewDijkstra
+// initializes the Dijkstra object for the length (number of nodes) of g.
+// If you add nodes to your graph, abandon any previously created Dijkstra
+// object and call NewDijkstra again.
 //
 // Searches on a single Dijkstra object can be run consecutively but not
 // concurrently.  Searches can be run concurrently however, on Dijkstra
-// objects obtained with separate calls to New, even with the same graph
-// argument to New.
-func NewDijkstra(g [][]Half) *Dijkstra {
+// objects obtained with separate calls to NewDijkstra, even with the same
+// graph argument to NewDijkstra.
+func NewDijkstra(g AdjacencyList) *Dijkstra {
 	r := make([]DijkstraResult, len(g))
 	for i := range r {
 		r[i].nx = i
@@ -60,8 +57,8 @@ func NewDijkstra(g [][]Half) *Dijkstra {
 	}
 }
 
-// DijkstraResult contains results for a single node.  A Dijkstra object
-// contains a DijkstraResult slice parallel to the input graph.
+// DijkstraResult contains search results for a single node.  A Dijkstra
+// object contains a DijkstraResult slice parallel to the input graph.
 //
 // Following an AllShortestPaths search, PathDist will contain the path
 // distance as the sum of arc weights for the found shortest path from the
@@ -98,8 +95,8 @@ type tent []*DijkstraResult
 // SingleShortestPath finds a single shortest path from start to end.
 //
 // Returned is the path and distance as returned by Dijkstra.PathTo.
-// The function terminates the algorithm as soon as the shortest path to
-// end is found.  It does not explore the remainder of the graph.
+// The function returns as soon as the shortest path to end is found.
+// It does not explore the remainder of the graph.
 func (d *Dijkstra) SingleShortestPath(start, end int) ([]Half, float64) {
 	d.search(start, end)
 	return d.PathTo(end)
@@ -137,6 +134,9 @@ func (d *Dijkstra) PathTo(end int) ([]Half, float64) {
 // AllShortestPaths finds shortest paths from start to all nodes reachable
 // from start.  Results are in d.Result; individual paths can be decoded
 // with DijkstraResult.PathTo.
+//
+// Returned is the number of nodes reached, or the number of paths found,
+// including the path ending at start.
 func (d *Dijkstra) AllShortestPaths(start int) int {
 	return d.search(start, -1)
 }

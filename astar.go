@@ -8,6 +8,7 @@ import (
 	"math"
 )
 
+// An Astar object allows shortest path searches by the AStar algorithm.
 type AStar struct {
 	g [][]Half // input graph
 	// r is a list of all nodes reached so far.
@@ -16,6 +17,30 @@ type AStar struct {
 	r []rNode
 }
 
+// NewAStar creates an AStar struct that allows shortest path searches.
+//
+// Argument g is the graph to be searched, as an adjacency list.
+// As usual for AStar, arc weights must be non-negative.
+//
+// The algorithm conceptually works for directed and undirected graphs but
+// the adjacency list structure is inherently directed. To represent an
+// undirected graph, create reciprocal Halfs with identical arc weights.
+//
+// Loops (arcs from a node to itself) are allowed but will not affect the
+// result. Parallel arcs (multiple arcs between the same two nodes) are also
+// allowed; the algorithm will find the shortest one. Generally though, you
+// should create simple graphs (graphs with no loops or parallel arcs) where
+// convenient, for best performance.
+//
+// The graph g will not be modified by any AStar methods. NewAStar initializes
+// the AStar object for the length (number of nodes) of g. If you add nodes
+// to your graph, abandon any previously created Dijkstra object and call
+// NewAStar again.
+//
+// Searches on a single AStar object can be run consecutively but not
+// concurrently. Searches can be run concurrently however, on AStar objects
+// obtained with separate calls to NewAStar, even with the same graph argument
+// to NewAStar.
 func NewAStar(g [][]Half) *AStar {
 	r := make([]rNode, len(g))
 	for i := range r {
