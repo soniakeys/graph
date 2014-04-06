@@ -54,7 +54,7 @@ type rNode struct {
 	nd       int
 	state    int8    // state constants defined below
 	prevNode *rNode  // chain encodes path back to start
-	prevEdge float64 // edge from prevNode to the node of this struct
+	prevArc  float64 // Arc weight from prevNode to the node of this struct
 	g        float64 // "g" best known path distance from start node
 	f        float64 // "g+h", path dist + heuristic estimate
 	n        int     // number of nodes in path
@@ -71,7 +71,44 @@ const (
 
 type openHeap []*rNode
 
-func (a *AStar) AStarA(start, end int, h func(int) float64) ([]Half, float64) {
+// A Heuristic is defined on a specific end node.  The function
+// returns an estimate of the path distance from node argument
+// "from" to the end node.  Two subclasses of heuristics are "admissable"
+// and "monotonic."
+//
+// Admissable means the value returned is guaranteed to be less than or
+// equal to the actual shortest path distance from the node to end.
+//
+// An admissable estimate may further be monotonic.
+// Monotonic means that for any neighboring nodes A and B with half arc aB
+// leading from A to B, and for heuristic h defined on some end node, then
+// h(A) <= aB.ArcWeight + h(B).
+type Heuristic func(from int) float64
+
+// AStarA finds a path between two nodes.
+//
+// AStarA implements both algorithm A and algorithm A*.  The difference in the
+// two algorithms is strictly in the heuristic estimate returned by argument h.
+// If h is an "admissable" heuristic estimate, then the algorithm is termed A*,
+// otherwise it is algorithm A.
+//
+// Like Dijkstra's algorithm, AStarA with an admissable heuristic finds the
+// shortest path between start and end.  AStarA generally runs faster than
+// Dijkstra though, by using the heuristic distance estimate.
+//
+// AStarA with an inadmissable heuristic becomes algorithm A.  Algorithm A
+// will find a path, but it is not guaranteed to be the shortest path.
+// The heuristic still guides the search however, so a nearly admissable
+// heuristic is likely to find a very good path, if not the best.  Quality
+// of the path returned degrades gracefully with the quality of the heuristic.
+//
+// The slice result represents the found path with a sequence of half arcs.
+// If no path exists from start to end the slice result will be nil. For the
+// first element, representing the start node, the arc weight is meaningless
+// and will be Dijkstra.NoPath. The total path distance is also returned.
+// Path distance is the sum of arc weights, excluding of couse the meaningless
+// arc weight of the first Half.
+func (a *AStar) AStarA(start, end int, h Heuristic) ([]Half, float64) {
 	// start node is reached initially
 	p := &a.r[start]
 	p.state = reached
@@ -137,7 +174,10 @@ func (a *AStar) AStarA(start, end int, h func(int) float64) ([]Half, float64) {
 	return nil, math.Inf(1) // no path
 }
 
-func (a *AStar) AStarM(start, end int, h func(int) float64) ([]Half, float64) {
+// AStarM is A* optimized for monotonic heuristic estimates.
+//
+// Usage is the same as with AStarA.
+func (a *AStar) AStarM(start, end int, h Heuristic) ([]Half, float64) {
 	p := &a.r[start]
 	p.f = h(start) // total path estimate is estimate from start
 	p.n = 1        // path length is 1 node
