@@ -5,6 +5,7 @@ package ed
 
 import (
 	"container/heap"
+	"fmt"
 	"math"
 )
 
@@ -85,6 +86,46 @@ type openHeap []*rNode
 // h(A) <= aB.ArcWeight + h(B).
 type Heuristic func(from int) float64
 
+func Admissable(g AdjacencyList, h Heuristic, end int) (bool, string) {
+	// invert graph
+	inv := make(AdjacencyList, len(g))
+	for from, nbs := range g {
+		for _, nb := range nbs {
+			inv[nb.To] = append(inv[nb.To], Half{from, nb.ArcWeight})
+		}
+	}
+	// run dijkstra
+	d := NewDijkstra(inv)
+	d.AllShortestPaths(end)
+	// compare h to found shortest paths
+	for n := range inv {
+		if !(h(n) <= d.Result[n].PathDist) {
+			return false, fmt.Sprintf("h(%d) not <= found shortest path"+
+				":  %g not <= %g", n, h(n), d.Result[n].PathDist)
+		}
+	}
+	return true, ""
+}
+
+func Monotonic(g AdjacencyList, h Heuristic) (bool, string) {
+	// precompute
+	hv := make([]float64, len(g))
+	for n := range g {
+		hv[n] = h(n)
+	}
+	// iterate over all edges
+	for from, nbs := range g {
+		for _, nb := range nbs {
+			if !(hv[from] <= nb.ArcWeight+hv[nb.To]) {
+				return false, fmt.Sprintf("h(%d) not <= arc weight + h(%d)"+
+					":  %g not <= %g + %g",
+					from, nb.To, hv[from], nb.ArcWeight, hv[nb.To])
+			}
+		}
+	}
+	return true, ""
+}
+
 // AStarA finds a path between two nodes.
 //
 // AStarA implements both algorithm A and algorithm A*.  The difference in the
@@ -128,7 +169,7 @@ func (a *AStar) AStarA(start, end int, h Heuristic) ([]Half, float64) {
 			path := make([]Half, i)
 			for i > 0 {
 				i--
-				path[i] = Half{To: bestPath.nd, ArcWeight: bestPath.prevEdge}
+				path[i] = Half{To: bestPath.nd, ArcWeight: bestPath.prevArc}
 				bestPath = bestPath.prevNode
 			}
 			return path, dist
@@ -150,7 +191,7 @@ func (a *AStar) AStarA(start, end int, h Heuristic) ([]Half, float64) {
 				// cool, we found a better way to get to this node.
 				// update alt with new data and make sure it's on the heap.
 				alt.prevNode = bestPath
-				alt.prevEdge = ed
+				alt.prevArc = ed
 				alt.g = g
 				alt.f = g + h(nd)
 				alt.n = bestPath.n + 1
@@ -163,7 +204,7 @@ func (a *AStar) AStarA(start, end int, h Heuristic) ([]Half, float64) {
 				// bestNode being reached for the first time.
 				alt.state = reached
 				alt.prevNode = bestPath
-				alt.prevEdge = ed
+				alt.prevArc = ed
 				alt.g = g
 				alt.f = g + h(nd)
 				alt.n = bestPath.n + 1
@@ -200,7 +241,7 @@ func (a *AStar) AStarM(start, end int, h Heuristic) ([]Half, float64) {
 			path := make([]Half, i)
 			for i > 0 {
 				i--
-				path[i] = Half{To: bestPath.nd, ArcWeight: bestPath.prevEdge}
+				path[i] = Half{To: bestPath.nd, ArcWeight: bestPath.prevArc}
 				bestPath = bestPath.prevNode
 			}
 			return path, dist
@@ -234,7 +275,7 @@ func (a *AStar) AStarM(start, end int, h Heuristic) ([]Half, float64) {
 				// cool, we found a better way to get to this node.
 				// update alt with new data and make sure it's on the heap.
 				alt.prevNode = bestPath
-				alt.prevEdge = ed
+				alt.prevArc = ed
 				alt.g = g
 				alt.f = g + h(nd)
 				alt.n = bestPath.n + 1
@@ -246,7 +287,7 @@ func (a *AStar) AStarM(start, end int, h Heuristic) ([]Half, float64) {
 				// bestNode being reached for the first time.
 				alt.state = open
 				alt.prevNode = bestPath
-				alt.prevEdge = ed
+				alt.prevArc = ed
 				alt.g = g
 				alt.f = g + h(nd)
 				alt.n = bestPath.n + 1
