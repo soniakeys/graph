@@ -50,3 +50,25 @@ type HalfFrom struct {
 	From      int
 	ArcWeight float64
 }
+
+func (a AdjacencyList) NegativeArc() bool {
+	for _, nbs := range a {
+		for _, nb := range nbs {
+			if nb.ArcWeight < 0 {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (a AdjacencyList) ValidTo() bool {
+	for _, nbs := range a {
+		for _, nb := range nbs {
+			if nb.To < 0 || nb.To >= len(a) {
+				return false
+			}
+		}
+	}
+	return true
+}
