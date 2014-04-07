@@ -11,7 +11,7 @@ import (
 
 // An Astar object allows shortest path searches by the AStar algorithm.
 type AStar struct {
-	g [][]Half // input graph
+	g WeightedAdjacencyList // input graph
 	// r is a list of all nodes reached so far.
 	// the chain of nodes following the prev member represents the
 	// best path found so far from the start to this node.
@@ -20,18 +20,10 @@ type AStar struct {
 
 // NewAStar creates an AStar struct that allows shortest path searches.
 //
-// Argument g is the graph to be searched, as an adjacency list.
+// Argument g is the graph to be searched, as a weighted adjacency list.
 // As usual for AStar, arc weights must be non-negative.
-//
-// The algorithm conceptually works for directed and undirected graphs but
-// the adjacency list structure is inherently directed. To represent an
-// undirected graph, create reciprocal Halfs with identical arc weights.
-//
-// Loops (arcs from a node to itself) are allowed but will not affect the
-// result. Parallel arcs (multiple arcs between the same two nodes) are also
-// allowed; the algorithm will find the shortest one. Generally though, you
-// should create simple graphs (graphs with no loops or parallel arcs) where
-// convenient, for best performance.
+// Graphs may be directed or undirected.  Loops and parallel arcs are
+// allowed.
 //
 // The graph g will not be modified by any AStar methods. NewAStar initializes
 // the AStar object for the length (number of nodes) of g. If you add nodes
@@ -42,7 +34,7 @@ type AStar struct {
 // concurrently. Searches can be run concurrently however, on AStar objects
 // obtained with separate calls to NewAStar, even with the same graph argument
 // to NewAStar.
-func NewAStar(g [][]Half) *AStar {
+func NewAStar(g WeightedAdjacencyList) *AStar {
 	r := make([]rNode, len(g))
 	for i := range r {
 		r[i].nd = i
@@ -86,9 +78,9 @@ type openHeap []*rNode
 // h(A) <= aB.ArcWeight + h(B).
 type Heuristic func(from int) float64
 
-func Admissable(g AdjacencyList, h Heuristic, end int) (bool, string) {
+func Admissable(g WeightedAdjacencyList, h Heuristic, end int) (bool, string) {
 	// invert graph
-	inv := make(AdjacencyList, len(g))
+	inv := make(WeightedAdjacencyList, len(g))
 	for from, nbs := range g {
 		for _, nb := range nbs {
 			inv[nb.To] = append(inv[nb.To], Half{from, nb.ArcWeight})
@@ -107,7 +99,7 @@ func Admissable(g AdjacencyList, h Heuristic, end int) (bool, string) {
 	return true, ""
 }
 
-func Monotonic(g AdjacencyList, h Heuristic) (bool, string) {
+func Monotonic(g WeightedAdjacencyList, h Heuristic) (bool, string) {
 	// precompute
 	hv := make([]float64, len(g))
 	for n := range g {

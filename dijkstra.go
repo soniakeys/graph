@@ -14,7 +14,7 @@ import (
 // path or no arc exists.  It is initialized to +Inf by NewDijkstra but you
 // can assign a different valule to this field if you like.
 type Dijkstra struct {
-	Graph  AdjacencyList
+	Graph  WeightedAdjacencyList
 	Result []DijkstraResult
 	NoPath float64 // initialized to +Inf by NewDijkstra.
 	// test instrumentation
@@ -23,18 +23,10 @@ type Dijkstra struct {
 
 // NewDijkstra creates a Dijkstra struct that allows shortest path searches.
 //
-// Argument g is the graph to be searched, as an adjacency list.
+// Argument g is the graph to be searched, as a weighted adjacency list.
 // As usual for Dijkstra's algorithm, arc weights must be non-negative.
-//
-// The algorithm conceptually works for directed and undirected graphs but
-// the adjacency list structure is inherently directed.  To represent an
-// undirected graph, create reciprocal Halfs with identical arc weights.
-//
-// Loops (arcs from a node to itself) are allowed but will not affect the
-// result.  Parallel arcs (multiple arcs between the same two nodes) are
-// also allowed; the algorithm will find the shortest one.  Generally though,
-// you should create simple graphs (graphs with no loops or parallel arcs)
-// where convenient, for best performance.
+// Graphs may be directed or undirected.  Loops and parallel arcs are
+// allowed.
 //
 // The graph g will not be modified by any Dijkstra methods.  NewDijkstra
 // initializes the Dijkstra object for the length (number of nodes) of g.
@@ -45,7 +37,7 @@ type Dijkstra struct {
 // concurrently.  Searches can be run concurrently however, on Dijkstra
 // objects obtained with separate calls to NewDijkstra, even with the same
 // graph argument to NewDijkstra.
-func NewDijkstra(g AdjacencyList) *Dijkstra {
+func NewDijkstra(g WeightedAdjacencyList) *Dijkstra {
 	r := make([]DijkstraResult, len(g))
 	for i := range r {
 		r[i].nx = i
@@ -82,7 +74,7 @@ func NewDijkstra(g AdjacencyList) *Dijkstra {
 // found path.  Results for other nodes are meaningless.
 type DijkstraResult struct {
 	PathDist float64  // sum of arc weights
-	FromTree FromHalf // encodes shortest path
+	FromTree HalfFrom // encodes shortest path
 	PathLen  int      // number of nodes
 
 	nx   int // slice index, "node id"
@@ -151,7 +143,7 @@ func (d *Dijkstra) search(start, end int) int {
 		r.done = false
 		r.PathLen = 0
 		r.PathDist = d.NoPath
-		r.FromTree = FromHalf{-1, d.NoPath}
+		r.FromTree = HalfFrom{-1, d.NoPath}
 	}
 
 	current := start
@@ -177,7 +169,7 @@ func (d *Dijkstra) search(start, end int) int {
 			// record new path data for this node and update tentative set.
 			hr.PathDist = dist
 			hr.PathLen = cr.PathLen + 1
-			hr.FromTree = FromHalf{current, nb.ArcWeight}
+			hr.FromTree = HalfFrom{current, nb.ArcWeight}
 			if visited {
 				heap.Fix(&t, hr.fx)
 			} else {
