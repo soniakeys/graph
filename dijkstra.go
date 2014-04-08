@@ -15,8 +15,10 @@ import (
 // can assign a different valule to this field if you like.
 type Dijkstra struct {
 	Graph  WeightedAdjacencyList
-	Result []DijkstraResult
 	NoPath float64 // initialized to +Inf by NewDijkstra.
+	Start  int
+	Result []DijkstraResult
+	MaxLen int
 	// test instrumentation
 	ndVis, arcVis int
 }
@@ -84,12 +86,12 @@ type DijkstraResult struct {
 
 type tent []*DijkstraResult
 
-// SingleShortestPath finds a single shortest path from start to end.
+// Path finds a single shortest path from start to end.
 //
 // Returned is the path and distance as returned by Dijkstra.PathTo.
 // The function returns as soon as the shortest path to end is found.
 // It does not explore the remainder of the graph.
-func (d *Dijkstra) SingleShortestPath(start, end int) ([]Half, float64) {
+func (d *Dijkstra) Path(start, end int) ([]Half, float64) {
 	d.search(start, end)
 	return d.PathTo(end)
 }
@@ -123,13 +125,13 @@ func (d *Dijkstra) PathTo(end int) ([]Half, float64) {
 	}
 }
 
-// AllShortestPaths finds shortest paths from start to all nodes reachable
+// AllPaths finds shortest paths from start to all nodes reachable
 // from start.  Results are in d.Result; individual paths can be decoded
 // with DijkstraResult.PathTo.
 //
 // Returned is the number of nodes reached, or the number of paths found,
 // including the path ending at start.
-func (d *Dijkstra) AllShortestPaths(start int) int {
+func (d *Dijkstra) AllPaths(start int) int {
 	return d.search(start, -1)
 }
 

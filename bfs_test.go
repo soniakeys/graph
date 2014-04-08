@@ -15,9 +15,17 @@ func ExampleBreadthFirst_AllPaths() {
 		6: {5, 6},
 	})
 	b.AllPaths(1)
-	fmt.Println(b.MaxLevel)
-	fmt.Println(b.Level)
+	fmt.Println("Max path length:", b.MaxLen)
+	for n := range b.Graph {
+		fmt.Println(n, b.PathTo(n))
+	}
 	// Output:
-	// 3
-	// [-1 0 -1 2 1 3 2]
+	// Max path length: 4
+	// 0 []
+	// 1 [1]
+	// 2 []
+	// 3 [1 4 3]
+	// 4 [1 4]
+	// 5 [1 4 3 5]
+	// 6 [1 4 6]
 }

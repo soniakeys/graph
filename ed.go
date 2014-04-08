@@ -51,7 +51,7 @@ type HalfFrom struct {
 	ArcWeight float64
 }
 
-func (a AdjacencyList) NegativeArc() bool {
+func (a WeightedAdjacencyList) NegativeArc() bool {
 	for _, nbs := range a {
 		for _, nb := range nbs {
 			if nb.ArcWeight < 0 {
@@ -62,13 +62,66 @@ func (a AdjacencyList) NegativeArc() bool {
 	return false
 }
 
-func (a AdjacencyList) ValidTo() bool {
-	for _, nbs := range a {
+func (g AdjacencyList) ValidTo() bool {
+	for _, nbs := range g {
 		for _, nb := range nbs {
-			if nb.To < 0 || nb.To >= len(a) {
+			if nb < 0 || nb >= len(g) {
 				return false
 			}
 		}
 	}
 	return true
+}
+
+func (g WeightedAdjacencyList) ValidTo() bool {
+	for _, nbs := range g {
+		for _, nb := range nbs {
+			if nb.To < 0 || nb.To >= len(g) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+type WeightedFromTree struct {
+	Start  int
+	Paths  []WeightedPathEnd
+	MaxLen int
+	NoPath float64
+}
+
+type WeightedPathEnd struct {
+	Dist float64
+	From HalfFrom
+	Len  int
+}
+
+// PathTo decodes Dijkstra.Result, recovering the found path from start to
+// end, where start was an argument to SingleShortestPath or AllShortestPaths
+// and end is the argument to this method.
+//
+// The slice result represents the found path with a sequence of half arcs.
+// If no path exists from start to end the slice result will be nil.
+// For the first element, representing the start node, the arc weight is
+// meaningless and will be Dijkstra.NoPath.  The total path distance is also
+// returned.  Path distance is the sum of arc weights, excluding of couse
+// the meaningless arc weight of the first Half.
+func (t *WeightedFromTree) PathTo(end int) ([]Half, float64) {
+	n := t.Paths[end].Len
+	if n == 0 {
+		return nil, t.NoPath
+	}
+	p := make([]Half, n)
+	dist := 0.
+	for {
+		n--
+		f := &t.Paths[end].From
+		p[n] = Half{end, f.ArcWeight}
+		if n == 0 {
+			return p, dist
+		}
+		dist += f.ArcWeight
+		end = f.From
+	}
 }

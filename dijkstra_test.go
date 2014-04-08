@@ -9,7 +9,7 @@ import (
 	"github.com/soniakeys/ed"
 )
 
-func ExampleDijkstra_SingleShortestPath() {
+func ExampleDijkstra_Path() {
 	d := ed.NewDijkstra([][]ed.Half{
 		0: {{1, .7}, {2, .9}, {5, 1.4}},
 		1: {{2, 1.0}, {3, 1.5}},
@@ -18,7 +18,7 @@ func ExampleDijkstra_SingleShortestPath() {
 		4: {{5, .9}},
 		5: {},
 	})
-	path, dist := d.SingleShortestPath(2, 4)
+	path, dist := d.Path(2, 4)
 	fmt.Println("Shortest path:", path)
 	fmt.Printf("Path distance: %.1f\n", dist)
 	// Output:
@@ -26,7 +26,7 @@ func ExampleDijkstra_SingleShortestPath() {
 	// Path distance: 1.7
 }
 
-func ExampleDijkstra_AllShortestPaths() {
+func ExampleDijkstra_AllPaths() {
 	g := [][]ed.Half{
 		0: {{1, .7}, {2, .9}, {5, 1.4}},
 		1: {{2, 1.0}, {3, 1.5}},
@@ -36,7 +36,7 @@ func ExampleDijkstra_AllShortestPaths() {
 		5: nil,
 	}
 	d := ed.NewDijkstra(g)
-	fmt.Println(d.AllShortestPaths(2), "paths found.")
+	fmt.Println(d.AllPaths(2), "paths found.")
 	// column len is from Result, and will be equal to len(path).
 	// column dist is from Result, and will be equal to sum.
 	fmt.Println("node:  path                       len  dist   sum")
@@ -67,7 +67,7 @@ func ExampleDijkstra_PathTo() {
 		5: nil,
 	}
 	d := ed.NewDijkstra(g)
-	d.AllShortestPaths(2)
+	d.AllPaths(2)
 	path, dist := d.PathTo(4)
 	fmt.Println("Shortest path:", path)
 	fmt.Printf("Path distance: %.1f\n", dist)

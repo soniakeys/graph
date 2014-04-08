@@ -8,33 +8,39 @@ import (
 )
 
 type BellmanFord struct {
-	Graph  AdjacencyList // input graph
-	Result []BellmanFordResult
+	Graph  WeightedAdjacencyList
+	Result *WeightedFromTree
 }
 
-type BellmanFordResult struct {
-	Dist float64
-	From FromHalf
+func NewBellmanFord(g WeightedAdjacencyList) *BellmanFord {
+	return &BellmanFord{g, &WeightedFromTree{
+		Paths:  make([]WeightedPathEnd, len(g)),
+		NoPath: math.Inf(1),
+	}}
 }
 
-func NewBellmanFord(g AdjacencyList) *BellmanFord {
-	return &BellmanFord{Graph: g, Result: make([]BellmanFordResult, len(g))}
-}
-
-func (b *BellmanFord) Scan(start int) (ok bool) {
-	r := b.Result
-	for n := range r {
-		r[n] = BellmanFordResult{math.Inf(-1), FromHalf{-1, math.Inf(1)}}
+func (b *BellmanFord) Run(start int) (ok bool) {
+	rp := b.Result.Paths
+	for n := range rp {
+		rp[n] = WeightedPathEnd{
+			Dist: b.Result.NoPath,
+			From: HalfFrom{-1, b.Result.NoPath},
+		}
 	}
+	rp[start].Dist = 0
+	rp[start].Len = 1
 	for _ = range b.Graph[1:] {
 		imp := false
 		for from, nbs := range b.Graph {
-			d1 := r[from].Dist
+			d1 := rp[from].Dist
 			for _, nb := range nbs {
-				if d2 := d1 + nb.ArcWeight; d2 < r[nb.To].Dist {
-					r[nb.To] = BellmanFordResult{
-						d2,
-						FromHalf{from, nb.ArcWeight},
+				d2 := d1 + nb.ArcWeight
+				to := &rp[nb.To]
+				if to.Len == 0 || d2 < to.Dist {
+					*to = WeightedPathEnd{
+						Dist: d2,
+						From: HalfFrom{from, nb.ArcWeight},
+						Len:  rp[from].Len + 1,
 					}
 					imp = true
 				}
@@ -45,9 +51,9 @@ func (b *BellmanFord) Scan(start int) (ok bool) {
 		}
 	}
 	for from, nbs := range b.Graph {
-		d1 := r[from].Dist
+		d1 := rp[from].Dist
 		for _, nb := range nbs {
-			if d1+nb.ArcWeight < r[nb.To].Dist {
+			if d1+nb.ArcWeight < rp[nb.To].Dist {
 				return false // negative cycle
 			}
 		}

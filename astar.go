@@ -88,7 +88,7 @@ func Admissable(g WeightedAdjacencyList, h Heuristic, end int) (bool, string) {
 	}
 	// run dijkstra
 	d := NewDijkstra(inv)
-	d.AllShortestPaths(end)
+	d.AllPaths(end)
 	// compare h to found shortest paths
 	for n := range inv {
 		if !(h(n) <= d.Result[n].PathDist) {

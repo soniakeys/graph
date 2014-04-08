@@ -3,43 +3,84 @@ package ed
 import ()
 
 type BreadthFirst struct {
-	Graph    AdjacencyList
-	Level    []int
-	MaxLevel int
+	Graph  AdjacencyList
+	Start  int
+	Paths  []PathEnd
+	MaxLen int
+}
+
+type PathEnd struct {
+	From int
+	Len  int
 }
 
 func NewBreadthFirst(g AdjacencyList) *BreadthFirst {
 	return &BreadthFirst{
 		Graph: g,
-		Level: make([]int, len(g)),
+		Paths: make([]PathEnd, len(g)),
 	}
 }
 
-func (b *BreadthFirst) AllPaths(start int) {
-	for n := range b.Level {
-		b.Level[n] = -1
+func (b *BreadthFirst) Path(start, end int) []int {
+	b.search(start, end)
+	return b.PathTo(end)
+}
+
+func (b *BreadthFirst) AllPaths(start int) int {
+	return b.search(start, -1)
+}
+
+func (b *BreadthFirst) search(start, end int) int {
+	for n := range b.Paths {
+		b.Paths[n] = PathEnd{From: -1, Len: 0}
 	}
-	b.MaxLevel = 0
-	b.Level[start] = b.MaxLevel
+	b.Start = start
+	b.MaxLen = 1
+	b.Paths[start].Len = b.MaxLen
+	if start == end {
+		return -1
+	}
+	nReached := 1 // accumulated for a return value
 	// the frontier consists of nodes all at the same level
 	frontier := []int{start}
 	for {
-		b.MaxLevel++
+		b.MaxLen++
 		var next []int
 		for _, n := range frontier {
 			for _, nb := range b.Graph[n] {
-				if b.Level[nb] < 0 {
-					b.Level[nb] = b.MaxLevel
+				if b.Paths[nb].Len == 0 {
+					b.Paths[nb] = PathEnd{From: n, Len: b.MaxLen}
+					if nb == end {
+						return -1
+					}
 					next = append(next, nb)
+					nReached++
 				}
 			}
 		}
-		if next == nil {
+		if len(next) == 0 {
 			break
 		}
 		frontier = next
 	}
-	b.MaxLevel--
+	b.MaxLen--
+	return nReached
+}
+
+func (b *BreadthFirst) PathTo(end int) []int {
+	n := b.Paths[end].Len
+	if n == 0 {
+		return nil
+	}
+	p := make([]int, n)
+	for {
+		n--
+		p[n] = end
+		if n == 0 {
+			return p
+		}
+		end = b.Paths[end].From
+	}
 }
 
 /*
