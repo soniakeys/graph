@@ -13,13 +13,30 @@
 //
 // Terminology
 //
+// There are lots of terms to pick from.  Goals for picking terms for this
+// this package included picking popular terms, terms that reduce confusion,
+// terms that describe, and terms that read well.
+//
 // This package uses the term "node" rather than "vertex."  It uses "arc"
 // to mean a directed edge, and uses "from" and "to" to refer to the ends
 // of an arc.
 //
-// A node that is a neighbor of itself is termed a "loop."  Duplicate
-// neighbors, or when a node appears more than once in the same neighbor list
-// are termed "parallel arcs."
+// A float64 value associated with an arc is "weight."  The sum of arc weights
+// along a path is a "distance."  The number of nodes in a path is the path's
+// "length."
+//
+// A "half arc" represents just one end of an arc, perhaps assocating it with
+// an arc weight.  The more common half to work with is the "half to" (the
+// type name is simply "Half".)  A list of half arcs can represent a
+// "neighbor list," neighbors of a single node.  A list of neighbor lists
+// forms an "adjacency list" which represents a directed graph.
+//
+// A node that is a neighbor of itself represents a "loop."  Duplicate
+// neighbors (when a node appears more than once in the same neighbor list)
+// represent "parallel arcs."
+//
+// Finially, this package documentation takes back the word "object" to
+// refer to a Go value, especially a value of a type with methods.
 package ed
 
 import (
@@ -88,33 +105,23 @@ func (g WeightedAdjacencyList) ValidTo() bool {
 	return true
 }
 
-// DijkstraResult contains search results for a single node.  A Dijkstra
-// object contains a DijkstraResult slice parallel to the input graph.
+// A FromTree represents a spanning tree where each node is associated with
+// a half arc identifying an arc from another node.
 //
-// Following an AllShortestPaths search, PathDist will contain the path
-// distance as the sum of arc weights for the found shortest path from the
-// start node to the node corresponding to the Dijkstra result.  If the node
-// is not reachable, PathDist will be Dijkstra.NoPath.
+// Other terms for this data structure include "predecessor list", "in-tree",
+// "inverse arborescence", and "spaghetti stack."  It is an effecient
+// representation for accumulating path results for various algorithms that
+// search or traverse graphs starting from a single source or start node.
 //
-// The FromTree fields for all reachable nodes represent a spanning
-// tree encoding all shortest paths.  The structure is an "inverse
-// arborescence", "in-tree", or "spaghetti stack."  For unreachable nodes
-// FromTree.From will be -1, FromTree.ArcWeight will be Dijkstra.NoPath.
-// See Dijkstra.PathTo for convenient decoding of this structure.
-//
-// PathLen will contain the number of nodes in the found shortest path, or
-// 0 if the node is unreachable.  Testing PathLen == 0 is the simplest test
-// of whether a node is reachable.  Note that in the case where there are
-// multiple paths with same minimum PathDist, PathLen contains only the length
-// of the path encoded by FromTree.  Other paths of minimum distance may have
-// fewer nodes.
-//
-// Following a SingleShortestPath search, results are only valid along the
-// found path.  Results for other nodes are meaningless.
+// For a node n, Paths[n] contains information about the path from the
+// the start node to n.  For reached nodes, the Len field will be > 0 and
+// indicate the length of the path from start.  The From field will indicate
+// the node this node was reached from, or -1 in the case of the start node.
+// For unreached nodes, Len will be 0 and From will be -1.
 type FromTree struct {
-	Start  int
-	Paths  []PathEnd
-	MaxLen int
+	Start  int       // start node, root of the tree
+	Paths  []PathEnd // tree representation
+	MaxLen int       // length of longest path, max of all PathEnd.Len values
 }
 
 func NewFromTree(n int) *FromTree {
@@ -160,6 +167,24 @@ func (t *FromTree) PathTo(end int) []int {
 	}
 }
 
+// WeightedFromTree is a variant of the FromTree type for weighted graphs.
+//
+// In addition to the fields of FromTree, NoPath designates a null distance
+// value for non-existant paths and arcs.  You can change this value before
+// calling a search or traversal function and it will use NoPath to populate
+// distance results where a null value is needed.  The default assigned by
+// the constructor is -Inf, which compares well against valid distances.
+// Other values you might consider are NaN, which might be considered more
+// correct; 0, which sums well with other distances; or -1 which is easily
+// tested for as an invalid distance.
+//
+// Missing, compared to FromTree
+// distance.
+// Following an AllShortestPaths search, PathDist will contain the path
+// distance as the sum of arc weights for the found shortest path from the
+// start node to the node corresponding to the Dijkstra result.  If the node
+// is not reachable, PathDist will be Dijkstra.NoPath.
+//
 type WeightedFromTree struct {
 	Start  int
 	Paths  []WeightedPathEnd

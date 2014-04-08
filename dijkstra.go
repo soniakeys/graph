@@ -9,18 +9,17 @@ import (
 
 // A Dijkstra object allows shortest path searches using Dijkstra's algorithm.
 //
-// Construct with NewDijkstra.  NoPath is used as a distance result when no
-// path or no arc exists.  It is initialized to +Inf by NewDijkstra but you
-// can assign a different valule to this field if you like.
+// Construct with NewDijkstra.
 type Dijkstra struct {
 	Graph  WeightedAdjacencyList
 	Result *WeightedFromTree
-	r      []tentResult
+	// heap values
+	r []tentResult
 	// test instrumentation
 	ndVis, arcVis int
 }
 
-// NewDijkstra creates a Dijkstra struct that allows shortest path searches.
+// NewDijkstra creates a Dijkstra object that allows shortest path searches.
 //
 // Argument g is the graph to be searched, as a weighted adjacency list.
 // As usual for Dijkstra's algorithm, arc weights must be non-negative.
@@ -31,6 +30,9 @@ type Dijkstra struct {
 // initializes the Dijkstra object for the length (number of nodes) of g.
 // If you add nodes to your graph, abandon any previously created Dijkstra
 // object and call NewDijkstra again.
+//
+// NewDijkstra calls NewWeightedFromTree.  See documentation there in
+// particular for the option to change NoPath before running a search.
 //
 // Searches on a single Dijkstra object can be run consecutively but not
 // concurrently.  Searches can be run concurrently however, on Dijkstra
@@ -59,21 +61,23 @@ type tent []*tentResult
 
 // Path finds a single shortest path from start to end.
 //
-// Returned is the path and distance as returned by Dijkstra.PathTo.
-// The function returns as soon as the shortest path to end is found.
-// It does not explore the remainder of the graph.
+// Returned is the path and distance as returned by WeightedFromTree.PathTo.
+// Path returns as soon as the shortest path to end is found.  It does not
+// explore the remainder of the graph.  Where multiple paths exist with the
+// same distance, AllPaths returns a path with the minimum number of nodes.
 func (d *Dijkstra) Path(start, end int) ([]Half, float64) {
 	d.search(start, end)
 	return d.Result.PathTo(end)
 }
 
 // AllPaths finds shortest paths from start to all nodes reachable
-// from start.  Results are in d.Result; individual paths can be decoded
-// with DijkstraResult.PathTo.
+// from start.
 //
-// Returned is the number of nodes reached, or the number of paths found,
-// including the path ending at start.
-func (d *Dijkstra) AllPaths(start int) int {
+// AllPaths returns number of paths found, equivalent to the number of nodes
+// reached, including the path ending at start.  Path results are left in
+// d.Result.  Where multiple paths to a particular node exist with the same
+// distance, AllPaths keeps a path with the minimum number of nodes.
+func (d *Dijkstra) AllPaths(start int) (nFound int) {
 	return d.search(start, -1)
 }
 
@@ -93,12 +97,13 @@ func (d *Dijkstra) search(start, end int) (reached int) {
 	rp := d.Result.Paths
 	rp[current].Len = 1 // path length 1 for start node
 	cr := &d.r[current]
-	cr.dist = 0    // distance at start is 0
+	cr.dist = 0 // distance at start is 0
 	rp[current].Dist = 0
 	cr.done = true // mark start done.  it skips the heap.
 	nDone := 1     // accumulated for a return value
 	var t tent
 	for current != end {
+		nextLen := rp[current].Len + 1
 		for _, nb := range d.Graph[current] {
 			d.arcVis++
 			hr := &d.r[nb.To]
@@ -106,14 +111,22 @@ func (d *Dijkstra) search(start, end int) (reached int) {
 				continue // skip nodes already done
 			}
 			dist := cr.dist + nb.ArcWeight
-			visited := rp[nb.To].Len > 0
-			if visited && dist >= hr.dist {
-				continue // it's no better
+			vl := rp[nb.To].Len
+			visited := vl > 0
+			if visited {
+				if dist > hr.dist {
+					continue // distance is worse
+				}
+				// tie breaker is a nice touch and doesn't seem to
+				// impact performance much.
+				if dist == hr.dist && nextLen >= vl {
+					continue // distance same, but number of nodes is no better
+				}
 			}
 			// the path through current to this node is shortest so far.
 			// record new path data for this node and update tentative set.
 			hr.dist = dist
-			rp[nb.To].Len = rp[current].Len + 1
+			rp[nb.To].Len = nextLen
 			rp[nb.To].From = HalfFrom{current, nb.ArcWeight}
 			if visited {
 				heap.Fix(&t, hr.fx)
