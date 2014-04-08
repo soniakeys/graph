@@ -41,10 +41,10 @@ func ExampleDijkstra_AllPaths() {
 	// column dist is from Result, and will be equal to sum.
 	fmt.Println("node:  path                       len  dist   sum")
 	for nd := range g {
-		r := &d.Result[nd]
-		path, dist := d.PathTo(nd)
+		r := &d.Result.Paths[nd]
+		path, dist := d.Result.PathTo(nd)
 		fmt.Printf("%d:     %-27s %d   %4.1f  %4.1f\n",
-			nd, fmt.Sprint(path), r.PathLen, r.PathDist, dist)
+			nd, fmt.Sprint(path), r.Len, r.Dist, dist)
 	}
 	// Output:
 	// 4 paths found.
@@ -55,23 +55,4 @@ func ExampleDijkstra_AllPaths() {
 	// 3:     [{2 +Inf} {3 1.1}]          2    1.1   1.1
 	// 4:     [{2 +Inf} {3 1.1} {4 0.6}]  3    1.7   1.7
 	// 5:     [{2 +Inf} {5 0.2}]          2    0.2   0.2
-}
-
-func ExampleDijkstra_PathTo() {
-	g := [][]ed.Half{
-		0: {{1, .7}, {2, .9}, {5, 1.4}},
-		1: {{2, 1.0}, {3, 1.5}},
-		2: {{3, 1.1}, {5, .2}},
-		3: {{4, .6}},
-		4: {{5, .9}},
-		5: nil,
-	}
-	d := ed.NewDijkstra(g)
-	d.AllPaths(2)
-	path, dist := d.PathTo(4)
-	fmt.Println("Shortest path:", path)
-	fmt.Printf("Path distance: %.1f\n", dist)
-	// Output:
-	// Shortest path: [{2 +Inf} {3 1.1} {4 0.6}]
-	// Path distance: 1.7
 }

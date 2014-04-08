@@ -3,23 +3,17 @@
 
 package ed
 
-import (
-	"math"
-)
-
 type BellmanFord struct {
 	Graph  WeightedAdjacencyList
 	Result *WeightedFromTree
 }
 
 func NewBellmanFord(g WeightedAdjacencyList) *BellmanFord {
-	return &BellmanFord{g, &WeightedFromTree{
-		Paths:  make([]WeightedPathEnd, len(g)),
-		NoPath: math.Inf(1),
-	}}
+	return &BellmanFord{g, NewWeightedFromTree(len(g))}
 }
 
 func (b *BellmanFord) Run(start int) (ok bool) {
+	b.Result.Reset()
 	rp := b.Result.Paths
 	for n := range rp {
 		rp[n] = WeightedPathEnd{

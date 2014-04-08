@@ -91,9 +91,9 @@ func Admissable(g WeightedAdjacencyList, h Heuristic, end int) (bool, string) {
 	d.AllPaths(end)
 	// compare h to found shortest paths
 	for n := range inv {
-		if !(h(n) <= d.Result[n].PathDist) {
+		if !(h(n) <= d.Result.Paths[n].Dist) {
 			return false, fmt.Sprintf("h(%d) not <= found shortest path"+
-				":  %g not <= %g", n, h(n), d.Result[n].PathDist)
+				":  %g not <= %g", n, h(n), d.Result.Paths[n].Dist)
 		}
 	}
 	return true, ""

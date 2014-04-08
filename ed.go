@@ -22,6 +22,10 @@
 // are termed "parallel arcs."
 package ed
 
+import (
+	"math"
+)
+
 // file ed.go contains definitions common to different search functions
 
 // An AdjacencyList represents a graph as a list of neighbors for each node.
@@ -84,10 +88,81 @@ func (g WeightedAdjacencyList) ValidTo() bool {
 	return true
 }
 
+// DijkstraResult contains search results for a single node.  A Dijkstra
+// object contains a DijkstraResult slice parallel to the input graph.
+//
+// Following an AllShortestPaths search, PathDist will contain the path
+// distance as the sum of arc weights for the found shortest path from the
+// start node to the node corresponding to the Dijkstra result.  If the node
+// is not reachable, PathDist will be Dijkstra.NoPath.
+//
+// The FromTree fields for all reachable nodes represent a spanning
+// tree encoding all shortest paths.  The structure is an "inverse
+// arborescence", "in-tree", or "spaghetti stack."  For unreachable nodes
+// FromTree.From will be -1, FromTree.ArcWeight will be Dijkstra.NoPath.
+// See Dijkstra.PathTo for convenient decoding of this structure.
+//
+// PathLen will contain the number of nodes in the found shortest path, or
+// 0 if the node is unreachable.  Testing PathLen == 0 is the simplest test
+// of whether a node is reachable.  Note that in the case where there are
+// multiple paths with same minimum PathDist, PathLen contains only the length
+// of the path encoded by FromTree.  Other paths of minimum distance may have
+// fewer nodes.
+//
+// Following a SingleShortestPath search, results are only valid along the
+// found path.  Results for other nodes are meaningless.
+type FromTree struct {
+	Start  int
+	Paths  []PathEnd
+	MaxLen int
+}
+
+func NewFromTree(n int) *FromTree {
+	return &FromTree{Paths: make([]PathEnd, n)}
+}
+
+func (t *FromTree) Reset() {
+	t.Start = -1
+	for n := range t.Paths {
+		t.Paths[n] = PathEnd{From: -1, Len: 0}
+	}
+	t.MaxLen = 0
+}
+
+type PathEnd struct {
+	From int
+	Len  int
+}
+
+// PathTo decodes Dijkstra.Result, recovering the found path from start to
+// end, where start was an argument to SingleShortestPath or AllShortestPaths
+// and end is the argument to this method.
+//
+// The slice result represents the found path with a sequence of half arcs.
+// If no path exists from start to end the slice result will be nil.
+// For the first element, representing the start node, the arc weight is
+// meaningless and will be Dijkstra.NoPath.  The total path distance is also
+// returned.  Path distance is the sum of arc weights, excluding of couse
+// the meaningless arc weight of the first Half.
+func (t *FromTree) PathTo(end int) []int {
+	n := t.Paths[end].Len
+	if n == 0 {
+		return nil
+	}
+	p := make([]int, n)
+	for {
+		n--
+		p[n] = end
+		if n == 0 {
+			return p
+		}
+		end = t.Paths[end].From
+	}
+}
+
 type WeightedFromTree struct {
 	Start  int
 	Paths  []WeightedPathEnd
-	MaxLen int
 	NoPath float64
 }
 
@@ -95,6 +170,23 @@ type WeightedPathEnd struct {
 	Dist float64
 	From HalfFrom
 	Len  int
+}
+
+func NewWeightedFromTree(n int) *WeightedFromTree {
+	return &WeightedFromTree{
+		Paths:  make([]WeightedPathEnd, n),
+		NoPath: math.Inf(1),
+	}
+}
+
+func (t *WeightedFromTree) Reset() {
+	t.Start = -1
+	for n := range t.Paths {
+		t.Paths[n] = WeightedPathEnd{
+			Dist: t.NoPath,
+			From: HalfFrom{-1, t.NoPath},
+		}
+	}
 }
 
 // PathTo decodes Dijkstra.Result, recovering the found path from start to
