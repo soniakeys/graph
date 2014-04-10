@@ -114,20 +114,28 @@ func (g WeightedAdjacencyList) ValidTo() bool {
 // search or traverse graphs starting from a single source or start node.
 //
 // For a node n, Paths[n] contains information about the path from the
-// the start node to n.  For reached nodes, the Len field will be > 0 and
-// indicate the length of the path from start.  The From field will indicate
-// the node this node was reached from, or -1 in the case of the start node.
-// For unreached nodes, Len will be 0 and From will be -1.
+// the start node to n.  For reached nodes, the PathEnd.Len field will be
+// > 0 and indicate the length of the path from start.  The PathEnd.From
+// field will indicate the node this node was reached from, or -1 in the
+// case of the start node.  For unreached nodes, PathEnd.Len will be 0 and
+// PathEnd.From will be -1.
 type FromTree struct {
-	Start  int       // start node, root of the tree
+	Start  int       // start node, argument to search, root of the tree
 	Paths  []PathEnd // tree representation
 	MaxLen int       // length of longest path, max of all PathEnd.Len values
 }
 
+// NewFromTree creates a FromTree object.  You don't typically call this
+// function from application code.  Rather it is typically called by search
+// object constructors.  NewFromTree leaves the result object with zero values
+// and does not call the Reset method.
 func NewFromTree(n int) *FromTree {
 	return &FromTree{Paths: make([]PathEnd, n)}
 }
 
+// Reset initializes a FromTree in preparation for a search.  Search methods
+// will call this function and you don't typically call it from application
+// code.
 func (t *FromTree) Reset() {
 	t.Start = -1
 	for n := range t.Paths {
@@ -136,21 +144,20 @@ func (t *FromTree) Reset() {
 	t.MaxLen = 0
 }
 
+// A PathEnd associates a half arc and a path length.
+//
+// See FromTree for use by search functions.
 type PathEnd struct {
-	From int
-	Len  int
+	From int // a "from" half arc, the node the arc comes from
+	Len  int // number of nodes in path from start
 }
 
-// PathTo decodes Dijkstra.Result, recovering the found path from start to
-// end, where start was an argument to SingleShortestPath or AllShortestPaths
-// and end is the argument to this method.
+// PathTo decodes a FromTree, recovering a found path.
 //
-// The slice result represents the found path with a sequence of half arcs.
-// If no path exists from start to end the slice result will be nil.
-// For the first element, representing the start node, the arc weight is
-// meaningless and will be Dijkstra.NoPath.  The total path distance is also
-// returned.  Path distance is the sum of arc weights, excluding of couse
-// the meaningless arc weight of the first Half.
+// PathTo returns the path recorded by some search from the start node of the
+// search to the given end node.  The returned slice represents a sequence of
+// half arcs.  If the search did not find a path  end the slice result will be
+// nil.
 func (t *FromTree) PathTo(end int) []int {
 	n := t.Paths[end].Len
 	if n == 0 {
@@ -178,25 +185,30 @@ func (t *FromTree) PathTo(end int) []int {
 // correct; 0, which sums well with other distances; or -1 which is easily
 // tested for as an invalid distance.
 //
-// Missing, compared to FromTree
-// distance.
-// Following an AllShortestPaths search, PathDist will contain the path
-// distance as the sum of arc weights for the found shortest path from the
-// start node to the node corresponding to the Dijkstra result.  If the node
-// is not reachable, PathDist will be Dijkstra.NoPath.
+// Within Paths, WeightedPathDist will contain the path distance as the sum
+// of arc weights from the start node.  If the node is not reachable, searches
+// will set PathDist to WeightedFromTree.NoPath.
 //
+// Missing, compared to FromTree is the maximum path length.
 type WeightedFromTree struct {
-	Start  int
-	Paths  []WeightedPathEnd
-	NoPath float64
+	Start  int               // start node, argument to the search function
+	Paths  []WeightedPathEnd // tree representation
+	NoPath float64           // null value
 }
 
+// A WeightedPathEnd associates a half arc and a path length.
+//
+// See WeightedFromTree for use by search functions.
 type WeightedPathEnd struct {
-	Dist float64
-	From HalfFrom
-	Len  int
+	From HalfFrom // half arc
+	Dist float64  // path distance, sum of arc weights from start
+	Len  int      // number of nodes in path from start
 }
 
+// NewWeightedFromTree creates a WeightedFromTree object.  You don't typically
+// call this function from application code.  Rather it is typically called by
+// search object constructors.  NewWeightedFromTree leaves the result object
+// with zero values and does not call the Reset method.
 func NewWeightedFromTree(n int) *WeightedFromTree {
 	return &WeightedFromTree{
 		Paths:  make([]WeightedPathEnd, n),
@@ -204,6 +216,9 @@ func NewWeightedFromTree(n int) *WeightedFromTree {
 	}
 }
 
+// Reset initializes a WeightedFromTree in preparation for a search.
+// Search methods will call this function and you don't typically call it
+// from application code.
 func (t *WeightedFromTree) Reset() {
 	t.Start = -1
 	for n := range t.Paths {
