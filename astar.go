@@ -9,7 +9,9 @@ import (
 	"math"
 )
 
-// An Astar object allows shortest path searches by the AStar algorithm.
+// An AStar object allows shortest path searches by variants of the A*
+// algorithm.  The variants are determined by the use of heuristics with
+// different properties and by using different search methods.
 type AStar struct {
 	g WeightedAdjacencyList // input graph
 	// r is a list of all nodes reached so far.
@@ -51,7 +53,7 @@ type rNode struct {
 	g        float64 // "g" best known path distance from start node
 	f        float64 // "g+h", path dist + heuristic estimate
 	n        int     // number of nodes in path
-	rx       int     // heap.Remove index
+	fx       int     // heap.Fix index
 }
 
 // for rNode.state
@@ -76,6 +78,9 @@ type openHeap []*rNode
 // Monotonic means that for any neighboring nodes A and B with half arc aB
 // leading from A to B, and for heuristic h defined on some end node, then
 // h(A) <= aB.ArcWeight + h(B).
+//
+// See AStarA for additional notes on implementing heuristic functions for
+// AStar search methods.
 type Heuristic func(from int) float64
 
 // Admissable returns true if heuristic h is admissable on graph g relative to
@@ -147,10 +152,20 @@ func (h Heuristic) Monotonic(g WeightedAdjacencyList) (bool, string) {
 // The slice result represents the found path with a sequence of half arcs.
 // If no path exists from start to end the slice result will be nil. For the
 // first element, representing the start node, the arc weight is meaningless
-// and will be Dijkstra.NoPath. The total path distance is also returned.
-// Path distance is the sum of arc weights, excluding of couse the meaningless
-// arc weight of the first Half.
+// and will be WeightedFromTree.NoPath. The total path distance is also
+// returned.  Path distance is the sum of arc weights, excluding the
+// meaningless arc weight of the first Half.
+//
+// The heuristic function h should ideally be fairly inexpensive.  AStarA
+// may call it more than once for the same node, especially as graph density
+// increases.  In some cases it may be worth the effort to memoize values.
+// Faster yet would be a fully precomputed lookup table, but typically h is
+// needed for a rather small fraction of the nodes in the graph.  Construction
+// of a complete lookup table will often not be worthwhile.  Profile to see
+// if it is even important; benchmark different approaches to find the best.
 func (a *AStar) AStarA(start, end int, h Heuristic) ([]Half, float64) {
+	// NOTE: AStarM is largely duplicate code.
+
 	// start node is reached initially
 	p := &a.r[start]
 	p.state = reached
@@ -196,10 +211,10 @@ func (a *AStar) AStarA(start, end int, h Heuristic) ([]Half, float64) {
 				alt.g = g
 				alt.f = g + h(nd)
 				alt.n = bestPath.n + 1
-				if alt.rx < 0 {
+				if alt.fx < 0 {
 					heap.Push(&oh, alt)
 				} else {
-					heap.Fix(&oh, alt.rx)
+					heap.Fix(&oh, alt.fx)
 				}
 			} else {
 				// bestNode being reached for the first time.
@@ -216,13 +231,16 @@ func (a *AStar) AStarA(start, end int, h Heuristic) ([]Half, float64) {
 	return nil, math.Inf(1) // no path
 }
 
-// AStarM is A* optimized for monotonic heuristic estimates.
+// AStarM is AStarA optimized for monotonic heuristic estimates.
 //
-// Usage is the same as with AStarA.
+// See AStarA for general usage.  See Heuristic for notes on monotonicity.
 func (a *AStar) AStarM(start, end int, h Heuristic) ([]Half, float64) {
 	p := &a.r[start]
 	p.f = h(start) // total path estimate is estimate from start
 	p.n = 1        // path length is 1 node
+
+	// NOTE: AStarM is largely code duplicated from AStarA.
+	// Differences are noted in comments in this method.
 
 	// difference from AStarA:
 	// instead of a bit to mark a reached node, there are two states,
@@ -283,7 +301,7 @@ func (a *AStar) AStarM(start, end int, h Heuristic) ([]Half, float64) {
 
 				// difference from AStarA:
 				// we know alt was on the heap because we found it marked open
-				heap.Fix(&oh, alt.rx)
+				heap.Fix(&oh, alt.fx)
 			} else {
 				// bestNode being reached for the first time.
 				alt.state = open
@@ -304,14 +322,14 @@ func (h openHeap) Len() int           { return len(h) }
 func (h openHeap) Less(i, j int) bool { return h[i].f < h[j].f }
 func (h openHeap) Swap(i, j int) {
 	h[i], h[j] = h[j], h[i]
-	h[i].rx = i
-	h[j].rx = j
+	h[i].fx = i
+	h[j].fx = j
 }
 func (p *openHeap) Push(x interface{}) {
 	h := *p
-	rx := len(h)
+	fx := len(h)
 	h = append(h, x.(*rNode))
-	h[rx].rx = rx
+	h[fx].fx = fx
 	*p = h
 }
 
@@ -319,6 +337,6 @@ func (p *openHeap) Pop() interface{} {
 	h := *p
 	last := len(h) - 1
 	*p = h[:last]
-	h[last].rx = -1
+	h[last].fx = -1
 	return h[last]
 }

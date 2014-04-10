@@ -3,23 +3,29 @@
 
 // Ed is a simple and fast graph library.
 //
-// For goals of speed and simplicity, Ed uses zero-based integer node IDs
-// and omits interfaces that would accomodate user data or user implemented
-// behavior.
+// Ed is a graph library of the kind where you create graphs out of
+// Ed concrete types, perhaps parallel to existing graph data structures
+// in your application.  You call some function such as a graph search
+// on the Ed graph, then use the result to navigate your application data.
 //
-// To use Ed functions, you typically create a data structure parallel
-// to your application data, call an Ed function, and use the result to
-// navigate your application data.
+// Ed graphs contain only data minimally neccessary for search functions.
+// This minimalism simplifies Ed code and allows faster searches.  Zero-based
+// integer node IDs serve directly as slice indexes.  Nodes and edge objects
+// are structs rather than interfaces.  Maps are not needed to associate
+// arbitrary IDs with node or edge types.  Ed graphs are memory efficient
+// and large graphs can potentially be handled, especially if Ed graphs are
+// constructed in an online manner.
 //
 // Terminology
 //
 // There are lots of terms to pick from.  Goals for picking terms for this
-// this package included picking popular terms, terms that reduce confusion,
+// this package include picking popular terms, terms that reduce confusion,
 // terms that describe, and terms that read well.
 //
 // This package uses the term "node" rather than "vertex."  It uses "arc"
 // to mean a directed edge, and uses "from" and "to" to refer to the ends
-// of an arc.
+// of an arc.  It uses "start" and "end" to refer to endpoints of a search
+// or traversal.
 //
 // A float64 value associated with an arc is "weight."  The sum of arc weights
 // along a path is a "distance."  The number of nodes in a path is the path's
@@ -35,7 +41,7 @@
 // neighbors (when a node appears more than once in the same neighbor list)
 // represent "parallel arcs."
 //
-// Finially, this package documentation takes back the word "object" to
+// Finally, this package documentation takes back the word "object" to
 // refer to a Go value, especially a value of a type with methods.
 package ed
 
@@ -72,6 +78,7 @@ type HalfFrom struct {
 	ArcWeight float64
 }
 
+// NegativeArc returns true if the receiver graph contains a negative arc.
 func (a WeightedAdjacencyList) NegativeArc() bool {
 	for _, nbs := range a {
 		for _, nb := range nbs {
@@ -83,6 +90,10 @@ func (a WeightedAdjacencyList) NegativeArc() bool {
 	return false
 }
 
+// ValidTo validates that no arcs in the reciever graph lead outside the graph.
+//
+// Ints in the adjacency list structure represent "to" half arcs.  ValidTo
+// returns true if all int values are valid slice indexes back into g.
 func (g AdjacencyList) ValidTo() bool {
 	for _, nbs := range g {
 		for _, nb := range nbs {
@@ -94,6 +105,10 @@ func (g AdjacencyList) ValidTo() bool {
 	return true
 }
 
+// ValidTo validates that no arcs in the reciever graph lead outside the graph.
+//
+// ValidTo returns true if all Half.To values are valid slice indexes
+// back into g.
 func (g WeightedAdjacencyList) ValidTo() bool {
 	for _, nbs := range g {
 		for _, nb := range nbs {
