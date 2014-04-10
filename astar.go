@@ -78,7 +78,11 @@ type openHeap []*rNode
 // h(A) <= aB.ArcWeight + h(B).
 type Heuristic func(from int) float64
 
-func Admissable(g WeightedAdjacencyList, h Heuristic, end int) (bool, string) {
+// Admissable returns true if heuristic h is admissable on graph g relative to
+// the given end node.
+//
+// If h is inadmissable, the string result describes a counter example.
+func (h Heuristic) Admissable(g WeightedAdjacencyList, end int) (bool, string) {
 	// invert graph
 	inv := make(WeightedAdjacencyList, len(g))
 	for from, nbs := range g {
@@ -88,6 +92,8 @@ func Admissable(g WeightedAdjacencyList, h Heuristic, end int) (bool, string) {
 	}
 	// run dijkstra
 	d := NewDijkstra(inv)
+	// Dijkstra.AllPaths takes a start node but after inverting the graph
+	// argument end now represents the start node of the inverted graph.
 	d.AllPaths(end)
 	// compare h to found shortest paths
 	for n := range inv {
@@ -99,7 +105,10 @@ func Admissable(g WeightedAdjacencyList, h Heuristic, end int) (bool, string) {
 	return true, ""
 }
 
-func Monotonic(g WeightedAdjacencyList, h Heuristic) (bool, string) {
+// Monotonic returns true if heuristic h is monotonic on weighted graph g.
+//
+// If h is non-monotonic, the string result describes a counter example.
+func (h Heuristic) Monotonic(g WeightedAdjacencyList) (bool, string) {
 	// precompute
 	hv := make([]float64, len(g))
 	for n := range g {
