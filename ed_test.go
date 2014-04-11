@@ -40,3 +40,16 @@ func ExampleAdjacencyList_Undirected() {
 	// false 0 1
 	// true -1 -1
 }
+
+func ExampleAdjacencyList_ConnectedComponents() {
+	g := ed.AdjacencyList{
+		0: {3, 4},
+		1: {5},
+		3: {0, 4},
+		4: {0, 3},
+		5: {1},
+	}
+	fmt.Println(g.ConnectedComponents())
+	// Output:
+	// [0 1 2]
+}

@@ -47,6 +47,7 @@ package ed
 
 import (
 	"math"
+	"math/big"
 )
 
 // file ed.go contains definitions common to different search functions
@@ -71,6 +72,27 @@ func (g AdjacencyList) Undirected() (u bool, from, to int) {
 		}
 	}
 	return true, -1, -1
+}
+
+func (g AdjacencyList) ConnectedComponents() []int {
+	var r []int
+	var c big.Int
+	var df func(int)
+	df = func(n int) {
+		c.SetBit(&c, n, 1)
+		for _, nb := range g[n] {
+			if c.Bit(nb) == 0 {
+				df(nb)
+			}
+		}
+	}
+	for n := range g {
+		if c.Bit(n) == 0 {
+			r = append(r, n)
+			df(n)
+		}
+	}
+	return r
 }
 
 // A WeightedAdjacencyList represents a graph as a list of neighbors for each
