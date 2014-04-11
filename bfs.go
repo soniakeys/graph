@@ -80,17 +80,6 @@ func NewBreadthFirst2(to, from AdjacencyList, m int) *BreadthFirst2 {
 	}
 }
 
-func (g AdjacencyList) Inverse() (from AdjacencyList, m int) {
-	from = make([][]int, len(g))
-	for n, nbs := range g {
-		for _, nb := range nbs {
-			from[nb] = append(from[nb], n)
-			m++
-		}
-	}
-	return
-}
-
 func (b *BreadthFirst2) Path(start, end int) []int {
 	b.Traverse(start, func(n int) bool { return n != end })
 	return b.Result.PathTo(end)
