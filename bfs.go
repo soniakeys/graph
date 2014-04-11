@@ -158,7 +158,7 @@ func (b *BreadthFirst2) Traverse(start int, v Visitor) int {
 			if rp[n].Len == 0 {
 				for _, nb := range b.From[n] {
 					if fBits.Bit(nb) == 1 {
-						rp[nb] = PathEnd{From: n, Len: level}
+						rp[n] = PathEnd{From: nb, Len: level}
 						if !v(nb) {
 							b.Result.MaxLen = level
 							return -1
@@ -171,7 +171,7 @@ func (b *BreadthFirst2) Traverse(start int, v Visitor) int {
 				}
 			}
 		}
-		if nextb.BitLen() == 0 {
+		if nNext == 0 {
 			break
 		}
 		fBits, nextb = nextb, fBits
