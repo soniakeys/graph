@@ -2,6 +2,7 @@ package ed_test
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/soniakeys/ed"
 )
@@ -52,4 +53,29 @@ func ExampleAdjacencyList_ConnectedComponents() {
 	fmt.Println(g.ConnectedComponents())
 	// Output:
 	// [0 1 2]
+}
+
+func ExampleAdjacencyList_Bipartite() {
+	g := ed.AdjacencyList{
+		0: {3},
+		1: {3},
+		2: {3, 4},
+		3: {0, 1, 2},
+		4: {2},
+	}
+	b, c1, c2, oc := g.Bipartite(0)
+	if b {
+		fmt.Println(
+			strconv.FormatInt(c1.Int64(), 2),
+			strconv.FormatInt(c2.Int64(), 2))
+	}
+	g[3] = append(g[3], 4)
+	g[4] = append(g[4], 3)
+	b, c1, c2, oc = g.Bipartite(0)
+	if !b {
+		fmt.Println(oc)
+	}
+	// Output:
+	// 111 11000
+	// [3 4 2]
 }
