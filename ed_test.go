@@ -7,7 +7,7 @@ import (
 )
 
 func ExampleWeightedFromTree_PathTo() {
-	g := [][]ed.Half{
+	g := ed.WeightedAdjacencyList{
 		0: {{1, .7}, {2, .9}, {5, 1.4}},
 		1: {{2, 1.0}, {3, 1.5}},
 		2: {{3, 1.1}, {5, .2}},
@@ -26,4 +26,17 @@ func ExampleWeightedFromTree_PathTo() {
 	// From 2
 	// To 3: [{2 +Inf} {3 1.1}] 1.1
 	// To 4: [{2 +Inf} {3 1.1} {4 0.6}] 1.7
+}
+
+func ExampleAdjacencyList_Undirected() {
+	g := ed.AdjacencyList{
+		0: {1, 2},
+		2: {0},
+	}
+	fmt.Println(g.Undirected())
+	g[1] = append(g[1], 0)
+	fmt.Println(g.Undirected())
+	// Output:
+	// false 0 1
+	// true -1 -1
 }

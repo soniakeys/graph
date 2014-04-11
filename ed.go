@@ -58,6 +58,21 @@ import (
 // create reciprocal neighbors.
 type AdjacencyList [][]int
 
+func (g AdjacencyList) Undirected() (u bool, from, to int) {
+	for from, nbs := range g {
+	nb:
+		for _, to := range nbs {
+			for _, r := range g[to] {
+				if r == from {
+					continue nb
+				}
+			}
+			return false, from, to
+		}
+	}
+	return true, -1, -1
+}
+
 // A WeightedAdjacencyList represents a graph as a list of neighbors for each
 // node, connected by weighted arcs.
 type WeightedAdjacencyList [][]Half
