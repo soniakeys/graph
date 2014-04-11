@@ -1,6 +1,8 @@
 package ed
 
-import ()
+import (
+	"math/big"
+)
 
 type BreadthFirst struct {
 	Graph  AdjacencyList
@@ -15,21 +17,24 @@ func NewBreadthFirst(g AdjacencyList) *BreadthFirst {
 }
 
 func (b *BreadthFirst) Path(start, end int) []int {
-	b.search(start, end)
+	b.Traverse(start, func(n int) bool { return n != end })
 	return b.Result.PathTo(end)
 }
 
 func (b *BreadthFirst) AllPaths(start int) int {
-	return b.search(start, -1)
+	return b.Traverse(start, func(int) bool { return true })
 }
 
-func (b *BreadthFirst) search(start, end int) int {
+type Visitor func(n int) (ok bool)
+
+func (b *BreadthFirst) Traverse(start int, v Visitor) int {
 	b.Result.Reset()
 	rp := b.Result.Paths
 	b.Result.Start = start
 	level := 1
 	rp[start].Len = level
-	if start == end {
+	if !v(start) {
+		b.Result.MaxLen = level
 		return -1
 	}
 	nReached := 1 // accumulated for a return value
@@ -42,7 +47,7 @@ func (b *BreadthFirst) search(start, end int) int {
 			for _, nb := range b.Graph[n] {
 				if rp[nb].Len == 0 {
 					rp[nb] = PathEnd{From: n, Len: level}
-					if nb == end {
+					if !v(nb) {
 						b.Result.MaxLen = level
 						return -1
 					}
@@ -60,94 +65,135 @@ func (b *BreadthFirst) search(start, end int) int {
 	return nReached
 }
 
-/*
 type BreadthFirst2 struct {
-	Out, In [][]int
-	M int
-	Level []int
-	FromTree []FromNode
+	To, From AdjacencyList
+	M        int
+	Result   *FromTree
 }
 
-func NewBF(out, in [][]int, m int) *BreadthFirst {
-
-
-
-type func Visitor(int) bool
-
-//func BreadthFirst(out, in [][]int, n, m int) (D []int) {
-func (bf *BreadthFirst) Search(start int, v Visitor) int {
-	// source defined by the problem to be vertex 1
-	source := 1
-	d0 := make([]int, len(out)) // 0 element unused.  return value is d0[1:]
-	for i := range d0 {
-		d0[i] = -1
+func NewBreadthFirst2(to, from AdjacencyList, m int) *BreadthFirst2 {
+	return &BreadthFirst2{
+		To:     to,
+		From:   from,
+		M:      m,
+		Result: NewFromTree(len(to)),
 	}
-	lNum := 0 // level number
-	d0[source] = lNum
+}
 
-	frontier := []int{source} // verices all at the same level
-	mf := len(out[source])    // number of arcs leading out from frontier
-	ctb := m / 10             // threshold to change from top-down to bottom-up
-	k14 := 14 * m / n         // 14 * mean degree
-	cbt := n / k14            // threshold to change from bottom-up to top-down
+func (g AdjacencyList) Inverse() (from AdjacencyList, m int) {
+	from = make([][]int, len(g))
+	for n, nbs := range g {
+		for _, nb := range nbs {
+			from[nb] = append(from[nb], n)
+			m++
+		}
+	}
+	return
+}
 
+func (b *BreadthFirst2) Path(start, end int) []int {
+	b.Traverse(start, func(n int) bool { return n != end })
+	return b.Result.PathTo(end)
+}
+
+func (b *BreadthFirst2) AllPaths(start int) int {
+	return b.Traverse(start, func(int) bool { return true })
+}
+
+func (b *BreadthFirst2) Traverse(start int, v Visitor) int {
+	b.Result.Reset()
+	rp := b.Result.Paths
+	b.Result.Start = start
+	level := 1
+	rp[start].Len = level
+	if !v(start) {
+		b.Result.MaxLen = level
+		return -1
+	}
+	nReached := 1 // accumulated for a return value
+	// the frontier consists of nodes all at the same level
+	frontier := []int{start}
+	mf := len(b.To[start])      // number of arcs leading out from frontier
+	ctb := b.M / 10             // threshold change from top-down to bottom-up
+	k14 := 14 * b.M / len(b.To) // 14 * mean degree
+	cbt := len(b.To) / k14      // threshold change from bottom-up to top-down
+	var fBits, nextb big.Int
 	for {
-		lNum++
-		frontier, mf = topDown(lNum, out, frontier, d0)
-		if len(frontier) == 0 {
+		// top down step
+		level++
+		var next []int
+		for _, n := range frontier {
+			for _, nb := range b.To[n] {
+				if rp[nb].Len == 0 {
+					rp[nb] = PathEnd{From: n, Len: level}
+					if !v(nb) {
+						b.Result.MaxLen = level
+						return -1
+					}
+					next = append(next, nb)
+					nReached++
+				}
+			}
+		}
+		if len(next) == 0 {
 			break
 		}
+		frontier = next
 		if mf > ctb {
 			// switch to bottom up!
 		} else {
 			// stick with top down
 			continue
 		}
-		// convert
+		// convert frontier representation
 		nf := 0 // number of vertices on the frontier
-		fBits := &big.Int{}
-		for _, v := range frontier {
-			fBits.SetBit(fBits, v, 1)
+		for _, n := range frontier {
+			fBits.SetBit(&fBits, n, 1)
 			nf++
 		}
 	bottomUpLoop:
-		lNum++
-		fBits, nf = bottomUp(lNum, in, fBits, d0)
-		if fBits.BitLen() == 0 {
+		level++
+		nNext := 0
+		for n := range b.From {
+			if rp[n].Len == 0 {
+				for _, nb := range b.From[n] {
+					if fBits.Bit(nb) == 1 {
+						rp[nb] = PathEnd{From: n, Len: level}
+						if !v(nb) {
+							b.Result.MaxLen = level
+							return -1
+						}
+						nextb.SetBit(&nextb, n, 1)
+						nReached++
+						nNext++
+						break
+					}
+				}
+			}
+		}
+		if nextb.BitLen() == 0 {
 			break
 		}
+		fBits, nextb = nextb, fBits
+		nextb.SetInt64(0)
+		nf = nNext
 		if nf < cbt {
 			// switch back to top down!
 		} else {
 			// stick with bottom up
 			goto bottomUpLoop
 		}
-		// convert
+		// convert frontier representation
 		mf = 0
 		frontier = frontier[:0]
-		for v := 1; v <= n; v++ {
-			if fBits.Bit(v) == 1 {
-				frontier = append(frontier, v)
-				mf += len(out[v])
+		for n := range b.To {
+			if fBits.Bit(n) == 1 {
+				frontier = append(frontier, n)
+				mf += len(b.To[n])
 			}
 		}
+		fBits.SetInt64(0)
 	}
-	return d0[1:] // drop unused 0 element
+	b.Result.MaxLen = level - 1
+	return nReached
 }
-
-func bottomUp(lNum int, in [][]int, frontier *big.Int, d0 []int) (next *big.Int, nNext int) {
-	next = &big.Int{}
-	for v := 1; v < len(in); v++ {
-		if d0[v] < 0 {
-			for _, nb := range in[v] {
-				if frontier.Bit(nb) == 1 {
-					d0[v] = lNum
-					next.SetBit(next, v, 1)
-					nNext++
-					break
-				}
-			}
-		}
-	}
-	return
-}*/
