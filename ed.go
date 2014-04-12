@@ -207,7 +207,7 @@ func (g AdjacencyList) Acyclic() bool {
 			}
 		}
 		temp.SetBit(&temp, n, 0)
-		perm.SetBit(&temp, n, 1)
+		perm.SetBit(&perm, n, 1)
 	}
 	for n := range g {
 		if perm.Bit(n) == 1 {
