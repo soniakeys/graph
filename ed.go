@@ -58,17 +58,30 @@ import (
 // create reciprocal neighbors.
 type AdjacencyList [][]int
 
-func (g AdjacencyList) Inverse() (from AdjacencyList, m int) {
-	from = make([][]int, len(g))
-	for n, nbs := range g {
+// Valid validates that no arcs in the reciever graph lead outside the graph.
+//
+// Ints in an adjacency list structure represent half arcs.  Valid
+// returns true if all int values are valid slice indexes back into g.
+func (g AdjacencyList) Valid() bool {
+	for _, nbs := range g {
 		for _, nb := range nbs {
-			from[nb] = append(from[nb], n)
-			m++
+			if nb < 0 || nb >= len(g) {
+				return false
+			}
 		}
 	}
-	return
+	return true
 }
 
+// Undirected determines if an adjacency list is undirected.
+//
+// Undirected validates that g is undirected by checking that every neighbor
+// has a reciprocal.  That is, that for every arc from->to, that to->from also
+// exists.
+//
+// If the graph is undirected, Undirected returns true, -1, -1.  If an arc
+// is found witout a reciprocal, Undirected returns false along with from
+// and to nodes of the arc.
 func (g AdjacencyList) Undirected() (u bool, from, to int) {
 	for from, nbs := range g {
 	nb:
@@ -84,6 +97,27 @@ func (g AdjacencyList) Undirected() (u bool, from, to int) {
 	return true, -1, -1
 }
 
+// Inverse constructs a new adjacency list that is the inverse of g.
+//
+// For every arc from->to of g, the result will have an arc to->from.
+// Inverse also returns m the number of arcs in g (equal to the number of
+// arcs in the result.)
+func (g AdjacencyList) Inverse() (inv AdjacencyList, m int) {
+	inv = make([][]int, len(g))
+	for n, nbs := range g {
+		for _, nb := range nbs {
+			inv[nb] = append(inv[nb], n)
+			m++
+		}
+	}
+	return
+}
+
+// ConnectedComponents determines the connected components in an undirected
+// graph.
+//
+// Returned is a slice with a single representative node from each connected
+// component.
 func (g AdjacencyList) ConnectedComponents() []int {
 	var r []int
 	var c big.Int
@@ -105,6 +139,11 @@ func (g AdjacencyList) ConnectedComponents() []int {
 	return r
 }
 
+// Bipartite determines if a graph is bipartite.
+//
+// If so, Bipartite returns true and the two-coloring of the graph.  Each
+// color set is returned as a bitmap.  If the graph is not bipartite,
+// Bipartite returns false and an odd cycle as an int slice.
 func (g AdjacencyList) Bipartite(n int) (b bool, c1, c2 *big.Int, oc []int) {
 	c1 = &big.Int{}
 	c2 = &big.Int{}
@@ -142,21 +181,6 @@ func (g AdjacencyList) Bipartite(n int) (b bool, c1, c2 *big.Int, oc []int) {
 		return b, c1, c2, nil
 	}
 	return b, nil, nil, oc
-}
-
-// ValidTo validates that no arcs in the reciever graph lead outside the graph.
-//
-// Ints in the adjacency list structure represent "to" half arcs.  ValidTo
-// returns true if all int values are valid slice indexes back into g.
-func (g AdjacencyList) ValidTo() bool {
-	for _, nbs := range g {
-		for _, nb := range nbs {
-			if nb < 0 || nb >= len(g) {
-				return false
-			}
-		}
-	}
-	return true
 }
 
 // A FromTree represents a spanning tree where each node is associated with
