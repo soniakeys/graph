@@ -221,6 +221,44 @@ func (g AdjacencyList) Acyclic() bool {
 	return true
 }
 
+func (g AdjacencyList) Topological() []int {
+	t := make([]int, len(g))
+	i := len(t) - 1
+	a := true
+	var temp, perm big.Int
+	var df func(int)
+	df = func(n int) {
+		switch {
+		case temp.Bit(n) == 1:
+			a = false
+			return
+		case perm.Bit(n) == 1:
+			return
+		}
+		temp.SetBit(&temp, n, 1)
+		for _, nb := range g[n] {
+			df(nb)
+			if !a {
+				return
+			}
+		}
+		temp.SetBit(&temp, n, 0)
+		perm.SetBit(&perm, n, 1)
+		t[i] = n
+		i--
+	}
+	for n := range g {
+		if perm.Bit(n) == 1 {
+			continue
+		}
+		df(n)
+		if !a {
+			return nil
+		}
+	}
+	return t
+}
+
 // A FromTree represents a spanning tree where each node is associated with
 // a half arc identifying an arc from another node.
 //

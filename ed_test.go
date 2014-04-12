@@ -72,3 +72,17 @@ func ExampleAdjacencyList_Acyclic() {
 	// true
 	// false
 }
+
+func ExampleAdjacencyList_Topological() {
+	g := ed.AdjacencyList{
+		1: {2},
+		3: {1, 2},
+		4: {3, 2},
+	}
+	fmt.Println(g.Topological())
+	g[2] = []int{3}
+	fmt.Println(g.Topological())
+	// Output:
+	// [4 3 1 2 0]
+	// []
+}
