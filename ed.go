@@ -183,6 +183,44 @@ func (g AdjacencyList) Bipartite(n int) (b bool, c1, c2 *big.Int, oc []int) {
 	return b, nil, nil, oc
 }
 
+// Acyclic determines if a directed graph contains cycles.
+//
+// Acyclic returns true if there are no cycles.
+// Acyclic returns false if a cycle is detected.
+func (g AdjacencyList) Acyclic() bool {
+	a := true
+	var temp, perm big.Int
+	var df func(int)
+	df = func(n int) {
+		switch {
+		case temp.Bit(n) == 1:
+			a = false
+			return
+		case perm.Bit(n) == 1:
+			return
+		}
+		temp.SetBit(&temp, n, 1)
+		for _, nb := range g[n] {
+			df(nb)
+			if !a {
+				return
+			}
+		}
+		temp.SetBit(&temp, n, 0)
+		perm.SetBit(&temp, n, 1)
+	}
+	for n := range g {
+		if perm.Bit(n) == 1 {
+			continue
+		}
+		df(n)
+		if !a {
+			return false
+		}
+	}
+	return true
+}
+
 // A FromTree represents a spanning tree where each node is associated with
 // a half arc identifying an arc from another node.
 //

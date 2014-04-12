@@ -57,3 +57,18 @@ func ExampleAdjacencyList_Bipartite() {
 	// 111 11000
 	// [3 4 2]
 }
+
+func ExampleAdjacencyList_Acyclic() {
+	g := ed.AdjacencyList{
+		0: {1},
+		1: {2},
+		2: {3},
+		3: {},
+	}
+	fmt.Println(g.Acyclic())
+	g[3] = []int{1}
+	fmt.Println(g.Acyclic())
+	// Output:
+	// true
+	// false
+}
