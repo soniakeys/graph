@@ -38,7 +38,7 @@ func ExampleBreadthFirst2_AllPaths() {
 		4: {3, 6},
 		6: {5, 6},
 	}
-	from, m := g.Inverse()
+	from, m := g.Transpose()
 	b := ed.NewBreadthFirst2(g, from, m)
 	b.AllPaths(1)
 	fmt.Println("Max path length:", b.Result.MaxLen)

@@ -97,16 +97,16 @@ func (g AdjacencyList) Undirected() (u bool, from, to int) {
 	return true, -1, -1
 }
 
-// Inverse constructs a new adjacency list that is the inverse of g.
+// Transpose constructs a new adjacency list that is the transpose of g.
 //
 // For every arc from->to of g, the result will have an arc to->from.
-// Inverse also returns m the number of arcs in g (equal to the number of
+// Transpose also returns m the number of arcs in g (equal to the number of
 // arcs in the result.)
-func (g AdjacencyList) Inverse() (inv AdjacencyList, m int) {
-	inv = make([][]int, len(g))
+func (g AdjacencyList) Transpose() (t AdjacencyList, m int) {
+	t = make([][]int, len(g))
 	for n, nbs := range g {
 		for _, nb := range nbs {
-			inv[nb] = append(inv[nb], n)
+			t[nb] = append(t[nb], n)
 			m++
 		}
 	}
