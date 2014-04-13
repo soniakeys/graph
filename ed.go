@@ -259,6 +259,56 @@ func (g AdjacencyList) Topological() []int {
 	return t
 }
 
+func (g AdjacencyList) Tarjan() (scc [][]int) {
+	// straight from WP
+	var indexed, stacked big.Int
+	index := make([]int, len(g))
+	lowlink := make([]int, len(g))
+	x := 0
+	var S []int
+	var sc func(int)
+	sc = func(n int) {
+		index[n] = x
+		indexed.SetBit(&indexed, n, 1)
+		lowlink[n] = x
+		x++
+		S = append(S, n)
+		stacked.SetBit(&stacked, n, 1)
+		for _, nb := range g[n] {
+			if indexed.Bit(nb) == 0 {
+				sc(nb)
+				if lowlink[nb] < lowlink[n] {
+					lowlink[n] = lowlink[nb]
+				}
+			} else if stacked.Bit(nb) == 1 {
+				if index[nb] < lowlink[n] {
+					lowlink[n] = index[nb]
+				}
+			}
+		}
+		if lowlink[n] == index[n] {
+			var c []int
+			for {
+				last := len(S) - 1
+				w := S[last]
+				S = S[:last]
+				stacked.SetBit(&stacked, w, 0)
+				c = append(c, w)
+				if w == n {
+					scc = append(scc, c)
+					break
+				}
+			}
+		}
+	}
+	for n := range g {
+		if indexed.Bit(n) == 0 {
+			sc(n)
+		}
+	}
+	return scc
+}
+
 // A FromTree represents a spanning tree where each node is associated with
 // a half arc identifying an arc from another node.
 //

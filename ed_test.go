@@ -86,3 +86,26 @@ func ExampleAdjacencyList_Topological() {
 	// [4 3 1 2 0]
 	// []
 }
+
+func ExampleAdjacencyList_Tarjan() {
+	g := ed.AdjacencyList{
+		0: {1},
+		1: {4, 2, 5},
+		2: {3, 6},
+		3: {2, 7},
+		4: {5, 0},
+		5: {6},
+		6: {5},
+		7: {3, 6},
+	}
+	scc := g.Tarjan()
+	for _, c := range scc {
+		fmt.Println(c)
+	}
+	fmt.Println(len(scc))
+	// Output:
+	// [6 5]
+	// [7 3 2]
+	// [4 1 0]
+	// 3
+}
