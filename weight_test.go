@@ -2,9 +2,37 @@ package ed_test
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/soniakeys/ed"
 )
+
+func ExampleWeightedAdjacencyList_NegativeArc() {
+	g := ed.WeightedAdjacencyList{
+		2: {{0, 0}, {1, .5}},
+	}
+	fmt.Println(g.NegativeArc())
+	g[0] = []ed.Half{{1, -2}}
+	fmt.Println(g.NegativeArc())
+	// Output:
+	// false
+	// true
+}
+
+func ExampleWeightedAdjacencyList_ValidTo() {
+	g := ed.WeightedAdjacencyList{
+		0: {{0, math.NaN()}},
+	}
+	fmt.Println(g.ValidTo())
+	g[0][0].To = -1
+	fmt.Println(g.ValidTo())
+	g[0][0].To = 1
+	fmt.Println(g.ValidTo())
+	// Output:
+	// true
+	// false
+	// false
+}
 
 func ExampleWeightedFromTree_PathTo() {
 	g := ed.WeightedAdjacencyList{

@@ -11,19 +11,18 @@ import (
 
 func ExampleDijkstra_Path() {
 	d := ed.NewDijkstra([][]ed.Half{
-		0: {{1, .7}, {2, .9}, {5, 1.4}},
-		1: {{2, 1.0}, {3, 1.5}},
-		2: {{3, 1.1}, {5, .2}},
-		3: {{4, .6}},
-		4: {{5, .9}},
-		5: {},
+		1: {{2, 7}, {3, 9}, {6, 11}},
+		2: {{3, 10}, {4, 15}},
+		3: {{4, 11}, {6, 2}},
+		4: {{5, 7}},
+		6: {{5, 9}},
 	})
-	path, dist := d.Path(2, 4)
+	path, dist := d.Path(1, 5)
 	fmt.Println("Shortest path:", path)
-	fmt.Printf("Path distance: %.1f\n", dist)
+	fmt.Println("Path distance:", dist)
 	// Output:
-	// Shortest path: [{2 +Inf} {3 1.1} {4 0.6}]
-	// Path distance: 1.7
+	// Shortest path: [{1 +Inf} {6 11} {5 9}]
+	// Path distance: 20
 }
 
 func ExampleDijkstra_AllPaths() {

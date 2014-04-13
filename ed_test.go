@@ -7,6 +7,16 @@ import (
 	"github.com/soniakeys/ed"
 )
 
+func ExampleAdjacencyList_Valid() {
+	var g ed.AdjacencyList
+	fmt.Println(g.Valid()) // zero value adjacency list is valid
+	g = ed.AdjacencyList{{1}}
+	fmt.Println(g.Valid()) // arc 0 to 1 invalid with only one node
+	// Output:
+	// true
+	// false
+}
+
 func ExampleAdjacencyList_Undirected() {
 	g := ed.AdjacencyList{
 		0: {1, 2},
@@ -60,7 +70,7 @@ func ExampleAdjacencyList_Bipartite() {
 
 func ExampleAdjacencyList_Acyclic() {
 	g := ed.AdjacencyList{
-		0: {1},
+		0: {1, 2},
 		1: {2},
 		2: {3},
 		3: {},
