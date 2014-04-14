@@ -98,10 +98,7 @@ func NewWeightedFromTree(n int) *WeightedFromTree {
 	}
 }
 
-// Reset initializes a WeightedFromTree in preparation for a search.
-// Search methods will call this function and you don't typically call it
-// from application code.
-func (t *WeightedFromTree) Reset() {
+func (t *WeightedFromTree) reset() {
 	t.Start = -1
 	for n := range t.Paths {
 		t.Paths[n] = WeightedPathEnd{

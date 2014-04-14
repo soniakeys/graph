@@ -13,28 +13,23 @@ func NewBellmanFord(g WeightedAdjacencyList) *BellmanFord {
 }
 
 func (b *BellmanFord) Run(start int) (ok bool) {
-	b.Result.Reset()
+	b.Result.reset()
 	rp := b.Result.Paths
-	for n := range rp {
-		rp[n] = WeightedPathEnd{
-			Dist: b.Result.NoPath,
-			From: HalfFrom{-1, b.Result.NoPath},
-		}
-	}
 	rp[start].Dist = 0
 	rp[start].Len = 1
 	for _ = range b.Graph[1:] {
 		imp := false
 		for from, nbs := range b.Graph {
-			d1 := rp[from].Dist
+			fp := &rp[from]
+			d1 := fp.Dist
 			for _, nb := range nbs {
 				d2 := d1 + nb.ArcWeight
 				to := &rp[nb.To]
-				if to.Len == 0 || d2 < to.Dist {
+				if fp.Len > 0 && d2 < to.Dist {
 					*to = WeightedPathEnd{
 						Dist: d2,
 						From: HalfFrom{from, nb.ArcWeight},
-						Len:  rp[from].Len + 1,
+						Len:  fp.Len + 1,
 					}
 					imp = true
 				}

@@ -86,7 +86,7 @@ func (d *Dijkstra) search(start, end int) (reached int) {
 	// reset from any previous run
 	d.ndVis = 0
 	d.arcVis = 0
-	d.Result.Reset()
+	d.Result.reset()
 	for i := range d.r {
 		r := &d.r[i]
 		r.done = false
