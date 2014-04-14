@@ -88,11 +88,11 @@ func Test100(t *testing.T) {
 
 func Benchmark100(b *testing.B) {
 	// 100 nodes, 200 edges
-	g, start, end := r(100, 200, 62)
+	g, start, _ := r(100, 200, 62)
 	d := NewDijkstra(g)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		d.Path(start, end)
+		d.AllPaths(start)
 	}
 }
 
@@ -108,11 +108,11 @@ func Test1e3(t *testing.T) {
 
 func Benchmark1e3(b *testing.B) {
 	// 1000 nodes, 3000 edges
-	g, start, end := r(1000, 3000, 66)
+	g, start, _ := r(1000, 3000, 66)
 	d := NewDijkstra(g)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		d.Path(start, end)
+		d.AllPaths(start)
 	}
 }
 
@@ -127,12 +127,12 @@ func Test1e4(t *testing.T) {
 }
 
 func Benchmark1e4(b *testing.B) {
-	// 10k nodes, 100k edges
-	g, start, end := r(1e4, 5e4, 59)
+	// 10k nodes, 50k edges
+	g, start, _ := r(1e4, 5e4, 59)
 	d := NewDijkstra(g)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		d.Path(start, end)
+		d.AllPaths(start)
 	}
 }
 
@@ -148,10 +148,10 @@ func Test1e5(t *testing.T) {
 
 func Benchmark1e5(b *testing.B) {
 	// 100k nodes, 1m edges
-	g, start, end := r(1e5, 1e6, 59)
+	g, start, _ := r(1e5, 1e6, 59)
 	d := NewDijkstra(g)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		d.Path(start, end)
+		d.AllPaths(start)
 	}
 }
