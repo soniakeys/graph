@@ -1,3 +1,6 @@
+// Copyright 2014 Sonia Keys
+// License MIT: http://opensource.org/licenses/MIT
+
 package ed_test
 
 import (
@@ -5,6 +8,19 @@ import (
 
 	"github.com/soniakeys/ed"
 )
+
+func ExampleBreadthFirst_Path() {
+	b := ed.NewBreadthFirst(ed.AdjacencyList{
+		1: {4},
+		2: {1},
+		3: {5},
+		4: {3, 6},
+		6: {5, 6},
+	})
+	fmt.Println(b.Path(1, 3))
+	// Output:
+	// [1 4 3]
+}
 
 func ExampleBreadthFirst_AllPaths() {
 	b := ed.NewBreadthFirst(ed.AdjacencyList{
@@ -28,6 +44,21 @@ func ExampleBreadthFirst_AllPaths() {
 	// 4 [1 4]
 	// 5 [1 4 3 5]
 	// 6 [1 4 6]
+}
+
+func ExampleBreadthFirst2_Path() {
+	g := ed.AdjacencyList{
+		1: {4},
+		2: {1},
+		3: {5},
+		4: {3, 6},
+		6: {5, 6},
+	}
+	from, m := g.Transpose()
+	b := ed.NewBreadthFirst2(g, from, m)
+	fmt.Println(b.Path(1, 3))
+	// Output:
+	// [1 4 3]
 }
 
 func ExampleBreadthFirst2_AllPaths() {

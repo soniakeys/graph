@@ -10,7 +10,7 @@ import (
 )
 
 func ExampleAStar_AStarA() {
-	a := ed.NewAStar([][]ed.Half{
+	a := ed.NewAStar(ed.WeightedAdjacencyList{
 		0: {{1, .7}, {2, .9}, {5, 1.4}},
 		1: {{2, 1}, {3, 1.5}},
 		2: {{3, 1.1}, {5, .2}},
@@ -29,7 +29,7 @@ func ExampleAStar_AStarA() {
 }
 
 func ExampleAStar_AStarM() {
-	a := ed.NewAStar([][]ed.Half{
+	a := ed.NewAStar(ed.WeightedAdjacencyList{
 		0: {{1, .7}, {2, .9}, {5, 1.4}},
 		1: {{2, 1}, {3, 1.5}},
 		2: {{3, 1.1}, {5, .2}},
@@ -45,4 +45,36 @@ func ExampleAStar_AStarM() {
 	// Output:
 	// Shortest path: [{0 0} {2 0.9} {3 1.1} {4 0.6}]
 	// Path length: 2.6
+}
+
+func ExampleHeuristic_Admissable() {
+	g := ed.WeightedAdjacencyList{
+		0: {{1, .7}, {2, .9}, {5, 1.4}},
+		1: {{2, 1}, {3, 1.5}},
+		2: {{3, 1.1}, {5, .2}},
+		3: {{4, .6}},
+		4: {{5, .9}},
+		5: {},
+	}
+	h4 := []float64{1.9, 2, 1, .6, 0, .9}
+	var h ed.Heuristic = func(from int) float64 { return h4[from] }
+	fmt.Println(h.Admissable(g, 4))
+	// Output:
+	// true
+}
+
+func ExampleHeuristic_Monotonic() {
+	g := ed.WeightedAdjacencyList{
+		0: {{1, .7}, {2, .9}, {5, 1.4}},
+		1: {{2, 1}, {3, 1.5}},
+		2: {{3, 1.1}, {5, .2}},
+		3: {{4, .6}},
+		4: {{5, .9}},
+		5: {},
+	}
+	h4 := []float64{1.9, 2, 1, .6, 0, .9}
+	var h ed.Heuristic = func(from int) float64 { return h4[from] }
+	fmt.Println(h.Monotonic(g))
+	// Output:
+	// true
 }
