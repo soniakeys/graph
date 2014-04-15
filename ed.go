@@ -47,6 +47,7 @@ package ed
 
 import (
 	"math/big"
+	"sort"
 )
 
 // file ed.go contains definitions for unweighted graphs
@@ -95,6 +96,30 @@ func (g AdjacencyList) Undirected() (u bool, from, to int) {
 		}
 	}
 	return true, -1, -1
+}
+
+// Simple checks for loops and parallel arcs.
+//
+// Simple returns true, -1 for simple graphs.  If a loop or parallel arc is found,
+// simple returns false and a node that has a loop or parallel arc in its neighbor list.
+func (g AdjacencyList) Simple() (s bool, n int) {
+	var t []int
+	for n, nbs := range g {
+		if len(nbs) == 0 {
+			continue
+		}
+		t = append(t[:0], nbs...)
+		sort.Ints(t)
+		if t[0] == n {
+			return false, n
+		}
+		for i, nb := range t[1:] {
+			if nb == n || nb == t[i] {
+				return false, n
+			}
+		}
+	}
+	return true, -1
 }
 
 // Transpose constructs a new adjacency list that is the transpose of g.

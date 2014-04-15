@@ -32,6 +32,21 @@ func ExampleAdjacencyList_Undirected() {
 	// false 0 1
 	// true -1 -1
 }
+func ExampleAdjacencyList_Simple() {
+	g := ed.AdjacencyList{
+		2: {0, 1},
+	}
+	fmt.Println(g.Simple())
+	g[1] = []int{1} // loop
+	fmt.Println(g.Simple())
+	g[1] = nil
+	g[2] = append(g[2], 0) // parallel arc
+	fmt.Println(g.Simple())
+	// Output:
+	// true -1
+	// false 1
+	// false 2
+}
 
 func ExampleAdjacencyList_ConnectedComponents() {
 	g := ed.AdjacencyList{
