@@ -32,7 +32,7 @@
 // "length."
 //
 // A "half arc" represents just one end of an arc, perhaps assocating it with
-// an arc weight.  The more common half to work with is the "half to" (the
+// an arc weight.  The more common half to work with is the "to half" (the
 // type name is simply "Half".)  A list of half arcs can represent a
 // "neighbor list," neighbors of a single node.  A list of neighbor lists
 // forms an "adjacency list" which represents a directed graph.

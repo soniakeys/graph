@@ -22,9 +22,9 @@ type Half struct {
 	ArcWeight float64
 }
 
-// HalfFrom is a half arc, representing a weighted arc and the "neighbor" node
+// FromHalf is a half arc, representing a weighted arc and the "neighbor" node
 // that the arc originates from.
-type HalfFrom struct {
+type FromHalf struct {
 	From      int
 	ArcWeight float64
 }
@@ -82,7 +82,7 @@ type WeightedFromTree struct {
 //
 // See WeightedFromTree for use by search functions.
 type WeightedPathEnd struct {
-	From HalfFrom // half arc
+	From FromHalf // half arc
 	Dist float64  // path distance, sum of arc weights from start
 	Len  int      // number of nodes in path from start
 }
@@ -103,7 +103,7 @@ func (t *WeightedFromTree) reset() {
 	for n := range t.Paths {
 		t.Paths[n] = WeightedPathEnd{
 			Dist: t.NoPath,
-			From: HalfFrom{-1, t.NoPath},
+			From: FromHalf{-1, t.NoPath},
 		}
 	}
 }

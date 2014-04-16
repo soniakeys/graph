@@ -127,7 +127,7 @@ func (d *Dijkstra) search(start, end int) (reached int) {
 			// record new path data for this node and update tentative set.
 			hr.dist = dist
 			rp[nb.To].Len = nextLen
-			rp[nb.To].From = HalfFrom{current, nb.ArcWeight}
+			rp[nb.To].From = FromHalf{current, nb.ArcWeight}
 			if visited {
 				heap.Fix(&t, hr.fx)
 			} else {

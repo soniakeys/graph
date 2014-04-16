@@ -28,7 +28,7 @@ func (b *BellmanFord) Run(start int) (ok bool) {
 				if fp.Len > 0 && d2 < to.Dist {
 					*to = WeightedPathEnd{
 						Dist: d2,
-						From: HalfFrom{from, nb.ArcWeight},
+						From: FromHalf{from, nb.ArcWeight},
 						Len:  fp.Len + 1,
 					}
 					imp = true
