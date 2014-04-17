@@ -88,9 +88,7 @@ func (d *Dijkstra) search(start, end int) (reached int) {
 	d.arcVis = 0
 	d.Result.reset()
 	for i := range d.r {
-		r := &d.r[i]
-		r.done = false
-		r.dist = d.Result.NoPath
+		d.r[i].done = false
 	}
 
 	current := start
