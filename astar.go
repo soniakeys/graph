@@ -10,8 +10,9 @@ import (
 )
 
 // An AStar object allows shortest path searches by variants of the A*
-// algorithm.  The variants are determined by the use of heuristics with
-// different properties and by using different search methods.
+// algorithm.
+//
+// The variants are determined by the specific search method and heuristic used.
 type AStar struct {
 	g WeightedAdjacencyList // input graph
 	// r is a list of all nodes reached so far.
@@ -24,8 +25,7 @@ type AStar struct {
 //
 // Argument g is the graph to be searched, as a weighted adjacency list.
 // As usual for AStar, arc weights must be non-negative.
-// Graphs may be directed or undirected.  Loops and parallel arcs are
-// allowed.
+// Graphs may be directed or undirected.
 //
 // The graph g will not be modified by any AStar methods. NewAStar initializes
 // the AStar object for the length (number of nodes) of g. If you add nodes

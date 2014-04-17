@@ -43,6 +43,21 @@
 //
 // Finally, this package documentation takes back the word "object" to
 // refer to a Go value, especially a value of a type with methods.
+//
+// Single source shortest path searches on weighted graphs
+//
+// Ed implements a number of single source shortest path searches for graphs
+// with weighted arcs.  These all work with graphs that are directed or
+// undirected, and graphs that may have loops or parallel arcs.  "Shortest"
+// is defined as the path distance (sum of arc weights) with path length
+// (number of nodes) breaking ties.  If multiple paths have the same minimum
+// distance with the same minumum length, search methods are free to return
+// any of them.
+//
+//  Type name      Description
+//  AStar          Non-negative arc weights, heuristic guided, single path.
+//  Dijkstra       Non-negative arc weights, single or all paths.
+//  BellmanFord    Negative arc weights allowed, no negative cycles, single or all paths.
 package ed
 
 import (
@@ -391,11 +406,13 @@ type PathEnd struct {
 
 // PathTo decodes a FromTree, recovering a found path.
 //
-// PathTo returns the path recorded by some search from the start node of the
-// search to the given end node.
-//
-// The found path is returned as a list of nodes.
+// The found path is returned as a list of nodes where the first element is
+// the start node of the search and the last element is the specified end node.
 // If the search did not find a path end the slice result will be nil.
+//
+// Acceptable end nodes are defined by the specific search.  For most all-paths
+// searches, any end node may be specified.  For many single-path searches,
+// only the end node specified in the original search is valid.
 func (t *FromTree) PathTo(end int) []int {
 	n := t.Paths[end].Len
 	if n == 0 {
