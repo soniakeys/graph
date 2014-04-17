@@ -4,11 +4,30 @@ import (
 	"math/big"
 )
 
+// A BreadthFirst object allows graph taversals and searches in
+// breadth first order.
+//
+// Construct with NewBreadthFirst.
 type BreadthFirst struct {
 	Graph  AdjacencyList
 	Result *FromTree
 }
 
+// NewBreadthFirst creates a BreadthFirst object that allows graph taversals
+// and searches in breadth first order.
+//
+// Argument g is the graph to be searched, as an adjacency list.
+// Graphs may be directed or undirected.
+//
+// The graph g will not be modified by any BreadthFirst methods.
+// NewBreadthFirst initializes the BreadthFirst object for the length
+// (number of nodes) of g.  If you add nodes to your graph, abandon any
+// previously created BreadthFirst object and call NewBreadthFirst again.
+//
+// Searches on a single BreadthFirst object can be run consecutively but not
+// concurrently.  Searches can be run concurrently however, on BreadthFirst
+// objects obtained with separate calls to NewBreadthFirst, even with the same
+// graph argument to NewBreadthFirst.
 func NewBreadthFirst(g AdjacencyList) *BreadthFirst {
 	return &BreadthFirst{
 		Graph:  g,
@@ -16,17 +35,41 @@ func NewBreadthFirst(g AdjacencyList) *BreadthFirst {
 	}
 }
 
+// Path finds a single path from start to end with a minimum number of nodes.
+//
+// Returned is the path as list of nodes as returned by FromTree.PathTo.
+// Path returns nil if no path was found.
 func (b *BreadthFirst) Path(start, end int) []int {
 	b.Traverse(start, func(n int) bool { return n != end })
 	return b.Result.PathTo(end)
 }
 
+// AllPaths finds paths from start to all nodes reachable from start that
+// have a minimum number of nodes.
+//
+// AllPaths returns number of paths found, equivalent to the number of nodes
+// reached, including the path ending at start.  Path results are left in
+// d.Result.
 func (b *BreadthFirst) AllPaths(start int) int {
 	return b.Traverse(start, func(int) bool { return true })
 }
 
+// A Visitor function is an argument to graph traversal methods.
+//
+// Graph traversal methods call the visitor function for each node visited.
+// The argument n is the node being visited.  If the visitor function
+// returns true, the traversal will continue.  If the visitor function
+// returns false, the traversal will terminate immediately.
 type Visitor func(n int) (ok bool)
 
+// Traverse traverses a graph in breadth first order starting from node start.
+//
+// Traverse calls the visitor function v for each node.
+// If the visitor function returns true, the traversal will continue.
+// If the visitor function returns false, the traversal will terminate
+// immediately.
+//
+// Traverse returns the number of nodes visited.
 func (b *BreadthFirst) Traverse(start int, v Visitor) int {
 	b.Result.Reset()
 	rp := b.Result.Paths

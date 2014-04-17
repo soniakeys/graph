@@ -246,6 +246,10 @@ func (g AdjacencyList) Acyclic() bool {
 	return true
 }
 
+// Topological computes a topological sort of a directed acyclic graph.
+//
+// Returned is a permutation of node numbers in topologically sorted order.
+// If the graph is found not to be acyclic, Topological returns nil.
 func (g AdjacencyList) Topological() []int {
 	t := make([]int, len(g))
 	i := len(t) - 1
@@ -284,6 +288,10 @@ func (g AdjacencyList) Topological() []int {
 	return t
 }
 
+// Tarjan identifies strongly connected components in a directed graph using
+// Tarjan's algorithm.
+//
+// Returned is a list of components, each component is a list of nodes.
 func (g AdjacencyList) Tarjan() (scc [][]int) {
 	// straight from WP
 	var indexed, stacked big.Int
@@ -384,9 +392,10 @@ type PathEnd struct {
 // PathTo decodes a FromTree, recovering a found path.
 //
 // PathTo returns the path recorded by some search from the start node of the
-// search to the given end node.  The returned slice represents a sequence of
-// half arcs.  If the search did not find a path  end the slice result will be
-// nil.
+// search to the given end node.
+//
+// The found path is returned as a list of nodes.
+// If the search did not find a path end the slice result will be nil.
 func (t *FromTree) PathTo(end int) []int {
 	n := t.Paths[end].Len
 	if n == 0 {
