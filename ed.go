@@ -223,18 +223,18 @@ func (g AdjacencyList) Bipartite(n int) (b bool, c1, c2 *big.Int, oc []int) {
 	return b, nil, nil, oc
 }
 
-// Acyclic determines if a directed graph contains cycles.
+// Cyclic determines if a directed graph contains cycles.
 //
-// Acyclic returns true if there are no cycles.
-// Acyclic returns false if a cycle is detected.
-func (g AdjacencyList) Acyclic() bool {
-	a := true
+// Cyclic returns true if g contains at least one cycle.
+// Cyclic returns false if g is acyclic.
+func (g AdjacencyList) Cyclic() bool {
+	var c bool
 	var temp, perm big.Int
 	var df func(int)
 	df = func(n int) {
 		switch {
 		case temp.Bit(n) == 1:
-			a = false
+			c = true
 			return
 		case perm.Bit(n) == 1:
 			return
@@ -242,7 +242,7 @@ func (g AdjacencyList) Acyclic() bool {
 		temp.SetBit(&temp, n, 1)
 		for _, nb := range g[n] {
 			df(nb)
-			if !a {
+			if c {
 				return
 			}
 		}
@@ -253,12 +253,11 @@ func (g AdjacencyList) Acyclic() bool {
 		if perm.Bit(n) == 1 {
 			continue
 		}
-		df(n)
-		if !a {
-			return false
+		if df(n); c {
+			break
 		}
 	}
-	return true
+	return c
 }
 
 // Topological computes a topological sort of a directed acyclic graph.

@@ -86,19 +86,19 @@ func ExampleAdjacencyList_Bipartite() {
 	// [3 4 2]
 }
 
-func ExampleAdjacencyList_Acyclic() {
+func ExampleAdjacencyList_Cyclic() {
 	g := ed.AdjacencyList{
 		0: {1, 2},
 		1: {2},
 		2: {3},
 		3: {},
 	}
-	fmt.Println(g.Acyclic())
-	g[3] = []int{1}
-	fmt.Println(g.Acyclic())
+	fmt.Println(g.Cyclic())
+	g[3] = []int{2}
+	fmt.Println(g.Cyclic())
 	// Output:
-	// true
 	// false
+	// true
 }
 
 func ExampleAdjacencyList_Topological() {
