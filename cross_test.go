@@ -24,15 +24,15 @@ type testCase struct {
 
 var s = rand.New(rand.NewSource(59))
 var r100 = r(100, 200, 62)
-var r1k, r10k, r100k testCase
-
-func bigger() {
-	r1k = r(1e3, 3e3, 66)   // (15x as many arcs as r100)
-	r10k = r(1e4, 5e4, 59)  // (17x as many arcs as r1k)
-	r100k = r(1e5, 1e6, 59) // (20x as many arcs as r10k)
-}
-
-var once sync.Once // for bigger
+var (
+	r1k, r10k, r100k testCase
+	once             sync.Once
+	bigger           = func() {
+		r1k = r(1e3, 3e3, 66)   // (15x as many arcs as r100)
+		r10k = r(1e4, 5e4, 59)  // (17x as many arcs as r1k)
+		r100k = r(1e5, 1e6, 59) // (20x as many arcs as r10k)
+	}
+)
 
 // generate random directed graph and end points to test
 func r(nNodes, nArcs int, seed int64) testCase {
@@ -97,94 +97,40 @@ arc:
 	return tc
 }
 
-func Test100(t *testing.T) {
-	tc := r100
-	d := ed.NewDijkstra(tc.g)
-	pathD, distD := d.Path(tc.start, tc.end)
-	// test that repeating same search on same d gives same result
-	path2, dist2 := d.Path(tc.start, tc.end)
-	if len(pathD) != len(path2) || distD != dist2 {
-		t.Fatal("D, D2 len or dist mismatch")
-	}
-	for i, half := range pathD {
-		if path2[i] != half {
-			t.Fatal("D, D2 path mismatch")
+// end duplicate code
+
+func TestSSSP(t *testing.T) {
+	tx := func(tc testCase) {
+		d := ed.NewDijkstra(tc.g)
+		pathD, distD := d.Path(tc.start, tc.end)
+		// test that repeating same search on same d gives same result
+		path2, dist2 := d.Path(tc.start, tc.end)
+		if len(pathD) != len(path2) || distD != dist2 {
+			t.Fatal(len(tc.g), "D, D2 len or dist mismatch")
+		}
+		for i, half := range pathD {
+			if path2[i] != half {
+				t.Fatal(len(tc.g), "D, D2 path mismatch")
+			}
+		}
+		// A*
+		a := ed.NewAStar(tc.g)
+		pathA, distA := a.AStarA(tc.start, tc.end, tc.h)
+		// test that a* path is same distance and length a dijkstra path
+		if len(pathA) != len(pathD) || distA != distD {
+			t.Log("pathA:", pathA)
+			t.Log("pathD:", pathD)
+			t.Log("distA:", distA)
+			t.Log("distD:", distD)
+			t.Fatal(len(tc.g), "A, D len or dist mismatch")
 		}
 	}
-	// A*
-	a := ed.NewAStar(tc.g)
-	pathA, distA := a.AStarA(tc.start, tc.end, tc.h)
-	// test that a* path is same distance and length a dijkstra path
-	if len(pathA) != len(pathD) || distA != distD {
-		t.Fatal("A, D len or dist mismatch")
-	}
-}
-
-func BenchmarkDijkstra100(b *testing.B) {
-	// 100 nodes, 200 edges
-	tc := r100
-	d := ed.NewDijkstra(tc.g)
-	for i := 0; i < b.N; i++ {
-		d.AllPaths(tc.start)
-	}
-}
-
-func TestDijkstra1e3(t *testing.T) {
+	tx(r100)
 	if testing.Short() {
 		t.Skip()
 	}
 	once.Do(bigger)
-	tc := r1k
-	d := ed.NewDijkstra(tc.g)
-	d.Path(tc.start, tc.end)
-}
-
-func BenchmarkDijkstra1e3(b *testing.B) {
-	// 1000 nodes, 3000 edges
-	once.Do(bigger)
-	tc := r1k
-	d := ed.NewDijkstra(tc.g)
-	for i := 0; i < b.N; i++ {
-		d.AllPaths(tc.start)
-	}
-}
-
-func TestDijkstra1e4(t *testing.T) {
-	if testing.Short() {
-		t.Skip()
-	}
-	once.Do(bigger)
-	tc := r10k
-	d := ed.NewDijkstra(tc.g)
-	d.Path(tc.start, tc.end)
-}
-
-func BenchmarkDijkstra1e4(b *testing.B) {
-	// 10k nodes, 50k edges
-	once.Do(bigger)
-	tc := r10k
-	d := ed.NewDijkstra(tc.g)
-	for i := 0; i < b.N; i++ {
-		d.AllPaths(tc.start)
-	}
-}
-
-func TestDijkstra1e5(t *testing.T) {
-	if testing.Short() {
-		t.Skip()
-	}
-	once.Do(bigger)
-	tc := r100k
-	d := ed.NewDijkstra(tc.g)
-	d.Path(tc.start, tc.end)
-}
-
-func BenchmarkDijkstra1e5(b *testing.B) {
-	// 100k nodes, 1m edges
-	once.Do(bigger)
-	tc := r100k
-	d := ed.NewDijkstra(tc.g)
-	for i := 0; i < b.N; i++ {
-		d.AllPaths(tc.start)
-	}
+	tx(r1k)
+	tx(r10k)
+	tx(r100k)
 }

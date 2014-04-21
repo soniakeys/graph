@@ -5,6 +5,7 @@ package ed_test
 
 import (
 	"fmt"
+	"testing"
 
 	"github.com/soniakeys/ed"
 )
@@ -54,4 +55,43 @@ func ExampleDijkstra_AllPaths() {
 	// 3:     [{2 +Inf} {3 1.1}]          2    1.1   1.1
 	// 4:     [{2 +Inf} {3 1.1} {4 0.6}]  3    1.7   1.7
 	// 5:     [{2 +Inf} {5 0.2}]          2    0.2   0.2
+}
+
+func BenchmarkDijkstra100(b *testing.B) {
+	// 100 nodes, 200 edges
+	tc := r100
+	d := ed.NewDijkstra(tc.g)
+	for i := 0; i < b.N; i++ {
+		d.AllPaths(tc.start)
+	}
+}
+
+func BenchmarkDijkstra1e3(b *testing.B) {
+	// 1000 nodes, 3000 edges
+	once.Do(bigger)
+	tc := r1k
+	d := ed.NewDijkstra(tc.g)
+	for i := 0; i < b.N; i++ {
+		d.AllPaths(tc.start)
+	}
+}
+
+func BenchmarkDijkstra1e4(b *testing.B) {
+	// 10k nodes, 50k edges
+	once.Do(bigger)
+	tc := r10k
+	d := ed.NewDijkstra(tc.g)
+	for i := 0; i < b.N; i++ {
+		d.AllPaths(tc.start)
+	}
+}
+
+func BenchmarkDijkstra1e5(b *testing.B) {
+	// 100k nodes, 1m edges
+	once.Do(bigger)
+	tc := r100k
+	d := ed.NewDijkstra(tc.g)
+	for i := 0; i < b.N; i++ {
+		d.AllPaths(tc.start)
+	}
 }
