@@ -4,7 +4,7 @@ import (
 	"math/big"
 )
 
-// A BreadthFirst object allows graph taversals and searches in
+// A BreadthFirst object allows graph traversals and searches in
 // breadth first order.
 //
 // Construct with NewBreadthFirst.
@@ -13,7 +13,7 @@ type BreadthFirst struct {
 	Result *FromTree
 }
 
-// NewBreadthFirst creates a BreadthFirst object that allows graph taversals
+// NewBreadthFirst creates a BreadthFirst object that allows graph traversals
 // and searches in breadth first order.
 //
 // Argument g is the graph to be searched, as an adjacency list.
