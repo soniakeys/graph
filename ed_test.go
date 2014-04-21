@@ -139,3 +139,32 @@ func ExampleAdjacencyList_Tarjan() {
 	// [4 1 0]
 	// 3
 }
+
+func ExampleAdjacencyList_BiconnectedComponents() {
+	g := ed.AdjacencyList{
+		0:  {1, 7},
+		1:  {2, 4, 0},
+		2:  {3, 1},
+		3:  {2, 4},
+		4:  {3, 1},
+		5:  {6, 12},
+		6:  {5, 12, 8},
+		7:  {8, 0},
+		8:  {6, 7, 9, 10},
+		9:  {8},
+		10: {8, 13, 11},
+		11: {10},
+		12: {5, 6, 13},
+		13: {12, 10},
+	}
+	b := ed.NewBiconnectedComponents(g)
+	b.Find(0)
+	fmt.Println("n: cut from")
+	for n, f := range b.From {
+		fmt.Printf("%d: %d %d\n",
+			n, b.Cuts.Bit(n), f)
+	}
+	fmt.Println("Leaves:", b.Leaves)
+	// wip
+	// Output:
+}
