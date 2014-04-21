@@ -1,7 +1,9 @@
 // Copyright 2013 Sonia Keys
 // License MIT: http://opensource.org/licenses/MIT
 
-package ed
+// cross_test.go, tests across multiple search algorithms
+
+package ed_test
 
 import (
 	"fmt"
@@ -9,12 +11,15 @@ import (
 	"math/rand"
 	"sync"
 	"testing"
+
+	"github.com/soniakeys/ed"
 )
 
+// duplicate code in instr_test.go
 type testCase struct {
-	g          WeightedAdjacencyList
+	g          ed.WeightedAdjacencyList
 	start, end int
-	h          Heuristic
+	h          ed.Heuristic
 }
 
 var s = rand.New(rand.NewSource(59))
@@ -59,7 +64,7 @@ func r(nNodes, nArcs int, seed int64) testCase {
 		return math.Hypot(ce.x-cn.x, ce.y-cn.y)
 	}
 	// graph
-	tc.g = make(WeightedAdjacencyList, nNodes)
+	tc.g = make(ed.WeightedAdjacencyList, nNodes)
 	// arcs
 	var tooFar, dup int
 arc:
@@ -86,7 +91,7 @@ arc:
 				continue arc
 			}
 		}
-		tc.g[n1] = append(tc.g[n1], Half{n2, dist})
+		tc.g[n1] = append(tc.g[n1], ed.Half{n2, dist})
 		i++
 	}
 	return tc
@@ -94,9 +99,8 @@ arc:
 
 func Test100(t *testing.T) {
 	tc := r100
-	d := NewDijkstra(tc.g)
+	d := ed.NewDijkstra(tc.g)
 	pathD, distD := d.Path(tc.start, tc.end)
-	t.Log("NV AV:", d.ndVis, d.arcVis)
 	// test that repeating same search on same d gives same result
 	path2, dist2 := d.Path(tc.start, tc.end)
 	if len(pathD) != len(path2) || distD != dist2 {
@@ -108,7 +112,7 @@ func Test100(t *testing.T) {
 		}
 	}
 	// A*
-	a := NewAStar(tc.g)
+	a := ed.NewAStar(tc.g)
 	pathA, distA := a.AStarA(tc.start, tc.end, tc.h)
 	// test that a* path is same distance and length a dijkstra path
 	if len(pathA) != len(pathD) || distA != distD {
@@ -119,7 +123,7 @@ func Test100(t *testing.T) {
 func BenchmarkDijkstra100(b *testing.B) {
 	// 100 nodes, 200 edges
 	tc := r100
-	d := NewDijkstra(tc.g)
+	d := ed.NewDijkstra(tc.g)
 	for i := 0; i < b.N; i++ {
 		d.AllPaths(tc.start)
 	}
@@ -131,16 +135,15 @@ func TestDijkstra1e3(t *testing.T) {
 	}
 	once.Do(bigger)
 	tc := r1k
-	d := NewDijkstra(tc.g)
+	d := ed.NewDijkstra(tc.g)
 	d.Path(tc.start, tc.end)
-	t.Log("NV AV:", d.ndVis, d.arcVis)
 }
 
 func BenchmarkDijkstra1e3(b *testing.B) {
 	// 1000 nodes, 3000 edges
 	once.Do(bigger)
 	tc := r1k
-	d := NewDijkstra(tc.g)
+	d := ed.NewDijkstra(tc.g)
 	for i := 0; i < b.N; i++ {
 		d.AllPaths(tc.start)
 	}
@@ -152,16 +155,15 @@ func TestDijkstra1e4(t *testing.T) {
 	}
 	once.Do(bigger)
 	tc := r10k
-	d := NewDijkstra(tc.g)
+	d := ed.NewDijkstra(tc.g)
 	d.Path(tc.start, tc.end)
-	t.Log("NV AV:", d.ndVis, d.arcVis)
 }
 
 func BenchmarkDijkstra1e4(b *testing.B) {
 	// 10k nodes, 50k edges
 	once.Do(bigger)
 	tc := r10k
-	d := NewDijkstra(tc.g)
+	d := ed.NewDijkstra(tc.g)
 	for i := 0; i < b.N; i++ {
 		d.AllPaths(tc.start)
 	}
@@ -173,16 +175,15 @@ func TestDijkstra1e5(t *testing.T) {
 	}
 	once.Do(bigger)
 	tc := r100k
-	d := NewDijkstra(tc.g)
+	d := ed.NewDijkstra(tc.g)
 	d.Path(tc.start, tc.end)
-	t.Log("NV AV:", d.ndVis, d.arcVis)
 }
 
 func BenchmarkDijkstra1e5(b *testing.B) {
 	// 100k nodes, 1m edges
 	once.Do(bigger)
 	tc := r100k
-	d := NewDijkstra(tc.g)
+	d := ed.NewDijkstra(tc.g)
 	for i := 0; i < b.N; i++ {
 		d.AllPaths(tc.start)
 	}
