@@ -10,11 +10,13 @@ import (
 	"github.com/soniakeys/ed"
 )
 
-func ExampleAdjacencyList_Valid() {
+func ExampleAdjacencyList_Ok() {
 	var g ed.AdjacencyList
-	fmt.Println(g.Valid()) // zero value adjacency list is valid
-	g = ed.AdjacencyList{{1}}
-	fmt.Println(g.Valid()) // arc 0 to 1 invalid with only one node
+	fmt.Println(g.Ok()) // zero value adjacency list is valid
+	g = ed.AdjacencyList{
+		0: {1},
+	}
+	fmt.Println(g.Ok()) // arc 0 to 1 invalid with only one node
 	// Output:
 	// true
 	// false

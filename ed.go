@@ -20,11 +20,11 @@ import (
 // create reciprocal neighbors.
 type AdjacencyList [][]int
 
-// Valid validates that no arcs in the reciever graph lead outside the graph.
+// Ok validates that no arcs in g lead outside the graph.
 //
-// Ints in an adjacency list structure represent half arcs.  Valid
+// Ints in an adjacency list represent half arcs.  Ok
 // returns true if all int values are valid slice indexes back into g.
-func (g AdjacencyList) Valid() bool {
+func (g AdjacencyList) Ok() bool {
 	for _, nbs := range g {
 		for _, nb := range nbs {
 			if nb < 0 || nb >= len(g) {
