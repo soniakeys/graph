@@ -34,8 +34,8 @@
 // or traversal.
 //
 // A float64 value associated with an arc is "weight."  The sum of arc weights
-// along a path is a "distance."  The number of nodes in a path is the path's
-// "length."
+// along a path is a "distance."  The number of nodes in a path, including
+// start and end nodes, is the path's "length."
 //
 // A "half arc" represents just one end of an arc, perhaps assocating it with
 // an arc weight.  The more common half to work with is the "to half" (the
