@@ -115,14 +115,20 @@ func TestSSSP(t *testing.T) {
 		}
 		// A*
 		a := ed.NewAStar(tc.g)
-		pathA, distA := a.AStarA(tc.start, tc.end, tc.h)
-		// test that a* path is same distance and length a dijkstra path
-		if len(pathA) != len(pathD) || distA != distD {
+		pathA, distA := a.AStarAPath(tc.start, tc.end, tc.h)
+		// test that a* path is same distance and length as dijkstra path
+		if len(pathA) != len(pathD) {
 			t.Log("pathA:", pathA)
 			t.Log("pathD:", pathD)
+			t.Fatal(len(tc.g), "A, D len mismatch")
+		}
+		//fudge coded when math was a little different. not needed currently.
+		//if math.Abs((distA - distD)/distA) > 1e-15 {
+		if distA != distD {
 			t.Log("distA:", distA)
 			t.Log("distD:", distD)
-			t.Fatal(len(tc.g), "A, D len or dist mismatch")
+			t.Log("delta:", math.Abs(distA-distD))
+			t.Fatal(len(tc.g), "A, D dist mismatch")
 		}
 	}
 	tx(r100)

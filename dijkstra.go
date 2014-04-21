@@ -7,7 +7,7 @@ import (
 	"container/heap"
 )
 
-// A Dijkstra object allows shortest path searches using Dijkstra's algorithm.
+// A Dijkstra object allows shortest path searches by Dijkstra's algorithm.
 //
 // Construct with NewDijkstra.
 type Dijkstra struct {
@@ -59,12 +59,12 @@ type tentResult struct {
 
 type tent []*tentResult
 
-// Path finds a single shortest path from start to end.
+// Path finds a single shortest path.
 //
 // Returned is the path and distance as returned by WeightedFromTree.PathTo.
 // Path returns as soon as the shortest path to end is found.  It does not
 // explore the remainder of the graph.  Where multiple paths exist with the
-// same distance, AllPaths returns a path with the minimum number of nodes.
+// same distance, Path returns a path with the minimum number of nodes.
 func (d *Dijkstra) Path(start, end int) ([]Half, float64) {
 	d.search(start, end)
 	return d.Result.PathTo(end)
@@ -93,7 +93,7 @@ func (d *Dijkstra) search(start, end int) (reached int) {
 
 	current := start
 	rp := d.Result.Paths
-	rp[current].Len = 1 // path length 1 for start node
+	rp[current].Len = 1 // path length at start is 1 node
 	cr := &d.r[current]
 	cr.dist = 0 // distance at start is 0
 	rp[current].Dist = 0

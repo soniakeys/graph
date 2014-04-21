@@ -6,19 +6,21 @@ package ed
 import (
 	"container/heap"
 	"fmt"
-	"math"
 )
 
 // An AStar object allows shortest path searches by variants of the A*
 // algorithm.
 //
 // The variants are determined by the specific search method and heuristic used.
+//
+// Construct with NewAStar
 type AStar struct {
-	g WeightedAdjacencyList // input graph
-	// r is a list of all nodes reached so far.
-	// the chain of nodes following the prev member represents the
-	// best path found so far from the start to this node.
+	Graph  WeightedAdjacencyList // input graph
+	Result *WeightedFromTree
+	// heap values
 	r []rNode
+	// test instrumentation
+	ndVis, arcVis int
 }
 
 // NewAStar creates an AStar struct that allows shortest path searches.
@@ -39,21 +41,25 @@ type AStar struct {
 func NewAStar(g WeightedAdjacencyList) *AStar {
 	r := make([]rNode, len(g))
 	for i := range r {
-		r[i].nd = i
+		r[i].nx = i
 	}
-	return &AStar{g: g, r: r}
+	return &AStar{
+		Graph:  g,
+		Result: NewWeightedFromTree(len(g)),
+		r:      r,
+	}
 }
 
 // rNode holds data for a "reached" node
 type rNode struct {
-	nd       int
-	state    int8    // state constants defined below
-	prevNode *rNode  // chain encodes path back to start
-	prevArc  float64 // Arc weight from prevNode to the node of this struct
-	g        float64 // "g" best known path distance from start node
-	f        float64 // "g+h", path dist + heuristic estimate
-	n        int     // number of nodes in path
-	fx       int     // heap.Fix index
+	nx    int
+	state int8 // state constants defined below
+	//	prevNode *rNode  // chain encodes path back to start
+	//	prevArc  float64 // Arc weight from prevNode to the node of this struct
+	//	g        float64 // "g" best known path distance from start node
+	f float64 // "g+h", path dist + heuristic estimate
+	//	n        int     // number of nodes in path
+	fx int // heap.Fix index
 }
 
 // for rNode.state
@@ -149,68 +155,66 @@ func (h Heuristic) Monotonic(g WeightedAdjacencyList) (bool, string) {
 // heuristic is likely to find a very good path, if not the best.  Quality
 // of the path returned degrades gracefully with the quality of the heuristic.
 //
-// The slice result represents the found path with a sequence of half arcs.
-// If no path exists from start to end the slice result will be nil. For the
-// first element, representing the start node, the arc weight is meaningless
-// and will be WeightedFromTree.NoPath. The total path distance is also
-// returned.  Path distance is the sum of arc weights, excluding the
-// meaningless arc weight of the first Half.
-//
 // The heuristic function h should ideally be fairly inexpensive.  AStarA
 // may call it more than once for the same node, especially as graph density
-// increases.  In some cases it may be worth the effort to memoize values.
-// Faster yet would be a fully precomputed lookup table, but typically h is
-// needed for a rather small fraction of the nodes in the graph.  Construction
-// of a complete lookup table will often not be worthwhile.  Profile to see
-// if it is even important; benchmark different approaches to find the best.
-func (a *AStar) AStarA(start, end int, h Heuristic) ([]Half, float64) {
+// increases.  In some cases it may be worth the effort to memoize or
+// precompute values.
+//
+// If AStarA finds a path it returns true.  The path can be decoded from
+// a.Result.
+func (a *AStar) AStarA(start, end int, h Heuristic) bool {
 	// NOTE: AStarM is largely duplicate code.
 
+	// reset from any previous run
+	a.ndVis = 0
+	a.arcVis = 0
+	a.Result.reset()
+	for i := range a.r {
+		a.r[i].state = unreached
+	}
+
 	// start node is reached initially
-	p := &a.r[start]
-	p.state = reached
-	p.f = h(start) // total path estimate is estimate from start
-	p.n = 1        // path length is 1 node
+	cr := &a.r[start]
+	cr.state = reached
+	cr.f = h(start) // total path estimate is estimate from start
+	rp := a.Result.Paths
+	rp[start].Len = 1  // path length at start is 1 node
+	rp[start].Dist = 0 // distance at start is 0
 	// oh is a heap of nodes "open" for exploration.  nodes go on the heap
 	// when they get an initial or new "g" path distance, and therefore a
 	// new "f" which serves as priority for exploration.
-	oh := openHeap{p}
+	oh := openHeap{cr}
 	for len(oh) > 0 {
 		bestPath := heap.Pop(&oh).(*rNode)
-		bestNode := bestPath.nd
+		bestNode := bestPath.nx
 		if bestNode == end {
-			// done
-			dist := bestPath.g
-			i := bestPath.n
-			path := make([]Half, i)
-			for i > 0 {
-				i--
-				path[i] = Half{To: bestPath.nd, ArcWeight: bestPath.prevArc}
-				bestPath = bestPath.prevNode
-			}
-			return path, dist
+			return true
 		}
-		for _, nb := range a.g[bestNode] {
-			ed := nb.ArcWeight
-			nd := nb.To
-			g := bestPath.g + ed
-			if alt := &a.r[nd]; alt.state == reached {
-				if g > alt.g {
-					// new path to nd is longer than some alternate path
+		bp := &rp[bestNode]
+		nextLen := bp.Len + 1
+		for _, nb := range a.Graph[bestNode] {
+			alt := &a.r[nb.To]
+			ap := &rp[alt.nx]
+			g := bp.Dist + nb.ArcWeight // "g" path distance from start
+			if alt.state == reached {
+				if g > ap.Dist {
+					// candidate path to nb is longer than some alternate path
 					continue
 				}
-				if g == alt.g && bestPath.n+1 >= alt.n {
-					// new path has identical length of some alternate path
-					// but it takes more hops.  stick with fewer nodes in path.
+				if g == ap.Dist && nextLen >= ap.Len {
+					// candidate path has identical length of some alternate
+					// path but it takes no fewer hops.
 					continue
 				}
 				// cool, we found a better way to get to this node.
+				// record new path data for this node and
 				// update alt with new data and make sure it's on the heap.
-				alt.prevNode = bestPath
-				alt.prevArc = ed
-				alt.g = g
-				alt.f = g + h(nd)
-				alt.n = bestPath.n + 1
+				*ap = WeightedPathEnd{
+					From: FromHalf{bestNode, nb.ArcWeight},
+					Dist: g,
+					Len:  nextLen,
+				}
+				alt.f = g + h(nb.To)
 				if alt.fx < 0 {
 					heap.Push(&oh, alt)
 				} else {
@@ -218,103 +222,124 @@ func (a *AStar) AStarA(start, end int, h Heuristic) ([]Half, float64) {
 				}
 			} else {
 				// bestNode being reached for the first time.
+				*ap = WeightedPathEnd{
+					From: FromHalf{bestNode, nb.ArcWeight},
+					Dist: g,
+					Len:  nextLen,
+				}
+				alt.f = g + h(nb.To)
 				alt.state = reached
-				alt.prevNode = bestPath
-				alt.prevArc = ed
-				alt.g = g
-				alt.f = g + h(nd)
-				alt.n = bestPath.n + 1
 				heap.Push(&oh, alt) // and it's now open for exploration
 			}
 		}
 	}
-	return nil, math.Inf(1) // no path
+	return false // no path
+}
+
+// AStarAPath finds a single shortest path.
+//
+// Returned is the path and distance as returned by WeightedFromTree.PathTo.
+func (a *AStar) AStarAPath(start, end int, h Heuristic) ([]Half, float64) {
+	a.AStarA(start, end, h)
+	return a.Result.PathTo(end)
 }
 
 // AStarM is AStarA optimized for monotonic heuristic estimates.
 //
 // See AStarA for general usage.  See Heuristic for notes on monotonicity.
-func (a *AStar) AStarM(start, end int, h Heuristic) ([]Half, float64) {
-	p := &a.r[start]
-	p.f = h(start) // total path estimate is estimate from start
-	p.n = 1        // path length is 1 node
-
+func (a *AStar) AStarM(start, end int, h Heuristic) bool {
 	// NOTE: AStarM is largely code duplicated from AStarA.
 	// Differences are noted in comments in this method.
+
+	a.ndVis = 0
+	a.arcVis = 0
+	a.Result.reset()
+	for i := range a.r {
+		a.r[i].state = unreached
+	}
+	cr := &a.r[start]
 
 	// difference from AStarA:
 	// instead of a bit to mark a reached node, there are two states,
 	// open and closed. open marks nodes "open" for exploration.
 	// nodes are marked open as they are reached, then marked
 	// closed as they are found to be on the best path.
-	p.state = open
+	cr.state = open
 
-	oh := openHeap{p}
+	cr.f = h(start)
+	rp := a.Result.Paths
+	rp[start].Len = 1
+	rp[start].Dist = 0
+	oh := openHeap{cr}
 	for len(oh) > 0 {
 		bestPath := heap.Pop(&oh).(*rNode)
-		bestNode := bestPath.nd
+		bestNode := bestPath.nx
 		if bestNode == end {
-			// done
-			dist := bestPath.g
-			i := bestPath.n
-			path := make([]Half, i)
-			for i > 0 {
-				i--
-				path[i] = Half{To: bestPath.nd, ArcWeight: bestPath.prevArc}
-				bestPath = bestPath.prevNode
-			}
-			return path, dist
+			return true
 		}
 
 		// difference from AStarA:
 		// move nodes to closed list as they are found to be best so far.
 		bestPath.state = closed
 
-		for _, nb := range a.g[bestNode] {
-			ed := nb.ArcWeight
-			nd := nb.To
+		bp := &rp[bestNode]
+		nextLen := bp.Len + 1
+		for _, nb := range a.Graph[bestNode] {
+			alt := &a.r[nb.To]
 
 			// difference from AStarA:
 			// Monotonicity means that f cannot be improved.
-			if a.r[nd].state == closed {
+			if alt.state == closed {
 				continue
 			}
 
-			g := bestPath.g + ed
-			if alt := &a.r[nd]; alt.state == open {
-				if g > alt.g {
-					// new path to nd is longer than some alternate path
+			ap := &rp[alt.nx]
+			g := bp.Dist + nb.ArcWeight
+
+			// difference from AStarA:
+			// test for open state, not just reached
+			if alt.state == open {
+
+				if g > ap.Dist {
 					continue
 				}
-				if g == alt.g && bestPath.n+1 >= alt.n {
-					// new path has identical length of some alternate path
-					// but it takes more hops.  stick with fewer nodes in path.
+				if g == ap.Dist && nextLen >= ap.Len {
 					continue
 				}
-				// cool, we found a better way to get to this node.
-				// update alt with new data and make sure it's on the heap.
-				alt.prevNode = bestPath
-				alt.prevArc = ed
-				alt.g = g
-				alt.f = g + h(nd)
-				alt.n = bestPath.n + 1
+				*ap = WeightedPathEnd{
+					From: FromHalf{bestNode, nb.ArcWeight},
+					Dist: g,
+					Len:  nextLen,
+				}
+				alt.f = g + h(nb.To)
 
 				// difference from AStarA:
 				// we know alt was on the heap because we found it marked open
 				heap.Fix(&oh, alt.fx)
 			} else {
-				// bestNode being reached for the first time.
+				*ap = WeightedPathEnd{
+					From: FromHalf{bestNode, nb.ArcWeight},
+					Dist: g,
+					Len:  nextLen,
+				}
+				alt.f = g + h(nb.To)
+
+				// difference from AStarA:
+				// nodes are opened when first reached
 				alt.state = open
-				alt.prevNode = bestPath
-				alt.prevArc = ed
-				alt.g = g
-				alt.f = g + h(nd)
-				alt.n = bestPath.n + 1
-				heap.Push(&oh, alt) // and it's now open for exploration
+				heap.Push(&oh, alt)
 			}
 		}
 	}
-	return nil, math.Inf(1) // no path
+	return false
+}
+
+// AStarMPath finds a single shortest path.
+//
+// Returned is the path and distance as returned by WeightedFromTree.PathTo.
+func (a *AStar) AStarMPath(start, end int, h Heuristic) ([]Half, float64) {
+	a.AStarM(start, end, h)
+	return a.Result.PathTo(end)
 }
 
 // implement container/heap

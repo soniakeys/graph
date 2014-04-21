@@ -20,11 +20,11 @@ func ExampleAStar_AStarA() {
 	})
 	h4 := []float64{1.9, 2, 1, .6, 0, .9}
 	h := func(from int) float64 { return h4[from] }
-	p, l := a.AStarA(0, 4, h)
+	p, l := a.AStarAPath(0, 4, h)
 	fmt.Println("Shortest path:", p)
 	fmt.Println("Path length:", l)
 	// Output:
-	// Shortest path: [{0 0} {2 0.9} {3 1.1} {4 0.6}]
+	// Shortest path: [{0 +Inf} {2 0.9} {3 1.1} {4 0.6}]
 	// Path length: 2.6
 }
 
@@ -39,11 +39,11 @@ func ExampleAStar_AStarM() {
 	})
 	h4 := []float64{1.9, 2, 1, .6, 0, .9}
 	h := func(from int) float64 { return h4[from] }
-	p, l := a.AStarM(0, 4, h)
+	p, l := a.AStarMPath(0, 4, h)
 	fmt.Println("Shortest path:", p)
 	fmt.Println("Path length:", l)
 	// Output:
-	// Shortest path: [{0 0} {2 0.9} {3 1.1} {4 0.6}]
+	// Shortest path: [{0 +Inf} {2 0.9} {3 1.1} {4 0.6}]
 	// Path length: 2.6
 }
 
