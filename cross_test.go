@@ -99,6 +99,18 @@ arc:
 
 // end duplicate code
 
+func TestR(t *testing.T) {
+	tcs := []testCase{r100, r1k, r10k, r100k}
+	if testing.Short() {
+		tcs = tcs[:1]
+	}
+	for _, tc := range tcs {
+		if s, cx := tc.g.Unweighted().Simple(); !s {
+			t.Fatal(len(tc.g), "not simple at node", cx)
+		}
+	}
+}
+
 func TestSSSP(t *testing.T) {
 	tx := func(tc testCase) {
 		d := ed.NewDijkstra(tc.g)

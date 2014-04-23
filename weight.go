@@ -136,3 +136,16 @@ func (t *WeightedFromTree) PathTo(end int) ([]Half, float64) {
 		end = f.From
 	}
 }
+
+// Unweighted constructs the equivalent unweighted graph.
+func (g WeightedAdjacencyList) Unweighted() AdjacencyList {
+	a := make(AdjacencyList, len(g))
+	for n, nbs := range g {
+		to := make([]int, len(nbs))
+		for i, nb := range nbs {
+			to[i] = nb.To
+		}
+		a[n] = to
+	}
+	return a
+}
