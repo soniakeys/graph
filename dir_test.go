@@ -5,11 +5,63 @@ package ed_test
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/soniakeys/ed"
 )
 
+func ExampleAdjacencyList_Cyclic() {
+	g := ed.AdjacencyList{
+		0: {1, 2},
+		1: {2},
+		2: {3},
+		3: {},
+	}
+	fmt.Println(g.Cyclic())
+	g[3] = []int{2}
+	fmt.Println(g.Cyclic())
+	// Output:
+	// false
+	// true
+}
+
+func ExampleAdjacencyList_Topological() {
+	g := ed.AdjacencyList{
+		1: {2},
+		3: {1, 2},
+		4: {3, 2},
+	}
+	fmt.Println(g.Topological())
+	g[2] = []int{3}
+	fmt.Println(g.Topological())
+	// Output:
+	// [4 3 1 2 0]
+	// []
+}
+
+func ExampleAdjacencyList_Tarjan() {
+	g := ed.AdjacencyList{
+		0: {1},
+		1: {4, 2, 5},
+		2: {3, 6},
+		3: {2, 7},
+		4: {5, 0},
+		5: {6},
+		6: {5},
+		7: {3, 6},
+	}
+	scc := g.Tarjan()
+	for _, c := range scc {
+		fmt.Println(c)
+	}
+	fmt.Println(len(scc))
+	// Output:
+	// [6 5]
+	// [7 3 2]
+	// [4 1 0]
+	// 3
+}
+
+/*
 func ExampleAdjacencyList_Ok() {
 	var g ed.AdjacencyList
 	fmt.Println(g.Ok()) // zero value adjacency list is valid
@@ -74,3 +126,33 @@ func ExampleAdjacencyList_Bipartite() {
 	// 111 11000
 	// [3 4 2]
 }
+
+func ExampleAdjacencyList_BiconnectedComponents() {
+	g := ed.AdjacencyList{
+		0:  {1, 7},
+		1:  {2, 4, 0},
+		2:  {3, 1},
+		3:  {2, 4},
+		4:  {3, 1},
+		5:  {6, 12},
+		6:  {5, 12, 8},
+		7:  {8, 0},
+		8:  {6, 7, 9, 10},
+		9:  {8},
+		10: {8, 13, 11},
+		11: {10},
+		12: {5, 6, 13},
+		13: {12, 10},
+	}
+	b := ed.NewBiconnectedComponents(g)
+	b.Find(0)
+	fmt.Println("n: cut from")
+	for n, f := range b.From {
+		fmt.Printf("%d: %d %d\n",
+			n, b.Cuts.Bit(n), f)
+	}
+	fmt.Println("Leaves:", b.Leaves)
+	// wip
+	// Output:
+}
+*/

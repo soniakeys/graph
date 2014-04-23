@@ -9,7 +9,7 @@ import (
 	"github.com/soniakeys/ed"
 )
 
-func ExampleAStar_AStarA() {
+func ExampleAStar_AStarAPath() {
 	a := ed.NewAStar(ed.WeightedAdjacencyList{
 		0: {{1, .7}, {2, .9}, {5, 1.4}},
 		1: {{2, 1}, {3, 1.5}},
@@ -28,7 +28,7 @@ func ExampleAStar_AStarA() {
 	// Path length: 2.6
 }
 
-func ExampleAStar_AStarM() {
+func ExampleAStar_AStarMPath() {
 	a := ed.NewAStar(ed.WeightedAdjacencyList{
 		0: {{1, .7}, {2, .9}, {5, 1.4}},
 		1: {{2, 1}, {3, 1.5}},
