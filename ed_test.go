@@ -50,19 +50,6 @@ func ExampleAdjacencyList_Simple() {
 	// false 2
 }
 
-func ExampleAdjacencyList_ConnectedComponents() {
-	g := ed.AdjacencyList{
-		0: {3, 4},
-		1: {5},
-		3: {0, 4},
-		4: {0, 3},
-		5: {1},
-	}
-	fmt.Println(g.ConnectedComponents())
-	// Output:
-	// [0 1 2]
-}
-
 func ExampleAdjacencyList_Bipartite() {
 	g := ed.AdjacencyList{
 		0: {3},
