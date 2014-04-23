@@ -6,7 +6,7 @@
 // Methods specific to directed graphs.
 // Doc for each method should specifically say directed.
 
-package ed
+package graph
 
 import (
 	"math/big"

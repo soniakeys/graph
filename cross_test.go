@@ -3,7 +3,7 @@
 
 // cross_test.go, tests across multiple search algorithms
 
-package ed_test
+package graph_test
 
 import (
 	"fmt"
@@ -12,14 +12,14 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/soniakeys/ed"
+	"github.com/soniakeys/graph"
 )
 
 // duplicate code in instr_test.go
 type testCase struct {
-	g          ed.WeightedAdjacencyList
+	g          graph.WeightedAdjacencyList
 	start, end int
-	h          ed.Heuristic
+	h          graph.Heuristic
 }
 
 var s = rand.New(rand.NewSource(59))
@@ -64,7 +64,7 @@ func r(nNodes, nArcs int, seed int64) testCase {
 		return math.Hypot(ce.x-cn.x, ce.y-cn.y)
 	}
 	// graph
-	tc.g = make(ed.WeightedAdjacencyList, nNodes)
+	tc.g = make(graph.WeightedAdjacencyList, nNodes)
 	// arcs
 	var tooFar, dup int
 arc:
@@ -91,7 +91,7 @@ arc:
 				continue arc
 			}
 		}
-		tc.g[n1] = append(tc.g[n1], ed.Half{n2, dist})
+		tc.g[n1] = append(tc.g[n1], graph.Half{n2, dist})
 		i++
 	}
 	return tc
@@ -113,7 +113,7 @@ func TestR(t *testing.T) {
 
 func TestSSSP(t *testing.T) {
 	tx := func(tc testCase) {
-		d := ed.NewDijkstra(tc.g)
+		d := graph.NewDijkstra(tc.g)
 		pathD, distD := d.Path(tc.start, tc.end)
 		// test that repeating same search on same d gives same result
 		path2, dist2 := d.Path(tc.start, tc.end)
@@ -126,7 +126,7 @@ func TestSSSP(t *testing.T) {
 			}
 		}
 		// A*
-		a := ed.NewAStar(tc.g)
+		a := graph.NewAStar(tc.g)
 		pathA, distA := a.AStarAPath(tc.start, tc.end, tc.h)
 		// test that a* path is same distance and length as dijkstra path
 		if len(pathA) != len(pathD) {

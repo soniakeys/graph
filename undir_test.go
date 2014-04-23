@@ -1,16 +1,16 @@
 // Copyright 2014 Sonia Keys
 // License MIT: http://opensource.org/licenses/MIT
 
-package ed_test
+package graph_test
 
 import (
 	"fmt"
 
-	"github.com/soniakeys/ed"
+	"github.com/soniakeys/graph"
 )
 
 func ExampleAdjacencyList_ConnectedComponents() {
-	g := ed.AdjacencyList{
+	g := graph.AdjacencyList{
 		0: {3, 4},
 		1: {5},
 		3: {0, 4},
@@ -23,7 +23,7 @@ func ExampleAdjacencyList_ConnectedComponents() {
 }
 
 func ExampleBiconnectedComponents_Find() {
-	g := ed.AdjacencyList{
+	g := graph.AdjacencyList{
 		0:  {1, 7},
 		1:  {2, 4, 0},
 		2:  {3, 1},
@@ -39,7 +39,7 @@ func ExampleBiconnectedComponents_Find() {
 		12: {5, 6, 13},
 		13: {12, 10},
 	}
-	b := ed.NewBiconnectedComponents(g)
+	b := graph.NewBiconnectedComponents(g)
 	b.Find(0)
 	fmt.Println("n: cut from")
 	for n, f := range b.From {

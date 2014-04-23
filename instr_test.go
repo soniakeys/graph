@@ -1,7 +1,11 @@
 // Copyright 2013 Sonia Keys
 // License MIT: http://opensource.org/licenses/MIT
 
-package ed
+// file instr_test.go
+//
+// Tests on unexported instrumentation.
+
+package graph
 
 import (
 	"fmt"

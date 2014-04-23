@@ -1,21 +1,21 @@
 // Copyright 2014 Sonia Keys
 // License MIT: http://opensource.org/licenses/MIT
 
-package ed_test
+package graph_test
 
 import (
 	"fmt"
 	"math"
 
-	"github.com/soniakeys/ed"
+	"github.com/soniakeys/graph"
 )
 
 func ExampleWeightedAdjacencyList_NegativeArc() {
-	g := ed.WeightedAdjacencyList{
+	g := graph.WeightedAdjacencyList{
 		2: {{0, 0}, {1, .5}},
 	}
 	fmt.Println(g.NegativeArc())
-	g[0] = []ed.Half{{1, -2}}
+	g[0] = []graph.Half{{1, -2}}
 	fmt.Println(g.NegativeArc())
 	// Output:
 	// false
@@ -23,7 +23,7 @@ func ExampleWeightedAdjacencyList_NegativeArc() {
 }
 
 func ExampleWeightedAdjacencyList_ValidTo() {
-	g := ed.WeightedAdjacencyList{
+	g := graph.WeightedAdjacencyList{
 		0: {{0, math.NaN()}},
 	}
 	fmt.Println(g.ValidTo())
@@ -38,7 +38,7 @@ func ExampleWeightedAdjacencyList_ValidTo() {
 }
 
 func ExampleWeightedFromTree_PathTo() {
-	g := ed.WeightedAdjacencyList{
+	g := graph.WeightedAdjacencyList{
 		0: {{1, .7}, {2, .9}, {5, 1.4}},
 		1: {{2, 1.0}, {3, 1.5}},
 		2: {{3, 1.1}, {5, .2}},
@@ -46,7 +46,7 @@ func ExampleWeightedFromTree_PathTo() {
 		4: {{5, .9}},
 		5: nil,
 	}
-	d := ed.NewDijkstra(g)
+	d := graph.NewDijkstra(g)
 	fmt.Println("From 2")
 	d.AllPaths(2)
 	path, dist := d.Result.PathTo(3)

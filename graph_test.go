@@ -1,19 +1,19 @@
 // Copyright 2014 Sonia Keys
 // License MIT: http://opensource.org/licenses/MIT
 
-package ed_test
+package graph_test
 
 import (
 	"fmt"
 	"strconv"
 
-	"github.com/soniakeys/ed"
+	"github.com/soniakeys/graph"
 )
 
 func ExampleAdjacencyList_Ok() {
-	var g ed.AdjacencyList
+	var g graph.AdjacencyList
 	fmt.Println(g.Ok()) // zero value adjacency list is valid
-	g = ed.AdjacencyList{
+	g = graph.AdjacencyList{
 		0: {1},
 	}
 	fmt.Println(g.Ok()) // arc 0 to 1 invalid with only one node
@@ -23,7 +23,7 @@ func ExampleAdjacencyList_Ok() {
 }
 
 func ExampleAdjacencyList_Undirected() {
-	g := ed.AdjacencyList{
+	g := graph.AdjacencyList{
 		0: {1, 2},
 		2: {0},
 	}
@@ -35,7 +35,7 @@ func ExampleAdjacencyList_Undirected() {
 	// true -1 -1
 }
 func ExampleAdjacencyList_Simple() {
-	g := ed.AdjacencyList{
+	g := graph.AdjacencyList{
 		2: {0, 1},
 	}
 	fmt.Println(g.Simple())
@@ -51,7 +51,7 @@ func ExampleAdjacencyList_Simple() {
 }
 
 func ExampleAdjacencyList_Bipartite() {
-	g := ed.AdjacencyList{
+	g := graph.AdjacencyList{
 		0: {3},
 		1: {3},
 		2: {3, 4},

@@ -1,17 +1,17 @@
 // Copyright 2013 Sonia Keys
 // License MIT: http://opensource.org/licenses/MIT
 
-package ed_test
+package graph_test
 
 import (
 	"fmt"
 	"testing"
 
-	"github.com/soniakeys/ed"
+	"github.com/soniakeys/graph"
 )
 
 func ExampleDijkstra_Path() {
-	d := ed.NewDijkstra([][]ed.Half{
+	d := graph.NewDijkstra([][]graph.Half{
 		1: {{2, 7}, {3, 9}, {6, 11}},
 		2: {{3, 10}, {4, 15}},
 		3: {{4, 11}, {6, 2}},
@@ -27,7 +27,7 @@ func ExampleDijkstra_Path() {
 }
 
 func ExampleDijkstra_AllPaths() {
-	g := [][]ed.Half{
+	g := [][]graph.Half{
 		0: {{1, .7}, {2, .9}, {5, 1.4}},
 		1: {{2, 1.0}, {3, 1.5}},
 		2: {{3, 1.1}, {5, .2}},
@@ -35,7 +35,7 @@ func ExampleDijkstra_AllPaths() {
 		4: {{5, .9}},
 		5: nil,
 	}
-	d := ed.NewDijkstra(g)
+	d := graph.NewDijkstra(g)
 	fmt.Println(d.AllPaths(2), "paths found.")
 	// column len is from Result, and will be equal to len(path).
 	// column dist is from Result, and will be equal to sum.
@@ -60,7 +60,7 @@ func ExampleDijkstra_AllPaths() {
 func BenchmarkDijkstra100(b *testing.B) {
 	// 100 nodes, 200 edges
 	tc := r100
-	d := ed.NewDijkstra(tc.g)
+	d := graph.NewDijkstra(tc.g)
 	for i := 0; i < b.N; i++ {
 		d.AllPaths(tc.start)
 	}
@@ -70,7 +70,7 @@ func BenchmarkDijkstra1e3(b *testing.B) {
 	// 1000 nodes, 3000 edges
 	once.Do(bigger)
 	tc := r1k
-	d := ed.NewDijkstra(tc.g)
+	d := graph.NewDijkstra(tc.g)
 	for i := 0; i < b.N; i++ {
 		d.AllPaths(tc.start)
 	}
@@ -80,7 +80,7 @@ func BenchmarkDijkstra1e4(b *testing.B) {
 	// 10k nodes, 50k edges
 	once.Do(bigger)
 	tc := r10k
-	d := ed.NewDijkstra(tc.g)
+	d := graph.NewDijkstra(tc.g)
 	for i := 0; i < b.N; i++ {
 		d.AllPaths(tc.start)
 	}
@@ -90,7 +90,7 @@ func BenchmarkDijkstra1e5(b *testing.B) {
 	// 100k nodes, 1m edges
 	once.Do(bigger)
 	tc := r100k
-	d := ed.NewDijkstra(tc.g)
+	d := graph.NewDijkstra(tc.g)
 	for i := 0; i < b.N; i++ {
 		d.AllPaths(tc.start)
 	}

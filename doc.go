@@ -1,27 +1,26 @@
 // Copyright 2014 Sonia Keys
 // License MIT: http://opensource.org/licenses/MIT
 
-// Ed is a simple and fast graph library.
+// Graph is a simple and fast graph library.
 //
-// Ed is a graph library of the kind where you create graphs out of
-// Ed concrete types, perhaps parallel to existing graph data structures
-// in your application.  You call some function such as a graph search
-// on the Ed graph, then use the result to navigate your application data.
+// This is a graph library of the kind where you create graphs out of
+// concrete types defined in this package, perhaps parallel to existing
+// graph data structures in your application.  You call some function such
+// as a graph search, then use the result to navigate your application data.
 //
-// Ed graphs contain only data minimally neccessary for search functions.
-// This minimalism simplifies Ed code and allows faster searches.  Zero-based
-// integer node IDs serve directly as slice indexes.  Nodes and edge objects
-// are structs rather than interfaces.  Maps are not needed to associate
-// arbitrary IDs with node or edge types.  Ed graphs are memory efficient
-// and large graphs can potentially be handled, especially if Ed graphs are
-// constructed in an online manner.
+// The types of this package represent only data minimally neccessary for
+// search functions.  This minimalism simplifies package code and allows faster
+// searches.  Zero-based integer node IDs serve directly as slice indexes.
+// Nodes and edges are structs rather than interfaces.  Maps are not needed
+// to associate arbitrary IDs with node or edge types.  These graphs are memory
+// efficient and large graphs can potentially be handled.
 //
 // Representation
 //
-// The only representation currently is an adjacency list, although there
-// are separate types for arc-weighted graphs and unweighted graphs.
+// The only graph representation currently is an adjacency list, although
+// there are separate types for arc-weighted graphs and unweighted graphs.
 // The types AdjacencyList and WeightedAdjacencyList are simply slices
-// of slices.  Construct with make, there is no special constructor.
+// of slices.  Construct with make; there is no special constructor.
 // Directed and undirected graphs use the same types.  Construct an undirected
 // graph by adding reciprocal edges.  Methods specific to either directed
 // or undirected graphs will be documented as such.
@@ -59,9 +58,9 @@
 //
 // Single source shortest path searches on weighted graphs
 //
-// Ed implements a number of single source shortest path searches for graphs
-// with weighted arcs.  These all work with graphs that are directed or
-// undirected, and graphs that may have loops or parallel arcs.  "Shortest"
+// This package implements a number of single source shortest path searches
+// for graphs with weighted arcs.  These all work with graphs that are directed
+// or undirected, and graphs that may have loops or parallel arcs.  "Shortest"
 // is defined as the path distance (sum of arc weights) with path length
 // (number of nodes) breaking ties.  If multiple paths have the same minimum
 // distance with the same minumum length, search methods are free to return
@@ -71,4 +70,4 @@
 //  AStar          Non-negative arc weights, heuristic guided, single path.
 //  Dijkstra       Non-negative arc weights, single or all paths.
 //  BellmanFord    Negative arc weights allowed, no negative cycles, single or all paths.
-package ed
+package graph

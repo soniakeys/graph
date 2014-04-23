@@ -1,16 +1,16 @@
 // Copyright 2014 Sonia Keys
 // License MIT: http://opensource.org/licenses/MIT
 
-package ed_test
+package graph_test
 
 import (
 	"fmt"
 
-	"github.com/soniakeys/ed"
+	"github.com/soniakeys/graph"
 )
 
 func ExampleAdjacencyList_Cyclic() {
-	g := ed.AdjacencyList{
+	g := graph.AdjacencyList{
 		0: {1, 2},
 		1: {2},
 		2: {3},
@@ -25,7 +25,7 @@ func ExampleAdjacencyList_Cyclic() {
 }
 
 func ExampleAdjacencyList_Topological() {
-	g := ed.AdjacencyList{
+	g := graph.AdjacencyList{
 		1: {2},
 		3: {1, 2},
 		4: {3, 2},
@@ -39,7 +39,7 @@ func ExampleAdjacencyList_Topological() {
 }
 
 func ExampleAdjacencyList_Tarjan() {
-	g := ed.AdjacencyList{
+	g := graph.AdjacencyList{
 		0: {1},
 		1: {4, 2, 5},
 		2: {3, 6},
@@ -62,7 +62,7 @@ func ExampleAdjacencyList_Tarjan() {
 }
 
 func ExampleAdjacencyList_Transpose() {
-	g := ed.AdjacencyList{
+	g := graph.AdjacencyList{
 		2: {0, 1},
 	}
 	t, m := g.Transpose()

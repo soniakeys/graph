@@ -1,7 +1,7 @@
 // Copyright 2014 Sonia Keys
 // License MIT: http://opensource.org/licenses/MIT
 
-package ed
+package graph
 
 import (
 	"container/heap"

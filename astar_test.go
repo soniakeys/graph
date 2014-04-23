@@ -1,16 +1,16 @@
 // Copyright 2014 Sonia Keys
 // License MIT: http://opensource.org/licenses/MIT
 
-package ed_test
+package graph_test
 
 import (
 	"fmt"
 
-	"github.com/soniakeys/ed"
+	"github.com/soniakeys/graph"
 )
 
 func ExampleAStar_AStarAPath() {
-	a := ed.NewAStar(ed.WeightedAdjacencyList{
+	a := graph.NewAStar(graph.WeightedAdjacencyList{
 		0: {{1, .7}, {2, .9}, {5, 1.4}},
 		1: {{2, 1}, {3, 1.5}},
 		2: {{3, 1.1}, {5, .2}},
@@ -29,7 +29,7 @@ func ExampleAStar_AStarAPath() {
 }
 
 func ExampleAStar_AStarMPath() {
-	a := ed.NewAStar(ed.WeightedAdjacencyList{
+	a := graph.NewAStar(graph.WeightedAdjacencyList{
 		0: {{1, .7}, {2, .9}, {5, 1.4}},
 		1: {{2, 1}, {3, 1.5}},
 		2: {{3, 1.1}, {5, .2}},
@@ -48,7 +48,7 @@ func ExampleAStar_AStarMPath() {
 }
 
 func ExampleHeuristic_Admissable() {
-	g := ed.WeightedAdjacencyList{
+	g := graph.WeightedAdjacencyList{
 		0: {{1, .7}, {2, .9}, {5, 1.4}},
 		1: {{2, 1}, {3, 1.5}},
 		2: {{3, 1.1}, {5, .2}},
@@ -57,14 +57,14 @@ func ExampleHeuristic_Admissable() {
 		5: {},
 	}
 	h4 := []float64{1.9, 2, 1, .6, 0, .9}
-	var h ed.Heuristic = func(from int) float64 { return h4[from] }
+	var h graph.Heuristic = func(from int) float64 { return h4[from] }
 	fmt.Println(h.Admissable(g, 4))
 	// Output:
 	// true
 }
 
 func ExampleHeuristic_Monotonic() {
-	g := ed.WeightedAdjacencyList{
+	g := graph.WeightedAdjacencyList{
 		0: {{1, .7}, {2, .9}, {5, 1.4}},
 		1: {{2, 1}, {3, 1.5}},
 		2: {{3, 1.1}, {5, .2}},
@@ -73,7 +73,7 @@ func ExampleHeuristic_Monotonic() {
 		5: {},
 	}
 	h4 := []float64{1.9, 2, 1, .6, 0, .9}
-	var h ed.Heuristic = func(from int) float64 { return h4[from] }
+	var h graph.Heuristic = func(from int) float64 { return h4[from] }
 	fmt.Println(h.Monotonic(g))
 	// Output:
 	// true

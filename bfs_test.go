@@ -1,16 +1,16 @@
 // Copyright 2014 Sonia Keys
 // License MIT: http://opensource.org/licenses/MIT
 
-package ed_test
+package graph_test
 
 import (
 	"fmt"
 
-	"github.com/soniakeys/ed"
+	"github.com/soniakeys/graph"
 )
 
 func ExampleBreadthFirst_Path() {
-	b := ed.NewBreadthFirst(ed.AdjacencyList{
+	b := graph.NewBreadthFirst(graph.AdjacencyList{
 		1: {4},
 		2: {1},
 		3: {5},
@@ -23,7 +23,7 @@ func ExampleBreadthFirst_Path() {
 }
 
 func ExampleBreadthFirst_AllPaths() {
-	b := ed.NewBreadthFirst(ed.AdjacencyList{
+	b := graph.NewBreadthFirst(graph.AdjacencyList{
 		1: {4},
 		2: {1},
 		3: {5},
@@ -47,7 +47,7 @@ func ExampleBreadthFirst_AllPaths() {
 }
 
 func ExampleBreadthFirst2_Path() {
-	g := ed.AdjacencyList{
+	g := graph.AdjacencyList{
 		1: {4},
 		2: {1},
 		3: {5},
@@ -55,14 +55,14 @@ func ExampleBreadthFirst2_Path() {
 		6: {5, 6},
 	}
 	from, m := g.Transpose()
-	b := ed.NewBreadthFirst2(g, from, m)
+	b := graph.NewBreadthFirst2(g, from, m)
 	fmt.Println(b.Path(1, 3))
 	// Output:
 	// [1 4 3]
 }
 
 func ExampleBreadthFirst2_AllPaths() {
-	g := ed.AdjacencyList{
+	g := graph.AdjacencyList{
 		1: {4},
 		2: {1},
 		3: {5},
@@ -70,7 +70,7 @@ func ExampleBreadthFirst2_AllPaths() {
 		6: {5, 6},
 	}
 	from, m := g.Transpose()
-	b := ed.NewBreadthFirst2(g, from, m)
+	b := graph.NewBreadthFirst2(g, from, m)
 	b.AllPaths(1)
 	fmt.Println("Max path length:", b.Result.MaxLen)
 	for n := range b.To {

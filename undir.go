@@ -6,7 +6,7 @@
 // Methods specific to undirected graphs.
 // Doc for each method should specifically say undirected.
 
-package ed
+package graph
 
 import (
 	"math/big"

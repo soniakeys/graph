@@ -1,4 +1,4 @@
-package ed
+package graph
 
 import (
 	"math/big"

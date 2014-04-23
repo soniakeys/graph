@@ -1,16 +1,16 @@
 // Copyright 2014 Sonia Keys
 // License MIT: http://opensource.org/licenses/MIT
 
-package ed_test
+package graph_test
 
 import (
 	"fmt"
 
-	"github.com/soniakeys/ed"
+	"github.com/soniakeys/graph"
 )
 
 func ExampleBellmanFord() {
-	g := ed.WeightedAdjacencyList{
+	g := graph.WeightedAdjacencyList{
 		1: {{2, 10}, {8, 8}},
 		2: {{6, 2}},
 		3: {{2, 1}, {4, 1}},
@@ -21,7 +21,7 @@ func ExampleBellmanFord() {
 		8: {{7, 1}},
 		9: {{5, -10}, {4, 7}},
 	}
-	b := ed.NewBellmanFord(g)
+	b := graph.NewBellmanFord(g)
 	if !b.Run(1) {
 		return
 	}

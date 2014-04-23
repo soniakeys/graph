@@ -1,7 +1,7 @@
 // Copyright 2014 Sonia Keys
 // License MIT: http://opensource.org/licenses/MIT
 
-package ed
+package graph
 
 // A BellmanFord object allows shortest path searches using the
 // Bellman-Ford-Moore algorithm.

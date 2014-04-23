@@ -1,12 +1,12 @@
 // Copyright 2014 Sonia Keys
 // License MIT: http://opensource.org/licenses/MIT
 
-// ed.go
+// graph.go
 //
 // Definitions for unweighted graphs, and methods not specific to directed
 // or undirected graphs.  Method docs need not mention that they work on both.
 
-package ed
+package graph
 
 import (
 	"math/big"
