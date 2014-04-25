@@ -150,14 +150,14 @@ type FromTree struct {
 // function from application code.  Rather it is typically called by search
 // object constructors.  NewFromTree leaves the result object with zero values
 // and does not call the Reset method.
-func NewFromTree(n int) *FromTree {
+func newFromTree(n int) *FromTree {
 	return &FromTree{Paths: make([]PathEnd, n)}
 }
 
 // Reset initializes a FromTree in preparation for a search.  Search methods
 // will call this function and you don't typically call it from application
 // code.
-func (t *FromTree) Reset() {
+func (t *FromTree) reset() {
 	t.Start = -1
 	for n := range t.Paths {
 		t.Paths[n] = PathEnd{From: -1, Len: 0}

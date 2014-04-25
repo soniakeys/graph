@@ -35,7 +35,7 @@ type BreadthFirst struct {
 func NewBreadthFirst(g AdjacencyList) *BreadthFirst {
 	return &BreadthFirst{
 		Graph:  g,
-		Result: NewFromTree(len(g)),
+		Result: newFromTree(len(g)),
 	}
 }
 
@@ -87,7 +87,7 @@ type Visitor func(n int) (ok bool)
 // Traverse returns the number of nodes successfully visited; if search is
 // is terminated by a false return from v, that node is not counted.
 func (b *BreadthFirst) Traverse(start int, v Visitor) int {
-	b.Result.Reset()
+	b.Result.reset()
 	rp := b.Result.Paths
 	b.Result.Start = start
 	level := 1
@@ -135,7 +135,7 @@ func NewBreadthFirst2(to, from AdjacencyList, m int) *BreadthFirst2 {
 		To:     to,
 		From:   from,
 		M:      m,
-		Result: NewFromTree(len(to)),
+		Result: newFromTree(len(to)),
 	}
 }
 
@@ -156,7 +156,7 @@ func (b *BreadthFirst2) AllPaths(start int) int {
 }
 
 func (b *BreadthFirst2) Traverse(start int, v Visitor) int {
-	b.Result.Reset()
+	b.Result.reset()
 	rp := b.Result.Paths
 	b.Result.Start = start
 	level := 1
