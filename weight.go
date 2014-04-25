@@ -62,7 +62,7 @@ func (g WeightedAdjacencyList) ValidTo() bool {
 // value for non-existant paths and arcs.  You can change this value before
 // calling a search or traversal function and it will use NoPath to populate
 // distance results where a null value is needed.  The default assigned by
-// the constructor is -Inf, which compares well against valid distances.
+// the constructor is +Inf, which compares well against valid distances.
 // Other values you might consider are NaN, which might be considered more
 // correct; 0, which sums well with other distances; or -1 which is easily
 // tested for as an invalid distance.
@@ -71,7 +71,7 @@ func (g WeightedAdjacencyList) ValidTo() bool {
 // of arc weights from the start node.  If the node is not reachable, searches
 // will set PathDist to WeightedFromTree.NoPath.
 //
-// Missing, compared to FromTree is the maximum path length.
+// Missing, compared to FromTree, is the maximum path length.
 type WeightedFromTree struct {
 	Start  int               // start node, argument to the search function
 	Paths  []WeightedPathEnd // tree representation

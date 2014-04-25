@@ -131,13 +131,8 @@ func (g AdjacencyList) Bipartite(n int) (b bool, c1, c2 *big.Int, oc []int) {
 	return b, nil, nil, oc
 }
 
-// A FromTree represents a spanning tree where each node is associated with
+// A FromTree represents a tree where each node is associated with
 // a half arc identifying an arc from another node.
-//
-// Other terms for this data structure include "predecessor list", "in-tree",
-// "inverse arborescence", and "spaghetti stack."  It is an effecient
-// representation for accumulating path results for various algorithms that
-// search or traverse graphs starting from a single source or start node.
 //
 // For a node n, Paths[n] contains information about the path from the
 // the start node to n.  For reached nodes, the PathEnd.Len field will be

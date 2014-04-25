@@ -13,20 +13,173 @@ import (
 	"github.com/soniakeys/graph"
 )
 
+func ExampleBreadthFirstPath() {
+	g := graph.AdjacencyList{
+		1: {4},
+		2: {1},
+		3: {5},
+		4: {3, 6},
+		6: {5, 6},
+	}
+	fmt.Println(graph.BreadthFirstPath(g, 1, 3))
+	// Output:
+	// [1 4 3]
+}
+
+func ExampleBreadthFirst_Path() {
+	b := graph.NewBreadthFirst(graph.AdjacencyList{
+		1: {4},
+		2: {1},
+		3: {5},
+		4: {3, 6},
+		6: {5, 6},
+	})
+	start, end := 1, 3
+	if !b.Path(start, end) {
+		return
+	}
+	fmt.Println("Path length:", b.Result.Paths[end].Len)
+	fmt.Print("Backtrack to start: ", end)
+	rp := b.Result.Paths
+	for n := end; n != start; {
+		n = rp[n].From
+		fmt.Print(" ", n)
+	}
+	fmt.Println()
+	// Output:
+	// Path length: 3
+	// Backtrack to start: 3 4 1
+}
+
+func ExampleBreadthFirst_AllPaths() {
+	b := graph.NewBreadthFirst(graph.AdjacencyList{
+		1: {4},
+		2: {1},
+		3: {5},
+		4: {3, 6},
+		6: {5, 6},
+	})
+	b.AllPaths(1)
+	fmt.Println("Max path length:", b.Result.MaxLen)
+	for n := range b.Graph {
+		fmt.Println(n, b.Result.PathTo(n))
+	}
+	// Output:
+	// Max path length: 4
+	// 0 []
+	// 1 [1]
+	// 2 []
+	// 3 [1 4 3]
+	// 4 [1 4]
+	// 5 [1 4 3 5]
+	// 6 [1 4 6]
+}
+
+func ExampleBreadthFirst2Path() {
+	g := graph.AdjacencyList{
+		1: {4},
+		2: {1},
+		3: {5},
+		4: {3, 6},
+		6: {5, 6},
+	}
+	fmt.Println(graph.BreadthFirst2Path(g, 1, 3))
+	// Output:
+	// [1 4 3]
+}
+
+func ExampleBreadthFirst2_Path() {
+	g := graph.AdjacencyList{
+		1: {4},
+		2: {1},
+		3: {5},
+		4: {3, 6},
+		6: {5, 6},
+	}
+	t, m := g.Transpose()
+	b := graph.NewBreadthFirst2(g, t, m)
+	start, end := 1, 3
+	if !b.Path(start, end) {
+		return
+	}
+	fmt.Println("Path length:", b.Result.Paths[end].Len)
+	fmt.Print("Backtrack to start: ", end)
+	rp := b.Result.Paths
+	for n := end; n != start; {
+		n = rp[n].From
+		fmt.Print(" ", n)
+	}
+	fmt.Println()
+	// Output:
+	// Path length: 3
+	// Backtrack to start: 3 4 1
+}
+
+func ExampleBreadthFirst2_AllPaths() {
+	g := graph.AdjacencyList{
+		1: {4},
+		2: {1},
+		3: {5},
+		4: {3, 6},
+		6: {5, 6},
+	}
+	t, m := g.Transpose()
+	b := graph.NewBreadthFirst2(g, t, m)
+	b.AllPaths(1)
+	fmt.Println("Max path length:", b.Result.MaxLen)
+	for n := range b.To {
+		fmt.Println(n, b.Result.PathTo(n))
+	}
+	// Output:
+	// Max path length: 4
+	// 0 []
+	// 1 [1]
+	// 2 []
+	// 3 [1 4 3]
+	// 4 [1 4]
+	// 5 [1 4 3 5]
+	// 6 [1 4 6]
+}
+
+func ExampleDijkstraPath() {
+	g := graph.WeightedAdjacencyList{
+		1: {{2, 7}, {3, 9}, {6, 11}},
+		2: {{3, 10}, {4, 15}},
+		3: {{4, 11}, {6, 2}},
+		4: {{5, 7}},
+		6: {{5, 9}},
+	}
+	p, l := graph.DijkstraPath(g, 1, 5)
+	fmt.Println("Shortest path:", p)
+	fmt.Println("Path length:", l)
+	// Output:
+	// Shortest path: [{1 +Inf} {6 11} {5 9}]
+	// Path length: 20
+}
+
 func ExampleDijkstra_Path() {
-	d := graph.NewDijkstra([][]graph.Half{
+	d := graph.NewDijkstra(graph.WeightedAdjacencyList{
 		1: {{2, 7}, {3, 9}, {6, 11}},
 		2: {{3, 10}, {4, 15}},
 		3: {{4, 11}, {6, 2}},
 		4: {{5, 7}},
 		6: {{5, 9}},
 	})
-	path, dist := d.Path(1, 5)
-	fmt.Println("Shortest path:", path)
-	fmt.Println("Path distance:", dist)
+	start, end := 1, 5
+	if !d.Path(start, end) {
+		return
+	}
+	fmt.Println("Path distance:", d.Result.Paths[end].Dist)
+	fmt.Print("Backtrack to start: ", end)
+	rp := d.Result.Paths
+	for n := end; n != start; {
+		n = rp[n].From.From
+		fmt.Print(" ", n)
+	}
+	fmt.Println()
 	// Output:
-	// Shortest path: [{1 +Inf} {6 11} {5 9}]
 	// Path distance: 20
+	// Backtrack to start: 5 6 1
 }
 
 func ExampleDijkstra_AllPaths() {
@@ -60,18 +213,18 @@ func ExampleDijkstra_AllPaths() {
 	// 5:     [{2 +Inf} {5 0.2}]          2    0.2   0.2
 }
 
-func ExampleAStar_AStarAPath() {
-	a := graph.NewAStar(graph.WeightedAdjacencyList{
+func ExampleAStarAPath() {
+	g := graph.WeightedAdjacencyList{
 		0: {{1, .7}, {2, .9}, {5, 1.4}},
 		1: {{2, 1}, {3, 1.5}},
 		2: {{3, 1.1}, {5, .2}},
 		3: {{4, .6}},
 		4: {{5, .9}},
 		5: {},
-	})
+	}
 	h4 := []float64{1.9, 2, 1, .6, 0, .9}
 	h := func(from int) float64 { return h4[from] }
-	p, l := a.AStarAPath(0, 4, h)
+	p, l := graph.AStarAPath(g, 0, 4, h)
 	fmt.Println("Shortest path:", p)
 	fmt.Println("Path length:", l)
 	// Output:
@@ -79,18 +232,18 @@ func ExampleAStar_AStarAPath() {
 	// Path length: 2.6
 }
 
-func ExampleAStar_AStarMPath() {
-	a := graph.NewAStar(graph.WeightedAdjacencyList{
+func ExampleAStarMPath() {
+	g := graph.WeightedAdjacencyList{
 		0: {{1, .7}, {2, .9}, {5, 1.4}},
 		1: {{2, 1}, {3, 1.5}},
 		2: {{3, 1.1}, {5, .2}},
 		3: {{4, .6}},
 		4: {{5, .9}},
 		5: {},
-	})
+	}
 	h4 := []float64{1.9, 2, 1, .6, 0, .9}
 	h := func(from int) float64 { return h4[from] }
-	p, l := a.AStarMPath(0, 4, h)
+	p, l := graph.AStarMPath(g, 0, 4, h)
 	fmt.Println("Shortest path:", p)
 	fmt.Println("Path length:", l)
 	// Output:
@@ -164,84 +317,6 @@ func ExampleBellmanFord() {
 	// 7:       3      9
 	// 8:       2      8
 	// 9:       0   +Inf
-}
-
-func ExampleBreadthFirst_Path() {
-	b := graph.NewBreadthFirst(graph.AdjacencyList{
-		1: {4},
-		2: {1},
-		3: {5},
-		4: {3, 6},
-		6: {5, 6},
-	})
-	fmt.Println(b.Path(1, 3))
-	// Output:
-	// [1 4 3]
-}
-
-func ExampleBreadthFirst_AllPaths() {
-	b := graph.NewBreadthFirst(graph.AdjacencyList{
-		1: {4},
-		2: {1},
-		3: {5},
-		4: {3, 6},
-		6: {5, 6},
-	})
-	b.AllPaths(1)
-	fmt.Println("Max path length:", b.Result.MaxLen)
-	for n := range b.Graph {
-		fmt.Println(n, b.Result.PathTo(n))
-	}
-	// Output:
-	// Max path length: 4
-	// 0 []
-	// 1 [1]
-	// 2 []
-	// 3 [1 4 3]
-	// 4 [1 4]
-	// 5 [1 4 3 5]
-	// 6 [1 4 6]
-}
-
-func ExampleBreadthFirst2_Path() {
-	g := graph.AdjacencyList{
-		1: {4},
-		2: {1},
-		3: {5},
-		4: {3, 6},
-		6: {5, 6},
-	}
-	from, m := g.Transpose()
-	b := graph.NewBreadthFirst2(g, from, m)
-	fmt.Println(b.Path(1, 3))
-	// Output:
-	// [1 4 3]
-}
-
-func ExampleBreadthFirst2_AllPaths() {
-	g := graph.AdjacencyList{
-		1: {4},
-		2: {1},
-		3: {5},
-		4: {3, 6},
-		6: {5, 6},
-	}
-	from, m := g.Transpose()
-	b := graph.NewBreadthFirst2(g, from, m)
-	b.AllPaths(1)
-	fmt.Println("Max path length:", b.Result.MaxLen)
-	for n := range b.To {
-		fmt.Println(n, b.Result.PathTo(n))
-	}
-	// Output:
-	// Max path length: 4
-	// 0 []
-	// 1 [1]
-	// 2 []
-	// 3 [1 4 3]
-	// 4 [1 4]
-	// 5 [1 4 3 5]
-	// 6 [1 4 6]
 }
 
 // duplicate code in instr_test.go
@@ -343,9 +418,11 @@ func TestR(t *testing.T) {
 func TestSSSP(t *testing.T) {
 	tx := func(tc testCase) {
 		d := graph.NewDijkstra(tc.g)
-		pathD, distD := d.Path(tc.start, tc.end)
+		d.Path(tc.start, tc.end)
+		pathD, distD := d.Result.PathTo(tc.end)
 		// test that repeating same search on same d gives same result
-		path2, dist2 := d.Path(tc.start, tc.end)
+		d.Path(tc.start, tc.end)
+		path2, dist2 := d.Result.PathTo(tc.end)
 		if len(pathD) != len(path2) || distD != dist2 {
 			t.Fatal(len(tc.g), "D, D2 len or dist mismatch")
 		}
@@ -355,8 +432,7 @@ func TestSSSP(t *testing.T) {
 			}
 		}
 		// A*
-		a := graph.NewAStar(tc.g)
-		pathA, distA := a.AStarAPath(tc.start, tc.end, tc.h)
+		pathA, distA := graph.AStarAPath(tc.g, tc.start, tc.end, tc.h)
 		// test that a* path is same distance and length as dijkstra path
 		if len(pathA) != len(pathD) {
 			t.Log("pathA:", pathA)

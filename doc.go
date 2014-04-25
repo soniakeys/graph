@@ -66,14 +66,19 @@
 // distance with the same minumum length, search methods are free to return
 // any of them.
 //
-//  Type name      Description
-//  BestFirst      Unweigted arcs, single path or all paths.
+//  Type name      Description, methods
+//  BestFirst      Unweigted arcs, traversal, single path search or all paths.
 //  BestFirst2     Direction-optimizing variant of BestFirst.
 //  Dijkstra       Non-negative arc weights, single or all paths.
 //  AStar          Non-negative arc weights, heuristic guided, single path.
-//  BellmanFord    Negative arc weights allowed, no negative cycles, single or all paths.
+//  BellmanFord    Negative arc weights allowed, no negative cycles, all paths.
 //
-// These searches are all used in a similar way that involves creating a
-// search object, running a search method on the object, and decoding results
-// from a "from-tree."
+// These searches are all done in a similar way that involves creating a
+// search object, running a search method on the object, and decoding a result
+// structure.  Convenience functions are provided that perform these
+// steps for single path searches.
+//
+// The result structure contains a "from-tree" which is an efficient
+// encoding of the path results.  Other terms for this data structure include
+// "predecessor list", "in-tree", "inverse arborescence", and "spaghetti stack."
 package graph

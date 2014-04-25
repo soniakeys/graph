@@ -9,7 +9,255 @@ import (
 	"math/big"
 )
 
+// A BreadthFirst object allows graph traversals and searches in
+// breadth first order.
+//
+// Construct with NewBreadthFirst.
+type BreadthFirst struct {
+	Graph  AdjacencyList
+	Result *FromTree
+}
+
+// NewBreadthFirst creates a BreadthFirst object.
+//
+// Argument g is the graph to be searched, as an adjacency list.
+// Graphs may be directed or undirected.
+//
+// The graph g will not be modified by any BreadthFirst methods.
+// NewBreadthFirst initializes the BreadthFirst object for the length
+// (number of nodes) of g.  If you add nodes to your graph, abandon any
+// previously created BreadthFirst object and call NewBreadthFirst again.
+//
+// Searches on a single BreadthFirst object can be run consecutively but not
+// concurrently.  Searches can be run concurrently however, on BreadthFirst
+// objects obtained with separate calls to NewBreadthFirst, even with the same
+// graph argument to NewBreadthFirst.
+func NewBreadthFirst(g AdjacencyList) *BreadthFirst {
+	return &BreadthFirst{
+		Graph:  g,
+		Result: NewFromTree(len(g)),
+	}
+}
+
+// BreadthFirstPath finds a single path from start to end with a minimum
+// number of nodes.
+//
+// Returned is the path as list of nodes.
+// Path returns nil if no path was found.
+func BreadthFirstPath(g AdjacencyList, start, end int) []int {
+	b := NewBreadthFirst(g)
+	b.Traverse(start, func(n int) bool { return n != end })
+	return b.Result.PathTo(end)
+}
+
+// Path finds a single path from start to end with a minimum number of nodes.
+//
+// Path returns true if a path exists, false if not.  The path can be recovered
+// from b.Result.
+func (b *BreadthFirst) Path(start, end int) bool {
+	b.Traverse(start, func(n int) bool { return n != end })
+	return b.Result.Paths[end].Len > 0
+}
+
+// AllPaths finds paths from start to all nodes reachable from start that
+// have a minimum number of nodes.
+//
+// AllPaths returns number of paths found, equivalent to the number of nodes
+// reached, including the path ending at start.  Path results are left in
+// d.Result.
+func (b *BreadthFirst) AllPaths(start int) int {
+	return b.Traverse(start, func(int) bool { return true })
+}
+
+// A Visitor function is an argument to graph traversal methods.
+//
+// Graph traversal methods call the visitor function for each node visited.
+// The argument n is the node being visited.  If the visitor function
+// returns true, the traversal will continue.  If the visitor function
+// returns false, the traversal will terminate immediately.
+type Visitor func(n int) (ok bool)
+
+// Traverse traverses a graph in breadth first order starting from node start.
+//
+// Traverse calls the visitor function v for each node.  If v returns true,
+// the traversal will continue.  If v returns false, the traversal will
+// terminate immediately.  Traverse updates b.Result.Paths before calling v.
+// It updates b.Result.MaxLen after calling v, if v returns true.
+//
+// Traverse returns the number of nodes successfully visited; if search is
+// is terminated by a false return from v, that node is not counted.
+func (b *BreadthFirst) Traverse(start int, v Visitor) int {
+	b.Result.Reset()
+	rp := b.Result.Paths
+	b.Result.Start = start
+	level := 1
+	rp[start].Len = level
+	if !v(start) {
+		b.Result.MaxLen = level
+		return -1
+	}
+	nReached := 1 // accumulated for a return value
+	// the frontier consists of nodes all at the same level
+	frontier := []int{start}
+	for {
+		level++
+		var next []int
+		for _, n := range frontier {
+			for _, nb := range b.Graph[n] {
+				if rp[nb].Len == 0 {
+					rp[nb] = PathEnd{From: n, Len: level}
+					if !v(nb) {
+						b.Result.MaxLen = level
+						return -1
+					}
+					next = append(next, nb)
+					nReached++
+				}
+			}
+		}
+		if len(next) == 0 {
+			break
+		}
+		frontier = next
+	}
+	b.Result.MaxLen = level - 1
+	return nReached
+}
+
+type BreadthFirst2 struct {
+	To, From AdjacencyList
+	M        int
+	Result   *FromTree
+}
+
+func NewBreadthFirst2(to, from AdjacencyList, m int) *BreadthFirst2 {
+	return &BreadthFirst2{
+		To:     to,
+		From:   from,
+		M:      m,
+		Result: NewFromTree(len(to)),
+	}
+}
+
+func BreadthFirst2Path(g AdjacencyList, start, end int) []int {
+	t, m := g.Transpose()
+	b := NewBreadthFirst2(g, t, m)
+	b.Traverse(start, func(n int) bool { return n != end })
+	return b.Result.PathTo(end)
+}
+
+func (b *BreadthFirst2) Path(start, end int) bool {
+	b.Traverse(start, func(n int) bool { return n != end })
+	return b.Result.Paths[end].Len > 0
+}
+
+func (b *BreadthFirst2) AllPaths(start int) int {
+	return b.Traverse(start, func(int) bool { return true })
+}
+
+func (b *BreadthFirst2) Traverse(start int, v Visitor) int {
+	b.Result.Reset()
+	rp := b.Result.Paths
+	b.Result.Start = start
+	level := 1
+	rp[start].Len = level
+	if !v(start) {
+		b.Result.MaxLen = level
+		return -1
+	}
+	nReached := 1 // accumulated for a return value
+	// the frontier consists of nodes all at the same level
+	frontier := []int{start}
+	mf := len(b.To[start])      // number of arcs leading out from frontier
+	ctb := b.M / 10             // threshold change from top-down to bottom-up
+	k14 := 14 * b.M / len(b.To) // 14 * mean degree
+	cbt := len(b.To) / k14      // threshold change from bottom-up to top-down
+	var fBits, nextb big.Int
+	for {
+		// top down step
+		level++
+		var next []int
+		for _, n := range frontier {
+			for _, nb := range b.To[n] {
+				if rp[nb].Len == 0 {
+					rp[nb] = PathEnd{From: n, Len: level}
+					if !v(nb) {
+						b.Result.MaxLen = level
+						return -1
+					}
+					next = append(next, nb)
+					nReached++
+				}
+			}
+		}
+		if len(next) == 0 {
+			break
+		}
+		frontier = next
+		if mf > ctb {
+			// switch to bottom up!
+		} else {
+			// stick with top down
+			continue
+		}
+		// convert frontier representation
+		nf := 0 // number of vertices on the frontier
+		for _, n := range frontier {
+			fBits.SetBit(&fBits, n, 1)
+			nf++
+		}
+	bottomUpLoop:
+		level++
+		nNext := 0
+		for n := range b.From {
+			if rp[n].Len == 0 {
+				for _, nb := range b.From[n] {
+					if fBits.Bit(nb) == 1 {
+						rp[n] = PathEnd{From: nb, Len: level}
+						if !v(nb) {
+							b.Result.MaxLen = level
+							return -1
+						}
+						nextb.SetBit(&nextb, n, 1)
+						nReached++
+						nNext++
+						break
+					}
+				}
+			}
+		}
+		if nNext == 0 {
+			break
+		}
+		fBits, nextb = nextb, fBits
+		nextb.SetInt64(0)
+		nf = nNext
+		if nf < cbt {
+			// switch back to top down!
+		} else {
+			// stick with bottom up
+			goto bottomUpLoop
+		}
+		// convert frontier representation
+		mf = 0
+		frontier = frontier[:0]
+		for n := range b.To {
+			if fBits.Bit(n) == 1 {
+				frontier = append(frontier, n)
+				mf += len(b.To[n])
+			}
+		}
+		fBits.SetInt64(0)
+	}
+	b.Result.MaxLen = level - 1
+	return nReached
+}
+
 // A Dijkstra object allows shortest path searches by Dijkstra's algorithm.
+//
+// Dijkstra methods find paths of shortest distance where distance is the
+// sum of arc weights.  Where multiple paths exist with the same distance,
+// Dijkstra methods return a path with the minimum number of nodes.
 //
 // Construct with NewDijkstra.
 type Dijkstra struct {
@@ -61,15 +309,23 @@ type tentResult struct {
 
 type tent []*tentResult
 
-// Path finds a single shortest path.
+// DijkstraPath finds a single shortest path.
 //
 // Returned is the path and distance as returned by WeightedFromTree.PathTo.
-// Path returns as soon as the shortest path to end is found.  It does not
-// explore the remainder of the graph.  Where multiple paths exist with the
-// same distance, Path returns a path with the minimum number of nodes.
-func (d *Dijkstra) Path(start, end int) ([]Half, float64) {
-	d.search(start, end)
+func DijkstraPath(g WeightedAdjacencyList, start, end int) ([]Half, float64) {
+	d := NewDijkstra(g)
+	d.Path(start, end)
 	return d.Result.PathTo(end)
+}
+
+// Path finds a single shortest path.
+//
+// Path returns true if a path exists, false if not. The path can be recovered
+// from b.Result.  Path returns as soon as the shortest path to end is found;
+// it does not explore the remainder of the graph.
+func (d *Dijkstra) Path(start, end int) bool {
+	d.search(start, end)
+	return d.Result.Paths[end].Len > 0
 }
 
 // AllPaths finds shortest paths from start to all nodes reachable
@@ -77,8 +333,7 @@ func (d *Dijkstra) Path(start, end int) ([]Half, float64) {
 //
 // AllPaths returns number of paths found, equivalent to the number of nodes
 // reached, including the path ending at start.  Path results are left in
-// d.Result.  Where multiple paths to a particular node exist with the same
-// distance, AllPaths keeps a path with the minimum number of nodes.
+// d.Result.
 func (d *Dijkstra) AllPaths(start int) (nFound int) {
 	return d.search(start, -1)
 }
@@ -400,7 +655,8 @@ func (a *AStar) AStarA(start, end int, h Heuristic) bool {
 // AStarAPath finds a single shortest path.
 //
 // Returned is the path and distance as returned by WeightedFromTree.PathTo.
-func (a *AStar) AStarAPath(start, end int, h Heuristic) ([]Half, float64) {
+func AStarAPath(g WeightedAdjacencyList, start, end int, h Heuristic) ([]Half, float64) {
+	a := NewAStar(g)
 	a.AStarA(start, end, h)
 	return a.Result.PathTo(end)
 }
@@ -498,7 +754,8 @@ func (a *AStar) AStarM(start, end int, h Heuristic) bool {
 // AStarMPath finds a single shortest path.
 //
 // Returned is the path and distance as returned by WeightedFromTree.PathTo.
-func (a *AStar) AStarMPath(start, end int, h Heuristic) ([]Half, float64) {
+func AStarMPath(g WeightedAdjacencyList, start, end int, h Heuristic) ([]Half, float64) {
+	a := NewAStar(g)
 	a.AStarM(start, end, h)
 	return a.Result.PathTo(end)
 }
@@ -605,230 +862,4 @@ func (b *BellmanFord) Run(start int) (ok bool) {
 		}
 	}
 	return true
-}
-
-// A BreadthFirst object allows graph traversals and searches in
-// breadth first order.
-//
-// Construct with NewBreadthFirst.
-type BreadthFirst struct {
-	Graph  AdjacencyList
-	Result *FromTree
-}
-
-// NewBreadthFirst creates a BreadthFirst object that allows graph traversals
-// and searches in breadth first order.
-//
-// Argument g is the graph to be searched, as an adjacency list.
-// Graphs may be directed or undirected.
-//
-// The graph g will not be modified by any BreadthFirst methods.
-// NewBreadthFirst initializes the BreadthFirst object for the length
-// (number of nodes) of g.  If you add nodes to your graph, abandon any
-// previously created BreadthFirst object and call NewBreadthFirst again.
-//
-// Searches on a single BreadthFirst object can be run consecutively but not
-// concurrently.  Searches can be run concurrently however, on BreadthFirst
-// objects obtained with separate calls to NewBreadthFirst, even with the same
-// graph argument to NewBreadthFirst.
-func NewBreadthFirst(g AdjacencyList) *BreadthFirst {
-	return &BreadthFirst{
-		Graph:  g,
-		Result: NewFromTree(len(g)),
-	}
-}
-
-// Path finds a single path from start to end with a minimum number of nodes.
-//
-// Returned is the path as list of nodes as returned by FromTree.PathTo.
-// Path returns nil if no path was found.
-func (b *BreadthFirst) Path(start, end int) []int {
-	b.Traverse(start, func(n int) bool { return n != end })
-	return b.Result.PathTo(end)
-}
-
-// AllPaths finds paths from start to all nodes reachable from start that
-// have a minimum number of nodes.
-//
-// AllPaths returns number of paths found, equivalent to the number of nodes
-// reached, including the path ending at start.  Path results are left in
-// d.Result.
-func (b *BreadthFirst) AllPaths(start int) int {
-	return b.Traverse(start, func(int) bool { return true })
-}
-
-// A Visitor function is an argument to graph traversal methods.
-//
-// Graph traversal methods call the visitor function for each node visited.
-// The argument n is the node being visited.  If the visitor function
-// returns true, the traversal will continue.  If the visitor function
-// returns false, the traversal will terminate immediately.
-type Visitor func(n int) (ok bool)
-
-// Traverse traverses a graph in breadth first order starting from node start.
-//
-// Traverse calls the visitor function v for each node.
-// If the visitor function returns true, the traversal will continue.
-// If the visitor function returns false, the traversal will terminate
-// immediately.
-//
-// Traverse returns the number of nodes visited.
-func (b *BreadthFirst) Traverse(start int, v Visitor) int {
-	b.Result.Reset()
-	rp := b.Result.Paths
-	b.Result.Start = start
-	level := 1
-	rp[start].Len = level
-	if !v(start) {
-		b.Result.MaxLen = level
-		return -1
-	}
-	nReached := 1 // accumulated for a return value
-	// the frontier consists of nodes all at the same level
-	frontier := []int{start}
-	for {
-		level++
-		var next []int
-		for _, n := range frontier {
-			for _, nb := range b.Graph[n] {
-				if rp[nb].Len == 0 {
-					rp[nb] = PathEnd{From: n, Len: level}
-					if !v(nb) {
-						b.Result.MaxLen = level
-						return -1
-					}
-					next = append(next, nb)
-					nReached++
-				}
-			}
-		}
-		if len(next) == 0 {
-			break
-		}
-		frontier = next
-	}
-	b.Result.MaxLen = level - 1
-	return nReached
-}
-
-type BreadthFirst2 struct {
-	To, From AdjacencyList
-	M        int
-	Result   *FromTree
-}
-
-func NewBreadthFirst2(to, from AdjacencyList, m int) *BreadthFirst2 {
-	return &BreadthFirst2{
-		To:     to,
-		From:   from,
-		M:      m,
-		Result: NewFromTree(len(to)),
-	}
-}
-
-func (b *BreadthFirst2) Path(start, end int) []int {
-	b.Traverse(start, func(n int) bool { return n != end })
-	return b.Result.PathTo(end)
-}
-
-func (b *BreadthFirst2) AllPaths(start int) int {
-	return b.Traverse(start, func(int) bool { return true })
-}
-
-func (b *BreadthFirst2) Traverse(start int, v Visitor) int {
-	b.Result.Reset()
-	rp := b.Result.Paths
-	b.Result.Start = start
-	level := 1
-	rp[start].Len = level
-	if !v(start) {
-		b.Result.MaxLen = level
-		return -1
-	}
-	nReached := 1 // accumulated for a return value
-	// the frontier consists of nodes all at the same level
-	frontier := []int{start}
-	mf := len(b.To[start])      // number of arcs leading out from frontier
-	ctb := b.M / 10             // threshold change from top-down to bottom-up
-	k14 := 14 * b.M / len(b.To) // 14 * mean degree
-	cbt := len(b.To) / k14      // threshold change from bottom-up to top-down
-	var fBits, nextb big.Int
-	for {
-		// top down step
-		level++
-		var next []int
-		for _, n := range frontier {
-			for _, nb := range b.To[n] {
-				if rp[nb].Len == 0 {
-					rp[nb] = PathEnd{From: n, Len: level}
-					if !v(nb) {
-						b.Result.MaxLen = level
-						return -1
-					}
-					next = append(next, nb)
-					nReached++
-				}
-			}
-		}
-		if len(next) == 0 {
-			break
-		}
-		frontier = next
-		if mf > ctb {
-			// switch to bottom up!
-		} else {
-			// stick with top down
-			continue
-		}
-		// convert frontier representation
-		nf := 0 // number of vertices on the frontier
-		for _, n := range frontier {
-			fBits.SetBit(&fBits, n, 1)
-			nf++
-		}
-	bottomUpLoop:
-		level++
-		nNext := 0
-		for n := range b.From {
-			if rp[n].Len == 0 {
-				for _, nb := range b.From[n] {
-					if fBits.Bit(nb) == 1 {
-						rp[n] = PathEnd{From: nb, Len: level}
-						if !v(nb) {
-							b.Result.MaxLen = level
-							return -1
-						}
-						nextb.SetBit(&nextb, n, 1)
-						nReached++
-						nNext++
-						break
-					}
-				}
-			}
-		}
-		if nNext == 0 {
-			break
-		}
-		fBits, nextb = nextb, fBits
-		nextb.SetInt64(0)
-		nf = nNext
-		if nf < cbt {
-			// switch back to top down!
-		} else {
-			// stick with bottom up
-			goto bottomUpLoop
-		}
-		// convert frontier representation
-		mf = 0
-		frontier = frontier[:0]
-		for n := range b.To {
-			if fBits.Bit(n) == 1 {
-				frontier = append(frontier, n)
-				mf += len(b.To[n])
-			}
-		}
-		fBits.SetInt64(0)
-	}
-	b.Result.MaxLen = level - 1
-	return nReached
 }
