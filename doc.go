@@ -58,16 +58,22 @@
 //
 // Single source shortest path searches on weighted graphs
 //
-// This package implements a number of single source shortest path searches
-// for graphs with weighted arcs.  These all work with graphs that are directed
-// or undirected, and graphs that may have loops or parallel arcs.  "Shortest"
+// This package implements a number of single source shortest path searches.
+// These all work with graphs that are directed or undirected, and with graphs
+// that may have loops or parallel arcs.  For weighted graphs, "Shortest"
 // is defined as the path distance (sum of arc weights) with path length
 // (number of nodes) breaking ties.  If multiple paths have the same minimum
 // distance with the same minumum length, search methods are free to return
 // any of them.
 //
 //  Type name      Description
-//  AStar          Non-negative arc weights, heuristic guided, single path.
+//  BestFirst      Unweigted arcs, single path or all paths.
+//  BestFirst2     Direction-optimizing variant of BestFirst.
 //  Dijkstra       Non-negative arc weights, single or all paths.
+//  AStar          Non-negative arc weights, heuristic guided, single path.
 //  BellmanFord    Negative arc weights allowed, no negative cycles, single or all paths.
+//
+// These searches are all used in a similar way that involves creating a
+// search object, running a search method on the object, and decoding results
+// from a "from-tree."
 package graph
