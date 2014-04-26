@@ -108,16 +108,16 @@ func (t *WeightedFromTree) reset() {
 	}
 }
 
-// PathTo decodes Dijkstra.Result, recovering the found path from start to
+// PathTo decodes a WeightedFromTree, recovering the found path from start to
 // end, where start was an argument to SingleShortestPath or AllShortestPaths
 // and end is the argument to this method.
 //
 // The slice result represents the found path with a sequence of half arcs.
 // If no path exists from start to end the slice result will be nil.
 // For the first element, representing the start node, the arc weight is
-// meaningless and will be Dijkstra.NoPath.  The total path distance is also
-// returned.  Path distance is the sum of arc weights, excluding of couse
-// the meaningless arc weight of the first Half.
+// meaningless and will be WeightedFromTree.NoPath.  The total path distance
+// is also returned.  Path distance is the sum of arc weights, excluding of
+// couse the meaningless arc weight of the first Half.
 func (t *WeightedFromTree) PathTo(end int) ([]Half, float64) {
 	n := t.Paths[end].Len
 	if n == 0 {
