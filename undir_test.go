@@ -47,6 +47,21 @@ func ExampleBiconnectedComponents_Find() {
 			n, b.Cuts.Bit(n), f)
 	}
 	fmt.Println("Leaves:", b.Leaves)
-	// wip
 	// Output:
+	// n: cut from
+	// 0: 1 -1
+	// 1: 1 0
+	// 2: 0 1
+	// 3: 0 2
+	// 4: 0 3
+	// 5: 0 6
+	// 6: 0 8
+	// 7: 1 0
+	// 8: 1 7
+	// 9: 0 8
+	// 10: 1 13
+	// 11: 0 10
+	// 12: 0 5
+	// 13: 0 12
+	// Leaves: [4 11 9]
 }
