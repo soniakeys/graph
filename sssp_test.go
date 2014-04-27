@@ -469,6 +469,72 @@ func TestSSSP(t *testing.T) {
 				t.Fatal("dr.Paths ne br.Paths")
 			}
 		}
+		// breadth first
+		for _, nbs := range tc.g {
+			for i := range nbs {
+				nbs[i].ArcWeight = 1
+			}
+		}
+		d.AllPaths(tc.start) // rerun dijkstra with unit weights
+		u := tc.g.Unweighted()
+		bfs := graph.NewBreadthFirst(u)
+		np := bfs.AllPaths(tc.start)
+		bfsr := bfs.Result
+		if bfsr.Start != dr.Start {
+			t.Fatal("dr.Start, bfsr.Start", dr.Start, bfsr.Start)
+		}
+		var ml, npf int
+		for i, de := range dr.Paths {
+			bl := bfsr.Paths[i].Len
+			if bl != de.Len {
+				t.Fatal("de.From.Len, bfsr.Paths[i].Len", de.Len, bl)
+			}
+			if bl > ml {
+				ml = bl
+			}
+			if bl > 0 {
+				npf++
+			}
+		}
+		if ml != bfsr.MaxLen {
+			t.Fatal("bfsr.MaxLen, recomputed", bfsr.MaxLen, ml)
+		}
+		if npf != np {
+			t.Fatal("bfs all paths returned", np, "recount:", npf)
+		}
+		// breadth first 2
+		tr, m := u.Transpose()
+		bfs2 := graph.NewBreadthFirst2(u, tr, m)
+		np2 := bfs2.AllPaths(tc.start)
+		bfs2r := bfs2.Result
+		if bfs2r.Start != bfsr.Start {
+			t.Fatal("bfsr.Start, bfs2r.Start", bfsr.Start, bfs2r.Start)
+		}
+		var ml2, npf2 int
+		for i, e := range bfsr.Paths {
+			bl2 := bfs2r.Paths[i].Len
+			if bl2 != e.Len {
+				t.Fatal("bfsr.Paths[i].Len, bfs2r", e.Len, bl2)
+			}
+			if bl2 > ml2 {
+				ml2 = bl2
+			}
+			if bl2 > 0 {
+				npf2++
+			}
+		}
+		if ml2 != bfs2r.MaxLen {
+			t.Fatal("bfs2r.MaxLen, recomputed", bfs2r.MaxLen, ml)
+		}
+		if npf2 != np2 {
+			t.Fatal("bfs2 all paths returned", np2, "recount:", npf2)
+		}
+		if ml2 != ml {
+			t.Fatal("bfs max len, bfs2", ml, ml2)
+		}
+		if npf2 != npf {
+			t.Fatal("bfs return, bfs2", npf, npf2)
+		}
 	}
 	tx(r100)
 	if testing.Short() {
