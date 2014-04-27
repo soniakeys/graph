@@ -447,6 +447,28 @@ func TestSSSP(t *testing.T) {
 			t.Log("delta:", math.Abs(distA-distD))
 			t.Fatal(len(tc.g), "A, D dist mismatch")
 		}
+		// test Bellman Ford against Dijkstra all paths
+		d.AllPaths(tc.start)
+		b := graph.NewBellmanFord(tc.g)
+		b.Run(tc.start)
+		// result objects should be identical
+		dr := d.Result
+		br := b.Result
+		if dr.Start != br.Start {
+			t.Fatal("dr.Start, br.Start", dr.Start, br.Start)
+		}
+		if dr.NoPath != br.NoPath {
+			t.Fatal("dr.NoPath, br.NoPath", dr.NoPath, br.NoPath)
+		}
+		if len(dr.Paths) != len(br.Paths) {
+			t.Fatal("len(dr.Paths), len(br.Paths)",
+				len(dr.Paths), len(br.Paths))
+		}
+		for i, de := range dr.Paths {
+			if de != br.Paths[i] {
+				t.Fatal("dr.Paths ne br.Paths")
+			}
+		}
 	}
 	tx(r100)
 	if testing.Short() {
