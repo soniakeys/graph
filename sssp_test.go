@@ -321,9 +321,15 @@ func ExampleBellmanFord() {
 
 // duplicate code in instr_test.go
 type testCase struct {
-	g          graph.WeightedAdjacencyList
-	start, end int
-	h          graph.Heuristic
+	w graph.WeightedAdjacencyList // generated
+	// variants
+	unit graph.WeightedAdjacencyList // unit arc weights
+	g    graph.AdjacencyList         // unweighted
+	t    graph.AdjacencyList         // transpose
+
+	h graph.Heuristic
+
+	start, end, m int
 }
 
 var s = rand.New(rand.NewSource(59))
@@ -368,7 +374,7 @@ func r(nNodes, nArcs int, seed int64) testCase {
 		return math.Hypot(ce.x-cn.x, ce.y-cn.y)
 	}
 	// graph
-	tc.g = make(graph.WeightedAdjacencyList, nNodes)
+	tc.w = make(graph.WeightedAdjacencyList, nNodes)
 	// arcs
 	var tooFar, dup int
 arc:
@@ -389,15 +395,26 @@ arc:
 			tooFar++
 			continue
 		}
-		for _, nb := range tc.g[n1] {
+		for _, nb := range tc.w[n1] {
 			if nb.To == n2 {
 				dup++
 				continue arc
 			}
 		}
-		tc.g[n1] = append(tc.g[n1], graph.Half{n2, dist})
+		tc.w[n1] = append(tc.w[n1], graph.Half{n2, dist})
 		i++
 	}
+	// variants
+	tc.unit = make(graph.WeightedAdjacencyList, len(tc.w))
+	for n, nbs := range tc.w {
+		u := make([]graph.Half, len(nbs))
+		for i, nb := range nbs {
+			u[i] = graph.Half{To: nb.To, ArcWeight: 1}
+		}
+		tc.unit[n] = u
+	}
+	tc.g = tc.w.Unweighted()
+	tc.t, tc.m = tc.g.Transpose()
 	return tc
 }
 
@@ -409,47 +426,45 @@ func TestR(t *testing.T) {
 		tcs = tcs[:1]
 	}
 	for _, tc := range tcs {
-		if s, cx := tc.g.Unweighted().Simple(); !s {
-			t.Fatal(len(tc.g), "not simple at node", cx)
+		if s, cx := tc.w.Unweighted().Simple(); !s {
+			t.Fatal(len(tc.w), "not simple at node", cx)
 		}
 	}
 }
 
 func TestSSSP(t *testing.T) {
 	tx := func(tc testCase) {
-		d := graph.NewDijkstra(tc.g)
+		d := graph.NewDijkstra(tc.w)
 		d.Path(tc.start, tc.end)
 		pathD, distD := d.Result.PathTo(tc.end)
 		// test that repeating same search on same d gives same result
 		d.Path(tc.start, tc.end)
 		path2, dist2 := d.Result.PathTo(tc.end)
 		if len(pathD) != len(path2) || distD != dist2 {
-			t.Fatal(len(tc.g), "D, D2 len or dist mismatch")
+			t.Fatal(len(tc.w), "D, D2 len or dist mismatch")
 		}
 		for i, half := range pathD {
 			if path2[i] != half {
-				t.Fatal(len(tc.g), "D, D2 path mismatch")
+				t.Fatal(len(tc.w), "D, D2 path mismatch")
 			}
 		}
 		// A*
-		pathA, distA := graph.AStarAPath(tc.g, tc.start, tc.end, tc.h)
+		pathA, distA := graph.AStarAPath(tc.w, tc.start, tc.end, tc.h)
 		// test that a* path is same distance and length as dijkstra path
 		if len(pathA) != len(pathD) {
 			t.Log("pathA:", pathA)
 			t.Log("pathD:", pathD)
-			t.Fatal(len(tc.g), "A, D len mismatch")
+			t.Fatal(len(tc.w), "A, D len mismatch")
 		}
-		//fudge coded when math was a little different. not needed currently.
-		//if math.Abs((distA - distD)/distA) > 1e-15 {
 		if distA != distD {
 			t.Log("distA:", distA)
 			t.Log("distD:", distD)
 			t.Log("delta:", math.Abs(distA-distD))
-			t.Fatal(len(tc.g), "A, D dist mismatch")
+			t.Fatal(len(tc.w), "A, D dist mismatch")
 		}
 		// test Bellman Ford against Dijkstra all paths
 		d.AllPaths(tc.start)
-		b := graph.NewBellmanFord(tc.g)
+		b := graph.NewBellmanFord(tc.w)
 		b.Run(tc.start)
 		// result objects should be identical
 		dr := d.Result
@@ -469,25 +484,21 @@ func TestSSSP(t *testing.T) {
 				t.Fatal("dr.Paths ne br.Paths")
 			}
 		}
-		// breadth first
-		for _, nbs := range tc.g {
-			for i := range nbs {
-				nbs[i].ArcWeight = 1
-			}
-		}
-		d.AllPaths(tc.start) // rerun dijkstra with unit weights
-		u := tc.g.Unweighted()
-		bfs := graph.NewBreadthFirst(u)
+		// breadth first, compare to dijkstra with unit weights
+		u := graph.NewDijkstra(tc.unit)
+		u.AllPaths(tc.start)
+		ur := u.Result
+		bfs := graph.NewBreadthFirst(tc.g)
 		np := bfs.AllPaths(tc.start)
 		bfsr := bfs.Result
 		if bfsr.Start != dr.Start {
 			t.Fatal("dr.Start, bfsr.Start", dr.Start, bfsr.Start)
 		}
 		var ml, npf int
-		for i, de := range dr.Paths {
+		for i, ue := range ur.Paths {
 			bl := bfsr.Paths[i].Len
-			if bl != de.Len {
-				t.Fatal("de.From.Len, bfsr.Paths[i].Len", de.Len, bl)
+			if bl != ue.Len {
+				t.Fatal("ue.From.Len, bfsr.Paths[i].Len", ue.Len, bl)
 			}
 			if bl > ml {
 				ml = bl
@@ -503,8 +514,7 @@ func TestSSSP(t *testing.T) {
 			t.Fatal("bfs all paths returned", np, "recount:", npf)
 		}
 		// breadth first 2
-		tr, m := u.Transpose()
-		bfs2 := graph.NewBreadthFirst2(u, tr, m)
+		bfs2 := graph.NewBreadthFirst2(tc.g, tc.t, tc.m)
 		np2 := bfs2.AllPaths(tc.start)
 		bfs2r := bfs2.Result
 		if bfs2r.Start != bfsr.Start {
@@ -549,7 +559,7 @@ func TestSSSP(t *testing.T) {
 func BenchmarkDijkstra100(b *testing.B) {
 	// 100 nodes, 200 edges
 	tc := r100
-	d := graph.NewDijkstra(tc.g)
+	d := graph.NewDijkstra(tc.w)
 	for i := 0; i < b.N; i++ {
 		d.AllPaths(tc.start)
 	}
@@ -559,7 +569,7 @@ func BenchmarkDijkstra1e3(b *testing.B) {
 	// 1000 nodes, 3000 edges
 	once.Do(bigger)
 	tc := r1k
-	d := graph.NewDijkstra(tc.g)
+	d := graph.NewDijkstra(tc.w)
 	for i := 0; i < b.N; i++ {
 		d.AllPaths(tc.start)
 	}
@@ -569,7 +579,7 @@ func BenchmarkDijkstra1e4(b *testing.B) {
 	// 10k nodes, 50k edges
 	once.Do(bigger)
 	tc := r10k
-	d := graph.NewDijkstra(tc.g)
+	d := graph.NewDijkstra(tc.w)
 	for i := 0; i < b.N; i++ {
 		d.AllPaths(tc.start)
 	}
@@ -579,8 +589,78 @@ func BenchmarkDijkstra1e5(b *testing.B) {
 	// 100k nodes, 1m edges
 	once.Do(bigger)
 	tc := r100k
-	d := graph.NewDijkstra(tc.g)
+	d := graph.NewDijkstra(tc.w)
 	for i := 0; i < b.N; i++ {
 		d.AllPaths(tc.start)
+	}
+}
+
+func BenchmarkBFS100(b *testing.B) {
+	tc := r100
+	bf := graph.NewBreadthFirst(tc.g)
+	for i := 0; i < b.N; i++ {
+		bf.AllPaths(tc.start)
+	}
+}
+
+func BenchmarkBFS1e3(b *testing.B) {
+	once.Do(bigger)
+	tc := r1k
+	bf := graph.NewBreadthFirst(tc.g)
+	for i := 0; i < b.N; i++ {
+		bf.AllPaths(tc.start)
+	}
+}
+
+func BenchmarkBFS1e4(b *testing.B) {
+	once.Do(bigger)
+	tc := r10k
+	bf := graph.NewBreadthFirst(tc.g)
+	for i := 0; i < b.N; i++ {
+		bf.AllPaths(tc.start)
+	}
+}
+
+func BenchmarkBFS1e5(b *testing.B) {
+	once.Do(bigger)
+	tc := r100k
+	bf := graph.NewBreadthFirst(tc.g)
+	for i := 0; i < b.N; i++ {
+		bf.AllPaths(tc.start)
+	}
+}
+
+func BenchmarkBFS2_100(b *testing.B) {
+	tc := r100
+	bf := graph.NewBreadthFirst2(tc.g, tc.t, tc.m)
+	for i := 0; i < b.N; i++ {
+		bf.AllPaths(tc.start)
+	}
+}
+
+func BenchmarkBFS2_1e3(b *testing.B) {
+	once.Do(bigger)
+	tc := r1k
+	bf := graph.NewBreadthFirst2(tc.g, tc.t, tc.m)
+	for i := 0; i < b.N; i++ {
+		bf.AllPaths(tc.start)
+	}
+}
+
+func BenchmarkBFS2_1e4(b *testing.B) {
+	once.Do(bigger)
+	tc := r10k
+	bf := graph.NewBreadthFirst2(tc.g, tc.t, tc.m)
+	for i := 0; i < b.N; i++ {
+		bf.AllPaths(tc.start)
+	}
+}
+
+func BenchmarkBFS2_1e5(b *testing.B) {
+	once.Do(bigger)
+	tc := r100k
+	bf := graph.NewBreadthFirst2(tc.g, tc.t, tc.m)
+	for i := 0; i < b.N; i++ {
+		bf.AllPaths(tc.start)
 	}
 }
