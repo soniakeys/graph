@@ -348,6 +348,7 @@ func (d *Dijkstra) search(start, end int) (reached int) {
 		d.r[i].done = false
 	}
 
+	d.Result.Start = start
 	current := start
 	rp := d.Result.Paths
 	rp[current].Len = 1 // path length at start is 1 node
@@ -827,6 +828,7 @@ func NewBellmanFord(g WeightedAdjacencyList) *BellmanFord {
 // In this case values in b.Result are meaningless.
 func (b *BellmanFord) Run(start int) (ok bool) {
 	b.Result.reset()
+	b.Result.Start = start
 	rp := b.Result.Paths
 	rp[start].Dist = 0
 	rp[start].Len = 1
