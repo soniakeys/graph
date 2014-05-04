@@ -68,19 +68,21 @@ func (g AdjacencyList) Cyclic() bool {
 
 // Topological, for directed acyclic graphs, computes a topological sort of g.
 //
-// Returned is a permutation of node numbers in topologically sorted order.
-// If the graph is found to be cyclic,  Topological returns nil.
-func (g AdjacencyList) Topological() []int {
-	// TODO handle non-connected graph
-	t := make([]int, len(g))
-	i := len(t) - 1
-	a := true
+// For an acyclic graph, return value order is a permutation of node numbers
+// in topologically sorted order and cycle will be nil.  If the graph is found
+// to be cyclic, order will be nil and cycle will be the path of a found cycle.
+func (g AdjacencyList) Topological() (order, cycle []int) {
+	order = make([]int, len(g))
+	i := len(order)
 	var temp, perm big.Int
+	var cycleFound bool
+	var cycleStart int
 	var df func(int)
 	df = func(n int) {
 		switch {
 		case temp.Bit(n) == 1:
-			a = false
+			cycleFound = true
+			cycleStart = n
 			return
 		case perm.Bit(n) == 1:
 			return
@@ -88,25 +90,31 @@ func (g AdjacencyList) Topological() []int {
 		temp.SetBit(&temp, n, 1)
 		for _, nb := range g[n] {
 			df(nb)
-			if !a {
+			if cycleFound {
+				if cycleStart >= 0 {
+					cycle = append(cycle, n)
+					if n == cycleStart {
+						cycleStart = -1
+					}
+				}
 				return
 			}
 		}
 		temp.SetBit(&temp, n, 0)
 		perm.SetBit(&perm, n, 1)
-		t[i] = n
 		i--
+		order[i] = n
 	}
 	for n := range g {
 		if perm.Bit(n) == 1 {
 			continue
 		}
 		df(n)
-		if !a {
-			return nil
+		if cycleFound {
+			return nil, cycle
 		}
 	}
-	return t
+	return order, nil
 }
 
 // Tarjan identifies strongly connected components in a directed graph using

@@ -34,8 +34,8 @@ func ExampleAdjacencyList_Topological() {
 	g[2] = []int{3}
 	fmt.Println(g.Topological())
 	// Output:
-	// [4 3 1 2 0]
-	// []
+	// [4 3 1 2 0] []
+	// [] [3 2 1]
 }
 
 func ExampleAdjacencyList_Tarjan() {
