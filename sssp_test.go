@@ -401,7 +401,7 @@ arc:
 				continue arc
 			}
 		}
-		tc.w[n1] = append(tc.w[n1], graph.Half{n2, dist})
+		tc.w[n1] = append(tc.w[n1], graph.Half{To: n2, ArcWeight: dist})
 		i++
 	}
 	// variants
