@@ -6,12 +6,24 @@ import (
 	"time"
 )
 
-// scale is log(2) node extent.
-// arcFactor is rato of arcs generated to node extent.
-func NewDir(scale uint, edgeFactor float64) (g AdjacencyList, m int) {
-	return krongen(scale, edgeFactor, true)
+// NewDir generates a Kronecker-like random directed graph.
+//
+// The returned graph g is simple and has no isolated nodes.  The number of
+// of nodes will be <= 2^scale, and will be near 2^scale for typical values
+// of arcFactor, >= 1.  ArcFactor * 2^scale arcs are generated, although
+// duplicates and loops are rejected.  Return value m is the number of arcs
+// retained in the result graph.
+func NewDir(scale uint, arcFactor float64) (g AdjacencyList, m int) {
+	return krongen(scale, arcFactor, true)
 }
 
+// NewDir generates a Kronecker-like random undirected graph.
+//
+// The returned graph g is simple and has no isolated nodes.  The number of
+// of nodes will be <= 2^scale, and will be near 2^scale for typical values
+// of arcFactor, >= 1.  EdgeFactor * 2^scale edges are generated, although
+// duplicates and loops are rejected.  Return value m is the number of edges
+// retained in the result graph.
 func NewUnDir(scale uint, edgeFactor float64) (g AdjacencyList, m int) {
 	return krongen(scale, edgeFactor, false)
 }
@@ -19,7 +31,7 @@ func NewUnDir(scale uint, edgeFactor float64) (g AdjacencyList, m int) {
 func krongen(scale uint, edgeFactor float64, dir bool) (g AdjacencyList, m int) {
 	rand.Seed(time.Now().Unix())
 	N := 1 << scale                      // node extent
-	M := int(edgeFactor*float64(N) + .5) // number of arcs to generate
+	M := int(edgeFactor*float64(N) + .5) // number of arcs/edges to generate
 	a, b, c := 0.57, 0.19, 0.19          // initiator probabilities
 	ab := a + b
 	cNorm := c / (1 - ab)
@@ -51,7 +63,7 @@ func krongen(scale uint, edgeFactor float64, dir bool) (g AdjacencyList, m int) 
 	}
 	p := rand.Perm(nNodes)
 	px := 0
-	r := make([]int, M)
+	r := make([]int, N)
 	for i := range r {
 		if bm.Bit(i) == 1 {
 			r[i] = p[px]
