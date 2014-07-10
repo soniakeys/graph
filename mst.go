@@ -4,9 +4,14 @@
 package graph
 
 import (
+"log"
 	"container/heap"
 )
 
+// Prim implements the Jarník-Prim-Dijkstra algorithm for constructing
+// a minimum spanning tree on an undirected graph.
+//
+// Construct with NewPrim.
 type Prim struct {
 	Graph  WeightedAdjacencyList
 	Result *WeightedFromTree
@@ -14,10 +19,13 @@ type Prim struct {
 	best []prNode // slice backs heap
 }
 
+// NewPrim constructs a new Prim object.  Argument g should represent an
+// undirected graph.
 func NewPrim(g WeightedAdjacencyList) *Prim {
 	b := make([]prNode, len(g))
 	for n := range b {
 		b[n].nx = n
+		b[n].fx = -1
 	}
 	return &Prim{
 		Graph:  g,
@@ -34,19 +42,38 @@ type prNode struct {
 
 type prHeap []*prNode
 
-func (p *Prim) Run(start int) int {
+// Reset clears results of Span, allowing results to be recomputed.
+//
+// Reset is not meaningful following a change to the number of nodes in the
+// graph.  To recompute following addition or deletion of nodes, simply
+// abandon the Prim object and create a new one.
+func (p *Prim) Reset() {
 	p.Result.reset()
 	b := p.best
 	for n := range b {
 		b[n].fx = -1
 	}
+}
+
+// Span computes a minimal spanning tree on the connected component containing
+// the given start node.
+//
+// If a graph has multiple connected components, a spanning forest can be
+// accumulated by calling Span successively on representative nodes of the
+// components.  Note that Result.Start can contain only the most recent start
+// node.  To complete the forest representation you must retain a separate
+// list of start nodes.
+func (p *Prim) Span(start int) int {
 	rp := p.Result.Paths
 	var frontier prHeap
 	rp[start].Dist = 0
 	rp[start].Len = 1
+	b := p.best
 	nDone := 1
 	for a := start; ; {
+		log.Println("node", a)
 		for _, nb := range p.Graph[a] {
+			log.Println("  nb", nb)
 			if rp[nb.To].Len > 0 {
 				continue // already in MST, no action
 			}
@@ -56,6 +83,10 @@ func (p *Prim) Run(start int) int {
 				heap.Push(&frontier, bp)
 			case nb.ArcWeight < bp.from.ArcWeight: // better arc
 				bp.from = FromHalf{a, nb.ArcWeight}
+				log.Println("heap")
+				for _, pn := range frontier {
+					log.Printf("  %#v\n", pn)
+				}
 				heap.Fix(&frontier, bp.fx)
 			}
 		}
@@ -75,7 +106,11 @@ func (h prHeap) Len() int { return len(h) }
 func (h prHeap) Less(i, j int) bool {
 	return h[i].from.ArcWeight < h[j].from.ArcWeight
 }
-func (h prHeap) Swap(i, j int) { h[i], h[j] = h[j], h[i] }
+func (h prHeap) Swap(i, j int) {
+	h[i], h[j] = h[j], h[i]
+	h[i].fx = i
+	h[j].fx = j
+}
 func (p *prHeap) Push(x interface{}) {
 	nd := x.(*prNode)
 	nd.fx = len(*p)

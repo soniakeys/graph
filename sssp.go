@@ -124,6 +124,8 @@ func (b *BreadthFirst) Traverse(start int, v Visitor) int {
 	return nReached
 }
 
+// BreadthFirst2 methods implement a direction-optimized strategy.
+// Code is experimental and currently is no faster than basic BreadthFirst.
 type BreadthFirst2 struct {
 	To, From AdjacencyList
 	M        int
