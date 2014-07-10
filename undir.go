@@ -16,26 +16,31 @@ import (
 // components in g.
 //
 // Returned is a slice with a single representative node from each connected
+// component and a parallel slice with the number of nodes in the corresponding
 // component.
-func (g AdjacencyList) ConnectedComponents() []int {
-	var r []int
+func (g AdjacencyList) ConnectedComponents() (rep, nNodes []int) {
 	var c big.Int
+	var nc int
 	var df func(int)
 	df = func(n int) {
 		c.SetBit(&c, n, 1)
+		nc++
 		for _, nb := range g[n] {
 			if c.Bit(nb) == 0 {
 				df(nb)
 			}
 		}
+		return
 	}
 	for n := range g {
 		if c.Bit(n) == 0 {
-			r = append(r, n)
+			rep = append(rep, n)
+			nc = 0
 			df(n)
+			nNodes = append(nNodes, nc)
 		}
 	}
-	return r
+	return
 }
 
 // wip

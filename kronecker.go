@@ -6,29 +6,34 @@ import (
 	"time"
 )
 
-// NewDir generates a Kronecker-like random directed graph.
+// KroneckerDir generates a Kronecker-like random directed graph.
 //
 // The returned graph g is simple and has no isolated nodes.  The number of
 // of nodes will be <= 2^scale, and will be near 2^scale for typical values
-// of arcFactor, >= 1.  ArcFactor * 2^scale arcs are generated, although
+// of arcFactor, >= 2.  ArcFactor * 2^scale arcs are generated, although
 // duplicates and loops are rejected.  Return value m is the number of arcs
 // retained in the result graph.
-func NewDir(scale uint, arcFactor float64) (g AdjacencyList, m int) {
-	return krongen(scale, arcFactor, true)
+func KroneckerDir(scale uint, arcFactor float64) (g AdjacencyList, m int) {
+	return kronecker(scale, arcFactor, true)
 }
 
-// NewDir generates a Kronecker-like random undirected graph.
+// KroneckerUndir generates a Kronecker-like random undirected graph.
 //
 // The returned graph g is simple and has no isolated nodes.  The number of
 // of nodes will be <= 2^scale, and will be near 2^scale for typical values
-// of arcFactor, >= 1.  EdgeFactor * 2^scale edges are generated, although
-// duplicates and loops are rejected.  Return value m is the number of edges
-// retained in the result graph.
-func NewUnDir(scale uint, edgeFactor float64) (g AdjacencyList, m int) {
-	return krongen(scale, edgeFactor, false)
+// of edgeFactor, >= 2.  EdgeFactor * 2^scale edges are generated, although
+// duplicates and loops are rejected.
+//
+// Return value m is the number of *arcs* retained in the result graph.
+// (There are two arcs per edge.)
+func KroneckerUndir(scale uint, edgeFactor float64) (g AdjacencyList, m int) {
+	return kronecker(scale, edgeFactor, false)
 }
 
-func krongen(scale uint, edgeFactor float64, dir bool) (g AdjacencyList, m int) {
+// Styled after the Graph500 example code.  Not well tested currently.
+// Graph500 example generates undirected only.  No idea if the directed variant
+// here is meaningful or not.
+func kronecker(scale uint, edgeFactor float64, dir bool) (g AdjacencyList, m int) {
 	rand.Seed(time.Now().Unix())
 	N := 1 << scale                      // node extent
 	M := int(edgeFactor*float64(N) + .5) // number of arcs/edges to generate
@@ -83,10 +88,11 @@ ij:
 			}
 		}
 		g[ri] = append(g[ri], rj)
+		m++
 		if !dir {
 			g[rj] = append(g[rj], ri)
+			m++
 		}
-		m++
 	}
 	return
 }

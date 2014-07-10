@@ -6,6 +6,7 @@ package graph_test
 import (
 	"fmt"
 	"math"
+	"math/big"
 	"math/rand"
 	"sync"
 	"testing"
@@ -321,7 +322,7 @@ func ExampleBellmanFord() {
 
 // duplicate code in instr_test.go
 type testCase struct {
-	w graph.WeightedAdjacencyList // generated
+	w graph.WeightedAdjacencyList // generated directed graph
 	// variants
 	unit graph.WeightedAdjacencyList // unit arc weights
 	g    graph.AdjacencyList         // unweighted
@@ -330,21 +331,27 @@ type testCase struct {
 	h graph.Heuristic
 
 	start, end, m int
+
+	// kronecker
+	kg      graph.AdjacencyList // undirected
+	km      int                 // number of arcs
+	kStarts []int               // a list of random start points
 }
 
 var s = rand.New(rand.NewSource(59))
 var r100 = r(100, 200, 62)
 var (
-	r1k, r10k, r100k testCase
-	once             sync.Once
-	bigger           = func() {
+	r1k, r10k, r100k/*, r1m*/ testCase
+	once   sync.Once
+	bigger = func() {
 		r1k = r(1e3, 3e3, 66)   // (15x as many arcs as r100)
 		r10k = r(1e4, 5e4, 59)  // (17x as many arcs as r1k)
 		r100k = r(1e5, 1e6, 59) // (20x as many arcs as r10k)
+		//		r1m = r(1e6, 16e6, 59) // (16x as many arcs as r100k)
 	}
 )
 
-// generate random directed graph and end points to test
+// generate random graphs and end points to test
 func r(nNodes, nArcs int, seed int64) testCase {
 	s.Seed(seed)
 	// generate random coordinates
@@ -415,13 +422,37 @@ arc:
 	}
 	tc.g = tc.w.Unweighted()
 	tc.t, tc.m = tc.g.Transpose()
+
+	// kronecker
+	scale := uint(math.Log2(float64(nNodes)) + .5)
+	arcFactor := float64(nArcs) / float64(nNodes)
+	tc.kg, tc.km = graph.KroneckerUndir(scale, arcFactor)
+	// extract giant connected component
+	rep, nc := tc.kg.ConnectedComponents()
+	var x, max int
+	for i, n := range nc {
+		if n > max {
+			x = i
+			max = n
+		}
+	}
+	gcc := new(big.Int)
+	tc.kg.DepthFirst(rep[x], gcc, nil)
+	// 16 start points, a little arbitrary but that's what Graph 500 uses.
+	tc.kStarts = make([]int, 16)
+	for i := 0; i < len(tc.kStarts); {
+		if s := rand.Intn(len(tc.kg)); gcc.Bit(s) == 1 {
+			tc.kStarts[i] = s
+			i++
+		}
+	}
 	return tc
 }
 
 // end duplicate code
 
 func TestR(t *testing.T) {
-	tcs := []testCase{r100, r1k, r10k, r100k}
+	tcs := []testCase{r100, r1k, r10k, r100k} //, r1m}
 	if testing.Short() {
 		tcs = tcs[:1]
 	}
@@ -554,6 +585,7 @@ func TestSSSP(t *testing.T) {
 	tx(r1k)
 	tx(r10k)
 	tx(r100k)
+	//	tx(r1m)
 }
 
 func BenchmarkDijkstra100(b *testing.B) {
@@ -595,72 +627,123 @@ func BenchmarkDijkstra1e5(b *testing.B) {
 	}
 }
 
-func BenchmarkBFS100(b *testing.B) {
+func BenchmarkBFS_K100(b *testing.B) {
 	tc := r100
-	bf := graph.NewBreadthFirst(tc.g)
+	bf := graph.NewBreadthFirst(tc.kg)
+	x := 0
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		bf.AllPaths(tc.start)
+		bf.AllPaths(tc.kStarts[x])
+		x = (x + 1) % len(tc.kStarts)
 	}
 }
 
-func BenchmarkBFS1e3(b *testing.B) {
+func BenchmarkBFS_K1e3(b *testing.B) {
 	once.Do(bigger)
 	tc := r1k
-	bf := graph.NewBreadthFirst(tc.g)
+	bf := graph.NewBreadthFirst(tc.kg)
+	x := 0
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		bf.AllPaths(tc.start)
+		bf.AllPaths(tc.kStarts[x])
+		x = (x + 1) % len(tc.kStarts)
 	}
 }
 
-func BenchmarkBFS1e4(b *testing.B) {
+func BenchmarkBFS_K1e4(b *testing.B) {
 	once.Do(bigger)
 	tc := r10k
-	bf := graph.NewBreadthFirst(tc.g)
+	bf := graph.NewBreadthFirst(tc.kg)
+	x := 0
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		bf.AllPaths(tc.start)
+		bf.AllPaths(tc.kStarts[x])
+		x = (x + 1) % len(tc.kStarts)
 	}
 }
 
-func BenchmarkBFS1e5(b *testing.B) {
+func BenchmarkBFS_K1e5(b *testing.B) {
 	once.Do(bigger)
 	tc := r100k
-	bf := graph.NewBreadthFirst(tc.g)
+	bf := graph.NewBreadthFirst(tc.kg)
+	x := 0
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		bf.AllPaths(tc.start)
+		bf.AllPaths(tc.kStarts[x])
+		x = (x + 1) % len(tc.kStarts)
 	}
 }
 
-func BenchmarkBFS2_100(b *testing.B) {
+/*
+func BenchmarkBFS_K1e6(b *testing.B) {
+	once.Do(bigger)
+	tc := r1m
+	bf := graph.NewBreadthFirst(tc.kg)
+	x := 0
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		bf.AllPaths(tc.kStarts[x])
+		x = (x + 1) % len(tc.kStarts)
+	}
+}
+*/
+func BenchmarkBFS2_K100(b *testing.B) {
 	tc := r100
-	bf := graph.NewBreadthFirst2(tc.g, tc.t, tc.m)
+	bf := graph.NewBreadthFirst2(tc.kg, tc.kg, tc.km)
+	x := 0
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		bf.AllPaths(tc.start)
+		bf.AllPaths(tc.kStarts[x])
+		x = (x + 1) % len(tc.kStarts)
 	}
 }
 
-func BenchmarkBFS2_1e3(b *testing.B) {
+func BenchmarkBFS2_K1e3(b *testing.B) {
 	once.Do(bigger)
 	tc := r1k
-	bf := graph.NewBreadthFirst2(tc.g, tc.t, tc.m)
+	bf := graph.NewBreadthFirst2(tc.kg, tc.kg, tc.km)
+	x := 0
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		bf.AllPaths(tc.start)
+		bf.AllPaths(tc.kStarts[x])
+		x = (x + 1) % len(tc.kStarts)
 	}
 }
 
-func BenchmarkBFS2_1e4(b *testing.B) {
+func BenchmarkBFS2_K1e4(b *testing.B) {
 	once.Do(bigger)
 	tc := r10k
-	bf := graph.NewBreadthFirst2(tc.g, tc.t, tc.m)
+	bf := graph.NewBreadthFirst2(tc.kg, tc.kg, tc.km)
+	x := 0
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		bf.AllPaths(tc.start)
+		bf.AllPaths(tc.kStarts[x])
+		x = (x + 1) % len(tc.kStarts)
 	}
 }
 
-func BenchmarkBFS2_1e5(b *testing.B) {
+func BenchmarkBFS2_K1e5(b *testing.B) {
 	once.Do(bigger)
 	tc := r100k
-	bf := graph.NewBreadthFirst2(tc.g, tc.t, tc.m)
+	bf := graph.NewBreadthFirst2(tc.kg, tc.kg, tc.km)
+	x := 0
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		bf.AllPaths(tc.start)
+		bf.AllPaths(tc.kStarts[x])
+		x = (x + 1) % len(tc.kStarts)
 	}
 }
+
+/*
+func BenchmarkBFS2_K1e6(b *testing.B) {
+	once.Do(bigger)
+	tc := r1m
+	bf := graph.NewBreadthFirst2(tc.kg, tc.kg, tc.km)
+	x := 0
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		bf.AllPaths(tc.kStarts[x])
+		x = (x + 1) % len(tc.kStarts)
+	}
+}
+*/

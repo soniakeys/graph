@@ -131,6 +131,52 @@ func (g AdjacencyList) Bipartite(n int) (b bool, c1, c2 *big.Int, oc []int) {
 	return b, nil, nil, oc
 }
 
+// DepthFirst traverses a graph depth first.
+//
+// As it traverses it calls visitor function v for each node.  If v returns
+// false at any point, the traversal is terminated immediately and DepthFirst
+// returns false.  Otherwise DepthFirst returns true.
+//
+// DepthFirst uses argument bm is as a bitmap to guide the traversal.
+// For a complete traversal, bm should be 0 initially.  During the
+// traversal, bits are set corresponding to each node visited.
+// The bit is set before calling the visitor function.
+//
+// Argument bm can be nil if you have no need for it.
+// In this case a bitmap is created internally for one-time use.
+//
+// Alternatively v can be nil.  In this case traversal still procedes and
+// updates the bitmap, which can be a useful result.
+// DepthFirst always returns true in this case.
+//
+// It makes no sense for both bm and v to be nil.  In this case DepthFirst
+// returns false immediately.
+func (g AdjacencyList) DepthFirst(start int, bm *big.Int, v Visitor) (ok bool) {
+	if bm == nil {
+		if v == nil {
+			return false
+		}
+		bm = new(big.Int)
+	}
+	ok = true
+	var df func(n int)
+	df = func(n int) {
+		if bm.Bit(n) == 1 {
+			return
+		}
+		bm.SetBit(bm, n, 1)
+		if v != nil && !v(n) {
+			ok = false
+			return
+		}
+		for _, nb := range g[n] {
+			df(nb)
+		}
+	}
+	df(start)
+	return
+}
+
 // A FromTree represents a tree where each node is associated with
 // a half arc identifying an arc from another node.
 //
