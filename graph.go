@@ -177,19 +177,44 @@ func (g AdjacencyList) DepthFirst(start int, bm *big.Int, v Visitor) (ok bool) {
 	return
 }
 
-// A FromTree represents a tree where each node is associated with
+const (
+	PreStart  = -1
+	Unreached = -2
+)
+
+// FromTree represents a tree where each node is associated with
 // a half arc identifying an arc from another node.
 //
-// For a node n, Paths[n] contains information about the path from the
-// the start node to n.  For reached nodes, the PathEnd.Len field will be
-// > 0 and indicate the length of the path from start.  The PathEnd.From
-// field will indicate the node this node was reached from, or -1 in the
-// case of the start node.  For unreached nodes, PathEnd.Len will be 0 and
-// PathEnd.From will be -1.
+// Paths represents a tree with information about the path to each node
+// from a start node.  See PathEnd documentation.
+//
+// Leaves and MaxLen are used by some search and traversal functions to
+// return extra information.  Where Leaves is used it serves as a bitmap where
+// Leave.Bit() == 1 for each leaf of the tree.  Where MaxLen is used it is
+// provided primarily as a convenience for functions that might want to
+// anticipate the maximum path length that would be encountered traversing
+// the tree.
+//
+// A single FromTree can also represent a forest.  In this case paths from
+// all leaves do not return to a single start node, but multiple start nodes.
 type FromTree struct {
-	Start  int       // start node, argument to search, root of the tree
 	Paths  []PathEnd // tree representation
+	Leaves big.Int   // leaves of tree
 	MaxLen int       // length of longest path, max of all PathEnd.Len values
+}
+
+// PathEnd associates a half arc and a path length.
+//
+// PathEnd is an element type of FromTree, a return type from various search
+// functions.
+//
+// For a start node of a search, From will be -1 and Len will be 1. For other
+// nodes reached by the search, From represents a half arc in a path back to
+// start and len represents the number of nodes in the path.  For nodes not
+// reached by the search, From will be -1 and Len will be 0.
+type PathEnd struct {
+	From int // a "from" half arc, the node the arc comes from
+	Len  int // number of nodes in path from start
 }
 
 // NewFromTree creates a FromTree object.  You don't typically call this
@@ -204,19 +229,11 @@ func newFromTree(n int) *FromTree {
 // will call this function and you don't typically call it from application
 // code.
 func (t *FromTree) reset() {
-	t.Start = -1
 	for n := range t.Paths {
 		t.Paths[n] = PathEnd{From: -1, Len: 0}
 	}
+	t.Leaves = big.Int{}
 	t.MaxLen = 0
-}
-
-// A PathEnd associates a half arc and a path length.
-//
-// See FromTree for use by search functions.
-type PathEnd struct {
-	From int // a "from" half arc, the node the arc comes from
-	Len  int // number of nodes in path from start
 }
 
 // PathTo decodes a FromTree, recovering a found path.

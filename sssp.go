@@ -9,10 +9,12 @@ import (
 	"math/big"
 )
 
-// A BreadthFirst object allows graph traversals and searches in
-// breadth first order.
+// BreadthFirst associates a graph with a result object for returning
+// results from breadth first searches and traversals.
 //
 // Construct with NewBreadthFirst.
+//
+// The search methods set Result.Paths and Result.MaxLen but not Result.Leaves.
 type BreadthFirst struct {
 	Graph  AdjacencyList
 	Result *FromTree
@@ -89,7 +91,6 @@ type Visitor func(n int) (ok bool)
 func (b *BreadthFirst) Traverse(start int, v Visitor) int {
 	b.Result.reset()
 	rp := b.Result.Paths
-	b.Result.Start = start
 	level := 1
 	rp[start].Len = level
 	if !v(start) {
@@ -160,7 +161,6 @@ func (b *BreadthFirst2) AllPaths(start int) int {
 func (b *BreadthFirst2) Traverse(start int, v Visitor) int {
 	b.Result.reset()
 	rp := b.Result.Paths
-	b.Result.Start = start
 	level := 1
 	rp[start].Len = level
 	if !v(start) {

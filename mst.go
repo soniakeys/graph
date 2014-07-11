@@ -4,8 +4,8 @@
 package graph
 
 import (
-"log"
 	"container/heap"
+	"log"
 )
 
 // Prim implements the Jarník-Prim-Dijkstra algorithm for constructing
