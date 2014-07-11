@@ -522,9 +522,6 @@ func TestSSSP(t *testing.T) {
 		bfs := graph.NewBreadthFirst(tc.g)
 		np := bfs.AllPaths(tc.start)
 		bfsr := bfs.Result
-		if bfsr.Start != dr.Start {
-			t.Fatal("dr.Start, bfsr.Start", dr.Start, bfsr.Start)
-		}
 		var ml, npf int
 		for i, ue := range ur.Paths {
 			bl := bfsr.Paths[i].Len
@@ -548,9 +545,6 @@ func TestSSSP(t *testing.T) {
 		bfs2 := graph.NewBreadthFirst2(tc.g, tc.t, tc.m)
 		np2 := bfs2.AllPaths(tc.start)
 		bfs2r := bfs2.Result
-		if bfs2r.Start != bfsr.Start {
-			t.Fatal("bfsr.Start, bfs2r.Start", bfsr.Start, bfs2r.Start)
-		}
 		var ml2, npf2 int
 		for i, e := range bfsr.Paths {
 			bl2 := bfs2r.Paths[i].Len
