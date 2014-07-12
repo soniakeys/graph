@@ -210,7 +210,7 @@ type FromTree struct {
 //
 // For a start node of a search, From will be -1 and Len will be 1. For other
 // nodes reached by the search, From represents a half arc in a path back to
-// start and len represents the number of nodes in the path.  For nodes not
+// start and Len represents the number of nodes in the path.  For nodes not
 // reached by the search, From will be -1 and Len will be 0.
 type PathEnd struct {
 	From int // a "from" half arc, the node the arc comes from

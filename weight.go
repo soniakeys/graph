@@ -5,6 +5,7 @@ package graph
 
 import (
 	"math"
+	"math/big"
 )
 
 // file weight.go contains definitions for weighted graphs
@@ -56,7 +57,19 @@ func (g WeightedAdjacencyList) ValidTo() bool {
 	return true
 }
 
+// WeightedFromTree represents a tree where each node is associated with
+// a half arc identifying an arc from another node.
+//
 // WeightedFromTree is a variant of the FromTree type for weighted graphs.
+//
+// Paths represents a tree with information about the path to each node
+// from a start node.  See WeightedPathEnd documentation.
+//
+// Leaves is used by some search and traversal functions to return
+// extra information.  Where Leaves is used it serves as a bitmap where
+// Leave.Bit() == 1 for each leaf of the tree.
+//
+// Missing, compared to FromTree, is the maximum path length.
 //
 // In addition to the fields of FromTree, NoPath designates a null distance
 // value for non-existant paths and arcs.  You can change this value before
@@ -67,24 +80,33 @@ func (g WeightedAdjacencyList) ValidTo() bool {
 // correct; 0, which sums well with other distances; or -1 which is easily
 // tested for as an invalid distance.
 //
-// Within Paths, WeightedPathDist will contain the path distance as the sum
+// Within Paths, WeightedPathEnd.Dist will contain the path distance as the sum
 // of arc weights from the start node.  If the node is not reachable, searches
-// will set PathDist to WeightedFromTree.NoPath.
+// will set Dist to WeightedFromTree.NoPath.
 //
-// Missing, compared to FromTree, is the maximum path length.
+// A single WeightedFromTree can also represent a forest.  In this case paths
+// from all leaves do not return to a single start node, but multiple start
+// nodes.
 type WeightedFromTree struct {
-	Start  int               // start node, argument to the search function
 	Paths  []WeightedPathEnd // tree representation
-	NoPath float64           // null value
+	Leaves big.Int           // leaves of tree
+	NoPath float64           // value to use as null
 }
 
 // A WeightedPathEnd associates a half arc and a path length.
 //
-// See WeightedFromTree for use by search functions.
+// WeightedPathEnd is an element type of FromTree, a return type from various
+// search functions.
+//
+// For a start node of a search, From.From will be -1 and Len will be 1.
+// For other nodes reached by the search, From represents a half arc in
+// a path back to start and Len represents the number of nodes in the path.
+// For nodes not reached by the search, From.From will be -1 and Len will be 0.
 type WeightedPathEnd struct {
-	From FromHalf // half arc
-	Dist float64  // path distance, sum of arc weights from start
-	Len  int      // number of nodes in path from start
+	// a "from" half arc, the node the arc comes from and the associated weight
+	From FromHalf
+	Dist float64 // path distance, sum of arc weights from start
+	Len  int     // number of nodes in path from start
 }
 
 // NewWeightedFromTree creates a WeightedFromTree object.  You don't typically
@@ -99,13 +121,13 @@ func NewWeightedFromTree(n int) *WeightedFromTree {
 }
 
 func (t *WeightedFromTree) reset() {
-	t.Start = -1
 	for n := range t.Paths {
 		t.Paths[n] = WeightedPathEnd{
 			Dist: t.NoPath,
 			From: FromHalf{-1, t.NoPath},
 		}
 	}
+	t.Leaves = big.Int{}
 }
 
 // PathTo decodes a WeightedFromTree, recovering the found path from start to

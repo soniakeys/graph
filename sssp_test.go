@@ -500,9 +500,6 @@ func TestSSSP(t *testing.T) {
 		// result objects should be identical
 		dr := d.Result
 		br := b.Result
-		if dr.Start != br.Start {
-			t.Fatal("dr.Start, br.Start", dr.Start, br.Start)
-		}
 		if dr.NoPath != br.NoPath {
 			t.Fatal("dr.NoPath, br.NoPath", dr.NoPath, br.NoPath)
 		}
