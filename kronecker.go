@@ -11,7 +11,7 @@ import (
 // The returned graph g is simple and has no isolated nodes.  The number of
 // of nodes will be <= 2^scale, and will be near 2^scale for typical values
 // of arcFactor, >= 2.  ArcFactor * 2^scale arcs are generated, although
-// duplicates and loops are rejected.  Return value m is the number of arcs
+// loops and duplicate arcs are rejected.  Return value m is the number of arcs
 // retained in the result graph.
 func KroneckerDir(scale uint, arcFactor float64) (g AdjacencyList, m int) {
 	return kronecker(scale, arcFactor, true)
@@ -22,10 +22,10 @@ func KroneckerDir(scale uint, arcFactor float64) (g AdjacencyList, m int) {
 // The returned graph g is simple and has no isolated nodes.  The number of
 // of nodes will be <= 2^scale, and will be near 2^scale for typical values
 // of edgeFactor, >= 2.  EdgeFactor * 2^scale edges are generated, although
-// duplicates and loops are rejected.
+// loops and duplicate edges are rejected.
 //
-// Return value m is the number of *arcs* retained in the result graph.
-// (There are two arcs per edge.)
+// Return value m is the number of arcs--not edges--retained in the result
+// graph.
 func KroneckerUndir(scale uint, edgeFactor float64) (g AdjacencyList, m int) {
 	return kronecker(scale, edgeFactor, false)
 }
@@ -64,14 +64,16 @@ func kronecker(scale uint, edgeFactor float64, dir bool) (g AdjacencyList, m int
 			bm.SetBit(&bm, j, 1)
 			nNodes++
 		}
-		ij[k] = [2]int{i, j}
+		r := rand.Intn(k + 1) // shuffle edges as they are generated
+		ij[k] = ij[r]
+		ij[r] = [2]int{i, j}
 	}
-	p := rand.Perm(nNodes)
+	p := rand.Perm(nNodes) // mapping to shuffle IDs of non-isolated nodes
 	px := 0
 	r := make([]int, N)
 	for i := range r {
 		if bm.Bit(i) == 1 {
-			r[i] = p[px]
+			r[i] = p[px] // fill lookup table
 			px++
 		}
 	}
@@ -79,12 +81,12 @@ func kronecker(scale uint, edgeFactor float64, dir bool) (g AdjacencyList, m int
 ij:
 	for _, e := range ij {
 		if e[0] == e[1] {
-			continue
+			continue // skip loops
 		}
 		ri, rj := r[e[0]], r[e[1]]
 		for _, nb := range g[ri] {
 			if nb == rj {
-				continue ij
+				continue ij // skip parallel edges
 			}
 		}
 		g[ri] = append(g[ri], rj)

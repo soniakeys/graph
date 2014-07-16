@@ -6,7 +6,7 @@ package graph
 import (
 	"container/heap"
 	"fmt"
-	"math/big"
+	//	"math/big"
 )
 
 // BreadthFirst associates a graph with a result object for returning
@@ -174,7 +174,10 @@ func (b *BreadthFirst2) Traverse(start int, v Visitor) int {
 	ctb := b.M / 10             // threshold change from top-down to bottom-up
 	k14 := 14 * b.M / len(b.To) // 14 * mean degree
 	cbt := len(b.To) / k14      // threshold change from bottom-up to top-down
-	var fBits, nextb big.Int
+	//	var fBits, nextb big.Int
+	fBits := make([]bool, len(b.To))
+	nextb := make([]bool, len(b.To))
+	zBits := make([]bool, len(b.To))
 	for {
 		// top down step
 		level++
@@ -205,7 +208,8 @@ func (b *BreadthFirst2) Traverse(start int, v Visitor) int {
 		// convert frontier representation
 		nf := 0 // number of vertices on the frontier
 		for _, n := range frontier {
-			fBits.SetBit(&fBits, n, 1)
+			//			fBits.SetBit(&fBits, n, 1)
+			fBits[n] = true
 			nf++
 		}
 	bottomUpLoop:
@@ -214,13 +218,15 @@ func (b *BreadthFirst2) Traverse(start int, v Visitor) int {
 		for n := range b.From {
 			if rp[n].Len == 0 {
 				for _, nb := range b.From[n] {
-					if fBits.Bit(nb) == 1 {
+					//					if fBits.Bit(nb) == 1 {
+					if fBits[nb] {
 						rp[n] = PathEnd{From: nb, Len: level}
 						if !v(nb) {
 							b.Result.MaxLen = level
 							return -1
 						}
-						nextb.SetBit(&nextb, n, 1)
+						//						nextb.SetBit(&nextb, n, 1)
+						nextb[n] = true
 						nReached++
 						nNext++
 						break
@@ -232,7 +238,8 @@ func (b *BreadthFirst2) Traverse(start int, v Visitor) int {
 			break
 		}
 		fBits, nextb = nextb, fBits
-		nextb.SetInt64(0)
+		//		nextb.SetInt64(0)
+		copy(nextb, zBits)
 		nf = nNext
 		if nf < cbt {
 			// switch back to top down!
@@ -244,12 +251,14 @@ func (b *BreadthFirst2) Traverse(start int, v Visitor) int {
 		mf = 0
 		frontier = frontier[:0]
 		for n := range b.To {
-			if fBits.Bit(n) == 1 {
+			//			if fBits.Bit(n) == 1 {
+			if fBits[n] {
 				frontier = append(frontier, n)
 				mf += len(b.To[n])
+				fBits[n] = false
 			}
 		}
-		fBits.SetInt64(0)
+		//		fBits.SetInt64(0)
 	}
 	b.Result.MaxLen = level - 1
 	return nReached

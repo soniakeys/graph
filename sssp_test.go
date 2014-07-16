@@ -6,7 +6,7 @@ package graph_test
 import (
 	"fmt"
 	"math"
-	"math/big"
+	//	"math/big"
 	"math/rand"
 	"sync"
 	"testing"
@@ -331,11 +331,6 @@ type testCase struct {
 	h graph.Heuristic
 
 	start, end, m int
-
-	// kronecker
-	kg      graph.AdjacencyList // undirected
-	km      int                 // number of arcs
-	kStarts []int               // a list of random start points
 }
 
 var s = rand.New(rand.NewSource(59))
@@ -422,30 +417,6 @@ arc:
 	}
 	tc.g = tc.w.Unweighted()
 	tc.t, tc.m = tc.g.Transpose()
-
-	// kronecker
-	scale := uint(math.Log2(float64(nNodes)) + .5)
-	arcFactor := float64(nArcs) / float64(nNodes)
-	tc.kg, tc.km = graph.KroneckerUndir(scale, arcFactor)
-	// extract giant connected component
-	rep, nc := tc.kg.ConnectedComponents()
-	var x, max int
-	for i, n := range nc {
-		if n > max {
-			x = i
-			max = n
-		}
-	}
-	gcc := new(big.Int)
-	tc.kg.DepthFirst(rep[x], gcc, nil)
-	// 16 start points, a little arbitrary but that's what Graph 500 uses.
-	tc.kStarts = make([]int, 16)
-	for i := 0; i < len(tc.kStarts); {
-		if s := rand.Intn(len(tc.kg)); gcc.Bit(s) == 1 {
-			tc.kStarts[i] = s
-			i++
-		}
-	}
 	return tc
 }
 
@@ -618,123 +589,112 @@ func BenchmarkDijkstra1e5(b *testing.B) {
 	}
 }
 
-func BenchmarkBFS_K100(b *testing.B) {
-	tc := r100
-	bf := graph.NewBreadthFirst(tc.kg)
+func BenchmarkBFS_K07(b *testing.B) {
+	tc := k7
+	bf := graph.NewBreadthFirst(tc.g)
 	x := 0
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		bf.AllPaths(tc.kStarts[x])
-		x = (x + 1) % len(tc.kStarts)
+		bf.AllPaths(tc.starts[x])
+		x = (x + 1) % len(tc.starts)
 	}
 }
 
-func BenchmarkBFS_K1e3(b *testing.B) {
-	once.Do(bigger)
-	tc := r1k
-	bf := graph.NewBreadthFirst(tc.kg)
+func BenchmarkBFS_K10(b *testing.B) {
+	tc := k10
+	bf := graph.NewBreadthFirst(tc.g)
 	x := 0
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		bf.AllPaths(tc.kStarts[x])
-		x = (x + 1) % len(tc.kStarts)
+		bf.AllPaths(tc.starts[x])
+		x = (x + 1) % len(tc.starts)
 	}
 }
 
-func BenchmarkBFS_K1e4(b *testing.B) {
-	once.Do(bigger)
-	tc := r10k
-	bf := graph.NewBreadthFirst(tc.kg)
+func BenchmarkBFS_K13(b *testing.B) {
+	tc := k13
+	bf := graph.NewBreadthFirst(tc.g)
 	x := 0
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		bf.AllPaths(tc.kStarts[x])
-		x = (x + 1) % len(tc.kStarts)
+		bf.AllPaths(tc.starts[x])
+		x = (x + 1) % len(tc.starts)
 	}
 }
 
-func BenchmarkBFS_K1e5(b *testing.B) {
-	once.Do(bigger)
-	tc := r100k
-	bf := graph.NewBreadthFirst(tc.kg)
+func BenchmarkBFS_K16(b *testing.B) {
+	tc := k16
+	bf := graph.NewBreadthFirst(tc.g)
 	x := 0
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		bf.AllPaths(tc.kStarts[x])
-		x = (x + 1) % len(tc.kStarts)
+		bf.AllPaths(tc.starts[x])
+		x = (x + 1) % len(tc.starts)
 	}
 }
 
-/*
-func BenchmarkBFS_K1e6(b *testing.B) {
-	once.Do(bigger)
-	tc := r1m
-	bf := graph.NewBreadthFirst(tc.kg)
+func BenchmarkBFS_K20(b *testing.B) {
+	tc := k20
+	bf := graph.NewBreadthFirst(tc.g)
 	x := 0
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		bf.AllPaths(tc.kStarts[x])
-		x = (x + 1) % len(tc.kStarts)
-	}
-}
-*/
-func BenchmarkBFS2_K100(b *testing.B) {
-	tc := r100
-	bf := graph.NewBreadthFirst2(tc.kg, tc.kg, tc.km)
-	x := 0
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		bf.AllPaths(tc.kStarts[x])
-		x = (x + 1) % len(tc.kStarts)
+		bf.AllPaths(tc.starts[x])
+		x = (x + 1) % len(tc.starts)
 	}
 }
 
-func BenchmarkBFS2_K1e3(b *testing.B) {
-	once.Do(bigger)
-	tc := r1k
-	bf := graph.NewBreadthFirst2(tc.kg, tc.kg, tc.km)
+func BenchmarkBFS2_K07(b *testing.B) {
+	tc := k7
+	bf := graph.NewBreadthFirst2(tc.g, tc.g, tc.m)
 	x := 0
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		bf.AllPaths(tc.kStarts[x])
-		x = (x + 1) % len(tc.kStarts)
+		bf.AllPaths(tc.starts[x])
+		x = (x + 1) % len(tc.starts)
 	}
 }
 
-func BenchmarkBFS2_K1e4(b *testing.B) {
-	once.Do(bigger)
-	tc := r10k
-	bf := graph.NewBreadthFirst2(tc.kg, tc.kg, tc.km)
+func BenchmarkBFS2_K10(b *testing.B) {
+	tc := k10
+	bf := graph.NewBreadthFirst2(tc.g, tc.g, tc.m)
 	x := 0
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		bf.AllPaths(tc.kStarts[x])
-		x = (x + 1) % len(tc.kStarts)
+		bf.AllPaths(tc.starts[x])
+		x = (x + 1) % len(tc.starts)
 	}
 }
 
-func BenchmarkBFS2_K1e5(b *testing.B) {
-	once.Do(bigger)
-	tc := r100k
-	bf := graph.NewBreadthFirst2(tc.kg, tc.kg, tc.km)
+func BenchmarkBFS2_K13(b *testing.B) {
+	tc := k13
+	bf := graph.NewBreadthFirst2(tc.g, tc.g, tc.m)
 	x := 0
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		bf.AllPaths(tc.kStarts[x])
-		x = (x + 1) % len(tc.kStarts)
+		bf.AllPaths(tc.starts[x])
+		x = (x + 1) % len(tc.starts)
 	}
 }
 
-/*
-func BenchmarkBFS2_K1e6(b *testing.B) {
-	once.Do(bigger)
-	tc := r1m
-	bf := graph.NewBreadthFirst2(tc.kg, tc.kg, tc.km)
+func BenchmarkBFS2_K16(b *testing.B) {
+	tc := k16
+	bf := graph.NewBreadthFirst2(tc.g, tc.g, tc.m)
 	x := 0
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		bf.AllPaths(tc.kStarts[x])
-		x = (x + 1) % len(tc.kStarts)
+		bf.AllPaths(tc.starts[x])
+		x = (x + 1) % len(tc.starts)
 	}
 }
-*/
+
+func BenchmarkBFS2_K20(b *testing.B) {
+	tc := k20
+	bf := graph.NewBreadthFirst2(tc.g, tc.g, tc.m)
+	x := 0
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		bf.AllPaths(tc.starts[x])
+		x = (x + 1) % len(tc.starts)
+	}
+}
