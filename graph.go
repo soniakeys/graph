@@ -87,11 +87,14 @@ func (g AdjacencyList) Simple() (s bool, n int) {
 	return true, -1
 }
 
-// Bipartite determines if a graph is bipartite.
+// Bipartite determines if a connected component of an undirected graph
+// is bipartite.
 //
-// If so, Bipartite returns true and the two-coloring of the graph.  Each
-// color set is returned as a bitmap.  If the graph is not bipartite,
-// Bipartite returns false and an odd cycle as an int slice.
+// Argument n can be any representative node of the component.
+//
+// If the component is bipartite, Bipartite returns true and a two-coloring
+// of the component.  Each color set is returned as a bitmap.  If the component
+// is not bipartite, Bipartite returns false and a representative odd cycle.
 func (g AdjacencyList) Bipartite(n int) (b bool, c1, c2 *big.Int, oc []int) {
 	c1 = &big.Int{}
 	c2 = &big.Int{}
@@ -137,7 +140,7 @@ func (g AdjacencyList) Bipartite(n int) (b bool, c1, c2 *big.Int, oc []int) {
 // false at any point, the traversal is terminated immediately and DepthFirst
 // returns false.  Otherwise DepthFirst returns true.
 //
-// DepthFirst uses argument bm is as a bitmap to guide the traversal.
+// DepthFirst uses argument bm is used as a bitmap to guide the traversal.
 // For a complete traversal, bm should be 0 initially.  During the
 // traversal, bits are set corresponding to each node visited.
 // The bit is set before calling the visitor function.
@@ -176,11 +179,6 @@ func (g AdjacencyList) DepthFirst(start int, bm *big.Int, v Visitor) (ok bool) {
 	df(start)
 	return
 }
-
-const (
-	PreStart  = -1
-	Unreached = -2
-)
 
 // FromTree represents a tree where each node is associated with
 // a half arc identifying an arc from another node.

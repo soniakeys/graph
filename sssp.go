@@ -45,7 +45,7 @@ func NewBreadthFirst(g AdjacencyList) *BreadthFirst {
 // number of nodes.
 //
 // Returned is the path as list of nodes.
-// Path returns nil if no path was found.
+// The result is nil if no path was found.
 func BreadthFirstPath(g AdjacencyList, start, end int) []int {
 	b := NewBreadthFirst(g)
 	b.Traverse(start, func(n int) bool { return n != end })
@@ -142,6 +142,14 @@ func NewBreadthFirst2(to, from AdjacencyList, m int) *BreadthFirst2 {
 	}
 }
 
+// BreadthFirst2Path finds a single path from start to end with a minimum
+// number of nodes using a direction optimizing algorithm.
+//
+// It is experimental and not currently recommended over BreadthFirstPath
+// as it is currently no faster and offers no benefits.
+//
+// Returned is the path as list of nodes.
+// The result is nil if no path was found.
 func BreadthFirst2Path(g AdjacencyList, start, end int) []int {
 	t, m := g.Transpose()
 	b := NewBreadthFirst2(g, t, m)
@@ -663,7 +671,9 @@ func (a *AStar) AStarA(start, end int, h Heuristic) bool {
 	return false // no path
 }
 
-// AStarAPath finds a single shortest path.
+// AStarAPath finds a single shortest path using the AStarA algorithm.
+//
+// See documentation on the AStarA method of the AStar type.
 //
 // Returned is the path and distance as returned by WeightedFromTree.PathTo.
 func AStarAPath(g WeightedAdjacencyList, start, end int, h Heuristic) ([]Half, float64) {
@@ -673,6 +683,9 @@ func AStarAPath(g WeightedAdjacencyList, start, end int, h Heuristic) ([]Half, f
 }
 
 // AStarM is AStarA optimized for monotonic heuristic estimates.
+//
+// Note that this function requires a monotonic heuristic.  Results will
+// not be meaningful if argument h is non-monotonic.
 //
 // See AStarA for general usage.  See Heuristic for notes on monotonicity.
 func (a *AStar) AStarM(start, end int, h Heuristic) bool {
@@ -762,7 +775,9 @@ func (a *AStar) AStarM(start, end int, h Heuristic) bool {
 	return false
 }
 
-// AStarMPath finds a single shortest path.
+// AStarMPath finds a single shortest path using the AStarM algorithm.
+//
+// See documentation on the AStarM method of the AStar type.
 //
 // Returned is the path and distance as returned by WeightedFromTree.PathTo.
 func AStarMPath(g WeightedAdjacencyList, start, end int, h Heuristic) ([]Half, float64) {

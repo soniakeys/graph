@@ -31,8 +31,8 @@ type FromHalf struct {
 }
 
 // NegativeArc returns true if the receiver graph contains a negative arc.
-func (a WeightedAdjacencyList) NegativeArc() bool {
-	for _, nbs := range a {
+func (g WeightedAdjacencyList) NegativeArc() bool {
+	for _, nbs := range g {
 		for _, nb := range nbs {
 			if nb.ArcWeight < 0 {
 				return true

@@ -8,21 +8,24 @@ import (
 
 // KroneckerDir generates a Kronecker-like random directed graph.
 //
-// The returned graph g is simple and has no isolated nodes.  The number of
-// of nodes will be <= 2^scale, and will be near 2^scale for typical values
-// of arcFactor, >= 2.  ArcFactor * 2^scale arcs are generated, although
-// loops and duplicate arcs are rejected.  Return value m is the number of arcs
-// retained in the result graph.
+// The returned graph g is simple and has no isolated nodes but is not
+// necessarily fully connected.  The number of of nodes will be <= 2^scale,
+// and will be near 2^scale for typical values of arcFactor, >= 2.
+// ArcFactor * 2^scale arcs are generated, although loops and duplicate arcs
+// are rejected.
+//
+// Return value m is the number of arcs retained in the result graph.
 func KroneckerDir(scale uint, arcFactor float64) (g AdjacencyList, m int) {
 	return kronecker(scale, arcFactor, true)
 }
 
 // KroneckerUndir generates a Kronecker-like random undirected graph.
 //
-// The returned graph g is simple and has no isolated nodes.  The number of
-// of nodes will be <= 2^scale, and will be near 2^scale for typical values
-// of edgeFactor, >= 2.  EdgeFactor * 2^scale edges are generated, although
-// loops and duplicate edges are rejected.
+// The returned graph g is simple and has no isolated nodes but is not
+// necessarily fully connected.  The number of of nodes will be <= 2^scale,
+// and will be near 2^scale for typical values of edgeFactor, >= 2.
+// EdgeFactor * 2^scale edges are generated, although loops and duplicate edges
+// are rejected.
 //
 // Return value m is the number of arcs--not edges--retained in the result
 // graph.
