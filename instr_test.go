@@ -14,7 +14,7 @@ import (
 	"testing"
 )
 
-// duplicate code in cross_test
+// duplicate code in sssp_test
 type testCase struct {
 	g          WeightedAdjacencyList
 	start, end int
@@ -23,13 +23,6 @@ type testCase struct {
 
 var s = rand.New(rand.NewSource(59))
 var r100 = r(100, 200, 62)
-var r1k, r10k, r100k testCase
-
-func bigger() {
-	r1k = r(1e3, 3e3, 66)   // (15x as many arcs as r100)
-	r10k = r(1e4, 5e4, 59)  // (17x as many arcs as r1k)
-	r100k = r(1e5, 1e6, 59) // (20x as many arcs as r10k)
-}
 
 // generate random directed graph and end points to test
 func r(nNodes, nArcs int, seed int64) testCase {
@@ -110,11 +103,4 @@ func TestInstr(t *testing.T) {
 		}
 	}
 	ti(r100)
-	if testing.Short() {
-		t.Skip()
-	}
-	bigger()
-	ti(r1k)
-	ti(r10k)
-	ti(r100k)
 }
