@@ -35,6 +35,25 @@ func (g AdjacencyList) Ok() bool {
 	return true
 }
 
+// Size returns the number of arcs in g.
+func (g AdjacencyList) Size() (m int) {
+	for _, to := range g {
+		m += len(to)
+	}
+	return
+}
+
+// Copy makes a copy of g, copying the underlying slices.
+// Copy also computes the size m, the number of arcs.
+func (g AdjacencyList) Copy() (c AdjacencyList, m int) {
+	c = make(AdjacencyList, len(g))
+	for n, to := range g {
+		c[n] = append([]int{}, to...)
+		m += len(to)
+	}
+	return
+}
+
 // Undirected determines if an adjacency list is undirected.
 //
 // An adjacency list represents an undirected graph if every arc has a

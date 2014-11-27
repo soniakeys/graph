@@ -76,3 +76,14 @@ func ExampleAdjacencyList_Transpose() {
 	// 2: []
 	// 2
 }
+
+func ExampleAdjacencyList_EulerianCycle() {
+	g := graph.AdjacencyList{
+		0: {1},
+		1: {2, 2},
+		2: {0, 1, 2},
+	}
+	fmt.Println(g.EulerianCycle())
+	// Output:
+	// [0 1 2 1 2 2 0] <nil>
+}

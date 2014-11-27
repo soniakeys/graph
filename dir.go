@@ -9,6 +9,7 @@
 package graph
 
 import (
+	"errors"
 	"math/big"
 )
 
@@ -169,4 +170,80 @@ func (g AdjacencyList) Tarjan() (scc [][]int) {
 		}
 	}
 	return scc
+}
+
+// InDegree computes the in-degree of each node in g
+func (g AdjacencyList) InDegree() []int {
+	ind := make([]int, len(g))
+	for _, nbs := range g {
+		for _, nb := range nbs {
+			ind[nb]++
+		}
+	}
+	return ind
+}
+
+// Balanced returns true if for every node in g, in-degree equals out-degree.
+func (g AdjacencyList) Balanced() bool {
+	for n, in := range g.InDegree() {
+		if in != len(g[n]) {
+			return false
+		}
+	}
+	return true
+}
+
+// EulerianCycle finds an Eulerian cycle in an directed multigraph.
+//
+// * If g has no nodes, result is nil, nil.
+//
+// * If g is Eulerian, result is an Eulerian cycle with err = nil.
+// The cycle result is a list of nodes, where the first and last
+// nodes are the same.
+//
+// * Otherwise, result is nil, error
+//
+// See EulerianCycleD for a more space efficient version.
+func (g AdjacencyList) EulerianCycle() ([]int, error) {
+	c, m := g.Copy()
+	return c.EulerianCycleD(m)
+}
+
+// EulerianCycleD finds an Eulerian cycle in an directed multigraph.
+//
+// EulerianCycleD is destructive on its receiver g.  See EulerianCycle for
+// a non-destructive version.
+//
+// Argument m must be the correct size, or number of arcs in g.
+//
+// * If g has no nodes, result is nil, nil.
+//
+// * If g is Eulerian, result is an Eulerian cycle with err = nil.
+// The cycle result is a list of nodes, where the first and last
+// nodes are the same.
+//
+// * Otherwise, result is nil, error
+func (g AdjacencyList) EulerianCycleD(m int) ([]int, error) {
+	if len(g) == 0 {
+		return nil, nil
+	}
+	p := make([]int, m+1)
+	for s := []int{0}; len(s) > 0; {
+		top := len(s) - 1
+		u := s[top]
+		if len(g[u]) > 0 {
+			arcs := g[u]
+			w := arcs[0]
+			s = append(s, w)
+			g[u] = arcs[1:]
+		} else {
+			p[m] = u
+			m--
+			s = s[:top]
+		}
+	}
+	if m > 0 {
+		return nil, errors.New("not eulerian")
+	}
+	return p, nil
 }
