@@ -87,3 +87,14 @@ func ExampleAdjacencyList_EulerianCycle() {
 	// Output:
 	// [0 1 2 1 2 2 0] <nil>
 }
+
+func ExampleAdjacencyList_EulerianPath() {
+	g := graph.AdjacencyList{
+		3: {1},
+		1: {2, 2},
+		2: {0, 1, 2},
+	}
+	fmt.Println(g.EulerianPath())
+	// Output:
+	// [3 1 2 1 2 2 0] <nil>
+}

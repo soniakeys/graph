@@ -193,7 +193,7 @@ func (g AdjacencyList) Balanced() bool {
 	return true
 }
 
-// EulerianCycle finds an Eulerian cycle in an directed multigraph.
+// EulerianCycle finds an Eulerian cycle in a directed multigraph.
 //
 // * If g has no nodes, result is nil, nil.
 //
@@ -203,13 +203,14 @@ func (g AdjacencyList) Balanced() bool {
 //
 // * Otherwise, result is nil, error
 //
+// Internally, EulerianCycle copies the entire graph g.
 // See EulerianCycleD for a more space efficient version.
 func (g AdjacencyList) EulerianCycle() ([]int, error) {
 	c, m := g.Copy()
 	return c.EulerianCycleD(m)
 }
 
-// EulerianCycleD finds an Eulerian cycle in an directed multigraph.
+// EulerianCycleD finds an Eulerian cycle in a directed multigraph.
 //
 // EulerianCycleD is destructive on its receiver g.  See EulerianCycle for
 // a non-destructive version.
@@ -243,7 +244,70 @@ func (g AdjacencyList) EulerianCycleD(m int) ([]int, error) {
 		}
 	}
 	if m > 0 {
-		return nil, errors.New("not eulerian")
+		return nil, errors.New("not Eulerian")
+	}
+	return p, nil
+}
+
+// EulerianPath finds an Eulerian path in a directed multigraph.
+//
+// * If g has no nodes, result is nil, nil.
+//
+// * If g has an Eulerian path, result is an Eulerian path with err = nil.
+// The path result is a list of nodes, where the first node is start.
+//
+// * Otherwise, result is nil, error
+//
+// Internally, EulerianPath copies the entire graph g.
+// See EulerianPathD for a more space efficient version.
+func (g AdjacencyList) EulerianPath() ([]int, error) {
+	ind := g.InDegree()
+	var start int
+	for n, to := range g {
+		if len(to) > ind[n] {
+			start = n
+			break
+		}
+	}
+	c, m := g.Copy()
+	return c.EulerianPathD(m, start)
+}
+
+// EulerianPathD finds an Eulerian path in a directed multigraph.
+//
+// EulerianPathD is destructive on its receiver g.  See EulerianPath for
+// a non-destructive version.
+//
+// Argument m must be the correct size, or number of arcs in g.  Argument
+// start must be a valid start node for the path.
+//
+// * If g has no nodes, result is nil, nil.
+//
+// * If g has an Eulerian path, result is an Eulerian path with err = nil.
+// The path result is a list of nodes, where the first node is start.
+//
+// * Otherwise, result is nil, error
+func (g AdjacencyList) EulerianPathD(m, start int) ([]int, error) {
+	if len(g) == 0 {
+		return nil, nil
+	}
+	p := make([]int, m+1)
+	for s := []int{start}; len(s) > 0; {
+		top := len(s) - 1
+		u := s[top]
+		if len(g[u]) > 0 {
+			arcs := g[u]
+			w := arcs[0]
+			s = append(s, w)
+			g[u] = arcs[1:]
+		} else {
+			p[m] = u
+			m--
+			s = s[:top]
+		}
+	}
+	if m > 0 {
+		return nil, errors.New("no Eulerian path")
 	}
 	return p, nil
 }
