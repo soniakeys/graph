@@ -13,6 +13,8 @@ import (
 	"sort"
 )
 
+var one = big.NewInt(1)
+
 // An AdjacencyList represents a graph as a list of neighbors for each node.
 // The "node ID" of a node is simply it's slice index in the AdjacencyList.
 //

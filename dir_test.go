@@ -5,6 +5,7 @@ package graph_test
 
 import (
 	"fmt"
+	"testing"
 
 	"github.com/soniakeys/graph"
 )
@@ -88,6 +89,50 @@ func ExampleAdjacencyList_EulerianCycle() {
 	// [0 1 2 1 2 2 0] <nil>
 }
 
+func TestEulerianCycle(t *testing.T) {
+	same := func(a, b []int) bool {
+		if len(a) != len(b) {
+			return false
+		}
+		for i, x := range a {
+			if b[i] != x {
+				return false
+			}
+		}
+		return true
+	}
+	var msg string
+	for _, tc := range []struct {
+		g     graph.AdjacencyList
+		cycle []int
+		ok    bool
+	}{
+		{nil, nil, true},
+		{graph.AdjacencyList{nil}, []int{0}, true},    // 1 node, 0 arcs
+		{graph.AdjacencyList{{0}}, []int{0, 0}, true}, // loop
+		{graph.AdjacencyList{nil, nil}, nil, false},   // not connected
+		{graph.AdjacencyList{{1}, nil}, nil, false},   // not balanced
+		{graph.AdjacencyList{nil, {0}}, nil, false},   // not balanced
+	} {
+		got, err := tc.g.EulerianCycle()
+		switch {
+		case err != nil:
+			if !tc.ok {
+				continue
+			}
+			msg = "g.EulerianCycle() returned error" + err.Error()
+		case !tc.ok:
+			msg = fmt.Sprintf("g.EulerianCycle() = %v, want error", got)
+		case !same(got, tc.cycle):
+			msg = fmt.Sprintf("g.EulerianCycle() = %v, want %v", got, tc.cycle)
+		default:
+			continue
+		}
+		t.Log("g:", tc.g)
+		t.Fatal(msg)
+	}
+}
+
 func ExampleAdjacencyList_EulerianPath() {
 	g := graph.AdjacencyList{
 		3: {1},
@@ -97,4 +142,50 @@ func ExampleAdjacencyList_EulerianPath() {
 	fmt.Println(g.EulerianPath())
 	// Output:
 	// [3 1 2 1 2 2 0] <nil>
+}
+
+func TestEulerianPath(t *testing.T) {
+	same := func(a, b []int) bool {
+		if len(a) != len(b) {
+			return false
+		}
+		for i, x := range a {
+			if b[i] != x {
+				return false
+			}
+		}
+		return true
+	}
+	var msg string
+	for _, tc := range []struct {
+		g    graph.AdjacencyList
+		path []int
+		ok   bool
+	}{
+		{nil, nil, true},
+		{graph.AdjacencyList{nil}, []int{0}, true},    // 1 node, 0 arcs
+		{graph.AdjacencyList{{0}}, []int{0, 0}, true}, // loop
+		{graph.AdjacencyList{{1}, nil}, []int{0, 1}, true},
+		{graph.AdjacencyList{nil, {0}}, []int{1, 0}, true},
+		{graph.AdjacencyList{nil, nil}, nil, false},         // not connected
+		{graph.AdjacencyList{{1}, nil, {1}}, nil, false},    // two starts
+		{graph.AdjacencyList{nil, nil, {0, 1}}, nil, false}, // two ends
+	} {
+		got, err := tc.g.EulerianPath()
+		switch {
+		case err != nil:
+			if !tc.ok {
+				continue
+			}
+			msg = "g.EulerianPath() returned error" + err.Error()
+		case !tc.ok:
+			msg = fmt.Sprintf("g.EulerianPath() = %v, want error", got)
+		case !same(got, tc.path):
+			msg = fmt.Sprintf("g.EulerianPath() = %v, want %v", got, tc.path)
+		default:
+			continue
+		}
+		t.Log("g:", tc.g)
+		t.Fatal(msg)
+	}
 }

@@ -228,23 +228,21 @@ func (g AdjacencyList) EulerianCycleD(m int) ([]int, error) {
 	if len(g) == 0 {
 		return nil, nil
 	}
-	p := make([]int, m+1)
-	for s := []int{0}; len(s) > 0; {
-		top := len(s) - 1
-		u := s[top]
-		if len(g[u]) > 0 {
-			arcs := g[u]
-			w := arcs[0]
-			s = append(s, w)
-			g[u] = arcs[1:]
-		} else {
-			p[m] = u
-			m--
-			s = s[:top]
+	uv := new(big.Int).Lsh(one, uint(len(g))) // unvisited
+	uv.Sub(uv, one)
+	// low end of p is stack of unfinished nodes
+	// high end is finished path
+	p := make([]int, m+1) // stack + path
+	for s := 0; s >= 0; {
+		v := p[s] // v is node that starts cycle
+		s = g.pushEulerian(uv, p, s)
+		if p[s] != v { // if Eulerian, we'll always come back to starting node
+			return nil, errors.New("not balanced")
 		}
+		s, m = g.keepEulerian(p, s, m)
 	}
-	if m > 0 {
-		return nil, errors.New("not Eulerian")
+	if uv.BitLen() > 0 {
+		return nil, errors.New("not strongly connected")
 	}
 	return p, nil
 }
@@ -291,23 +289,57 @@ func (g AdjacencyList) EulerianPathD(m, start int) ([]int, error) {
 	if len(g) == 0 {
 		return nil, nil
 	}
+	uv := new(big.Int).Lsh(one, uint(len(g)))
+	uv.Sub(uv, one)
 	p := make([]int, m+1)
-	for s := []int{start}; len(s) > 0; {
-		top := len(s) - 1
-		u := s[top]
-		if len(g[u]) > 0 {
-			arcs := g[u]
-			w := arcs[0]
-			s = append(s, w)
-			g[u] = arcs[1:]
-		} else {
-			p[m] = u
-			m--
-			s = s[:top]
+	p[0] = start
+	// unlike EulerianCycle, the first path doesn't have be a cycle.
+	s := g.pushEulerian(uv, p, 0)
+	s, m = g.keepEulerian(p, s, m)
+	for s >= 0 {
+		start = p[s]
+		s = g.pushEulerian(uv, p, s)
+		// paths after the first must be cycles though
+		if p[s] != start {
+			return nil, errors.New("no Eulerian path")
 		}
+		s, m = g.keepEulerian(p, s, m)
 	}
-	if m > 0 {
+	if uv.BitLen() > 0 {
 		return nil, errors.New("no Eulerian path")
 	}
 	return p, nil
+}
+
+// starting at the node on the top of the stack, follow arcs until stuck.
+// mark nodes visited, push nodes on stack, remove arcs from g.
+// returns new stack pointer.
+func (g AdjacencyList) pushEulerian(uv *big.Int, p []int, s int) int {
+	for u := p[s]; ; {
+		uv.SetBit(uv, u, 0) // reset unvisited bit
+		arcs := g[u]
+		if len(arcs) == 0 {
+			return s // stuck, return stack pointer
+		}
+		w := arcs[0] // follow first arc
+		s++          // push followed node on stack
+		p[s] = w
+		g[u] = arcs[1:] // consume arc
+		u = w
+	}
+}
+
+// starting with the node on top of the stack, move nodes with no arcs.
+// returns new stack pointer and new m.
+func (g AdjacencyList) keepEulerian(p []int, s, m int) (int, int) {
+	for s >= 0 {
+		n := p[s]
+		if len(g[n]) > 0 {
+			break
+		}
+		p[m] = n
+		s--
+		m--
+	}
+	return s, m
 }
