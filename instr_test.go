@@ -14,17 +14,24 @@ import (
 	"testing"
 )
 
-// duplicate code in sssp_test
+// duplicate code in random_test.go (execpt for package qualification)
+
 type testCase struct {
-	g          WeightedAdjacencyList
-	start, end int
-	h          Heuristic
+	l LabeledAdjacencyList // generated labeled directed graph
+	w []float64            // arc weights for l
+	// variants
+	g AdjacencyList // unlabeled
+	t AdjacencyList // transpose
+
+	h Heuristic
+
+	start, end, m int
 }
 
 var s = rand.New(rand.NewSource(59))
 var r100 = r(100, 200, 62)
 
-// generate random directed graph and end points to test
+// generate random graphs and end points to test
 func r(nNodes, nArcs int, seed int64) testCase {
 	s.Seed(seed)
 	// generate random coordinates
@@ -54,7 +61,8 @@ func r(nNodes, nArcs int, seed int64) testCase {
 		return math.Hypot(ce.x-cn.x, ce.y-cn.y)
 	}
 	// graph
-	tc.g = make(WeightedAdjacencyList, nNodes)
+	tc.l = make(LabeledAdjacencyList, nNodes)
+	tc.w = make([]float64, nArcs)
 	// arcs
 	var tooFar, dup int
 arc:
@@ -75,15 +83,19 @@ arc:
 			tooFar++
 			continue
 		}
-		for _, nb := range tc.g[n1] {
+		for _, nb := range tc.l[n1] {
 			if nb.To == n2 {
 				dup++
 				continue arc
 			}
 		}
-		tc.g[n1] = append(tc.g[n1], Half{n2, dist})
+		tc.w[i] = dist
+		tc.l[n1] = append(tc.l[n1], Half{To: n2, Label: i})
 		i++
 	}
+	// variants
+	tc.g = tc.l.Unlabeled()
+	tc.t, tc.m = tc.g.Transpose()
 	return tc
 }
 
@@ -91,12 +103,14 @@ arc:
 
 func TestInstr(t *testing.T) {
 	ti := func(tc testCase) {
-		d := NewDijkstra(tc.g)
+		w := func(label int) float64 { return tc.w[label] }
+		d := NewDijkstra(tc.l, w)
 		d.Path(tc.start, tc.end)
 		t.Log("NV AV:", d.ndVis, d.arcVis)
 		ndVis1 := d.ndVis
 		arcVis1 := d.arcVis
 		// test that repeating same search on same d has same signature
+		d.Reset()
 		d.Path(tc.start, tc.end)
 		if d.ndVis != ndVis1 || d.arcVis != arcVis1 {
 			t.Fatal(len(tc.g), ndVis1, d.ndVis, arcVis1, d.arcVis)

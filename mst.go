@@ -13,15 +13,17 @@ import (
 //
 // Construct with NewPrim.
 type Prim struct {
-	Graph  WeightedAdjacencyList
-	Result *WeightedFromTree
+	Graph  LabeledAdjacencyList
+	Weight WeightFunc
+	Tree   *LabeledFromTree
+	Dist   []float64
 
 	best []prNode // slice backs heap
 }
 
 // NewPrim constructs a new Prim object.  Argument g should represent an
 // undirected graph.
-func NewPrim(g WeightedAdjacencyList) *Prim {
+func NewPrim(g LabeledAdjacencyList, w WeightFunc) *Prim {
 	b := make([]prNode, len(g))
 	for n := range b {
 		b[n].nx = n
@@ -29,7 +31,9 @@ func NewPrim(g WeightedAdjacencyList) *Prim {
 	}
 	return &Prim{
 		Graph:  g,
-		Result: NewWeightedFromTree(len(g)),
+		Weight: w,
+		Tree:   NewLabeledFromTree(len(g)),
+		Dist:   make([]float64, len(g)),
 		best:   b,
 	}
 }
@@ -37,6 +41,7 @@ func NewPrim(g WeightedAdjacencyList) *Prim {
 type prNode struct {
 	nx   int
 	from FromHalf
+	wt   float64 // p.Weight(from.Label)
 	fx   int
 }
 
@@ -48,7 +53,10 @@ type prHeap []*prNode
 // graph.  To recompute following addition or deletion of nodes, simply
 // abandon the Prim object and create a new one.
 func (p *Prim) Reset() {
-	p.Result.reset()
+	p.Tree.reset()
+	for n := range p.Dist {
+		p.Dist[n] = 0
+	}
 	b := p.best
 	for n := range b {
 		b[n].fx = -1
@@ -64,9 +72,8 @@ func (p *Prim) Reset() {
 // node.  To complete the forest representation you must retain a separate
 // list of start nodes.
 func (p *Prim) Span(start int) int {
-	rp := p.Result.Paths
+	rp := p.Tree.Paths
 	var frontier prHeap
-	rp[start].Dist = 0
 	rp[start].Len = 1
 	b := p.best
 	nDone := 1
@@ -79,14 +86,12 @@ func (p *Prim) Span(start int) int {
 			}
 			switch bp := &b[nb.To]; {
 			case bp.fx == -1: // new node for frontier
-				bp.from = FromHalf{a, nb.ArcWeight}
+				bp.from = FromHalf{From: a, Label: nb.Label}
+				bp.wt = p.Weight(nb.Label)
 				heap.Push(&frontier, bp)
-			case nb.ArcWeight < bp.from.ArcWeight: // better arc
-				bp.from = FromHalf{a, nb.ArcWeight}
-				log.Println("heap")
-				for _, pn := range frontier {
-					log.Printf("  %#v\n", pn)
-				}
+			case p.Weight(nb.Label) < bp.wt: // better arc
+				bp.from = FromHalf{From: a, Label: nb.Label}
+				bp.wt = p.Weight(nb.Label)
 				heap.Fix(&frontier, bp.fx)
 			}
 		}
@@ -102,10 +107,8 @@ func (p *Prim) Span(start int) int {
 	return nDone
 }
 
-func (h prHeap) Len() int { return len(h) }
-func (h prHeap) Less(i, j int) bool {
-	return h[i].from.ArcWeight < h[j].from.ArcWeight
-}
+func (h prHeap) Len() int           { return len(h) }
+func (h prHeap) Less(i, j int) bool { return h[i].wt < h[j].wt }
 func (h prHeap) Swap(i, j int) {
 	h[i], h[j] = h[j], h[i]
 	h[i].fx = i

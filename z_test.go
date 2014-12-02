@@ -20,8 +20,8 @@ var (
 
 func TestRBig(t *testing.T) {
 	for _, tc := range []testCase{r1k, r10k, r100k /*, r1m*/} {
-		if s, cx := tc.w.Unweighted().Simple(); !s {
-			t.Fatal(len(tc.w), "not simple at node", cx)
+		if s, cx := tc.g.Simple(); !s {
+			t.Fatal(len(tc.g), "not simple at node", cx)
 		}
 	}
 }
@@ -36,7 +36,8 @@ func TestSSSPBig(t *testing.T) {
 func BenchmarkDijkstra1e3(b *testing.B) {
 	// 1000 nodes, 3000 edges
 	tc := r1k
-	d := graph.NewDijkstra(tc.w)
+	w := func(label int) float64 { return tc.w[label] }
+	d := graph.NewDijkstra(tc.l, w)
 	for i := 0; i < b.N; i++ {
 		d.AllPaths(tc.start)
 	}
@@ -45,7 +46,8 @@ func BenchmarkDijkstra1e3(b *testing.B) {
 func BenchmarkDijkstra1e4(b *testing.B) {
 	// 10k nodes, 50k edges
 	tc := r10k
-	d := graph.NewDijkstra(tc.w)
+	w := func(label int) float64 { return tc.w[label] }
+	d := graph.NewDijkstra(tc.l, w)
 	for i := 0; i < b.N; i++ {
 		d.AllPaths(tc.start)
 	}
@@ -54,7 +56,8 @@ func BenchmarkDijkstra1e4(b *testing.B) {
 func BenchmarkDijkstra1e5(b *testing.B) {
 	// 100k nodes, 1m edges
 	tc := r100k
-	d := graph.NewDijkstra(tc.w)
+	w := func(label int) float64 { return tc.w[label] }
+	d := graph.NewDijkstra(tc.l, w)
 	for i := 0; i < b.N; i++ {
 		d.AllPaths(tc.start)
 	}

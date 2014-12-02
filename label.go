@@ -4,37 +4,37 @@
 package graph
 
 import (
-	"math"
 	"math/big"
 )
 
-// file weight.go contains definitions for weighted graphs
+// A LabledAdjacencyList represents a graph as a list of neighbors for each
+// node, connected by labeled arcs.
+type LabeledAdjacencyList [][]Half
 
-// A WeightedAdjacencyList represents a graph as a list of neighbors for each
-// node, connected by weighted arcs.
-type WeightedAdjacencyList [][]Half
-
-// Half is a half arc, representing a weighted arc and the "neighbor" node
+// Half is a half arc, representing a labeled arc and the "neighbor" node
 // that the arc leads to.
 //
-// Halfs can be composed to form a weighted adjacency list.
+// Halfs can be composed to form a labeled adjacency list.
 type Half struct {
-	To        int // node ID, usable as a slice index
-	ArcWeight float64
+	To    int // node ID, usable as a slice index
+	Label int // half-arc ID for application data
 }
 
-// FromHalf is a half arc, representing a weighted arc and the "neighbor" node
+// FromHalf is a half arc, representing a labeled arc and the "neighbor" node
 // that the arc originates from.
 type FromHalf struct {
-	From      int
-	ArcWeight float64
+	From  int
+	Label int
 }
 
+// A WeightFunc accesses arc weights from arc labels.
+type WeightFunc func(label int) (weight float64)
+
 // NegativeArc returns true if the receiver graph contains a negative arc.
-func (g WeightedAdjacencyList) NegativeArc() bool {
+func (g LabeledAdjacencyList) NegativeArc(w WeightFunc) bool {
 	for _, nbs := range g {
 		for _, nb := range nbs {
-			if nb.ArcWeight < 0 {
+			if w(nb.Label) < 0 {
 				return true
 			}
 		}
@@ -46,7 +46,7 @@ func (g WeightedAdjacencyList) NegativeArc() bool {
 //
 // ValidTo returns true if all Half.To values are valid slice indexes
 // back into g.
-func (g WeightedAdjacencyList) ValidTo() bool {
+func (g LabeledAdjacencyList) ValidTo() bool {
 	for _, nbs := range g {
 		for _, nb := range nbs {
 			if nb.To < 0 || nb.To >= len(g) {
@@ -57,13 +57,13 @@ func (g WeightedAdjacencyList) ValidTo() bool {
 	return true
 }
 
-// WeightedFromTree represents a tree where each node is associated with
+// LabeledFromTree represents a tree where each node is associated with
 // a half arc identifying an arc from another node.
 //
-// WeightedFromTree is a variant of the FromTree type for weighted graphs.
+// LabeledFromTree is a variant of the FromTree type for labeled graphs.
 //
 // Paths represents a tree with information about the path to each node
-// from a start node.  See WeightedPathEnd documentation.
+// from a start node.  See LabeledPathEnd documentation.
 //
 // Leaves is used by some search and traversal functions to return
 // extra information.  Where Leaves is used it serves as a bitmap where
@@ -80,17 +80,16 @@ func (g WeightedAdjacencyList) ValidTo() bool {
 // correct; 0, which sums well with other distances; or -1 which is easily
 // tested for as an invalid distance.
 //
-// Within Paths, WeightedPathEnd.Dist will contain the path distance as the sum
+// Within Paths, LabeledPathEnd.Dist will contain the path distance as the sum
 // of arc weights from the start node.  If the node is not reachable, searches
 // will set Dist to WeightedFromTree.NoPath.
 //
 // A single WeightedFromTree can also represent a forest.  In this case paths
 // from all leaves do not return to a single start node, but multiple start
 // nodes.
-type WeightedFromTree struct {
-	Paths  []WeightedPathEnd // tree representation
-	Leaves big.Int           // leaves of tree
-	NoPath float64           // value to use as null
+type LabeledFromTree struct {
+	Paths  []LabeledPathEnd // tree representation
+	Leaves big.Int          // leaves of tree
 }
 
 // A WeightedPathEnd associates a half arc and a path length.
@@ -102,29 +101,28 @@ type WeightedFromTree struct {
 // For other nodes reached by the search, From represents a half arc in
 // a path back to start and Len represents the number of nodes in the path.
 // For nodes not reached by the search, From.From will be -1 and Len will be 0.
-type WeightedPathEnd struct {
-	// a "from" half arc, the node the arc comes from and the associated weight
+type LabeledPathEnd struct {
+	// a "from" half arc, the node the arc comes from and the associated label
 	From FromHalf
-	Dist float64 // path distance, sum of arc weights from start
-	Len  int     // number of nodes in path from start
+	Len  int // number of nodes in path from start
 }
 
 // NewWeightedFromTree creates a WeightedFromTree object.  You don't typically
 // call this function from application code.  Rather it is typically called by
 // search object constructors.  NewWeightedFromTree leaves the result object
 // with zero values and does not call the Reset method.
-func NewWeightedFromTree(n int) *WeightedFromTree {
-	return &WeightedFromTree{
-		Paths:  make([]WeightedPathEnd, n),
-		NoPath: math.Inf(1),
+func NewLabeledFromTree(n int) *LabeledFromTree {
+	t := &LabeledFromTree{
+		Paths: make([]LabeledPathEnd, n),
 	}
+	t.reset()
+	return t
 }
 
-func (t *WeightedFromTree) reset() {
+func (t *LabeledFromTree) reset() {
 	for n := range t.Paths {
-		t.Paths[n] = WeightedPathEnd{
-			Dist: t.NoPath,
-			From: FromHalf{-1, t.NoPath},
+		t.Paths[n] = LabeledPathEnd{
+			From: FromHalf{-1, -1},
 		}
 	}
 	t.Leaves = big.Int{}
@@ -140,27 +138,25 @@ func (t *WeightedFromTree) reset() {
 // meaningless and will be WeightedFromTree.NoPath.  The total path distance
 // is also returned.  Path distance is the sum of arc weights, excluding of
 // couse the meaningless arc weight of the first Half.
-func (t *WeightedFromTree) PathTo(end int) ([]Half, float64) {
+func (t *LabeledFromTree) PathTo(end int) []Half {
 	n := t.Paths[end].Len
 	if n == 0 {
-		return nil, t.NoPath
+		return nil
 	}
 	p := make([]Half, n)
-	dist := 0.
 	for {
 		n--
 		f := &t.Paths[end].From
-		p[n] = Half{end, f.ArcWeight}
+		p[n] = Half{end, f.Label}
 		if n == 0 {
-			return p, dist
+			return p
 		}
-		dist += f.ArcWeight
 		end = f.From
 	}
 }
 
-// Unweighted constructs the equivalent unweighted graph.
-func (g WeightedAdjacencyList) Unweighted() AdjacencyList {
+// UnLabeled constructs the equivalent unlabeled graph.
+func (g LabeledAdjacencyList) Unlabeled() AdjacencyList {
 	a := make(AdjacencyList, len(g))
 	for n, nbs := range g {
 		to := make([]int, len(nbs))
