@@ -7,7 +7,6 @@ import (
 	"container/heap"
 	"fmt"
 	"math"
-	//	"math/big"
 )
 
 // BreadthFirst associates a graph with a result object for returning
@@ -303,9 +302,6 @@ type Dijkstra struct {
 // If you add nodes to your graph, abandon any previously created Dijkstra
 // object and call NewDijkstra again.
 //
-// NewDijkstra calls NewWeightedFromTree.  See documentation there in
-// particular for the option to change NoPath before running a search.
-//
 // Searches on a single Dijkstra object can be run consecutively but not
 // concurrently.  Searches can be run concurrently however, on Dijkstra
 // objects obtained with separate calls to NewDijkstra, even with the same
@@ -335,7 +331,7 @@ type tent []*tentResult
 
 // DijkstraPath finds a single shortest path.
 //
-// Returned is the path and distance as returned by WeightedFromTree.PathTo.
+// Returned is the path and distance as returned by LabeledFromTree.PathTo.
 func (g LabeledAdjacencyList) DijkstraPath(start, end int, w WeightFunc) ([]Half, float64) {
 	d := NewDijkstra(g, w)
 	d.Path(start, end)
@@ -695,7 +691,7 @@ func (a *AStar) AStarA(start, end int, h Heuristic) bool {
 //
 // See documentation on the AStarA method of the AStar type.
 //
-// Returned is the path and distance as returned by WeightedFromTree.PathTo.
+// Returned is the path and distance as returned by LabeledFromTree.PathTo.
 func (g LabeledAdjacencyList) AStarAPath(start, end int, h Heuristic, w WeightFunc) ([]Half, float64) {
 	a := NewAStar(g, w)
 	a.AStarA(start, end, h)
@@ -792,7 +788,7 @@ func (a *AStar) AStarM(start, end int, h Heuristic) bool {
 //
 // See documentation on the AStarM method of the AStar type.
 //
-// Returned is the path and distance as returned by WeightedFromTree.PathTo.
+// Returned is the path and distance as returned by LabeledFromTree.PathTo.
 func (g LabeledAdjacencyList) AStarMPath(start, end int, h Heuristic, w WeightFunc) ([]Half, float64) {
 	a := NewAStar(g, w)
 	a.AStarM(start, end, h)
@@ -835,7 +831,8 @@ type BellmanFord struct {
 // NewBellmanFord creates a BellmanFord object that allows shortest path
 // searches using the Bellman-Ford-Moore algorithm.
 //
-// Argument g is the graph to be searched, as a weighted adjacency list.
+// Argument g is the graph to be searched, as a labeled adjacency list.
+// WeightFunc w must translate arc labels to arc weights.
 // Negative arc weights are allowed as long as there are no negative cycles.
 // Graphs may be directed or undirected.  Loops and parallel arcs are
 // allowed.
@@ -844,9 +841,6 @@ type BellmanFord struct {
 // initializes the BellmanFord object for the length (number of nodes) of g.
 // If you add nodes to your graph, abandon any previously created BellmanFord
 // object and call NewBellmanFord again.
-//
-// NewBellmanFord calls NewWeightedFromTree.  See documentation there in
-// particular for the option to change NoPath before running a search.
 //
 // Searches on a single BellmanFord object can be run consecutively but not
 // concurrently.  Searches can be run concurrently however, on BellmanFord
@@ -870,7 +864,7 @@ func (b *BellmanFord) Reset() {
 //
 // The algorithm allows negative edge weights but not negative cycles.
 // Run returns true if the algorithm completes successfully.  In this case
-// b.Result will be populated with a WeightedFromTree encoding shortest paths
+// b.Result will be populated with a LabeledFromTree encoding shortest paths
 // found.
 //
 // Run returns false in the case that it encounters a negative cycle.

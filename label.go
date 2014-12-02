@@ -71,20 +71,7 @@ func (g LabeledAdjacencyList) ValidTo() bool {
 //
 // Missing, compared to FromTree, is the maximum path length.
 //
-// In addition to the fields of FromTree, NoPath designates a null distance
-// value for non-existant paths and arcs.  You can change this value before
-// calling a search or traversal function and it will use NoPath to populate
-// distance results where a null value is needed.  The default assigned by
-// the constructor is +Inf, which compares well against valid distances.
-// Other values you might consider are NaN, which might be considered more
-// correct; 0, which sums well with other distances; or -1 which is easily
-// tested for as an invalid distance.
-//
-// Within Paths, LabeledPathEnd.Dist will contain the path distance as the sum
-// of arc weights from the start node.  If the node is not reachable, searches
-// will set Dist to WeightedFromTree.NoPath.
-//
-// A single WeightedFromTree can also represent a forest.  In this case paths
+// A single LabeledFromTree can also represent a forest.  In this case paths
 // from all leaves do not return to a single start node, but multiple start
 // nodes.
 type LabeledFromTree struct {
@@ -92,9 +79,9 @@ type LabeledFromTree struct {
 	Leaves big.Int          // leaves of tree
 }
 
-// A WeightedPathEnd associates a half arc and a path length.
+// A LabeledPathEnd associates a half arc and a path length.
 //
-// WeightedPathEnd is an element type of FromTree, a return type from various
+// LabeledPathEnd is an element type of FromTree, a return type from various
 // search functions.
 //
 // For a start node of a search, From.From will be -1 and Len will be 1.
@@ -107,9 +94,9 @@ type LabeledPathEnd struct {
 	Len  int // number of nodes in path from start
 }
 
-// NewWeightedFromTree creates a WeightedFromTree object.  You don't typically
+// NewLabeledFromTree creates a LabeledFromTree object.  You don't typically
 // call this function from application code.  Rather it is typically called by
-// search object constructors.  NewWeightedFromTree leaves the result object
+// search object constructors.  NewLabeledFromTree leaves the result object
 // with zero values and does not call the Reset method.
 func NewLabeledFromTree(n int) *LabeledFromTree {
 	t := &LabeledFromTree{
@@ -128,16 +115,14 @@ func (t *LabeledFromTree) reset() {
 	t.Leaves = big.Int{}
 }
 
-// PathTo decodes a WeightedFromTree, recovering the found path from start to
+// PathTo decodes a LabeledFromTree, recovering the found path from start to
 // end, where start was an argument to SingleShortestPath or AllShortestPaths
 // and end is the argument to this method.
 //
 // The slice result represents the found path with a sequence of half arcs.
 // If no path exists from start to end the slice result will be nil.
-// For the first element, representing the start node, the arc weight is
-// meaningless and will be WeightedFromTree.NoPath.  The total path distance
-// is also returned.  Path distance is the sum of arc weights, excluding of
-// couse the meaningless arc weight of the first Half.
+// For the first element, representing the start node, the arc label is
+// meaningless and will be -1.
 func (t *LabeledFromTree) PathTo(end int) []Half {
 	n := t.Paths[end].Len
 	if n == 0 {

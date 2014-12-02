@@ -18,12 +18,18 @@
 // Representation
 //
 // The only graph representation currently is an adjacency list, although
-// there are separate types for arc-weighted graphs and unweighted graphs.
-// The types AdjacencyList and WeightedAdjacencyList are simply slices
+// there are separate types for graphs with and without arc labels.
+// The types AdjacencyList and LabeledAdjacencyList are simply slices
 // of slices.  Construct with make; there is no special constructor.
 // Directed and undirected graphs use the same types.  Construct an undirected
 // graph by adding reciprocal edges.  Methods specific to either directed
 // or undirected graphs will be documented as such.
+//
+// The arc label of labeled graphs can be used to index or encode arbitrary
+// information, however it is common to need arc weights.  In some simple
+// cases the arc weight might be encoded directly as the label.  Otherwise
+// arc weights must be maintained separately from the graph.  Functions
+// requiring weights use a function to translate labels to weights.
 //
 // Terminology
 //
