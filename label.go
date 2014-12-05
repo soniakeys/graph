@@ -57,6 +57,23 @@ func (g LabeledAdjacencyList) ValidTo() bool {
 	return true
 }
 
+// Transpose, for directed graphs, constructs a new adjacency list that is
+// the transpose of g.
+//
+// For every arc from->to of g, the result will have an arc to->from.
+// Transpose also counts arcs as it traverses and returns m the number of arcs
+// in g (equal to the number of arcs in the result.)
+func (g LabeledAdjacencyList) Transpose() (t LabeledAdjacencyList, m int) {
+	t = make(LabeledAdjacencyList, len(g))
+	for n, nbs := range g {
+		for _, nb := range nbs {
+			t[nb.To] = append(t[nb.To], Half{To: n, Label: nb.Label})
+			m++
+		}
+	}
+	return
+}
+
 // LabeledFromTree represents a tree where each node is associated with
 // a half arc identifying an arc from another node.
 //
