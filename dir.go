@@ -123,7 +123,8 @@ func (g AdjacencyList) Topological() (order, cycle []int) {
 //
 // Returned is a list of components, each component is a list of nodes.
 func (g AdjacencyList) Tarjan() (scc [][]int) {
-	// straight from WP
+	// Implementation from Wikipedia pseudocode,
+	// http://en.wikipedia.org/w/index.php?title=Tarjan%27s_strongly_connected_components_algorithm&direction=prev&oldid=647184742
 	var indexed, stacked big.Int
 	index := make([]int, len(g))
 	lowlink := make([]int, len(g))
