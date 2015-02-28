@@ -123,7 +123,10 @@ func (g AdjacencyList) Topological() (order, cycle []int) {
 //
 // Returned is a list of components, each component is a list of nodes.
 func (g AdjacencyList) Tarjan() (scc [][]int) {
-	// Implementation from Wikipedia pseudocode,
+	// See "Depth-first search and linear graph algorithms", Robert Tarjan,
+	// SIAM J. Comput. Vol. 1, No. 2, June 1972.
+	//
+	// Implementation here from Wikipedia pseudocode,
 	// http://en.wikipedia.org/w/index.php?title=Tarjan%27s_strongly_connected_components_algorithm&direction=prev&oldid=647184742
 	var indexed, stacked big.Int
 	index := make([]int, len(g))
@@ -172,6 +175,57 @@ func (g AdjacencyList) Tarjan() (scc [][]int) {
 	}
 	return scc
 }
+
+// StronglyConnectedComponents identifies strongly connected components
+// in a directed graph.
+//
+// Algorithm by David J. Pearce, from "An Improved Algorithm for Finding the
+// Strongly Connected Components of a Directed Graph".  It is algorithm 3,
+// PEA_FIND_SCC2 in
+// http://homepages.mcs.vuw.ac.nz/~djp/files/P05.pdf, accessed 22 Feb 2015.
+//
+// Returned is a list of components, each component is a list of nodes.
+/*
+func (g AdjacencyList) StronglyConnectedComponents() []int {
+	rindex := make([]int, len(g))
+	S := []int{}
+	index := 1
+	c := len(g) - 1
+	visit := func(v int) {
+		root := true
+		rindex[v] = index
+		index++
+		for _, w := range g[v] {
+			if rindex[w] == 0 {
+				visit(w)
+			}
+			if rindex[w] < rindex[v] {
+				rindex[v] = rindex[w]
+				root = false
+			}
+		}
+		if root {
+			index--
+			for top := len(S) - 1; top >= 0 && rindex[v] <= rindex[top]; top-- {
+				w = rindex[top]
+				S = S[:top]
+				rindex[w] = c
+				index--
+			}
+			rindex[v] = c
+			c--
+		} else {
+			S = append(S, v)
+		}
+	}
+	for v := range g {
+		if rindex[v] == 0 {
+			visit(v)
+		}
+	}
+	return rindex
+}
+*/
 
 // InDegree computes the in-degree of each node in g
 func (g AdjacencyList) InDegree() []int {
