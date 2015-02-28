@@ -22,6 +22,46 @@ func ExampleAdjacencyList_ConnectedComponents() {
 	// [0 1 2] [3 2 1]
 }
 
+func ExampleTarjanBiconnectedComponents() {
+	g := graph.AdjacencyList{}
+	g.AddEdge(3, 4)
+	g.AddEdge(3, 2)
+	g.AddEdge(2, 4)
+	g.AddEdge(2, 5)
+	g.AddEdge(2, 1)
+	g.AddEdge(5, 1)
+	g.AddEdge(6, 1)
+	g.AddEdge(6, 5)
+	g.AddEdge(7, 1)
+	g.AddEdge(7, 9)
+	g.AddEdge(7, 8)
+	g.AddEdge(9, 8)
+	for _, bcc := range g.TarjanBiconnectedComponents() {
+		fmt.Println("Edges:")
+		for _, e := range bcc {
+			fmt.Println(e)
+		}
+	}
+	// Output:
+	// Edges:
+	// {4 2}
+	// {3 4}
+	// {2 3}
+	// Edges:
+	// {6 1}
+	// {5 6}
+	// {5 1}
+	// {2 5}
+	// {1 2}
+	// Edges:
+	// {8 7}
+	// {9 8}
+	// {7 9}
+	// Edges:
+	// {1 7}
+}
+
+/* shelved
 func ExampleBiconnectedComponents_Find() {
 	g := graph.AdjacencyList{
 		0:  {1, 7},
@@ -65,3 +105,4 @@ func ExampleBiconnectedComponents_Find() {
 	// 13: 0 12
 	// Leaves: [4 11 9]
 }
+*/

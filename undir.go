@@ -12,6 +12,30 @@ import (
 	"math/big"
 )
 
+// Edge is an undirected edge between nodes n1 and n2.
+type Edge struct{ n1, n2 int }
+
+func (p *AdjacencyList) AddEdge(n1, n2 int) {
+	// determine max of the two end points
+	max := n1
+	if n2 > max {
+		max = n2
+	}
+	// expand graph if needed, to include both
+	g := *p
+	if max >= len(g) {
+		*p = make(AdjacencyList, max+1)
+		copy(*p, g)
+		g = *p
+	}
+	// create one half-arc,
+	g[n1] = append(g[n1], n2)
+	// and except for loops, create the reciprocal
+	if n1 != n2 {
+		g[n2] = append(g[n2], n1)
+	}
+}
+
 // ConnectedComponents, for undirected graphs, determines the connected
 // components in g.
 //
@@ -43,7 +67,61 @@ func (g AdjacencyList) ConnectedComponents() (rep, nNodes []int) {
 	return
 }
 
-// wip
+// TarjanBiconnectedComponents, for undirected simple graphs.
+func (g AdjacencyList) TarjanBiconnectedComponents() (components [][]Edge) {
+	// Implemented closely to pseudocode in "Depth-first search and linear
+	// graph algorithms", Robert Tarjan, SIAM J. Comput. Vol. 1, No. 2,
+	// June 1972.
+	//
+	// Note Tarjan's "adjacency structure" is graph.AdjacencyList,
+	// His "adjacency list" is an element of a graph.AdjacencyList, also
+	// termed a "to-list", "neighbor list", or "child list."
+	number := make([]int, len(g))
+	lowpt := make([]int, len(g))
+	var stack []Edge
+	var i int
+	var biconnect func(int, int)
+	biconnect = func(v, u int) {
+		i++
+		number[v] = i
+		lowpt[v] = i
+		for _, w := range g[v] {
+			if number[w] == 0 {
+				stack = append(stack, Edge{v, w})
+				biconnect(w, v)
+				if lowpt[w] < lowpt[v] {
+					lowpt[v] = lowpt[w]
+				}
+				if lowpt[w] >= number[v] {
+					var bcc []Edge
+					top := len(stack) - 1
+					for number[stack[top].n1] >= number[w] {
+						bcc = append(bcc, stack[top])
+						stack = stack[:top]
+						top--
+					}
+					bcc = append(bcc, stack[top])
+					stack = stack[:top]
+					top--
+					components = append(components, bcc)
+				}
+			} else if number[w] < number[v] && w != u {
+				stack = append(stack, Edge{v, w})
+				if number[w] < lowpt[v] {
+					lowpt[v] = number[w]
+				}
+			}
+		}
+	}
+	for w := range g {
+		if number[w] == 0 {
+			biconnect(w, 0)
+		}
+	}
+	return
+}
+
+/* half-baked.  Read the 72 paper.  Maybe revisit at some point.
 type BiconnectedComponents struct {
 	Graph  AdjacencyList
 	Start  int
@@ -121,3 +199,4 @@ func (b *BiconnectedComponents) Find(start int) {
 	b.Cuts.SetBit(&b.Cuts, start, rc)
 	return
 }
+*/
