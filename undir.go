@@ -9,6 +9,7 @@
 package graph
 
 import (
+"fmt"
 	"math/big"
 )
 
@@ -200,3 +201,64 @@ func (b *BiconnectedComponents) Find(start int) {
 	return
 }
 */
+
+func (g AdjacencyList) Degeneracy() (k int, ord []int, cores []int) {
+	ord = make([]int, len(g))
+	var L big.Int
+	d := make([]int, len(g))
+	var D [][]int
+	for v, nb := range g {
+		dv := len(nb)
+		d[v] = dv
+		for len(D) <= dv {
+			D = append(D, nil)
+		}
+		D[dv] = append(D[dv], v)
+	}
+	for ox := range g {
+		// find a non-empty D
+		i := 0
+		for len(D[i]) == 0 {
+			i++
+		}
+		// k is max(i, k)
+		if i > k {
+			for len(cores) <= i {
+				cores = append(cores, 0)
+			}
+			cores[k] = ox
+			fmt.Println("i =", i, "ox =", ox, "ord:", ord[:ox])
+			k = i
+		}
+		// select from D[i]
+		Di := D[i]
+		last := len(Di) - 1
+		v := Di[last]
+		// Add v to ordering, remove from Di
+		ord[ox] = v
+		L.SetBit(&L, v, 1)
+		D[i] = Di[:last]
+		// move neighbors
+		for _, nb := range g[v] {
+			if L.Bit(nb) == 1 {
+				continue
+			}
+			dn := d[nb]  // old number of neighbors of nb
+			Ddn := D[dn] // nb is in this list
+			// remove it from the list
+			for wx, w := range Ddn {
+				if w == nb {
+					last := len(Ddn) - 1
+					Ddn[wx], Ddn[last] = Ddn[last], Ddn[wx]
+					D[dn] = Ddn[:last]
+				}
+			}
+			dn-- // new number of neighbors
+			d[nb] = dn
+			// re--add it to it's new list
+			D[dn] = append(D[dn], nb)
+		}
+	}
+	cores[k] = len(ord)
+	return
+}
