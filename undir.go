@@ -68,6 +68,53 @@ func (g AdjacencyList) ConnectedComponents() (rep, nNodes []int) {
 	return
 }
 
+// Bipartite determines if a connected component of an undirected graph
+// is bipartite.
+//
+// Argument n can be any representative node of the component.
+//
+// If the component is bipartite, Bipartite returns true and a two-coloring
+// of the component.  Each color set is returned as a bitmap.  If the component
+// is not bipartite, Bipartite returns false and a representative odd cycle.
+func (g AdjacencyList) Bipartite(n int) (b bool, c1, c2 *big.Int, oc []int) {
+	c1 = &big.Int{}
+	c2 = &big.Int{}
+	b = true
+	var open bool
+	var df func(n int, c1, c2 *big.Int)
+	df = func(n int, c1, c2 *big.Int) {
+		c1.SetBit(c1, n, 1)
+		for _, nb := range g[n] {
+			if c1.Bit(nb) == 1 {
+				b = false
+				oc = []int{nb, n}
+				open = true
+				return
+			}
+			if c2.Bit(nb) == 1 {
+				continue
+			}
+			df(nb, c2, c1)
+			if b {
+				continue
+			}
+			switch {
+			case !open:
+			case n == oc[0]:
+				open = false
+			default:
+				oc = append(oc, n)
+			}
+			return
+		}
+	}
+	df(n, c1, c2)
+	if b {
+		return b, c1, c2, nil
+	}
+	return b, nil, nil, oc
+}
+
 // TarjanBiconnectedComponents, for undirected simple graphs.
 func (g AdjacencyList) TarjanBiconnectedComponents() (components [][]Edge) {
 	// Implemented closely to pseudocode in "Depth-first search and linear

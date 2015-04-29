@@ -81,6 +81,21 @@ func (g AdjacencyList) Undirected() (u bool, from, to int) {
 	return true, -1, -1
 }
 
+func (g LabeledAdjacencyList) Undirected() (u bool, from int, to Half) {
+	for from, nbs := range g {
+	nb:
+		for _, to := range nbs {
+			for _, r := range g[to.To] {
+				if r.To == from {
+					continue nb
+				}
+			}
+			return false, from, to
+		}
+	}
+	return true, -1, Half{}
+}
+
 // Simple checks for loops and parallel arcs.
 //
 // A graph is "simple" if it has no loops or parallel arcs.
@@ -108,51 +123,29 @@ func (g AdjacencyList) Simple() (s bool, n int) {
 	return true, -1
 }
 
-// Bipartite determines if a connected component of an undirected graph
-// is bipartite.
+// IsTree identifies trees.
 //
-// Argument n can be any representative node of the component.
+// For directed graphs, IsTree returns true if the subgraph reachable from
+// root is a tree.
 //
-// If the component is bipartite, Bipartite returns true and a two-coloring
-// of the component.  Each color set is returned as a bitmap.  If the component
-// is not bipartite, Bipartite returns false and a representative odd cycle.
-func (g AdjacencyList) Bipartite(n int) (b bool, c1, c2 *big.Int, oc []int) {
-	c1 = &big.Int{}
-	c2 = &big.Int{}
-	b = true
-	var open bool
-	var df func(n int, c1, c2 *big.Int)
-	df = func(n int, c1, c2 *big.Int) {
-		c1.SetBit(c1, n, 1)
-		for _, nb := range g[n] {
-			if c1.Bit(nb) == 1 {
-				b = false
-				oc = []int{nb, n}
-				open = true
-				return
-			}
-			if c2.Bit(nb) == 1 {
-				continue
-			}
-			df(nb, c2, c1)
-			if b {
-				continue
-			}
-			switch {
-			case !open:
-			case n == oc[0]:
-				open = false
-			default:
-				oc = append(oc, n)
-			}
-			return
+// For undirected graphs, IsTree returns true if the connected component
+// containing argument root is a tree.
+func (g AdjacencyList) IsTree(root int) bool {
+	var v big.Int
+	var df func(int) bool
+	df = func(n int) bool {
+		if v.Bit(n) == 1 {
+			return false
 		}
+		v.SetBit(&v, root, 1)
+		for _, to := range g[n] {
+			if !df(to) {
+				return false
+			}
+		}
+		return true
 	}
-	df(n, c1, c2)
-	if b {
-		return b, c1, c2, nil
-	}
-	return b, nil, nil, oc
+	return df(root)
 }
 
 // DepthFirst traverses a graph depth first.
