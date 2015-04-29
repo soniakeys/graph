@@ -9,7 +9,6 @@
 package graph
 
 import (
-"fmt"
 	"math/big"
 )
 
@@ -274,7 +273,6 @@ func (g AdjacencyList) Degeneracy() (k int, ord []int, cores []int) {
 				cores = append(cores, 0)
 			}
 			cores[k] = ox
-			fmt.Println("i =", i, "ox =", ox, "ord:", ord[:ox])
 			k = i
 		}
 		// select from D[i]

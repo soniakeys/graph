@@ -106,3 +106,48 @@ func ExampleBiconnectedComponents_Find() {
 	// Leaves: [4 11 9]
 }
 */
+
+func ExampleAdjacencyList_Degeneracy() {
+	//
+	//   /---2
+	//  0--./|\
+	//  |\ /\| \
+	//  | .  6  3--5
+	//  |/ \/| /
+	//  1--'\|/
+	//   \---4
+	//
+	// Same graph redrawn to show ordering:
+	//
+	//          /-----\
+	//         /  /--\ \
+	//      /-+--+-\  \|
+	//  5--3--4--6--2--1--0
+	//         \  \  \---/|\
+	//          \  \-----/ |
+	//           \--------/
+	//
+	g := graph.AdjacencyList{
+		0: {1, 2, 4, 6},
+		1: {0, 2, 4, 6},
+		2: {0, 1, 3, 6},
+		3: {2, 4, 5},
+		4: {0, 1, 3, 6},
+		5: {3},
+		6: {0, 1, 2, 4},
+	}
+	k, ord, cores := g.Degeneracy()
+	fmt.Println("Degeneracy:", k)
+	fmt.Println("Ordering:", ord)
+	fmt.Println("0-core:", ord[:cores[0]])
+	for k := 1; k < len(cores); k++ {
+		fmt.Printf("%d-core: %d\n", k, ord[cores[k-1]:cores[k]])
+	}
+	// Output:
+	// Degeneracy: 3
+	// Ordering: [5 3 4 6 2 1 0]
+	// 0-core: []
+	// 1-core: [5]
+	// 2-core: [3]
+	// 3-core: [4 6 2 1 0]
+}
