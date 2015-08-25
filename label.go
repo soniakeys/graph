@@ -4,6 +4,7 @@
 package graph
 
 import (
+	"math"
 	"math/big"
 )
 
@@ -168,4 +169,53 @@ func (g LabeledAdjacencyList) Unlabeled() AdjacencyList {
 		a[n] = to
 	}
 	return a
+}
+
+// FloydWarshall finds all pairs shortest distances for a simple weighted
+// graph without negative cycles.
+//
+// In result array d, d[i][j] will be the shortest distance from node i
+// to node j.  Any diagonal element < 0 indicates a negative cycle exists.
+//
+// If g is an undirected graph with no negative edge weights, the result
+// array will be a distance matrix, for example as used by package
+// github.com/soniakeys/cluster.
+func (g LabeledAdjacencyList) FloydWarshall(w WeightFunc) (d [][]float64) {
+	d = newFWd(len(g))
+	for fr, to := range g {
+		for _, to := range to {
+			d[fr][to.To] = w(to.Label)
+		}
+	}
+	solveFW(d)
+	return
+}
+
+// little helper function, makes a blank matrix for FloydWarshall.
+func newFWd(n int) [][]float64 {
+	d := make([][]float64, n)
+	for i := range d {
+		di := make([]float64, n)
+		for j := range di {
+			if j != i {
+				di[j] = math.Inf(1)
+			}
+		}
+		d[i] = di
+	}
+	return d
+}
+
+// Floyd Warshall solver, once the matrix d is initialized by arc weights.
+func solveFW(d [][]float64) {
+	for k, dk := range d {
+		for _, di := range d {
+			dik := di[k]
+			for j := range d {
+				if d2 := dik + dk[j]; d2 < di[j] {
+					di[j] = d2
+				}
+			}
+		}
+	}
 }

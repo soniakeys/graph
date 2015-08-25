@@ -63,3 +63,23 @@ func ExampleLabeledFromTree_PathTo() {
 	// To 3: [{2 -1} {3 11}] 11
 	// To 4: [{2 -1} {3 11} {4 6}] 17
 }
+
+// A directed graph with negative arc weights.
+// Arc weights are encoded simply as label numbers.
+func ExampleLabeledAdjacencyList_FloydWarshall_negative() {
+	g := graph.LabeledAdjacencyList{
+		0: {{To: 2, Label: -1}},
+		1: {{To: 3, Label: -2}},
+		2: {{To: 1, Label: 4}, {To: 3, Label: 3}},
+		3: {{To: 0, Label: 2}},
+	}
+	d := g.FloydWarshall(func(l int) float64 { return float64(l) })
+	for _, di := range d {
+		fmt.Printf("%2.0f\n", di)
+	}
+	// Output:
+	// [ 0  3 -1  1]
+	// [ 0  0 -1 -2]
+	// [ 4  4  0  2]
+	// [ 2  5  1  0]
+}
