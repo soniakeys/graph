@@ -283,23 +283,20 @@ func (g AdjacencyList) EulerianCycleD(m int) ([]int, error) {
 	if len(g) == 0 {
 		return nil, nil
 	}
-	uv := new(big.Int).Lsh(one, uint(len(g))) // unvisited
-	uv.Sub(uv, one)
-	// low end of p is stack of unfinished nodes
-	// high end is finished path
-	p := make([]int, m+1) // stack + path
-	for s := 0; s >= 0; {
-		v := p[s] // v is node that starts cycle
-		s = g.pushEulerian(uv, p, s)
-		if p[s] != v { // if Eulerian, we'll always come back to starting node
+	e := newEulerian(g, m)
+	for e.s >= 0 {
+		v := e.top() // v is node that starts cycle
+		e.push()
+		// if Eulerian, we'll always come back to starting node
+		if e.top() != v {
 			return nil, errors.New("not balanced")
 		}
-		s, m = g.keepEulerian(p, s, m)
+		e.keep()
 	}
-	if uv.BitLen() > 0 {
+	if e.uv.BitLen() > 0 {
 		return nil, errors.New("not strongly connected")
 	}
-	return p, nil
+	return e.p, nil
 }
 
 // EulerianPath finds an Eulerian path in a directed multigraph.
@@ -344,57 +341,78 @@ func (g AdjacencyList) EulerianPathD(m, start int) ([]int, error) {
 	if len(g) == 0 {
 		return nil, nil
 	}
-	uv := new(big.Int).Lsh(one, uint(len(g)))
-	uv.Sub(uv, one)
-	p := make([]int, m+1)
-	p[0] = start
+	e := newEulerian(g, m)
+	e.p[0] = start
 	// unlike EulerianCycle, the first path doesn't have be a cycle.
-	s := g.pushEulerian(uv, p, 0)
-	s, m = g.keepEulerian(p, s, m)
-	for s >= 0 {
-		start = p[s]
-		s = g.pushEulerian(uv, p, s)
+	e.push()
+	e.keep()
+	for e.s >= 0 {
+		start = e.top()
+		e.push()
 		// paths after the first must be cycles though
-		if p[s] != start {
+		// (as long as there are nodes on the stack)
+		if e.top() != start {
 			return nil, errors.New("no Eulerian path")
 		}
-		s, m = g.keepEulerian(p, s, m)
+		e.keep()
 	}
-	if uv.BitLen() > 0 {
+	if e.uv.BitLen() > 0 {
 		return nil, errors.New("no Eulerian path")
 	}
-	return p, nil
+	return e.p, nil
 }
 
 // starting at the node on the top of the stack, follow arcs until stuck.
 // mark nodes visited, push nodes on stack, remove arcs from g.
-// returns new stack pointer.
-func (g AdjacencyList) pushEulerian(uv *big.Int, p []int, s int) int {
-	for u := p[s]; ; {
-		uv.SetBit(uv, u, 0) // reset unvisited bit
-		arcs := g[u]
+func (e *eulerian) push() {
+	for u := e.top(); ; {
+		e.uv.SetBit(&e.uv, u, 0) // reset unvisited bit
+		arcs := e.g[u]
 		if len(arcs) == 0 {
-			return s // stuck, return stack pointer
+			return // stuck
 		}
 		w := arcs[0] // follow first arc
-		s++          // push followed node on stack
-		p[s] = w
-		g[u] = arcs[1:] // consume arc
+		e.s++        // push followed node on stack
+		e.p[e.s] = w
+		e.g[u] = arcs[1:] // consume arc
 		u = w
 	}
 }
 
 // starting with the node on top of the stack, move nodes with no arcs.
-// returns new stack pointer and new m.
-func (g AdjacencyList) keepEulerian(p []int, s, m int) (int, int) {
-	for s >= 0 {
-		n := p[s]
-		if len(g[n]) > 0 {
+func (e *eulerian) keep() {
+	for e.s >= 0 {
+		n := e.top()
+		if len(e.g[n]) > 0 {
 			break
 		}
-		p[m] = n
-		s--
-		m--
+		e.p[e.m] = n
+		e.s--
+		e.m--
 	}
-	return s, m
+}
+
+type eulerian struct {
+	g  AdjacencyList // working copy of graph, it gets consumed
+	m  int           // number of arcs in g, updated as g is consumed
+	uv big.Int       // unvisited
+	// low end of p is stack of unfinished nodes
+	// high end is finished path
+	p []int // stack + path
+	s int   // stack pointer
+}
+
+func (e *eulerian) top() int {
+	return e.p[e.s]
+}
+
+func newEulerian(g AdjacencyList, m int) *eulerian {
+	e := &eulerian{
+		g: g,
+		m: m,
+		p: make([]int, m+1),
+	}
+	e.uv.Lsh(one, uint(len(g)))
+	e.uv.Sub(&e.uv, one)
+	return e
 }
