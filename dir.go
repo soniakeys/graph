@@ -299,6 +299,36 @@ func (g AdjacencyList) EulerianCycleD(m int) ([]int, error) {
 	return e.p, nil
 }
 
+// EulerianCycleUndirD is a bit of an experiment.
+//
+// It is about the same as EulerianCycleD, but modified for an undirected
+// multigraph.
+//
+// Parameter m in this case must be the size of the undirected graph -- the
+// number of edges -- which is the number of arcs / 2.
+//
+// It works, but contains an extra loop that I think spoils the time
+// complexity.  Probably still pretty fast in practice, but a different
+// graph representation might be better.
+func (g AdjacencyList) EulerianCycleUndirD(m int) ([]int, error) {
+	if len(g) == 0 {
+		return nil, nil
+	}
+	e := newEulerian(g, m)
+	for e.s >= 0 {
+		v := e.top()
+		e.pushUndir() // call modified method
+		if e.top() != v {
+			return nil, errors.New("not balanced")
+		}
+		e.keep()
+	}
+	if e.uv.BitLen() > 0 {
+		return nil, errors.New("not strongly connected")
+	}
+	return e.p, nil
+}
+
 // EulerianPath finds an Eulerian path in a directed multigraph.
 //
 // * If g has no nodes, result is nil, nil.
@@ -375,6 +405,32 @@ func (e *eulerian) push() {
 		e.s++        // push followed node on stack
 		e.p[e.s] = w
 		e.g[u] = arcs[1:] // consume arc
+		u = w
+	}
+}
+
+// like push, but for for undirected graphs.
+func (e *eulerian) pushUndir() {
+	for u := e.top(); ; {
+		e.uv.SetBit(&e.uv, u, 0)
+		arcs := e.g[u]
+		if len(arcs) == 0 {
+			return
+		}
+		w := arcs[0]
+		e.s++
+		e.p[e.s] = w
+		e.g[u] = arcs[1:] // consume arc
+		// here is the only difference, consume reciprocal arc as well:
+		a2 := e.g[w]
+		for x, rx := range a2 {
+			if rx == u { // here it is
+				last := len(a2) - 1
+				a2[x] = a2[last]   // someone else gets the seat
+				e.g[w] = a2[:last] // and it's gone.
+				break
+			}
+		}
 		u = w
 	}
 }

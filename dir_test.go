@@ -89,6 +89,18 @@ func ExampleAdjacencyList_EulerianCycle() {
 	// [0 1 2 1 2 2 0] <nil>
 }
 
+func ExampleAdjacencyList_EulerianCycleUndir() {
+	g := graph.AdjacencyList{
+		0: {1},
+		1: {2, 2},
+		2: {0, 1, 2},
+	}
+	g, m := g.CopyUndir()
+	fmt.Println(g.EulerianCycleUndirD(m))
+	// Output:
+	// [0 1 2 2 1 2 0] <nil>
+}
+
 func TestEulerianCycle(t *testing.T) {
 	same := func(a, b []int) bool {
 		if len(a) != len(b) {
