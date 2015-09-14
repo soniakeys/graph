@@ -472,3 +472,44 @@ func newEulerian(g AdjacencyList, m int) *eulerian {
 	e.uv.Sub(&e.uv, one)
 	return e
 }
+
+func (g AdjacencyList) MaximalNonBranchingPaths() (p [][]int) {
+	ind := g.InDegree()
+	var uv big.Int
+	uv.Lsh(one, uint(len(g)))
+	uv.Sub(&uv, one)
+	for v, vTo := range g {
+		if !(ind[v] == 1 && len(vTo) == 1) {
+			for _, w := range vTo {
+				n := []int{v, w}
+				uv.SetBit(&uv, v, 0)
+				uv.SetBit(&uv, w, 0)
+				wTo := g[w]
+				for ind[w] == 1 && len(wTo) == 1 {
+					u := wTo[0]
+					n = append(n, u)
+					uv.SetBit(&uv, u, 0)
+					w = u
+					wTo = g[w]
+				}
+				// path
+				p = append(p, n)
+			}
+		}
+	}
+	for b := uv.BitLen(); b > 0; b = uv.BitLen() {
+		v := b - 1
+		n := []int{v}
+		for w := v; ; {
+			w = g[w][0]
+			uv.SetBit(&uv, w, 0)
+			n = append(n, w)
+			if w == v {
+				break
+			}
+		}
+		// isolated cycle
+		p = append(p, n)
+	}
+	return p
+}
