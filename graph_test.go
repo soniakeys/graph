@@ -74,3 +74,24 @@ func ExampleAdjacencyList_Bipartite() {
 	// 111 11000
 	// [3 4 2]
 }
+
+func ExampleFromTree_CommonAncestor() {
+	// tree:
+	//       4
+	//      /
+	//     1
+	//    / \
+	//   0   2
+	//  /
+	// 3
+	t := &graph.FromTree{Paths: []graph.PathEnd{
+		4: {From: -1, Len: 1},
+		1: {From: 4, Len: 2},
+		0: {From: 1, Len: 3},
+		2: {From: 1, Len: 3},
+		3: {From: 0, Len: 4},
+	}}
+	fmt.Println(t.CommonAncestor(2, 3))
+	// Output:
+	// 1
+}

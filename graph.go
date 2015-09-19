@@ -291,3 +291,21 @@ func (t *FromTree) PathTo(end int) []int {
 		end = t.Paths[end].From
 	}
 }
+
+func (t *FromTree) CommonAncestor(a, b int) int {
+	p := t.Paths
+	if a < 0 || b < 0 || a >= len(p) || b >= len(p) {
+		return -1
+	}
+	if p[a].Len < p[b].Len {
+		a, b = b, a
+	}
+	for bl := p[b].Len; p[a].Len > bl; {
+		a = p[a].From
+	}
+	for a != b {
+		a = p[a].From
+		b = p[b].From
+	}
+	return a
+}
