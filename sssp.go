@@ -92,7 +92,7 @@ func (b *BreadthFirst) Traverse(start int, v Visitor) int {
 	b.Result.reset()
 	rp := b.Result.Paths
 	level := 1
-	rp[start].Len = level
+	rp[start] = PathEnd{Len: level, From: -1}
 	if !v(start) {
 		b.Result.MaxLen = level
 		return -1
@@ -170,7 +170,7 @@ func (b *BreadthFirst2) Traverse(start int, v Visitor) int {
 	b.Result.reset()
 	rp := b.Result.Paths
 	level := 1
-	rp[start].Len = level
+	rp[start] = PathEnd{Len: level, From: -1}
 	if !v(start) {
 		b.Result.MaxLen = level
 		return -1
@@ -282,8 +282,8 @@ func (b *BreadthFirst2) Traverse(start int, v Visitor) int {
 type Dijkstra struct {
 	Graph  LabeledAdjacencyList // input graph
 	Weight WeightFunc           // input weight function
-	Tree   *LabeledFromTree     // result paths
-	Dist   []float64            // distances for result paths
+	Tree   FromList             // result paths
+	Dist   []float64            // in Tree, distances for result paths
 	// heap values
 	r []tentResult
 	// test instrumentation
@@ -314,7 +314,7 @@ func NewDijkstra(g LabeledAdjacencyList, w WeightFunc) *Dijkstra {
 	return &Dijkstra{
 		Graph:  g,
 		Weight: w,
-		Tree:   NewLabeledFromTree(len(g)),
+		Tree:   NewFromList(len(g)),
 		Dist:   make([]float64, len(g)),
 		r:      r,
 	}
@@ -331,8 +331,8 @@ type tent []*tentResult
 
 // DijkstraPath finds a single shortest path.
 //
-// Returned is the path and distance as returned by LabeledFromTree.PathTo.
-func (g LabeledAdjacencyList) DijkstraPath(start, end int, w WeightFunc) ([]Half, float64) {
+// Returned is the path and distance as returned by FromList.PathTo.
+func (g LabeledAdjacencyList) DijkstraPath(start, end int, w WeightFunc) ([]int, float64) {
 	d := NewDijkstra(g, w)
 	d.Path(start, end)
 	return d.Tree.PathTo(end), d.Dist[end]
@@ -375,7 +375,7 @@ func (d *Dijkstra) Reset() {
 func (d *Dijkstra) search(start, end int) (reached int) {
 	current := start
 	rp := d.Tree.Paths
-	rp[current].Len = 1 // path length at start is 1 node
+	rp[current] = PathEnd{Len: 1, From: -1} // path length at start is 1 node
 	cr := &d.r[current]
 	cr.dist = 0    // distance at start is 0.
 	cr.done = true // mark start done.  it skips the heap.
@@ -406,7 +406,7 @@ func (d *Dijkstra) search(start, end int) (reached int) {
 			// record new path data for this node and update tentative set.
 			hr.dist = dist
 			rp[nb.To].Len = nextLen
-			rp[nb.To].From = FromHalf{From: current, Label: nb.Label}
+			rp[nb.To].From = current
 			if visited {
 				heap.Fix(&t, hr.fx)
 			} else {
@@ -457,7 +457,7 @@ func (s *tent) Pop() interface{} {
 type AStar struct {
 	Graph  LabeledAdjacencyList // input graph
 	Weight WeightFunc           // input weight function
-	Tree   *LabeledFromTree     // result paths
+	Tree   FromList             // result paths
 	Dist   []float64            // distances for result paths
 	// heap values
 	r []rNode
@@ -488,7 +488,7 @@ func NewAStar(g LabeledAdjacencyList, w WeightFunc) *AStar {
 	return &AStar{
 		Graph:  g,
 		Weight: w,
-		Tree:   NewLabeledFromTree(len(g)),
+		Tree:   NewFromList(len(g)),
 		Dist:   make([]float64, len(g)),
 		r:      r,
 	}
@@ -629,7 +629,7 @@ func (a *AStar) AStarA(start, end int, h Heuristic) bool {
 	cr.state = reached
 	cr.f = h(start) // total path estimate is estimate from start
 	rp := a.Tree.Paths
-	rp[start].Len = 1 // path length at start is 1 node
+	rp[start] = PathEnd{Len: 1, From: -1} // path length at start is 1 node
 	// oh is a heap of nodes "open" for exploration.  nodes go on the heap
 	// when they get an initial or new "g" path distance, and therefore a
 	// new "f" which serves as priority for exploration.
@@ -660,10 +660,7 @@ func (a *AStar) AStarA(start, end int, h Heuristic) bool {
 				// cool, we found a better way to get to this node.
 				// record new path data for this node and
 				// update alt with new data and make sure it's on the heap.
-				*ap = LabeledPathEnd{
-					From: FromHalf{From: bestNode, Label: nb.Label},
-					Len:  nextLen,
-				}
+				*ap = PathEnd{From: bestNode, Len: nextLen}
 				a.Dist[nb.To] = g
 				alt.f = g + h(nb.To)
 				if alt.fx < 0 {
@@ -673,10 +670,7 @@ func (a *AStar) AStarA(start, end int, h Heuristic) bool {
 				}
 			} else {
 				// bestNode being reached for the first time.
-				*ap = LabeledPathEnd{
-					From: FromHalf{From: bestNode, Label: nb.Label},
-					Len:  nextLen,
-				}
+				*ap = PathEnd{From: bestNode, Len: nextLen}
 				a.Dist[nb.To] = g
 				alt.f = g + h(nb.To)
 				alt.state = reached
@@ -691,8 +685,8 @@ func (a *AStar) AStarA(start, end int, h Heuristic) bool {
 //
 // See documentation on the AStarA method of the AStar type.
 //
-// Returned is the path and distance as returned by LabeledFromTree.PathTo.
-func (g LabeledAdjacencyList) AStarAPath(start, end int, h Heuristic, w WeightFunc) ([]Half, float64) {
+// Returned is the path and distance as returned by FromList.PathTo.
+func (g LabeledAdjacencyList) AStarAPath(start, end int, h Heuristic, w WeightFunc) ([]int, float64) {
 	a := NewAStar(g, w)
 	a.AStarA(start, end, h)
 	return a.Tree.PathTo(end), a.Dist[end]
@@ -719,7 +713,7 @@ func (a *AStar) AStarM(start, end int, h Heuristic) bool {
 
 	cr.f = h(start)
 	rp := a.Tree.Paths
-	rp[start].Len = 1
+	rp[start] = PathEnd{Len: 1, From: -1}
 	oh := openHeap{cr}
 	for len(oh) > 0 {
 		bestPath := heap.Pop(&oh).(*rNode)
@@ -756,10 +750,7 @@ func (a *AStar) AStarM(start, end int, h Heuristic) bool {
 				if g == a.Dist[nb.To] && nextLen >= ap.Len {
 					continue
 				}
-				*ap = LabeledPathEnd{
-					From: FromHalf{From: bestNode, Label: nb.Label},
-					Len:  nextLen,
-				}
+				*ap = PathEnd{From: bestNode, Len: nextLen}
 				a.Dist[nb.To] = g
 				alt.f = g + h(nb.To)
 
@@ -767,10 +758,7 @@ func (a *AStar) AStarM(start, end int, h Heuristic) bool {
 				// we know alt was on the heap because we found it marked open
 				heap.Fix(&oh, alt.fx)
 			} else {
-				*ap = LabeledPathEnd{
-					From: FromHalf{From: bestNode, Label: nb.Label},
-					Len:  nextLen,
-				}
+				*ap = PathEnd{From: bestNode, Len: nextLen}
 				a.Dist[nb.To] = g
 				alt.f = g + h(nb.To)
 
@@ -788,8 +776,8 @@ func (a *AStar) AStarM(start, end int, h Heuristic) bool {
 //
 // See documentation on the AStarM method of the AStar type.
 //
-// Returned is the path and distance as returned by LabeledFromTree.PathTo.
-func (g LabeledAdjacencyList) AStarMPath(start, end int, h Heuristic, w WeightFunc) ([]Half, float64) {
+// Returned is the path and distance as returned by FromList.PathTo.
+func (g LabeledAdjacencyList) AStarMPath(start, end int, h Heuristic, w WeightFunc) ([]int, float64) {
 	a := NewAStar(g, w)
 	a.AStarM(start, end, h)
 	return a.Tree.PathTo(end), a.Dist[end]
@@ -824,7 +812,7 @@ func (p *openHeap) Pop() interface{} {
 type BellmanFord struct {
 	Graph  LabeledAdjacencyList
 	Weight WeightFunc
-	Tree   *LabeledFromTree
+	Tree   FromList
 	Dist   []float64
 }
 
@@ -850,7 +838,7 @@ func NewBellmanFord(g LabeledAdjacencyList, w WeightFunc) *BellmanFord {
 	return &BellmanFord{
 		Graph:  g,
 		Weight: w,
-		Tree:   NewLabeledFromTree(len(g)),
+		Tree:   NewFromList(len(g)),
 		Dist:   make([]float64, len(g)),
 	}
 }
@@ -864,7 +852,7 @@ func (b *BellmanFord) Reset() {
 //
 // The algorithm allows negative edge weights but not negative cycles.
 // Run returns true if the algorithm completes successfully.  In this case
-// b.Result will be populated with a LabeledFromTree encoding shortest paths
+// b.Result will be populated with a FromList encoding shortest paths
 // found.
 //
 // Run returns false in the case that it encounters a negative cycle.
@@ -875,7 +863,7 @@ func (b *BellmanFord) Run(start int) (ok bool) {
 		b.Dist[i] = inf
 	}
 	rp := b.Tree.Paths
-	rp[start].Len = 1
+	rp[start] = PathEnd{Len: 1, From: -1}
 	b.Dist[start] = 0
 	for _ = range b.Graph[1:] {
 		imp := false
@@ -887,10 +875,7 @@ func (b *BellmanFord) Run(start int) (ok bool) {
 				to := &rp[nb.To]
 				// TODO improve to break ties
 				if fp.Len > 0 && d2 < b.Dist[nb.To] {
-					*to = LabeledPathEnd{
-						From: FromHalf{From: from, Label: nb.Label},
-						Len:  fp.Len + 1,
-					}
+					*to = PathEnd{From: from, Len: fp.Len + 1}
 					b.Dist[nb.To] = d2
 					imp = true
 				}

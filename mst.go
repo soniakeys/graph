@@ -15,8 +15,6 @@ type Prim struct {
 	Graph  LabeledAdjacencyList
 	Weight WeightFunc
 	Tree   FromList
-	Wt     []float64 // in Tree, wt of arc from parent
-	Dist   []float64 // in Tree, path distance
 
 	best []prNode // slice backs heap
 }
@@ -33,8 +31,6 @@ func NewPrim(g LabeledAdjacencyList, w WeightFunc) *Prim {
 		Graph:  g,
 		Weight: w,
 		Tree:   NewFromList(len(g)),
-		Wt:     make([]float64, len(g)),
-		Dist:   make([]float64, len(g)),
 		best:   b,
 	}
 }
@@ -55,9 +51,6 @@ type prHeap []*prNode
 // abandon the Prim object and create a new one.
 func (p *Prim) Reset() {
 	p.Tree.reset()
-	for n := range p.Dist {
-		p.Dist[n] = 0
-	}
 	b := p.best
 	for n := range b {
 		b[n].fx = -1
@@ -101,7 +94,7 @@ func (p *Prim) Span(start int) int {
 		a = bp.nx
 		rp[a].Len = rp[bp.from.From].Len + 1
 		rp[a].From = bp.from.From
-		p.Wt[a] = p.Weight(bp.from.Label)
+		//		p.Wt[a] = p.Weight(bp.from.Label)
 		nDone++
 	}
 	return nDone

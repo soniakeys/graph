@@ -53,10 +53,9 @@ func ExamplePrim_Span() {
 	}
 
 	fmt.Println("Spanning Forest:")
-	fmt.Println("Node  From  Weight")
+	fmt.Println("Node  From")
 	for n, pe := range p.Tree.Paths {
-		fmt.Printf("%d %8d %7.1f\n",
-			n, pe.From, p.Wt[n])
+		fmt.Printf("%d %8d\n", n, pe.From)
 	}
 	// Output:
 	// Undirected: true
@@ -67,10 +66,10 @@ func ExamplePrim_Span() {
 	// From node 0, 3 nodes spanned.
 	// From node 3, 2 nodes spanned.
 	// Spanning Forest:
-	// Node  From  Weight
-	// 0       -1     0.0
-	// 1        0     3.0
-	// 2        1     4.0
-	// 3       -1     0.0
-	// 4        3     2.0
+	// Node  From
+	// 0       -1
+	// 1        0
+	// 2        1
+	// 3       -1
+	// 4        3
 }

@@ -150,7 +150,7 @@ func ExampleLabeledAdjacencyList_DijkstraPath() {
 	fmt.Println("Shortest path:", p)
 	fmt.Println("Path length:", l)
 	// Output:
-	// Shortest path: [{1 -1} {6 11} {5 9}]
+	// Shortest path: [1 6 5]
 	// Path length: 20
 }
 
@@ -171,7 +171,7 @@ func ExampleDijkstra_Path() {
 	fmt.Print("Backtrack to start: ", end)
 	rp := d.Tree.Paths
 	for n := end; n != start; {
-		n = rp[n].From.From
+		n = rp[n].From
 		fmt.Print(" ", n)
 	}
 	fmt.Println()
@@ -208,10 +208,10 @@ func ExampleDijkstra_AllPaths() {
 	// Output:
 	// 4 paths found.
 	// node:  path                  len  dist
-	// 2:     [{2 -1}]                1     0
-	// 3:     [{2 -1} {3 11}]         2    11
-	// 4:     [{2 -1} {3 11} {4 6}]   3    17
-	// 5:     [{2 -1} {5 2}]          2     2
+	// 2:     [2]                     1     0
+	// 3:     [2 3]                   2    11
+	// 4:     [2 3 4]                 3    17
+	// 5:     [2 5]                   2     2
 }
 
 func ExampleLabeledAdjacencyList_AStarAPath() {
@@ -230,7 +230,7 @@ func ExampleLabeledAdjacencyList_AStarAPath() {
 	fmt.Println("Shortest path:", p)
 	fmt.Println("Path length:", l)
 	// Output:
-	// Shortest path: [{0 -1} {2 9} {3 11} {4 6}]
+	// Shortest path: [0 2 3 4]
 	// Path length: 26
 }
 
@@ -250,7 +250,7 @@ func ExampleAStarMPath() {
 	fmt.Println("Shortest path:", p)
 	fmt.Println("Path length:", l)
 	// Output:
-	// Shortest path: [{0 -1} {2 9} {3 11} {4 6}]
+	// Shortest path: [0 2 3 4]
 	// Path length: 26
 }
 
