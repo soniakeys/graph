@@ -17,7 +17,7 @@ import (
 // The search methods set Result.Paths and Result.MaxLen but not Result.Leaves.
 type BreadthFirst struct {
 	Graph  AdjacencyList
-	Result *FromTree
+	Result FromList
 }
 
 // NewBreadthFirst creates a BreadthFirst object.
@@ -37,7 +37,7 @@ type BreadthFirst struct {
 func NewBreadthFirst(g AdjacencyList) *BreadthFirst {
 	return &BreadthFirst{
 		Graph:  g,
-		Result: newFromTree(len(g)),
+		Result: NewFromList(len(g)),
 	}
 }
 
@@ -130,7 +130,7 @@ func (b *BreadthFirst) Traverse(start int, v Visitor) int {
 type BreadthFirst2 struct {
 	To, From AdjacencyList
 	M        int
-	Result   *FromTree
+	Result   FromList
 }
 
 func NewBreadthFirst2(to, from AdjacencyList, m int) *BreadthFirst2 {
@@ -138,7 +138,7 @@ func NewBreadthFirst2(to, from AdjacencyList, m int) *BreadthFirst2 {
 		To:     to,
 		From:   from,
 		M:      m,
-		Result: newFromTree(len(to)),
+		Result: NewFromList(len(to)),
 	}
 }
 

@@ -213,7 +213,7 @@ func (g AdjacencyList) DepthFirst(start int, bm *big.Int, v Visitor) (ok bool) {
 	return
 }
 
-// FromTree represents a tree where each node is associated with
+// FromList represents a tree where each node is associated with
 // a half arc identifying an arc from another node.
 //
 // Paths represents a tree with information about the path to each node
@@ -226,9 +226,9 @@ func (g AdjacencyList) DepthFirst(start int, bm *big.Int, v Visitor) (ok bool) {
 // anticipate the maximum path length that would be encountered traversing
 // the tree.
 //
-// A single FromTree can also represent a forest.  In this case paths from
+// A single FromList can also represent a forest.  In this case paths from
 // all leaves do not return to a single start node, but multiple start nodes.
-type FromTree struct {
+type FromList struct {
 	Paths  []PathEnd // tree representation
 	Leaves big.Int   // leaves of tree
 	MaxLen int       // length of longest path, max of all PathEnd.Len values
@@ -236,7 +236,7 @@ type FromTree struct {
 
 // PathEnd associates a half arc and a path length.
 //
-// PathEnd is an element type of FromTree, a return type from various search
+// PathEnd is an element type of FromList, a return type from various search
 // functions.
 //
 // For a start node of a search, From will be -1 and Len will be 1. For other
@@ -248,18 +248,18 @@ type PathEnd struct {
 	Len  int // number of nodes in path from start
 }
 
-// NewFromTree creates a FromTree object.  You don't typically call this
+// NewFromList creates a FromList object.  You don't typically call this
 // function from application code.  Rather it is typically called by search
-// object constructors.  NewFromTree leaves the result object with zero values
+// object constructors.  NewFromList leaves the result object with zero values
 // and does not call the Reset method.
-func newFromTree(n int) *FromTree {
-	return &FromTree{Paths: make([]PathEnd, n)}
+func NewFromList(n int) FromList {
+	return FromList{Paths: make([]PathEnd, n)}
 }
 
-// Reset initializes a FromTree in preparation for a search.  Search methods
+// Reset initializes a FromList in preparation for a search.  Search methods
 // will call this function and you don't typically call it from application
 // code.
-func (t *FromTree) reset() {
+func (t *FromList) reset() {
 	for n := range t.Paths {
 		t.Paths[n] = PathEnd{From: -1, Len: 0}
 	}
@@ -267,7 +267,7 @@ func (t *FromTree) reset() {
 	t.MaxLen = 0
 }
 
-// PathTo decodes a FromTree, recovering a found path.
+// PathTo decodes a FromList, recovering a found path.
 //
 // The found path is returned as a list of nodes where the first element is
 // the start node of the search and the last element is the specified end node.
@@ -276,7 +276,7 @@ func (t *FromTree) reset() {
 // Acceptable end nodes are defined by the specific search.  For most all-paths
 // searches, any end node may be specified.  For many single-path searches,
 // only the end node specified in the original search is valid.
-func (t *FromTree) PathTo(end int) []int {
+func (t *FromList) PathTo(end int) []int {
 	n := t.Paths[end].Len
 	if n == 0 {
 		return nil
@@ -292,7 +292,7 @@ func (t *FromTree) PathTo(end int) []int {
 	}
 }
 
-func (t *FromTree) CommonAncestor(a, b int) int {
+func (t *FromList) CommonAncestor(a, b int) int {
 	p := t.Paths
 	if a < 0 || b < 0 || a >= len(p) || b >= len(p) {
 		return -1

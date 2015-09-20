@@ -84,7 +84,7 @@ func ExampleFromTree_CommonAncestor() {
 	//   0   2
 	//  /
 	// 3
-	t := &graph.FromTree{Paths: []graph.PathEnd{
+	t := &graph.FromList{Paths: []graph.PathEnd{
 		4: {From: -1, Len: 1},
 		1: {From: 4, Len: 2},
 		0: {From: 1, Len: 3},

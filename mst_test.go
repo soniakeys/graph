@@ -1,41 +1,76 @@
 package graph_test
 
-/*
 import (
 	"fmt"
 
 	"github.com/soniakeys/graph"
 )
 
-func ExamplePrim_Scan() {
-	g := graph.WeightedAdjacencyList{
+func ExamplePrim_Span() {
+	// graph:
+	//
+	//  (2)     (3)
+	//   |\       \
+	//   | \       \ 2
+	//   |  \       \
+	// 4 |   \ 5    (4)
+	//   |    \
+	//   |     \
+	//   |      \
+	//  (1)-----(0)
+	//       3
+	g := graph.LabeledAdjacencyList{
 		0: {{1, 3}, {2, 5}},
 		1: {{0, 3}, {2, 4}},
 		2: {{0, 5}, {1, 4}},
 		3: {{4, 2}},
 		4: {{3, 2}},
 	}
-	uw := g.Unweighted()
-	ud, _, _ := uw.Undirected()
+	w := func(arcLabel int) float64 { return float64(arcLabel) }
+
+	// construct unweighted equivalent for some demonstrations
+	ul := g.Unlabeled()
+
+	// demonstration 1:  show that the graph is undirected
+	ud, _, _ := ul.Undirected()
 	fmt.Println("Undirected:", ud)
-	rep, nNodes := uw.ConnectedComponents()
-	fmt.Println("Connected component representatives:", rep)
-	p := graph.NewPrim(g)
-	nSpanned := p.Span(rep[0])
-	fmt.Println("Spanned:", nSpanned == nNodes[0])
-	fmt.Println("Node  From  Weight")
-	for n, pe := range p.Result.Paths {
-//		if pe.Len > 0 {
-			fmt.Printf("%4d %5d %7.1f %#v\n",
-				n, pe.From.From, pe.From.ArcWeight, pe)
-//		}
+
+	// demonstration 2:  show connected components
+	rep, nNodes := ul.ConnectedComponents()
+	fmt.Println("Connected components:")
+	fmt.Println("representative node - number of nodes in component")
+	for i, r := range rep {
+		fmt.Printf("%d %21d\n", r, nNodes[i])
 	}
-	for n, nbs := range g {
-		fmt.Println(n, nbs)
+
+	// construct prim object on the original weighted graph
+	p := graph.NewPrim(g, w)
+
+	// construct spanning tree for each component
+	for _, r := range rep {
+		ns := p.Span(r)
+		fmt.Printf("From node %d, %d nodes spanned.\n", r, ns)
+	}
+
+	fmt.Println("Spanning Forest:")
+	fmt.Println("Node  From  Weight")
+	for n, pe := range p.Tree.Paths {
+		fmt.Printf("%d %8d %7.1f\n",
+			n, pe.From, p.Wt[n])
 	}
 	// Output:
 	// Undirected: true
-	// Connected component representatives: [0 3]
-	// :P
+	// Connected components:
+	// representative node - number of nodes in component
+	// 0                     3
+	// 3                     2
+	// From node 0, 3 nodes spanned.
+	// From node 3, 2 nodes spanned.
+	// Spanning Forest:
+	// Node  From  Weight
+	// 0       -1     0.0
+	// 1        0     3.0
+	// 2        1     4.0
+	// 3       -1     0.0
+	// 4        3     2.0
 }
-*/

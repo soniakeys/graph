@@ -5,7 +5,6 @@ package graph
 
 import (
 	"container/heap"
-	"log"
 )
 
 // Prim implements the Jarník-Prim-Dijkstra algorithm for constructing
@@ -15,8 +14,9 @@ import (
 type Prim struct {
 	Graph  LabeledAdjacencyList
 	Weight WeightFunc
-	Tree   *LabeledFromTree
-	Dist   []float64
+	Tree   FromList
+	Wt     []float64 // in Tree, wt of arc from parent
+	Dist   []float64 // in Tree, path distance
 
 	best []prNode // slice backs heap
 }
@@ -32,7 +32,8 @@ func NewPrim(g LabeledAdjacencyList, w WeightFunc) *Prim {
 	return &Prim{
 		Graph:  g,
 		Weight: w,
-		Tree:   NewLabeledFromTree(len(g)),
+		Tree:   NewFromList(len(g)),
+		Wt:     make([]float64, len(g)),
 		Dist:   make([]float64, len(g)),
 		best:   b,
 	}
@@ -74,13 +75,11 @@ func (p *Prim) Reset() {
 func (p *Prim) Span(start int) int {
 	rp := p.Tree.Paths
 	var frontier prHeap
-	rp[start].Len = 1
+	rp[start] = PathEnd{From: -1, Len: 1}
 	b := p.best
 	nDone := 1
 	for a := start; ; {
-		log.Println("node", a)
 		for _, nb := range p.Graph[a] {
-			log.Println("  nb", nb)
 			if rp[nb.To].Len > 0 {
 				continue // already in MST, no action
 			}
@@ -101,7 +100,8 @@ func (p *Prim) Span(start int) int {
 		bp := heap.Pop(&frontier).(*prNode)
 		a = bp.nx
 		rp[a].Len = rp[bp.from.From].Len + 1
-		rp[a].From = bp.from
+		rp[a].From = bp.from.From
+		p.Wt[a] = p.Weight(bp.from.Label)
 		nDone++
 	}
 	return nDone
