@@ -20,7 +20,7 @@ import (
 // Transpose also counts arcs as it traverses and returns m the number of arcs
 // in g (equal to the number of arcs in the result.)
 func (g AdjacencyList) Transpose() (t AdjacencyList, m int) {
-	t = make([][]int, len(g))
+	t = make(AdjacencyList, len(g))
 	for n, nbs := range g {
 		for _, nb := range nbs {
 			t[nb] = append(t[nb], n)
@@ -93,7 +93,12 @@ func (g AdjacencyList) Topological() (order, cycle []int) {
 			df(nb)
 			if cycleFound {
 				if cycleStart >= 0 {
-					cycle = append(cycle, n)
+					// a little hack: order won't be needed so repurpose the
+					// slice as cycle.  this is read out in reverse order
+					// as the recursion unwinds.
+					x := len(order) - 1 - len(cycle)
+					order[x] = n
+					cycle = order[x:]
 					if n == cycleStart {
 						cycleStart = -1
 					}
@@ -116,6 +121,64 @@ func (g AdjacencyList) Topological() (order, cycle []int) {
 		}
 	}
 	return order, nil
+}
+
+// Topological, for directed acyclic graphs, computes a topological sort of g.
+//
+// For an acyclic graph, return value order is a permutation of node numbers
+// in topologically sorted order and cycle will be nil.  If the graph is found
+// to be cyclic, order will be nil and cycle will be the path of a found cycle.
+//
+// This function is based on the algorithm by Arthur Kahn and requires the
+// transpose of g be passed as the argument.
+func (g AdjacencyList) TopologicalKahn(tr AdjacencyList) (order, cycle []int) {
+	// code follows Wikipedia pseudocode.
+	var L, S []int
+	// rem for "remaining edges," this function makes a local copy of the
+	// in-degrees and consumes that instead of consuming an input.
+	rem := make([]int, len(g))
+	for n, fr := range tr {
+		if len(fr) == 0 {
+			// accumulate "set of all nodes with no incoming edges"
+			S = append(S, n)
+		} else {
+			// initialize rem from in-degree
+			rem[n] = len(fr)
+		}
+	}
+	for len(S) > 0 {
+		last := len(S) - 1 // "remove a node n from S"
+		n := S[last]
+		S = S[:last]
+		L = append(L, n) // "add n to tail of L"
+		for _, m := range g[n] {
+			// WP pseudo code reads "for each node m..." but it means for each
+			// node m *remaining in the graph.*  We consume rem rather than
+			// the graph, so "remaining in the graph" for us means rem[m] > 0.
+			if rem[m] > 0 {
+				rem[m]--         // "remove edge from the graph"
+				if rem[m] == 0 { // if "m has no other incoming edges"
+					S = append(S, m) // "insert m into S"
+				}
+			}
+		}
+	}
+	// "If graph has edges," for us means a value in rem is > 0.
+	for c, in := range rem {
+		if in > 0 {
+			// recover cyclic nodes
+			for _, nb := range g[c] {
+				if rem[nb] > 0 {
+					cycle = append(cycle, c)
+					break
+				}
+			}
+		}
+	}
+	if len(cycle) > 0 {
+		return nil, cycle
+	}
+	return L, nil
 }
 
 // Tarjan identifies strongly connected components in a directed graph using

@@ -36,7 +36,24 @@ func ExampleAdjacencyList_Topological() {
 	fmt.Println(g.Topological())
 	// Output:
 	// [4 3 1 2 0] []
-	// [] [3 2 1]
+	// [] [1 2 3]
+}
+
+func ExampleAdjacencyList_TopologicalKahn() {
+	g := graph.AdjacencyList{
+		1: {2},
+		3: {1, 2},
+		4: {3, 2},
+	}
+	tr, _ := g.Transpose()
+	fmt.Println(g.TopologicalKahn(tr))
+
+	g[2] = []int{3}
+	tr, _ = g.Transpose()
+	fmt.Println(g.TopologicalKahn(tr))
+	// Output:
+	// [4 3 1 2 0] []
+	// [] [1 2 3]
 }
 
 func ExampleAdjacencyList_Tarjan() {
