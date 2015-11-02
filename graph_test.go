@@ -95,3 +95,47 @@ func ExampleFromTree_CommonAncestor() {
 	// Output:
 	// 1
 }
+
+func ExampleAdjacencyList_IsTreeDirected() {
+	// Example graph
+	// Arcs point down unless otherwise indicated
+	//           1
+	//          / \
+	//         0   5
+	//        /   / \
+	//       2   3-->4
+	g := graph.AdjacencyList{
+		1: {0, 5},
+		0: {2},
+		5: {3, 4},
+		3: {4},
+	}
+	fmt.Println(g.IsTreeDirected(0))
+	fmt.Println(g.IsTreeDirected(1))
+	// Output:
+	// true
+	// false
+}
+
+func ExampleAdjacencyList_IsTreeUndirected() {
+	//  1--\
+	//  |  |
+	//  \--/   0   5
+	//        /   / \
+	//       2   3---4
+	g := graph.AdjacencyList{
+		1: {1},
+		0: {2},
+		2: {0},
+		5: {3, 4},
+		3: {4, 5},
+		4: {3, 5},
+	}
+	fmt.Println(g.IsTreeUndirected(1))
+	fmt.Println(g.IsTreeUndirected(2))
+	fmt.Println(g.IsTreeUndirected(3))
+	// Output:
+	// false
+	// true
+	// false
+}

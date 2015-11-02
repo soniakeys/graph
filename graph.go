@@ -142,21 +142,18 @@ func (g AdjacencyList) Simple() (s bool, n int) {
 	return true, -1
 }
 
-// IsTree identifies trees.
+// IsTreeDirected identifies trees in directed graphs.
 //
-// For directed graphs, IsTree returns true if the subgraph reachable from
-// root is a tree.
-//
-// For undirected graphs, IsTree returns true if the connected component
-// containing argument root is a tree.
-func (g AdjacencyList) IsTree(root int) bool {
+// IsTreeDirected returns true if the subgraph reachable from
+// root is a tree.  It does not validate that the entire graph is a tree.
+func (g AdjacencyList) IsTreeDirected(root int) bool {
 	var v big.Int
 	var df func(int) bool
 	df = func(n int) bool {
 		if v.Bit(n) == 1 {
 			return false
 		}
-		v.SetBit(&v, root, 1)
+		v.SetBit(&v, n, 1)
 		for _, to := range g[n] {
 			if !df(to) {
 				return false
@@ -165,6 +162,35 @@ func (g AdjacencyList) IsTree(root int) bool {
 		return true
 	}
 	return df(root)
+}
+
+// IsTreeUndirected identifies trees in undirected graphs.
+//
+// IsTreeUndirected returns true if the connected component
+// containing argument root is a tree.  It does not validate
+// that the entire graph is a tree.
+func (g AdjacencyList) IsTreeUndirected(root int) bool {
+	var v big.Int
+	var df func(int, int) bool
+	df = func(fr, n int) bool {
+		if v.Bit(n) == 1 {
+			return false
+		}
+		v.SetBit(&v, n, 1)
+		for _, to := range g[n] {
+			if to != fr && !df(n, to) {
+				return false
+			}
+		}
+		return true
+	}
+	v.SetBit(&v, root, 1)
+	for _, to := range g[root] {
+		if !df(root, to) {
+			return false
+		}
+	}
+	return true
 }
 
 // DepthFirst traverses a graph depth first.
