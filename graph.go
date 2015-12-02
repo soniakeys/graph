@@ -318,6 +318,9 @@ func (t *FromList) PathTo(end int) []int {
 	}
 }
 
+// CommonAncestor returns the common ancestor of a and b.
+//
+// It returns -1 if a or b are invalid node numbers.
 func (t *FromList) CommonAncestor(a, b int) int {
 	p := t.Paths
 	if a < 0 || b < 0 || a >= len(p) || b >= len(p) {
@@ -334,4 +337,30 @@ func (t *FromList) CommonAncestor(a, b int) int {
 		b = p[b].From
 	}
 	return a
+}
+
+// Undirected contructs the undirected graph corresponding to the receiver.
+func (t *FromList) Undirected() AdjacencyList {
+	g := make(AdjacencyList, len(t.Paths))
+	for n, p := range t.Paths {
+		if p.From == -1 {
+			continue
+		}
+		g[n] = append(g[n], p.From)
+		g[p.From] = append(g[p.From], n)
+	}
+	return g
+}
+
+// Undirected contructs the corresponding undirected graph with edge labels.
+func (t *FromList) UndirectedLabeled() LabeledAdjacencyList {
+	g := make(LabeledAdjacencyList, len(t.Paths))
+	for n, p := range t.Paths {
+		if p.From == -1 {
+			continue
+		}
+		g[n] = append(g[n], Half{To: p.From, Label: n})
+		g[p.From] = append(g[p.From], Half{n, n})
+	}
+	return g
 }

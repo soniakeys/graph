@@ -139,3 +139,21 @@ func ExampleAdjacencyList_IsTreeUndirected() {
 	// true
 	// false
 }
+
+func ExampleFromList_Undirected() {
+	t := graph.FromList{Paths: []graph.PathEnd{
+		0: {From: -1},
+		1: {From: 0},
+		2: {From: 0},
+		3: {From: -1},
+	}}
+	g := t.Undirected()
+	for n, fr := range g {
+		fmt.Println(n, fr)
+	}
+	// Example:
+	// 0 [1 2]
+	// 1 [0]
+	// 2 [0]
+	// 3 []
+}
