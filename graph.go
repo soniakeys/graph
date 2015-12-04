@@ -339,7 +339,33 @@ func (t *FromList) CommonAncestor(a, b int) int {
 	return a
 }
 
-// Undirected contructs the undirected graph corresponding to the receiver.
+// Transpose contructs the directed graph with arcs in the opposite direction
+// of the FromList.  That is, from root toward leaves.
+func (t *FromList) Transpose() AdjacencyList {
+	g := make(AdjacencyList, len(t.Paths))
+	for n, p := range t.Paths {
+		if p.From == -1 {
+			continue
+		}
+		g[p.From] = append(g[p.From], n)
+	}
+	return g
+}
+
+// TransposeLabled contructs the labeled directed graph with arcs in the
+// opposite direction of the FromList.  That is, from root toward leaves.
+func (t *FromList) TransposeLabeled() LabeledAdjacencyList {
+	g := make(LabeledAdjacencyList, len(t.Paths))
+	for n, p := range t.Paths {
+		if p.From == -1 {
+			continue
+		}
+		g[p.From] = append(g[p.From], Half{n, n})
+	}
+	return g
+}
+
+// Undirected contructs the undirected graph corresponding to the FromList.
 func (t *FromList) Undirected() AdjacencyList {
 	g := make(AdjacencyList, len(t.Paths))
 	for n, p := range t.Paths {
@@ -352,7 +378,8 @@ func (t *FromList) Undirected() AdjacencyList {
 	return g
 }
 
-// Undirected contructs the corresponding undirected graph with edge labels.
+// UndirectedLabeled contructs the corresponding undirected graph with
+// edge labels.
 func (t *FromList) UndirectedLabeled() LabeledAdjacencyList {
 	g := make(LabeledAdjacencyList, len(t.Paths))
 	for n, p := range t.Paths {
