@@ -5,11 +5,15 @@ package graph_test
 
 import (
 	"fmt"
+	"math/big"
 
 	"github.com/soniakeys/graph"
 )
 
-func ExampleAdjacencyList_ConnectedComponents() {
+func ExampleAdjacencyList_ConnectedComponentReps() {
+	//    0   1   2
+	//   / \   \
+	//  3---4   5
 	g := graph.AdjacencyList{
 		0: {3, 4},
 		1: {5},
@@ -17,9 +21,102 @@ func ExampleAdjacencyList_ConnectedComponents() {
 		4: {0, 3},
 		5: {1},
 	}
-	fmt.Println(g.ConnectedComponents())
+	fmt.Println(g.ConnectedComponentReps())
 	// Output:
 	// [0 1 2] [3 2 1]
+}
+
+func ExampleAdjacencyList_ConnectedComponentReps_collectingBits() {
+	g := graph.AdjacencyList{
+		0: {3, 4},
+		1: {5},
+		3: {0, 4},
+		4: {0, 3},
+		5: {1},
+	}
+	rep, order := g.ConnectedComponentReps()
+	fmt.Println("543210  rep  order")
+	fmt.Println("------  ---  -----")
+	for i, r := range rep {
+		var bits big.Int
+		g.DepthFirst(r, &bits, nil)
+		fmt.Printf("%0*b   %d     %d\n", len(g), &bits, r, order[i])
+	}
+	// Output:
+	// 543210  rep  order
+	// ------  ---  -----
+	// 011001   0     3
+	// 100010   1     2
+	// 000100   2     1
+}
+
+func ExampleAdjacencyList_ConnectedComponentReps_collectingLists() {
+	g := graph.AdjacencyList{
+		0: {3, 4},
+		1: {5},
+		3: {0, 4},
+		4: {0, 3},
+		5: {1},
+	}
+	rep, _ := g.ConnectedComponentReps()
+	for _, r := range rep {
+		var m []int
+		g.DepthFirst(r, nil, func(n int) bool {
+			m = append(m, n)
+			return true
+		})
+		fmt.Println(m)
+	}
+	// Output:
+	// [0 3 4]
+	// [1 5]
+	// [2]
+}
+
+func ExampleAdjacencyList_ConnectedComponentBits() {
+	//    0   1   2
+	//   / \   \
+	//  3---4   5
+	g := graph.AdjacencyList{
+		0: {3, 4},
+		1: {5},
+		3: {0, 4},
+		4: {0, 3},
+		5: {1},
+	}
+	f := g.ConnectedComponentBits()
+	fmt.Println("o  543210")
+	fmt.Println("-  ------")
+	for o, b := f(); o > 0; o, b = f() {
+		fmt.Printf("%d  %0*b\n", o, len(g), &b)
+	}
+	// Output:
+	// o  543210
+	// -  ------
+	// 3  011001
+	// 2  100010
+	// 1  000100
+}
+
+func ExampleAdjacencyList_ConnectedComponentLists() {
+	//    0   1   2
+	//   / \   \
+	//  3---4   5
+	g := graph.AdjacencyList{
+		0: {3, 4},
+		1: {5},
+		3: {0, 4},
+		4: {0, 3},
+		5: {1},
+	}
+	f := g.ConnectedComponentLists()
+	for l := f(); l != nil; l = f() {
+		fmt.Println(l)
+	}
+	// Output:
+	// [0 3 4]
+	// [1 5]
+	// [2]
 }
 
 func ExampleTarjanBiconnectedComponents() {

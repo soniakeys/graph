@@ -36,19 +36,26 @@ func (p *AdjacencyList) AddEdge(n1, n2 int) {
 	}
 }
 
-// ConnectedComponents, for undirected graphs, determines the connected
-// components in g.
+// ConnectedComponentReps, for undirected graphs, returns a representative
+// node from each connected component of g.
 //
 // Returned is a slice with a single representative node from each connected
-// component and a parallel slice with the number of nodes in the corresponding
-// component.
-func (g AdjacencyList) ConnectedComponents() (rep, nNodes []int) {
+// component and also a parallel slice with the order, or number of nodes,
+// in the corresponding component.
+//
+// This is fairly minimal information describing connected components.
+// From a representative node, other nodes in the component can be reached
+// by depth first traversal for example.
+//
+// See also ConnectedComponentBits and ConnectedComponentLists which can
+// collect component members in a single traversal.
+func (g AdjacencyList) ConnectedComponentReps() (reps, orders []int) {
 	var c big.Int
-	var nc int
+	var o int
 	var df func(int)
 	df = func(n int) {
 		c.SetBit(&c, n, 1)
-		nc++
+		o++
 		for _, nb := range g[n] {
 			if c.Bit(nb) == 0 {
 				df(nb)
@@ -58,13 +65,86 @@ func (g AdjacencyList) ConnectedComponents() (rep, nNodes []int) {
 	}
 	for n := range g {
 		if c.Bit(n) == 0 {
-			rep = append(rep, n)
-			nc = 0
+			reps = append(reps, n)
+			o = 0
 			df(n)
-			nNodes = append(nNodes, nc)
+			orders = append(orders, o)
 		}
 	}
 	return
+}
+
+// ConnectedComponentBits, for undirected graphs, returns a function that
+// iterates over connected components of g, returning a member bitmap for each.
+//
+// Each call of the returned function returns the order and bits of a
+// connected component.  The returned function returns zeros after returning
+// all connected components.
+//
+// See also ConnectedComponentReps, which has lighter weight return values.
+func (g AdjacencyList) ConnectedComponentBits() func() (order int, bits big.Int) {
+	var vg big.Int  // nodes visited in graph
+	var vc *big.Int // nodes visited in current component
+	var nc int
+	var df func(int)
+	df = func(n int) {
+		vg.SetBit(&vg, n, 1)
+		vc.SetBit(vc, n, 1)
+		nc++
+		for _, nb := range g[n] {
+			if vg.Bit(nb) == 0 {
+				df(nb)
+			}
+		}
+		return
+	}
+	n := 0
+	return func() (o int, bits big.Int) {
+		for ; n < len(g); n++ {
+			if vg.Bit(n) == 0 {
+				vc = &bits
+				nc = 0
+				df(n)
+				return nc, bits
+			}
+		}
+		return
+	}
+}
+
+// ConnectedComponentLists, for undirected graphs, returns a function that
+// iterates over connected components of g, returning the member list of each.
+//
+// Each call of the returned function returns the order and a member list of a
+// connected component.  The returned function returns zeros after returning
+// all connected components.
+//
+// See also ConnectedComponentReps, which has lighter weight return values.
+func (g AdjacencyList) ConnectedComponentLists() func() []int {
+	var vg big.Int // nodes visited in graph
+	var m []int    // members of current component
+	var df func(int)
+	df = func(n int) {
+		vg.SetBit(&vg, n, 1)
+		m = append(m, n)
+		for _, nb := range g[n] {
+			if vg.Bit(nb) == 0 {
+				df(nb)
+			}
+		}
+		return
+	}
+	n := 0
+	return func() []int {
+		for ; n < len(g); n++ {
+			if vg.Bit(n) == 0 {
+				m = nil
+				df(n)
+				return m
+			}
+		}
+		return nil
+	}
 }
 
 // Bipartite determines if a connected component of an undirected graph

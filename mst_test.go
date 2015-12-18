@@ -36,18 +36,18 @@ func ExamplePrim_Span() {
 	fmt.Println("Undirected:", ud)
 
 	// demonstration 2:  show connected components
-	rep, nNodes := ul.ConnectedComponents()
+	reps, orders := ul.ConnectedComponentReps()
 	fmt.Println("Connected components:")
-	fmt.Println("representative node - number of nodes in component")
-	for i, r := range rep {
-		fmt.Printf("%d %21d\n", r, nNodes[i])
+	fmt.Println("representative node - order (number of nodes) in component")
+	for i, r := range reps {
+		fmt.Printf("%d %21d\n", r, orders[i])
 	}
 
 	// construct prim object on the original weighted graph
 	p := graph.NewPrim(g, w)
 
 	// construct spanning tree for each component
-	for _, r := range rep {
+	for _, r := range reps {
 		ns := p.Span(r)
 		fmt.Printf("From node %d, %d nodes spanned.\n", r, ns)
 	}
@@ -60,7 +60,7 @@ func ExamplePrim_Span() {
 	// Output:
 	// Undirected: true
 	// Connected components:
-	// representative node - number of nodes in component
+	// representative node - order (number of nodes) in component
 	// 0                     3
 	// 3                     2
 	// From node 0, 3 nodes spanned.

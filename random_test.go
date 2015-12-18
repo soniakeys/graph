@@ -124,7 +124,7 @@ var k7 = k(7, 8, 4)
 func k(scale uint, ef float64, nStarts int) (kt kronTest) {
 	kt.g, kt.m = graph.KroneckerUndir(scale, ef)
 	// extract giant connected component
-	rep, nc := kt.g.ConnectedComponents()
+	rep, nc := kt.g.ConnectedComponentReps()
 	var x, max int
 	for i, n := range nc {
 		if n > max {
