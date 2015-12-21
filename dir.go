@@ -30,6 +30,52 @@ func (g AdjacencyList) Transpose() (t AdjacencyList, m int) {
 	return
 }
 
+// FromList transposes a graph into a FromList, typically to encode a tree.
+//
+// Results may not be meaningful for non-trees.
+func (g AdjacencyList) FromList() FromList {
+	// init paths
+	paths := make([]PathEnd, len(g))
+	for i := range paths {
+		paths[i].From = -1
+	}
+	// init leaves
+	var leaves big.Int
+	leaves.Sub(leaves.Lsh(one, uint(len(g))), one)
+	// iterate over arcs, setting from pointers and and marking non-leaves.
+	for fr, to := range g {
+		for _, to := range to {
+			paths[to].From = fr
+			leaves.SetBit(&leaves, fr, 0)
+		}
+	}
+	// f to set path lengths
+	var leng func(int) int
+	leng = func(n int) int {
+		if l := paths[n].Len; l > 0 {
+			return l
+		}
+		fr := paths[n].From
+		if fr < 0 {
+			paths[n].Len = 1
+			return 1
+		}
+		l := 1 + leng(fr)
+		paths[n].Len = l
+		return l
+	}
+	// for each leaf, trace path to set path length, accumulate max
+	maxLen := 0
+	for i := range paths {
+		if leaves.Bit(i) == 1 {
+			if l := leng(i); l > maxLen {
+				maxLen = l
+			}
+		}
+	}
+	return FromList{paths, leaves, maxLen}
+}
+
 // Cyclic, for directed graphs, determines if g contains cycles.
 //
 // Cyclic returns true if g contains at least one cycle.
