@@ -10,6 +10,30 @@ import (
 	"github.com/soniakeys/graph"
 )
 
+func ExampleAdjacencyList_IsUndirected() {
+	//    0  2--\
+	//   /   |  |
+	//  1    \--/
+	g := graph.AdjacencyList{
+		0: {1},
+		1: {0},
+		2: {2},
+	}
+	fmt.Println(g.IsUndirected())
+	//   0
+	//  /
+	// 1<--2
+	g = graph.AdjacencyList{
+		0: {1},
+		1: {0},
+		2: {1},
+	}
+	fmt.Println(g.IsUndirected())
+	// Output:
+	// true
+	// false
+}
+
 func ExampleAdjacencyList_ConnectedComponentReps() {
 	//    0   1   2
 	//   / \   \
