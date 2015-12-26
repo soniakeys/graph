@@ -19,7 +19,8 @@ func ExampleAdjacencyList_IsUndirected() {
 		1: {0},
 		2: {2},
 	}
-	fmt.Println(g.IsUndirected())
+	ud, _, _ := g.IsUndirected()
+	fmt.Println(ud)
 	//   0
 	//  /
 	// 1<--2
@@ -31,7 +32,7 @@ func ExampleAdjacencyList_IsUndirected() {
 	fmt.Println(g.IsUndirected())
 	// Output:
 	// true
-	// false
+	// false 2 1
 }
 
 func ExampleAdjacencyList_ConnectedComponentReps() {

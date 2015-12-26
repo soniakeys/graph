@@ -3,7 +3,7 @@
 
 // graph.go
 //
-// Definitions for unweighted graphs, and methods not specific to directed
+// Definitions for unlabeled graphs, and methods not specific to directed
 // or undirected graphs.  Method docs need not mention that they work on both.
 
 package graph
@@ -22,19 +22,19 @@ var one = big.NewInt(1)
 // create reciprocal neighbors.
 type AdjacencyList [][]int
 
-// Ok validates that no arcs in g lead outside the graph.
+// BoundsOk validates that all arcs in g stay within the slice bounds of g.
 //
-// Ints in an adjacency list represent half arcs.  Ok
-// returns true if all int values are valid slice indexes back into g.
-func (g AdjacencyList) Ok() bool {
-	for _, nbs := range g {
-		for _, nb := range nbs {
-			if nb < 0 || nb >= len(g) {
-				return false
+// BoundsOk returns true when no arcs point outside the bounds of g.
+// Otherwise it returns false and an example arc that points outside of g.
+func (g AdjacencyList) BoundsOk() (ok bool, fr, to int) {
+	for fr, to := range g {
+		for _, to := range to {
+			if to < 0 || to >= len(g) {
+				return false, fr, to
 			}
 		}
 	}
-	return true
+	return true, -1, -1
 }
 
 // ArcSize returns the number of arcs in g.
@@ -49,7 +49,7 @@ func (g AdjacencyList) ArcSize() (m int) {
 }
 
 // Copy makes a copy of g, copying the underlying slices.
-// Copy also computes the size m, the number of arcs.
+// Copy also computes the arc size m, the number of arcs.
 func (g AdjacencyList) Copy() (c AdjacencyList, m int) {
 	c = make(AdjacencyList, len(g))
 	for n, to := range g {
@@ -73,46 +73,6 @@ func (g AdjacencyList) CopyUndir() (c AdjacencyList, m int) {
 		}
 	}
 	return
-}
-
-// Undirected determines if an adjacency list is undirected.
-//
-// An adjacency list represents an undirected graph if every arc has a
-// reciprocal.  That is, that for every arc from->to, that to->from also
-// exists.
-//
-// If the graph is undirected, Undirected returns true, -1, -1.  If an arc
-// is found witout a reciprocal, Undirected returns false along with the
-// from and to nodes of an arc that represents a counterexample to the graph
-// being undirected.
-func (g AdjacencyList) Undirected() (u bool, from, to int) {
-	for from, nbs := range g {
-	nb:
-		for _, to := range nbs {
-			for _, r := range g[to] {
-				if r == from {
-					continue nb
-				}
-			}
-			return false, from, to
-		}
-	}
-	return true, -1, -1
-}
-
-func (g LabeledAdjacencyList) Undirected() (u bool, from int, to Half) {
-	for from, nbs := range g {
-	nb:
-		for _, to := range nbs {
-			for _, r := range g[to.To] {
-				if r.To == from {
-					continue nb
-				}
-			}
-			return false, from, to
-		}
-	}
-	return true, -1, Half{}
 }
 
 // Simple checks for loops and parallel arcs.

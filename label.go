@@ -42,19 +42,19 @@ func (g LabeledAdjacencyList) NegativeArc(w WeightFunc) bool {
 	return false
 }
 
-// ValidTo validates that no arcs in the reciever graph lead outside the graph.
+// BoundsOk validates that all arcs in g stay within the slice bounds of g.
 //
-// ValidTo returns true if all Half.To values are valid slice indexes
-// back into g.
-func (g LabeledAdjacencyList) ValidTo() bool {
-	for _, nbs := range g {
-		for _, nb := range nbs {
-			if nb.To < 0 || nb.To >= len(g) {
-				return false
+// BoundsOk returns true when no arcs point outside the bounds of g.
+// Otherwise it returns false and an example arc that points outside of g.
+func (g LabeledAdjacencyList) BoundsOk() (ok bool, fr int, to Half) {
+	for fr, to := range g {
+		for _, to := range to {
+			if to.To < 0 || to.To >= len(g) {
+				return false, fr, to
 			}
 		}
 	}
-	return true
+	return true, -1, Half{}
 }
 
 // Transpose, for directed graphs, constructs a new adjacency list that is
@@ -85,6 +85,40 @@ func (g LabeledAdjacencyList) Unlabeled() AdjacencyList {
 		a[n] = to
 	}
 	return a
+}
+
+// IsUndirected returns true if g represents an undirected graph.
+//
+// Returns true when all non-loop arcs are paired in reciprocal pairs with
+// matching labels.  Otherwise returns false and an example unpaired arc.
+func (g LabeledAdjacencyList) IsUndirected() (u bool, from int, to Half) {
+	unpaired := make(LabeledAdjacencyList, len(g))
+	for fr, to := range g {
+	arc: // for each arc in g
+		for _, to := range to {
+			if to.To == fr {
+				continue // loop
+			}
+			// search unpaired arcs
+			ut := unpaired[to.To]
+			for i, u := range ut {
+				if u.To == fr && u.Label == to.Label { // found reciprocal
+					last := len(ut) - 1
+					ut[i] = ut[last]
+					unpaired[to.To] = ut[:last]
+					continue arc
+				}
+			}
+			// reciprocal not found
+			unpaired[fr] = append(unpaired[fr], to)
+		}
+	}
+	for fr, to := range unpaired {
+		if len(to) > 0 {
+			return false, fr, to[0]
+		}
+	}
+	return true, -1, Half{}
 }
 
 // FloydWarshall finds all pairs shortest distances for a simple weighted

@@ -5,25 +5,26 @@
 
 package graph
 
-import (
-	"math/big"
-)
+import "math/big"
 
 // FromList represents a tree where each node is associated with
 // a half arc identifying an arc from another node.
 //
-// Paths represents a tree with information about the path to each node
-// from a start node.  See PathEnd documentation.
-//
-// Leaves and MaxLen are used by some search and traversal functions to
-// return extra information.  Where Leaves is used it serves as a bitmap where
+// The Paths member represents the tree structure.  Leaves and MaxLen are
+// not always needed.  Where Leaves is used it serves as a bitmap where
 // Leave.Bit() == 1 for each leaf of the tree.  Where MaxLen is used it is
 // provided primarily as a convenience for functions that might want to
 // anticipate the maximum path length that would be encountered traversing
 // the tree.
 //
+// Various graph search functions use a FromList to returns search results.
+// For a start node of a search, From will be -1 and Len will be 1. For other
+// nodes reached by the search, From represents a half arc in a path back to
+// start and Len represents the number of nodes in the path.  For nodes not
+// reached by the search, From will be -1 and Len will be 0.
+//
 // A single FromList can also represent a forest.  In this case paths from
-// all leaves do not return to a single start node, but multiple start nodes.
+// all leaves do not return to a single root node, but multiple root nodes.
 type FromList struct {
 	Paths  []PathEnd // tree representation
 	Leaves big.Int   // leaves of tree
@@ -32,27 +33,18 @@ type FromList struct {
 
 // PathEnd associates a half arc and a path length.
 //
-// PathEnd is an element type of FromList, a return type from various search
-// functions.
-//
-// For a start node of a search, From will be -1 and Len will be 1. For other
-// nodes reached by the search, From represents a half arc in a path back to
-// start and Len represents the number of nodes in the path.  For nodes not
-// reached by the search, From will be -1 and Len will be 0.
+// A PathEnd list is an element type of FromList.
 type PathEnd struct {
 	From int // a "from" half arc, the node the arc comes from
 	Len  int // number of nodes in path from start
 }
 
-// NewFromList creates a FromList object.  You don't typically call this
-// function from application code.  Rather it is typically called by search
-// object constructors.  NewFromList leaves the result object with zero values
-// and does not call the Reset method.
+// NewFromList creates a FromList object of given order.
 func NewFromList(n int) FromList {
 	return FromList{Paths: make([]PathEnd, n)}
 }
 
-// Reset initializes a FromList in preparation for a search.  Search methods
+// reset initializes a FromList in preparation for a search.  Search methods
 // will call this function and you don't typically call it from application
 // code.
 func (t *FromList) reset() {
@@ -63,28 +55,64 @@ func (t *FromList) reset() {
 	t.MaxLen = 0
 }
 
-// PathTo decodes a FromList, recovering a found path.
+// BoundsOk validates the "from" values in the list.
 //
-// The found path is returned as a list of nodes where the first element is
-// the start node of the search and the last element is the specified end node.
-// If the search did not find a path end the slice result will be nil.
+// Negative values are allowed as they indicate root nodes.
 //
-// Acceptable end nodes are defined by the specific search.  For most all-paths
-// searches, any end node may be specified.  For many single-path searches,
-// only the end node specified in the original search is valid.
-func (t *FromList) PathTo(end int) []int {
-	n := t.Paths[end].Len
+// BoundsOk returns true when all from values are less than len(t).
+// Otherwise it returns false and a node with a from value >= len(t).
+func (t *FromList) BoundsOk() (ok bool, n int) {
+	for n, e := range t.Paths {
+		if e.From >= len(t.Paths) {
+			return false, n
+		}
+	}
+	return true, -1
+}
+
+// PathTo decodes a FromList, recovering a single path.
+//
+// The path is returned as a list of nodes where the first element will be
+// a root node and the last element will be the specified end node.
+//
+// Only the Paths member of the receiver is used.  Other members of the
+// FromList do not need to be valid, however the MaxLen member can be useful
+// for allocating argument p.
+//
+// Argument p can provide the result slice.  If p has capacity for the result
+// it will be used, otherwise a new slice is created for the result.
+//
+// See also function PathTo.
+func (t *FromList) PathTo(end int, p []int) []int {
+	return PathTo(t.Paths, end, p)
+}
+
+// PathTo decodes a single path from a PathEnd list.
+//
+// The path is returned as a list of nodes where the first element will be
+// a root node and the last element will be the specified end node.
+//
+// Argument p can provide the result slice.  If p has capacity for the result
+// it will be used, otherwise a new slice is created for the result.
+//
+// See also method FromList.PathTo.
+func PathTo(paths []PathEnd, end int, p []int) []int {
+	n := paths[end].Len
 	if n == 0 {
 		return nil
 	}
-	p := make([]int, n)
+	if cap(p) >= n {
+		p = p[:n]
+	} else {
+		p = make([]int, n)
+	}
 	for {
 		n--
 		p[n] = end
 		if n == 0 {
 			return p
 		}
-		end = t.Paths[end].From
+		end = paths[end].From
 	}
 }
 
@@ -118,19 +146,6 @@ func (t *FromList) Transpose() AdjacencyList {
 			continue
 		}
 		g[p.From] = append(g[p.From], n)
-	}
-	return g
-}
-
-// TransposeLabled contructs the labeled directed graph with arcs in the
-// opposite direction of the FromList.  That is, from root toward leaves.
-func (t *FromList) TransposeLabeled() LabeledAdjacencyList {
-	g := make(LabeledAdjacencyList, len(t.Paths))
-	for n, p := range t.Paths {
-		if p.From == -1 {
-			continue
-		}
-		g[p.From] = append(g[p.From], Half{n, n})
 	}
 	return g
 }

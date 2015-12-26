@@ -32,7 +32,7 @@ func ExamplePrim_Span() {
 	ul := g.Unlabeled()
 
 	// demonstration 1:  show that the graph is undirected
-	ud, _, _ := ul.Undirected()
+	ud, _, _ := ul.IsUndirected()
 	fmt.Println("Undirected:", ud)
 
 	// demonstration 2:  show connected components

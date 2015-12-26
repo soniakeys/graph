@@ -38,8 +38,9 @@ func (p *AdjacencyList) AddEdge(n1, n2 int) {
 
 // IsUndirected returns true if g represents an undirected graph.
 //
-// It checks that all non-loop arcs are paired in reciprocal pairs.
-func (g AdjacencyList) IsUndirected() bool {
+// Returns true when all non-loop arcs are paired in reciprocal pairs.
+// Otherwise returns false and an example unpaired arc.
+func (g AdjacencyList) IsUndirected() (u bool, from, to int) {
 	unpaired := make(AdjacencyList, len(g))
 	for fr, to := range g {
 	arc: // for each arc in g
@@ -61,12 +62,12 @@ func (g AdjacencyList) IsUndirected() bool {
 			unpaired[fr] = append(unpaired[fr], to)
 		}
 	}
-	for _, to := range unpaired {
+	for fr, to := range unpaired {
 		if len(to) > 0 {
-			return false
+			return false, fr, to[0]
 		}
 	}
-	return true
+	return true, -1, -1
 }
 
 // ConnectedComponentReps, for undirected graphs, returns a representative

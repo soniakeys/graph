@@ -20,7 +20,7 @@ func TestKroneckerUndir(t *testing.T) {
 		t.Fatalf("KroneckerUndir returned non-simple graph.  Node %d to: %v",
 			n, g[n])
 	}
-	if u, from, to := g.Undirected(); !u {
+	if u, from, to := g.IsUndirected(); !u {
 		t.Fatalf("KroneckerUndir returned directed graph.  "+
 			"Arc %d->%d has no reciprocal.", from, to)
 	}

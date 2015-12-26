@@ -148,11 +148,11 @@ func testSSSP(tc testCase, t *testing.T) {
 	w := func(label int) float64 { return tc.w[label] }
 	d := graph.NewDijkstra(tc.l, w)
 	d.Path(tc.start, tc.end)
-	pathD := d.Tree.PathTo(tc.end)
+	pathD := d.Tree.PathTo(tc.end, nil)
 	distD := d.Dist[tc.end]
 	// test that repeating same search on same d gives same result
 	d.Path(tc.start, tc.end)
-	path2 := d.Tree.PathTo(tc.end)
+	path2 := d.Tree.PathTo(tc.end, nil)
 	dist2 := d.Dist[tc.end]
 	if len(pathD) != len(path2) || distD != dist2 {
 		t.Fatal(len(tc.w), "D, D2 len or dist mismatch")

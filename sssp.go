@@ -49,7 +49,7 @@ func NewBreadthFirst(g AdjacencyList) *BreadthFirst {
 func BreadthFirstPath(g AdjacencyList, start, end int) []int {
 	b := NewBreadthFirst(g)
 	b.Traverse(start, func(n int) bool { return n != end })
-	return b.Result.PathTo(end)
+	return b.Result.PathTo(end, nil)
 }
 
 // Path finds a single path from start to end with a minimum number of nodes.
@@ -154,7 +154,7 @@ func BreadthFirst2Path(g AdjacencyList, start, end int) []int {
 	t, m := g.Transpose()
 	b := NewBreadthFirst2(g, t, m)
 	b.Traverse(start, func(n int) bool { return n != end })
-	return b.Result.PathTo(end)
+	return b.Result.PathTo(end, nil)
 }
 
 func (b *BreadthFirst2) Path(start, end int) bool {
@@ -335,7 +335,7 @@ type tent []*tentResult
 func (g LabeledAdjacencyList) DijkstraPath(start, end int, w WeightFunc) ([]int, float64) {
 	d := NewDijkstra(g, w)
 	d.Path(start, end)
-	return d.Tree.PathTo(end), d.Dist[end]
+	return d.Tree.PathTo(end, nil), d.Dist[end]
 }
 
 // Path finds a single shortest path.
@@ -689,7 +689,7 @@ func (a *AStar) AStarA(start, end int, h Heuristic) bool {
 func (g LabeledAdjacencyList) AStarAPath(start, end int, h Heuristic, w WeightFunc) ([]int, float64) {
 	a := NewAStar(g, w)
 	a.AStarA(start, end, h)
-	return a.Tree.PathTo(end), a.Dist[end]
+	return a.Tree.PathTo(end, nil), a.Dist[end]
 }
 
 // AStarM is AStarA optimized for monotonic heuristic estimates.
@@ -780,7 +780,7 @@ func (a *AStar) AStarM(start, end int, h Heuristic) bool {
 func (g LabeledAdjacencyList) AStarMPath(start, end int, h Heuristic, w WeightFunc) ([]int, float64) {
 	a := NewAStar(g, w)
 	a.AStarM(start, end, h)
-	return a.Tree.PathTo(end), a.Dist[end]
+	return a.Tree.PathTo(end, nil), a.Dist[end]
 }
 
 // implement container/heap

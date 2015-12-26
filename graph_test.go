@@ -10,30 +10,19 @@ import (
 	"github.com/soniakeys/graph"
 )
 
-func ExampleAdjacencyList_Ok() {
+func ExampleAdjacencyList_BoundsOk() {
 	var g graph.AdjacencyList
-	fmt.Println(g.Ok()) // zero value adjacency list is valid
+	ok, _, _ := g.BoundsOk() // zero value adjacency list is valid
+	fmt.Println(ok)
 	g = graph.AdjacencyList{
-		0: {1},
+		0: {9},
 	}
-	fmt.Println(g.Ok()) // arc 0 to 1 invalid with only one node
+	fmt.Println(g.BoundsOk()) // arc 0 to 9 invalid with only one node
 	// Output:
 	// true
-	// false
+	// false 0 9
 }
 
-func ExampleAdjacencyList_Undirected() {
-	g := graph.AdjacencyList{
-		0: {1, 2},
-		2: {0},
-	}
-	fmt.Println(g.Undirected())
-	g[1] = append(g[1], 0)
-	fmt.Println(g.Undirected())
-	// Output:
-	// false 0 1
-	// true -1 -1
-}
 func ExampleAdjacencyList_Simple() {
 	g := graph.AdjacencyList{
 		2: {0, 1},

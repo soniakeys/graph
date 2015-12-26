@@ -57,8 +57,9 @@ func ExampleBreadthFirst_AllPaths() {
 	})
 	b.AllPaths(1)
 	fmt.Println("Max path length:", b.Result.MaxLen)
+	p := make([]int, b.Result.MaxLen)
 	for n := range b.Graph {
-		fmt.Println(n, b.Result.PathTo(n))
+		fmt.Println(n, b.Result.PathTo(n, p))
 	}
 	// Output:
 	// Max path length: 4
@@ -123,8 +124,9 @@ func ExampleBreadthFirst2_AllPaths() {
 	b := graph.NewBreadthFirst2(g, t, m)
 	b.AllPaths(1)
 	fmt.Println("Max path length:", b.Result.MaxLen)
+	p := make([]int, b.Result.MaxLen)
 	for n := range b.To {
-		fmt.Println(n, b.Result.PathTo(n))
+		fmt.Println(n, b.Result.PathTo(n, p))
 	}
 	// Output:
 	// Max path length: 4
@@ -196,9 +198,10 @@ func ExampleDijkstra_AllPaths() {
 	// column len is from Result, and will be equal to len(path).
 	// column dist is from Result, and will be equal to sum.
 	fmt.Println("node:  path                  len  dist")
+	p := make([]int, d.Tree.MaxLen)
 	for nd := range g {
 		r := &d.Tree.Paths[nd]
-		path := d.Tree.PathTo(nd)
+		path := d.Tree.PathTo(nd, p)
 		if r.Len > 0 {
 			fmt.Printf("%d:     %-23s %d    %2.0f\n",
 				nd, fmt.Sprint(path), r.Len, d.Dist[nd])

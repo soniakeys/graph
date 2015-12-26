@@ -24,19 +24,49 @@ func ExampleLabeledAdjacencyList_NegativeArc() {
 	// true
 }
 
-func ExampleLabeledAdjacencyList_ValidTo() {
+func ExampleLabeledAdjacencyList_BoundsOk() {
 	g := graph.LabeledAdjacencyList{
 		0: {{0, -1}},
 	}
-	fmt.Println(g.ValidTo())
-	g[0][0].To = -1
-	fmt.Println(g.ValidTo())
-	g[0][0].To = 1
-	fmt.Println(g.ValidTo())
+	ok, _, _ := g.BoundsOk()
+	fmt.Println(ok)
+	g = graph.LabeledAdjacencyList{
+		0: {{-1, -1}},
+	}
+	fmt.Println(g.BoundsOk())
+	g = graph.LabeledAdjacencyList{
+		0: {{9, -1}},
+	}
+	fmt.Println(g.BoundsOk())
 	// Output:
 	// true
-	// false
-	// false
+	// false 0 {-1 -1}
+	// false 0 {9 -1}
+}
+
+func ExampleLabeledAdjacencyList_IsUndirected() {
+	// multigraph, edges with different labels
+	//               ----0
+	//  (Label: 0)  /   /  (Label: 1)
+	//             1----
+	g := graph.LabeledAdjacencyList{
+		0: {{To: 1, Label: 0}, {To: 1, Label: 1}},
+		1: {{To: 0, Label: 0}, {To: 0, Label: 1}},
+	}
+	ud, _, _ := g.IsUndirected()
+	fmt.Println(ud)
+	// directed graph, arcs with different labels
+	//               --->0
+	//  (Label: 0)  /   /  (Label: 1)
+	//             1<---
+	g = graph.LabeledAdjacencyList{
+		0: {{To: 1, Label: 1}},
+		1: {{To: 0, Label: 0}},
+	}
+	fmt.Println(g.IsUndirected())
+	// Output:
+	// true
+	// false 0 {1 1}
 }
 
 // A directed graph with negative arc weights.
