@@ -3,33 +3,31 @@
 
 // Graph is a simple and fast graph library.
 //
-// This is a graph library of the kind where you create graphs out of
-// concrete types defined in this package, perhaps parallel to existing
-// graph data structures in your application.  You call some function such
-// as a graph search, then use the result to navigate your application data.
+// This is a graph library of integer indexes.  To use it with application
+// data, associate data with integer indexes, perform searches or other
+// operations with the library, and then use the integer index results to refer
+// back to the application data.
 //
-// The types of this package represent only data minimally neccessary for
-// search functions.  This minimalism simplifies package code and allows faster
-// searches.  Zero-based integer node IDs serve directly as slice indexes.
-// Nodes and edges are structs rather than interfaces.  Maps are not needed
-// to associate arbitrary IDs with node or edge types.  These graphs are memory
-// efficient and large graphs can potentially be handled.
+// Thus it does not store application data, pointers to application data,
+// or require application data to implement an interface.  The idea is to
+// keep the library methods fast and lean.
 //
-// Representation
+// Representation overview
 //
-// The only graph representation currently is an adjacency list, although
-// there are separate types for graphs with and without arc labels.
-// The types AdjacencyList and LabeledAdjacencyList are simply slices
-// of slices.  Construct with make; there is no special constructor.
-// Directed and undirected graphs use the same types.  Construct an undirected
-// graph by adding reciprocal edges.  Methods specific to either directed
-// or undirected graphs will be documented as such.
+// The package currently implements three graph representations using types
+// AdjacencyList, LabeledAdjacencyList, and FromList.
 //
-// The arc label of labeled graphs can be used to index or encode arbitrary
-// information, however it is common to need arc weights.  In some simple
-// cases the arc weight might be encoded directly as the label.  Otherwise
-// arc weights must be maintained separately from the graph.  Functions
-// requiring weights use a function to translate labels to weights.
+// AdjacencyList is the common "list of lists" representation.  It is a list
+// with one element for each node of the graph.  Each element is a list
+// itself, a list of neighbor nodes.
+//
+// LabeledAdjacencyList is similar, but each node-to-neighbor "arc" has an
+// associated label.
+//
+// FromList is a compact rooted tree respresentation.  Like AdjacencyList and
+// LabeledAdjacencyList, it is a list with one element for each node of the
+// graph.  Each element contains only a single neighbor however, its parent
+// in the tree, the "from" node.
 //
 // Terminology
 //
@@ -38,29 +36,31 @@
 // of an arc.  It uses "start" and "end" to refer to endpoints of a search
 // or traversal.
 //
-// A float64 value associated with an arc is "weight."  The sum of arc weights
-// along a path is a "distance."  The number of nodes in a path, including
-// start and end nodes, is the path's "length."
+// The usage of "to" and "from" is perhaps most strange.  Throughout the
+// the package they are used as adjectives, for example to refer to the
+// "from node" of an arc or the "to node".  The type "FromList" is named
+// to indicate it stores a list of "from" values.
 //
-// A "half arc" represents just one end of an arc, perhaps assocating it with
-// an arc weight.  The more common half to work with is the "to half" (the
-// type name is simply "Half".)  A list of half arcs can represent a
-// "neighbor list," neighbors of a single node.  A list of neighbor lists
-// forms an "adjacency list" which represents a directed graph.
+// A "half arc" refers to just one end of an arc, either the to or from end.
 //
 // Two arcs are "reciprocal" if they connect two distinct nodes n1 and n2,
 // one arc leading from n1 to n2 and the other arc leading from n2 to n1.
-// Undirected graphs are represented with reciprocal arcs.  A graph is
-// undirected if a reciprocal arc exists for every arc connecting distinct
-// nodes.
+// "Undirected graphs" are represented with reciprocal arcs.
 //
 // A node that is a neighbor of itself represents a "loop."  Duplicate
 // neighbors (when a node appears more than once in the same neighbor list)
 // represent "parallel arcs."  A graph with no loops or parallel arcs
-// is "simple."
+// is "simple."  A graph that allows parallel arcs is a "multigraph"
 //
-// Finally, this package documentation takes back the word "object" to
-// refer to a Go value, especially a value of a type with methods.
+// A number of graph search algorithms use a concept of arc "weights."
+// The sum of arc weights along a path is a "distance."  In contrast, the
+// number of nodes in a path, including start and end nodes, is the path's
+// "length."  (Yes, mixing weights and lengths would be nonsense physically,
+// but the terms used here are just distinct terms for abstract values.
+// The actual meaning to an application is not relevant within this package.)
+//
+// Finally, this package documentation takes back the word "object" in some
+// places to refer to a Go value, especially a value of a type with methods.
 //
 // Single source shortest path searches on weighted graphs
 //
@@ -83,8 +83,4 @@
 // search object, running a search method on the object, and decoding a result
 // structure.  Convenience functions are provided that perform these
 // steps for single path searches.
-//
-// The result structure contains a "from-tree" which is an efficient
-// encoding of the path results.  Other terms for this data structure include
-// "predecessor list", "in-tree", "inverse arborescence", and "spaghetti stack."
 package graph
