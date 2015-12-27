@@ -102,6 +102,35 @@ func (g AdjacencyList) IsUndirected() (u bool, from, to int) {
 	return true, -1, -1
 }
 
+// IsTreeUndirected identifies trees in undirected graphs.
+//
+// IsTreeUndirected returns true if the connected component
+// containing argument root is a tree.  It does not validate
+// that the entire graph is a tree.
+func (g AdjacencyList) IsTreeUndirected(root int) bool {
+	var v big.Int
+	var df func(int, int) bool
+	df = func(fr, n int) bool {
+		if v.Bit(n) == 1 {
+			return false
+		}
+		v.SetBit(&v, n, 1)
+		for _, to := range g[n] {
+			if to != fr && !df(n, to) {
+				return false
+			}
+		}
+		return true
+	}
+	v.SetBit(&v, root, 1)
+	for _, to := range g[root] {
+		if !df(root, to) {
+			return false
+		}
+	}
+	return true
+}
+
 // ConnectedComponentReps, for undirected graphs, returns a representative
 // node from each connected component of g.
 //

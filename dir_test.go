@@ -25,6 +25,27 @@ func ExampleAdjacencyList_Cyclic() {
 	// true
 }
 
+func ExampleAdjacencyList_IsTreeDirected() {
+	// Example graph
+	// Arcs point down unless otherwise indicated
+	//           1
+	//          / \
+	//         0   5
+	//        /   / \
+	//       2   3-->4
+	g := graph.AdjacencyList{
+		1: {0, 5},
+		0: {2},
+		5: {3, 4},
+		3: {4},
+	}
+	fmt.Println(g.IsTreeDirected(0))
+	fmt.Println(g.IsTreeDirected(1))
+	// Output:
+	// true
+	// false
+}
+
 func ExampleAdjacencyList_Topological() {
 	g := graph.AdjacencyList{
 		1: {2},

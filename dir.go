@@ -76,6 +76,28 @@ func (g AdjacencyList) FromList() FromList {
 	return FromList{paths, leaves, maxLen}
 }
 
+// IsTreeDirected identifies trees in directed graphs.
+//
+// IsTreeDirected returns true if the subgraph reachable from
+// root is a tree.  It does not validate that the entire graph is a tree.
+func (g AdjacencyList) IsTreeDirected(root int) bool {
+	var v big.Int
+	var df func(int) bool
+	df = func(n int) bool {
+		if v.Bit(n) == 1 {
+			return false
+		}
+		v.SetBit(&v, n, 1)
+		for _, to := range g[n] {
+			if !df(to) {
+				return false
+			}
+		}
+		return true
+	}
+	return df(root)
+}
+
 // Cyclic, for directed graphs, determines if g contains cycles.
 //
 // Cyclic returns true if g contains at least one cycle.
