@@ -10,6 +10,54 @@ import (
 	"github.com/soniakeys/graph"
 )
 
+func ExampleAdjacencyList_UndirectedCopy_simple() {
+	//    0
+	//   / \
+	//  1   2
+	g := graph.AdjacencyList{
+		0: {1, 2},
+		1: {},
+		2: {},
+	}
+	fmt.Println(g.IsUndirected())
+	u := g.UndirectedCopy()
+	for fr, to := range u {
+		fmt.Println(fr, to)
+	}
+	ok, _, _ := u.IsUndirected()
+	fmt.Println(ok)
+	// Output:
+	// false 0 1
+	// 0 [1 2]
+	// 1 [0]
+	// 2 [0]
+	// true
+}
+
+func ExampleAdjacencyList_UndirectedCopy_loopMultigraph() {
+	//  0--\   1--->2
+	//  |  |   |<---|
+	//  \--/   |<---|
+	g := graph.AdjacencyList{
+		0: {0},
+		1: {2},
+		2: {1, 1},
+	}
+	fmt.Println(g.IsUndirected())
+	u := g.UndirectedCopy()
+	for fr, to := range u {
+		fmt.Println(fr, to)
+	}
+	ok, _, _ := u.IsUndirected()
+	fmt.Println(ok)
+	// Output:
+	// false 2 1
+	// 0 [0]
+	// 1 [2 2]
+	// 2 [1 1]
+	// true
+}
+
 func ExampleAdjacencyList_IsUndirected() {
 	//    0  2--\
 	//   /   |  |

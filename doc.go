@@ -14,7 +14,7 @@
 //
 // Representation overview
 //
-// The package currently implements three graph representations using types
+// The package currently implements three graph representations through types
 // AdjacencyList, LabeledAdjacencyList, and FromList.
 //
 // AdjacencyList is the common "list of lists" representation.  It is a list

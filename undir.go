@@ -15,6 +15,7 @@ import (
 // Edge is an undirected edge between nodes n1 and n2.
 type Edge struct{ n1, n2 int }
 
+// AddEdge adds an arc and its reciprocal to a graph.
 func (p *AdjacencyList) AddEdge(n1, n2 int) {
 	// determine max of the two end points
 	max := n1
@@ -34,6 +35,37 @@ func (p *AdjacencyList) AddEdge(n1, n2 int) {
 	if n1 != n2 {
 		g[n2] = append(g[n2], n1)
 	}
+}
+
+// Undirected returns copy of g augmented as needed to make it undirected.
+func (g AdjacencyList) UndirectedCopy() AdjacencyList {
+	c, _ := g.Copy()                  // start with a copy
+	rw := make(AdjacencyList, len(g)) // "reciprocals wanted"
+	for fr, to := range g {
+	arc: // for each arc in g
+		for _, to := range to {
+			if to == fr {
+				continue // loop
+			}
+			// search wanted arcs
+			wf := rw[fr]
+			for i, w := range wf {
+				if w == to { // found, remove
+					last := len(wf) - 1
+					wf[i] = wf[last]
+					rw[fr] = wf[:last]
+					continue arc
+				}
+			}
+			// arc not found, add to reciprocal to wanted list
+			rw[to] = append(rw[to], fr)
+		}
+	}
+	// add missing reciprocals
+	for fr, to := range rw {
+		c[fr] = append(c[fr], to...)
+	}
+	return c
 }
 
 // IsUndirected returns true if g represents an undirected graph.

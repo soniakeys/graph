@@ -39,8 +39,8 @@ func (g AdjacencyList) BoundsOk() (ok bool, fr, to int) {
 
 // ArcSize returns the number of arcs in g.
 //
-// Note that for an undirected graph, the number of edges -- the traditional
-// meaning of graph size -- will be m/2.
+// Note that for an undirected graph witout loops, the number of edges --
+// the traditional meaning of graph size -- will be m/2.
 func (g AdjacencyList) ArcSize() (m int) {
 	for _, to := range g {
 		m += len(to)
@@ -55,22 +55,6 @@ func (g AdjacencyList) Copy() (c AdjacencyList, m int) {
 	for n, to := range g {
 		c[n] = append([]int{}, to...)
 		m += len(to)
-	}
-	return
-}
-
-// CopyUndir makes an undirected copy of g -- for each arc in g, both a forward
-// and reciprocal arc are added to the result.
-//
-// The result m here indicates the number of undirected edges, where each
-// edge is represented with 2 arcs.  That will be the number of arcs in the
-// input graph g, but the undirected result will have 2*m arcs.
-func (g AdjacencyList) CopyUndir() (c AdjacencyList, m int) {
-	c, m = g.Copy()          // start with forward links
-	for gFr, to := range g { // then add reciprocals
-		for _, gTo := range to {
-			c[gTo] = append(c[gTo], gFr)
-		}
 	}
 	return
 }
