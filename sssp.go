@@ -46,7 +46,7 @@ func NewBreadthFirst(g AdjacencyList) *BreadthFirst {
 //
 // Returned is the path as list of nodes.
 // The result is nil if no path was found.
-func BreadthFirstPath(g AdjacencyList, start, end int) []int {
+func (g AdjacencyList) BreadthFirstPath(start, end int) []int {
 	b := NewBreadthFirst(g)
 	b.Traverse(start, func(n int) bool { return n != end })
 	return b.Result.PathTo(end, nil)
@@ -150,7 +150,7 @@ func NewBreadthFirst2(to, from AdjacencyList, m int) *BreadthFirst2 {
 //
 // Returned is the path as list of nodes.
 // The result is nil if no path was found.
-func BreadthFirst2Path(g AdjacencyList, start, end int) []int {
+func (g AdjacencyList) BreadthFirst2Path(start, end int) []int {
 	t, m := g.Transpose()
 	b := NewBreadthFirst2(g, t, m)
 	b.Traverse(start, func(n int) bool { return n != end })

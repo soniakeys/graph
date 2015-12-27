@@ -10,24 +10,34 @@ import (
 )
 
 func ExampleBreadthFirstPath() {
+	// arcs are directed right:
+	//    1   3---5
+	//   / \ /   /
+	//  2   4---6--\
+	//           \-/
 	g := graph.AdjacencyList{
-		1: {4},
 		2: {1},
-		3: {5},
+		1: {4},
 		4: {3, 6},
+		3: {5},
 		6: {5, 6},
 	}
-	fmt.Println(graph.BreadthFirstPath(g, 1, 3))
+	fmt.Println(g.BreadthFirstPath(1, 3))
 	// Output:
 	// [1 4 3]
 }
 
 func ExampleBreadthFirst_Path() {
+	// arcs are directed right:
+	//    1   3---5
+	//   / \ /   /
+	//  2   4---6--\
+	//           \-/
 	b := graph.NewBreadthFirst(graph.AdjacencyList{
-		1: {4},
 		2: {1},
-		3: {5},
+		1: {4},
 		4: {3, 6},
+		3: {5},
 		6: {5, 6},
 	})
 	start, end := 1, 3
@@ -48,11 +58,16 @@ func ExampleBreadthFirst_Path() {
 }
 
 func ExampleBreadthFirst_AllPaths() {
+	// arcs are directed right:
+	//    1   3---5
+	//   / \ /   /
+	//  2   4---6--\
+	//           \-/
 	b := graph.NewBreadthFirst(graph.AdjacencyList{
-		1: {4},
 		2: {1},
-		3: {5},
+		1: {4},
 		4: {3, 6},
+		3: {5},
 		6: {5, 6},
 	})
 	b.AllPaths(1)
@@ -73,24 +88,34 @@ func ExampleBreadthFirst_AllPaths() {
 }
 
 func ExampleBreadthFirst2Path() {
+	// arcs are directed right:
+	//    1   3---5
+	//   / \ /   /
+	//  2   4---6--\
+	//           \-/
 	g := graph.AdjacencyList{
-		1: {4},
 		2: {1},
-		3: {5},
+		1: {4},
 		4: {3, 6},
+		3: {5},
 		6: {5, 6},
 	}
-	fmt.Println(graph.BreadthFirst2Path(g, 1, 3))
+	fmt.Println(g.BreadthFirst2Path(1, 3))
 	// Output:
 	// [1 4 3]
 }
 
 func ExampleBreadthFirst2_Path() {
+	// arcs are directed right:
+	//    1   3---5
+	//   / \ /   /
+	//  2   4---6--\
+	//           \-/
 	g := graph.AdjacencyList{
-		1: {4},
 		2: {1},
-		3: {5},
+		1: {4},
 		4: {3, 6},
+		3: {5},
 		6: {5, 6},
 	}
 	t, m := g.Transpose()
@@ -113,11 +138,16 @@ func ExampleBreadthFirst2_Path() {
 }
 
 func ExampleBreadthFirst2_AllPaths() {
+	// arcs are directed right:
+	//    1   3---5
+	//   / \ /   /
+	//  2   4---6--\
+	//           \-/
 	g := graph.AdjacencyList{
-		1: {4},
 		2: {1},
-		3: {5},
+		1: {4},
 		4: {3, 6},
+		3: {5},
 		6: {5, 6},
 	}
 	t, m := g.Transpose()
@@ -140,6 +170,18 @@ func ExampleBreadthFirst2_AllPaths() {
 }
 
 func ExampleLabeledAdjacencyList_DijkstraPath() {
+	// arcs are directed right:
+	//          (wt: 11)
+	//       --------------6----
+	//      /             /     \
+	//     /             /(2)    \(9)
+	//    /     (9)     /         \
+	//   1-------------3----       5
+	//    \           /     \     /
+	//     \     (10)/   (11)\   /(7)
+	//   (7)\       /         \ /
+	//       ------2-----------4
+	//                 (15)
 	g := graph.LabeledAdjacencyList{
 		1: {{To: 2, Label: 7}, {To: 3, Label: 9}, {To: 6, Label: 11}},
 		2: {{To: 3, Label: 10}, {To: 4, Label: 15}},
@@ -157,6 +199,18 @@ func ExampleLabeledAdjacencyList_DijkstraPath() {
 }
 
 func ExampleDijkstra_Path() {
+	// arcs are directed right:
+	//          (wt: 11)
+	//       --------------6----
+	//      /             /     \
+	//     /             /(2)    \(9)
+	//    /     (9)     /         \
+	//   1-------------3----       5
+	//    \           /     \     /
+	//     \     (10)/   (11)\   /(7)
+	//   (7)\       /         \ /
+	//       ------2-----------4
+	//                 (15)
 	g := graph.LabeledAdjacencyList{
 		1: {{To: 2, Label: 7}, {To: 3, Label: 9}, {To: 6, Label: 11}},
 		2: {{To: 3, Label: 10}, {To: 4, Label: 15}},
@@ -184,13 +238,24 @@ func ExampleDijkstra_Path() {
 }
 
 func ExampleDijkstra_AllPaths() {
+	// arcs are directed right:
+	//       -----------------------
+	//      /      (wt: 14)         \
+	//     /                         \
+	//    /     (9)           (2)     \
+	//   0-------------2---------------5
+	//    \           / \             /
+	//     \     (10)/   \(11)    (9)/
+	//   (7)\       /     \         /
+	//       ------1-------3-------4
+	//               (15)     (6)
 	g := graph.LabeledAdjacencyList{
 		0: {{To: 1, Label: 7}, {To: 2, Label: 9}, {To: 5, Label: 14}},
 		1: {{To: 2, Label: 10}, {To: 3, Label: 15}},
 		2: {{To: 3, Label: 11}, {To: 5, Label: 2}},
 		3: {{To: 4, Label: 6}},
 		4: {{To: 5, Label: 9}},
-		5: nil,
+		5: {},
 	}
 	w := func(label int) float64 { return float64(label) }
 	d := graph.NewDijkstra(g, w)
@@ -218,6 +283,17 @@ func ExampleDijkstra_AllPaths() {
 }
 
 func ExampleLabeledAdjacencyList_AStarAPath() {
+	// arcs are directed right:
+	//       -----------------------
+	//      /      (wt: 14)         \
+	//     /                         \
+	//    /     (9)           (2)     \
+	//   0-------------2---------------5
+	//    \           / \             /
+	//     \     (10)/   \(11)    (9)/
+	//   (7)\       /     \         /
+	//       ------1-------3-------4
+	//               (15)     (6)
 	g := graph.LabeledAdjacencyList{
 		0: {{To: 1, Label: 7}, {To: 2, Label: 9}, {To: 5, Label: 14}},
 		1: {{To: 2, Label: 10}, {To: 3, Label: 15}},
@@ -238,6 +314,17 @@ func ExampleLabeledAdjacencyList_AStarAPath() {
 }
 
 func ExampleAStarMPath() {
+	// arcs are directed right:
+	//       -----------------------
+	//      /      (wt: 14)         \
+	//     /                         \
+	//    /     (9)           (2)     \
+	//   0-------------2---------------5
+	//    \           / \             /
+	//     \     (10)/   \(11)    (9)/
+	//   (7)\       /     \         /
+	//       ------1-------3-------4
+	//               (15)     (6)
 	g := graph.LabeledAdjacencyList{
 		0: {{To: 1, Label: 7}, {To: 2, Label: 9}, {To: 5, Label: 14}},
 		1: {{To: 2, Label: 10}, {To: 3, Label: 15}},
@@ -258,6 +345,17 @@ func ExampleAStarMPath() {
 }
 
 func ExampleHeuristic_Admissable() {
+	// arcs are directed right:
+	//       -----------------------
+	//      /      (wt: 14)         \
+	//     /                         \
+	//    /     (9)           (2)     \
+	//   0-------------2---------------5
+	//    \           / \             /
+	//     \     (10)/   \(11)    (9)/
+	//   (7)\       /     \         /
+	//       ------1-------3-------4
+	//               (15)     (6)
 	g := graph.LabeledAdjacencyList{
 		0: {{To: 1, Label: 7}, {To: 2, Label: 9}, {To: 5, Label: 14}},
 		1: {{To: 2, Label: 10}, {To: 3, Label: 15}},
@@ -275,6 +373,17 @@ func ExampleHeuristic_Admissable() {
 }
 
 func ExampleHeuristic_Monotonic() {
+	// arcs are directed right:
+	//       -----------------------
+	//      /      (wt: 14)         \
+	//     /                         \
+	//    /     (9)           (2)     \
+	//   0-------------2---------------5
+	//    \           / \             /
+	//     \     (10)/   \(11)    (9)/
+	//   (7)\       /     \         /
+	//       ------1-------3-------4
+	//               (15)     (6)
 	g := graph.LabeledAdjacencyList{
 		0: {{To: 1, Label: 7}, {To: 2, Label: 9}, {To: 5, Label: 14}},
 		1: {{To: 2, Label: 10}, {To: 3, Label: 15}},
@@ -292,6 +401,17 @@ func ExampleHeuristic_Monotonic() {
 }
 
 func ExampleBellmanFord() {
+	//              /--------3------->4<-------9
+	//              |        ^   (1)  |   (7)  |
+	//              |(1)     |        |        |
+	//              |        |(-2)    |(3)     |
+	//    (wt: 10)  v   (2)  |        v        |
+	//  1---------->2------->6<-------5<-------/
+	//  |           ^        ^   (-1)    (-10)
+	//  |(8)        |        |
+	//  |           |(-4)    |(-1)
+	//  v     (1)   |        |
+	//  8---------->7--------/
 	g := graph.LabeledAdjacencyList{
 		1: {{2, 10}, {8, 8}},
 		2: {{6, 2}},
@@ -305,26 +425,30 @@ func ExampleBellmanFord() {
 	}
 	w := func(label int) float64 { return float64(label) }
 	b := graph.NewBellmanFord(g, w)
-	if !b.Run(1) {
+	start := 1
+	fmt.Println("start:", start)
+	if !b.Run(start) {
 		fmt.Println("negative cycle")
 		return
 	}
-	fmt.Println("end    path  path")
-	fmt.Println("node:  len   dist")
-	for n, p := range b.Tree.Paths {
-		fmt.Printf("%d:       %d   %4.0f\n", n, p.Len, b.Dist[n])
+	fmt.Println("end   path  path")
+	fmt.Println("node  len   dist   path")
+	p := make([]int, b.Tree.MaxLen)
+	for n, e := range b.Tree.Paths {
+		fmt.Printf("%d       %d   %4.0f   %d\n",
+			n, e.Len, b.Dist[n], b.Tree.PathTo(n, p))
 	}
-	// Output:
-	// end    path  path
-	// node:  len   dist
-	// 0:       0   +Inf
-	// 1:       1      0
-	// 2:       4      5
-	// 3:       6      5
-	// 4:       7      6
-	// 5:       8      9
-	// 6:       5      7
-	// 7:       3      9
-	// 8:       2      8
-	// 9:       0   +Inf
+	// start: 1
+	// end   path  path
+	// node  len   dist   path
+	// 0       0   +Inf   []
+	// 1       1      0   [1]
+	// 2       4      5   [1 8 7 2]
+	// 3       6      5   [1 8 7 2 6 3]
+	// 4       7      6   [1 8 7 2 6 3 4]
+	// 5       8      9   [1 8 7 2 6 3 4 5]
+	// 6       5      7   [1 8 7 2 6]
+	// 7       3      9   [1 8 7]
+	// 8       2      8   [1 8]
+	// 9       0   +Inf   []
 }
