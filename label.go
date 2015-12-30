@@ -5,6 +5,7 @@ package graph
 
 import (
 	"math"
+	"sort"
 )
 
 // A LabledAdjacencyList represents a graph as a list of neighbors for each
@@ -27,6 +28,39 @@ type FromHalf struct {
 	Label int
 }
 
+// AddLabeledEdge adds an edge to a labeled graph.
+//
+// It can be useful for constructing undirected graphs.
+//
+// When n1 and n2 are distinct, it adds the arc n1->n2 and the reciprocal
+// n2->n1.  When n1 and n2 are the same, it adds a single arc loop.
+//
+// The pointer receiver allows the method to expand the graph as needed
+// to include the values n1 and n2.  If n1 or n2 happen to be greater than
+// len(*p) the method does not panic, but simply expands the graph.
+func (p *LabeledAdjacencyList) AddEdge(n1, n2, label int) {
+	// Similar code in AdjacencyList.AddEdge.
+
+	// determine max of the two end points
+	max := n1
+	if n2 > max {
+		max = n2
+	}
+	// expand graph if needed, to include both
+	g := *p
+	if max >= len(g) {
+		*p = make(LabeledAdjacencyList, max+1)
+		copy(*p, g)
+		g = *p
+	}
+	// create one half-arc,
+	g[n1] = append(g[n1], Half{To: n2, Label: label})
+	// and except for loops, create the reciprocal
+	if n1 != n2 {
+		g[n2] = append(g[n2], Half{To: n1, Label: label})
+	}
+}
+
 // A WeightFunc accesses arc weights from arc labels.
 type WeightFunc func(label int) (weight float64)
 
@@ -40,21 +74,6 @@ func (g LabeledAdjacencyList) NegativeArc(w WeightFunc) bool {
 		}
 	}
 	return false
-}
-
-// BoundsOk validates that all arcs in g stay within the slice bounds of g.
-//
-// BoundsOk returns true when no arcs point outside the bounds of g.
-// Otherwise it returns false and an example arc that points outside of g.
-func (g LabeledAdjacencyList) BoundsOk() (ok bool, fr int, to Half) {
-	for fr, to := range g {
-		for _, to := range to {
-			if to.To < 0 || to.To >= len(g) {
-				return false, fr, to
-			}
-		}
-	}
-	return true, -1, Half{}
 }
 
 // Transpose, for directed graphs, constructs a new adjacency list that is
@@ -74,6 +93,23 @@ func (g LabeledAdjacencyList) Transpose() (t LabeledAdjacencyList, m int) {
 	return
 }
 
+// UnLabeledTranspose, for directed graphs, constructs a new adjacency list
+// that is the transpose of g.
+//
+// For every arc from->to of g, the result will have an arc to->from.
+// Transpose also counts arcs as it traverses and returns m the number of arcs
+// in g (equal to the number of arcs in the result.)
+func (g LabeledAdjacencyList) UnLabeledTranspose() (t AdjacencyList, m int) {
+	t = make(AdjacencyList, len(g))
+	for n, nbs := range g {
+		for _, nb := range nbs {
+			t[nb.To] = append(t[nb.To], n)
+			m++
+		}
+	}
+	return
+}
+
 // UnLabeled constructs the equivalent unlabeled graph.
 func (g LabeledAdjacencyList) Unlabeled() AdjacencyList {
 	a := make(AdjacencyList, len(g))
@@ -85,40 +121,6 @@ func (g LabeledAdjacencyList) Unlabeled() AdjacencyList {
 		a[n] = to
 	}
 	return a
-}
-
-// IsUndirected returns true if g represents an undirected graph.
-//
-// Returns true when all non-loop arcs are paired in reciprocal pairs with
-// matching labels.  Otherwise returns false and an example unpaired arc.
-func (g LabeledAdjacencyList) IsUndirected() (u bool, from int, to Half) {
-	unpaired := make(LabeledAdjacencyList, len(g))
-	for fr, to := range g {
-	arc: // for each arc in g
-		for _, to := range to {
-			if to.To == fr {
-				continue // loop
-			}
-			// search unpaired arcs
-			ut := unpaired[to.To]
-			for i, u := range ut {
-				if u.To == fr && u.Label == to.Label { // found reciprocal
-					last := len(ut) - 1
-					ut[i] = ut[last]
-					unpaired[to.To] = ut[:last]
-					continue arc
-				}
-			}
-			// reciprocal not found
-			unpaired[fr] = append(unpaired[fr], to)
-		}
-	}
-	for fr, to := range unpaired {
-		if len(to) > 0 {
-			return false, fr, to[0]
-		}
-	}
-	return true, -1, Half{}
 }
 
 // FloydWarshall finds all pairs shortest distances for a simple weighted
@@ -168,4 +170,158 @@ func solveFW(d [][]float64) {
 			}
 		}
 	}
+}
+
+// IsUndirected returns true if g represents an undirected graph.
+//
+// Returns true when all non-loop arcs are paired in reciprocal pairs with
+// matching labels.  Otherwise returns false and an example unpaired arc.
+func (g LabeledAdjacencyList) IsUndirected() (u bool, from int, to Half) {
+	unpaired := make(LabeledAdjacencyList, len(g))
+	for fr, to := range g {
+	arc: // for each arc in g
+		for _, to := range to {
+			if to.To == fr {
+				continue // loop
+			}
+			// search unpaired arcs
+			ut := unpaired[to.To]
+			for i, u := range ut {
+				if u.To == fr && u.Label == to.Label { // found reciprocal
+					last := len(ut) - 1
+					ut[i] = ut[last]
+					unpaired[to.To] = ut[:last]
+					continue arc
+				}
+			}
+			// reciprocal not found
+			unpaired[fr] = append(unpaired[fr], to)
+		}
+	}
+	for fr, to := range unpaired {
+		if len(to) > 0 {
+			return false, fr, to[0]
+		}
+	}
+	return true, -1, to
+}
+
+// Simple checks for loops and parallel arcs.
+//
+// A graph is "simple" if it has no loops or parallel arcs.
+//
+// Simple returns true, -1 for simple graphs.  If a loop or parallel arc is
+// found, simple returns false and and a node that represents a counterexample
+// to the graph being simple.
+func (g LabeledAdjacencyList) Simple() (s bool, n int) {
+	var t []int
+	for n, nbs := range g {
+		if len(nbs) == 0 {
+			continue
+		}
+		t = t[:0]
+		for _, nb := range nbs {
+			t = append(t, nb.To)
+		}
+		sort.Ints(t)
+		if t[0] == n {
+			return false, n
+		}
+		for i, nb := range t[1:] {
+			if nb == n || nb == t[i] {
+				return false, n
+			}
+		}
+	}
+	return true, -1
+}
+
+type LabeledEdge struct {
+	N1, N2 int
+	Label  int
+}
+
+// TarjanBiconnectedComponents, for undirected simple graphs.
+func (g LabeledAdjacencyList) TarjanBiconnectedComponents() (components [][]LabeledEdge) {
+	// Implemented closely to pseudocode in "Depth-first search and linear
+	// graph algorithms", Robert Tarjan, SIAM J. Comput. Vol. 1, No. 2,
+	// June 1972.
+	//
+	// Note Tarjan's "adjacency structure" is graph.AdjacencyList,
+	// His "adjacency list" is an element of a graph.AdjacencyList, also
+	// termed a "to-list", "neighbor list", or "child list."
+	number := make([]int, len(g))
+	lowpt := make([]int, len(g))
+	var stack []LabeledEdge
+	var i int
+	var biconnect func(int, int)
+	biconnect = func(v, u int) {
+		i++
+		number[v] = i
+		lowpt[v] = i
+		for _, w := range g[v] {
+			if number[w.To] == 0 {
+				stack = append(stack, LabeledEdge{v, w.To, w.Label})
+				biconnect(w.To, v)
+				if lowpt[w.To] < lowpt[v] {
+					lowpt[v] = lowpt[w.To]
+				}
+				if lowpt[w.To] >= number[v] {
+					var bcc []LabeledEdge
+					top := len(stack) - 1
+					for number[stack[top].N1] >= number[w.To] {
+						bcc = append(bcc, stack[top])
+						stack = stack[:top]
+						top--
+					}
+					bcc = append(bcc, stack[top])
+					stack = stack[:top]
+					top--
+					components = append(components, bcc)
+				}
+			} else if number[w.To] < number[v] && w.To != u {
+				stack = append(stack, LabeledEdge{v, w.To, w.Label})
+				if number[w.To] < lowpt[v] {
+					lowpt[v] = number[w.To]
+				}
+			}
+		}
+	}
+	for w := range g {
+		if number[w] == 0 {
+			biconnect(w, 0)
+		}
+	}
+	return
+}
+
+// Undirected returns copy of g augmented as needed to make it undirected.
+func (g LabeledAdjacencyList) UndirectedCopy() LabeledAdjacencyList {
+	c, _ := g.Copy()                         // start with a copy
+	rw := make(LabeledAdjacencyList, len(g)) // "reciprocals wanted"
+	for fr, to := range g {
+	arc: // for each arc in g
+		for _, to := range to {
+			if to.To == fr {
+				continue // loop
+			}
+			// search wanted arcs
+			wf := rw[fr]
+			for i, w := range wf {
+				if w == to { // found, remove
+					last := len(wf) - 1
+					wf[i] = wf[last]
+					rw[fr] = wf[:last]
+					continue arc
+				}
+			}
+			// arc not found, add to reciprocal to wanted list
+			rw[to.To] = append(rw[to.To], Half{To: fr, Label: to.Label})
+		}
+	}
+	// add missing reciprocals
+	for fr, to := range rw {
+		c[fr] = append(c[fr], to...)
+	}
+	return c
 }
