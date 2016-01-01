@@ -35,16 +35,18 @@ type FromHalf struct {
 // When n1 and n2 are distinct, it adds the arc n1->n2 and the reciprocal
 // n2->n1.  When n1 and n2 are the same, it adds a single arc loop.
 //
+// If the edge already exists in *p, a parallel edge is added.
+//
 // The pointer receiver allows the method to expand the graph as needed
 // to include the values n1 and n2.  If n1 or n2 happen to be greater than
 // len(*p) the method does not panic, but simply expands the graph.
-func (p *LabeledAdjacencyList) AddEdge(n1, n2, label int) {
+func (p *LabeledAdjacencyList) AddEdge(e Edge, label int) {
 	// Similar code in AdjacencyList.AddEdge.
 
 	// determine max of the two end points
-	max := n1
-	if n2 > max {
-		max = n2
+	max := e.N1
+	if e.N2 > max {
+		max = e.N2
 	}
 	// expand graph if needed, to include both
 	g := *p
@@ -54,74 +56,20 @@ func (p *LabeledAdjacencyList) AddEdge(n1, n2, label int) {
 		g = *p
 	}
 	// create one half-arc,
-	g[n1] = append(g[n1], Half{To: n2, Label: label})
+	g[e.N1] = append(g[e.N1], Half{To: e.N2, Label: label})
 	// and except for loops, create the reciprocal
-	if n1 != n2 {
-		g[n2] = append(g[n2], Half{To: n1, Label: label})
+	if e.N1 != e.N2 {
+		g[e.N2] = append(g[e.N2], Half{To: e.N1, Label: label})
 	}
 }
 
-// A WeightFunc accesses arc weights from arc labels.
+// WeightFunc returns a weight for a given label.
+//
+// WeightFunc is a parameter type for various search functions.  The intent
+// is to return a weight corresponding to an arc label.  The name "weight"
+// is an abstract term.  An arc "weight" will typically have some application
+// specific meaning other than physical weight.
 type WeightFunc func(label int) (weight float64)
-
-// NegativeArc returns true if the receiver graph contains a negative arc.
-func (g LabeledAdjacencyList) NegativeArc(w WeightFunc) bool {
-	for _, nbs := range g {
-		for _, nb := range nbs {
-			if w(nb.Label) < 0 {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-// Transpose, for directed graphs, constructs a new adjacency list that is
-// the transpose of g.
-//
-// For every arc from->to of g, the result will have an arc to->from.
-// Transpose also counts arcs as it traverses and returns m the number of arcs
-// in g (equal to the number of arcs in the result.)
-func (g LabeledAdjacencyList) Transpose() (t LabeledAdjacencyList, m int) {
-	t = make(LabeledAdjacencyList, len(g))
-	for n, nbs := range g {
-		for _, nb := range nbs {
-			t[nb.To] = append(t[nb.To], Half{To: n, Label: nb.Label})
-			m++
-		}
-	}
-	return
-}
-
-// UnLabeledTranspose, for directed graphs, constructs a new adjacency list
-// that is the transpose of g.
-//
-// For every arc from->to of g, the result will have an arc to->from.
-// Transpose also counts arcs as it traverses and returns m the number of arcs
-// in g (equal to the number of arcs in the result.)
-func (g LabeledAdjacencyList) UnLabeledTranspose() (t AdjacencyList, m int) {
-	t = make(AdjacencyList, len(g))
-	for n, nbs := range g {
-		for _, nb := range nbs {
-			t[nb.To] = append(t[nb.To], n)
-			m++
-		}
-	}
-	return
-}
-
-// UnLabeled constructs the equivalent unlabeled graph.
-func (g LabeledAdjacencyList) Unlabeled() AdjacencyList {
-	a := make(AdjacencyList, len(g))
-	for n, nbs := range g {
-		to := make([]int, len(nbs))
-		for i, nb := range nbs {
-			to[i] = nb.To
-		}
-		a[n] = to
-	}
-	return a
-}
 
 // FloydWarshall finds all pairs shortest distances for a simple weighted
 // graph without negative cycles.
@@ -176,6 +124,10 @@ func solveFW(d [][]float64) {
 //
 // Returns true when all non-loop arcs are paired in reciprocal pairs with
 // matching labels.  Otherwise returns false and an example unpaired arc.
+//
+// Note the requirement that reciprocal pairs have matching labels is
+// an additional test not present in the otherwise equivalent unlabled version
+// of IsUndirected.
 func (g LabeledAdjacencyList) IsUndirected() (u bool, from int, to Half) {
 	unpaired := make(LabeledAdjacencyList, len(g))
 	for fr, to := range g {
@@ -206,6 +158,18 @@ func (g LabeledAdjacencyList) IsUndirected() (u bool, from int, to Half) {
 	return true, -1, to
 }
 
+// NegativeArc returns true if the receiver graph contains a negative arc.
+func (g LabeledAdjacencyList) NegativeArc(w WeightFunc) bool {
+	for _, nbs := range g {
+		for _, nb := range nbs {
+			if w(nb.Label) < 0 {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // Simple checks for loops and parallel arcs.
 //
 // A graph is "simple" if it has no loops or parallel arcs.
@@ -213,6 +177,8 @@ func (g LabeledAdjacencyList) IsUndirected() (u bool, from int, to Half) {
 // Simple returns true, -1 for simple graphs.  If a loop or parallel arc is
 // found, simple returns false and and a node that represents a counterexample
 // to the graph being simple.
+//
+// See also the eqivalent unlabeled Simple.
 func (g LabeledAdjacencyList) Simple() (s bool, n int) {
 	var t []int
 	for n, nbs := range g {
@@ -236,12 +202,18 @@ func (g LabeledAdjacencyList) Simple() (s bool, n int) {
 	return true, -1
 }
 
+// LabeledEdge is used as a function return type.
 type LabeledEdge struct {
 	N1, N2 int
 	Label  int
 }
 
 // TarjanBiconnectedComponents, for undirected simple graphs.
+//
+// A list of components is returned, with each component represented as an
+// edge list.
+//
+// See also the eqivalent unlabeled TarjanBiconnectedComponents.
 func (g LabeledAdjacencyList) TarjanBiconnectedComponents() (components [][]LabeledEdge) {
 	// Implemented closely to pseudocode in "Depth-first search and linear
 	// graph algorithms", Robert Tarjan, SIAM J. Comput. Vol. 1, No. 2,
@@ -250,6 +222,8 @@ func (g LabeledAdjacencyList) TarjanBiconnectedComponents() (components [][]Labe
 	// Note Tarjan's "adjacency structure" is graph.AdjacencyList,
 	// His "adjacency list" is an element of a graph.AdjacencyList, also
 	// termed a "to-list", "neighbor list", or "child list."
+	//
+	// Nearly identical code in undir.go.
 	number := make([]int, len(g))
 	lowpt := make([]int, len(g))
 	var stack []LabeledEdge
@@ -295,7 +269,25 @@ func (g LabeledAdjacencyList) TarjanBiconnectedComponents() (components [][]Labe
 	return
 }
 
-// Undirected returns copy of g augmented as needed to make it undirected.
+// Transpose, for directed graphs, constructs a new adjacency list that is
+// the transpose of g.
+//
+// For every arc from->to of g, the result will have an arc to->from.
+// Transpose also counts arcs as it traverses and returns m the number of arcs
+// in g (equal to the number of arcs in the result.)
+func (g LabeledAdjacencyList) Transpose() (t LabeledAdjacencyList, m int) {
+	t = make(LabeledAdjacencyList, len(g))
+	for n, nbs := range g {
+		for _, nb := range nbs {
+			t[nb.To] = append(t[nb.To], Half{To: n, Label: nb.Label})
+			m++
+		}
+	}
+	return
+}
+
+// Undirected returns copy of g augmented as needed to make it undirected,
+// with reciprocal arcs having matching labels.
 func (g LabeledAdjacencyList) UndirectedCopy() LabeledAdjacencyList {
 	c, _ := g.Copy()                         // start with a copy
 	rw := make(LabeledAdjacencyList, len(g)) // "reciprocals wanted"
@@ -303,7 +295,7 @@ func (g LabeledAdjacencyList) UndirectedCopy() LabeledAdjacencyList {
 	arc: // for each arc in g
 		for _, to := range to {
 			if to.To == fr {
-				continue // loop
+				continue // arc is a loop
 			}
 			// search wanted arcs
 			wf := rw[fr]
@@ -324,4 +316,37 @@ func (g LabeledAdjacencyList) UndirectedCopy() LabeledAdjacencyList {
 		c[fr] = append(c[fr], to...)
 	}
 	return c
+}
+
+// Unlabeled constructs the unlabeled graph corresponding to g.
+func (g LabeledAdjacencyList) Unlabeled() AdjacencyList {
+	a := make(AdjacencyList, len(g))
+	for n, nbs := range g {
+		to := make([]int, len(nbs))
+		for i, nb := range nbs {
+			to[i] = nb.To
+		}
+		a[n] = to
+	}
+	return a
+}
+
+// UnlabeledTranspose, for directed graphs, constructs a new adjacency list
+// that is the unlabeled transpose of g.
+//
+// For every arc from->to of g, the result will have an arc to->from.
+// Transpose also counts arcs as it traverses and returns m the number of arcs
+// in g (equal to the number of arcs in the result.)
+//
+// It is equivalent to g.Unlabeled().Transpose() but constructs the result
+// directly.
+func (g LabeledAdjacencyList) UnlabeledTranspose() (t AdjacencyList, m int) {
+	t = make(AdjacencyList, len(g))
+	for n, nbs := range g {
+		for _, nb := range nbs {
+			t[nb.To] = append(t[nb.To], n)
+			m++
+		}
+	}
+	return
 }

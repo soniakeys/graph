@@ -19,32 +19,23 @@ func ExamplePrim_Span() {
 	//   |      \
 	//  (1)-----(0)
 	//       3
-	g := graph.LabeledAdjacencyList{
-		0: {{1, 3}, {2, 5}},
-		1: {{0, 3}, {2, 4}},
-		2: {{0, 5}, {1, 4}},
-		3: {{4, 2}},
-		4: {{3, 2}},
-	}
+	g := &graph.LabeledAdjacencyList{}
+	g.AddEdge(graph.Edge{0, 1}, 3)
+	g.AddEdge(graph.Edge{1, 2}, 4)
+	g.AddEdge(graph.Edge{2, 0}, 5)
+	g.AddEdge(graph.Edge{3, 4}, 2)
 	w := func(arcLabel int) float64 { return float64(arcLabel) }
 
-	// construct unweighted equivalent for some demonstrations
-	ul := g.Unlabeled()
-
-	// demonstration 1:  show that the graph is undirected
-	ud, _, _ := ul.IsUndirected()
-	fmt.Println("Undirected:", ud)
-
-	// demonstration 2:  show connected components
-	reps, orders := ul.ConnectedComponentReps()
+	// get connected components
+	reps, orders := g.ConnectedComponentReps()
 	fmt.Println("Connected components:")
 	fmt.Println("representative node - order (number of nodes) in component")
 	for i, r := range reps {
 		fmt.Printf("%d %21d\n", r, orders[i])
 	}
 
-	// construct prim object on the original weighted graph
-	p := graph.NewPrim(g, w)
+	// construct prim object
+	p := graph.NewPrim(*g, w)
 
 	// construct spanning tree for each component
 	for _, r := range reps {
@@ -58,7 +49,6 @@ func ExamplePrim_Span() {
 		fmt.Printf("%d %8d\n", n, pe.From)
 	}
 	// Output:
-	// Undirected: true
 	// Connected components:
 	// representative node - order (number of nodes) in component
 	// 0                     3

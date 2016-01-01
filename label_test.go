@@ -88,3 +88,103 @@ func ExampleLabeledAdjacencyList_FloydWarshall_negative() {
 	// [ 4  4  0  2]
 	// [ 2  5  1  0]
 }
+
+func ExampleLabeledAdjacencyList_Transpose() {
+	// arcs directed down:
+	//             2
+	//  (label: 7)/ \(9)
+	//           0   1
+	g := graph.LabeledAdjacencyList{
+		2: {{To: 0, Label: 7}, {To: 1, Label: 9}},
+	}
+	tr, m := g.Transpose()
+	for fr, to := range tr {
+		fmt.Printf("%d %#v\n", fr, to)
+	}
+	fmt.Println(m, "arcs")
+	// Output:
+	// 0 []graph.Half{graph.Half{To:2, Label:7}}
+	// 1 []graph.Half{graph.Half{To:2, Label:9}}
+	// 2 []graph.Half(nil)
+	// 2 arcs
+}
+
+func ExampleLabeledAdjacencyList_UndirectedCopy() {
+	// arcs directed down:
+	//             2
+	//  (label: 7)/ \(9)
+	//           0   1
+	g := graph.LabeledAdjacencyList{
+		2: {{To: 0, Label: 7}, {To: 1, Label: 9}},
+	}
+	for fr, to := range g.UndirectedCopy() {
+		fmt.Printf("%d %#v\n", fr, to)
+	}
+	// Output:
+	// 0 []graph.Half{graph.Half{To:2, Label:7}}
+	// 1 []graph.Half{graph.Half{To:2, Label:9}}
+	// 2 []graph.Half{graph.Half{To:0, Label:7}, graph.Half{To:1, Label:9}}
+}
+
+func ExampleLabeledAdjacencyList_Unlabeled() {
+	// arcs directed down:
+	//             2
+	//  (label: 7)/ \(9)
+	//           0   1
+	g := graph.LabeledAdjacencyList{
+		2: {{To: 0, Label: 7}, {To: 1, Label: 9}},
+	}
+	fmt.Println("Input:")
+	for fr, to := range g {
+		fmt.Printf("%d, %#v\n", fr, to)
+	}
+	fmt.Println("\nUnlabeled:")
+	for fr, to := range g.Unlabeled() {
+		fmt.Printf("%d, %#v\n", fr, to)
+	}
+	// Output:
+	// Input:
+	// 0, []graph.Half(nil)
+	// 1, []graph.Half(nil)
+	// 2, []graph.Half{graph.Half{To:0, Label:7}, graph.Half{To:1, Label:9}}
+	//
+	// Unlabeled:
+	// 0, []int{}
+	// 1, []int{}
+	// 2, []int{0, 1}
+}
+
+func ExampleLabeledAdjacencyList_UnlabeledTranspose() {
+	// arcs directed down:
+	//             2
+	//  (label: 7)/ \(9)
+	//           0   1
+	g := graph.LabeledAdjacencyList{
+		2: {{To: 0, Label: 7}, {To: 1, Label: 9}},
+	}
+
+	fmt.Println("two steps:")
+	ut, m := g.Unlabeled().Transpose()
+	for fr, to := range ut {
+		fmt.Println(fr, to)
+	}
+	fmt.Println(m, "arcs")
+
+	fmt.Println("direct:")
+	ut, m = g.UnlabeledTranspose()
+	for fr, to := range ut {
+		fmt.Println(fr, to)
+	}
+	fmt.Println(m, "arcs")
+	// Output:
+	// two steps:
+	// 0 [2]
+	// 1 [2]
+	// 2 []
+	// 2 arcs
+	// direct:
+	// 0 [2]
+	// 1 [2]
+	// 2 []
+	// 2 arcs
+}

@@ -9,8 +9,6 @@
 package graph
 
 // Edge is an undirected edge between nodes N1 and N2.
-//
-// It is used as a return type from TarjanBiconnectedComponents.
 type Edge struct{ N1, N2 int }
 
 // AddEdge adds an edge to a graph.
