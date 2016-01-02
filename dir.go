@@ -13,73 +13,38 @@ import (
 	"math/big"
 )
 
-// Transpose, for directed graphs, constructs a new adjacency list that is
-// the transpose of g.
+// DAGMaxLenPath finds a maximum length path in a directed acyclic graph.
 //
-// For every arc from->to of g, the result will have an arc to->from.
-// Transpose also counts arcs as it traverses and returns m the number of arcs
-// in g (equal to the number of arcs in the result.)
-func (g AdjacencyList) Transpose() (t AdjacencyList, m int) {
-	t = make(AdjacencyList, len(g))
-	for n, nbs := range g {
-		for _, nb := range nbs {
-			t[nb] = append(t[nb], n)
-			m++
+// Argument order must be a topological ordering of g.
+func (g AdjacencyList) DAGMaxLenPath(order []int) (path []int) {
+	// dynamic programming. visit nodes in reverse order. for each, compute
+	// longest path as one plus longest of 'to' nodes.
+	// Visits each arc once.  O(m).
+	//
+	// Similar code in label.go
+	var n int
+	mlp := make([][]int, len(g)) // index by node number
+	for i := len(order) - 1; i >= 0; i-- {
+		fr := order[i] // node number
+		to := g[fr]
+		if len(to) == 0 {
+			continue
+		}
+		mt := to[0]
+		for _, to := range to[1:] {
+			if len(mlp[to]) > len(mlp[mt]) {
+				mt = to
+			}
+		}
+		p := append([]int{mt}, mlp[mt]...)
+		mlp[fr] = p
+		if len(p) > len(path) {
+			n = fr
+			path = p
 		}
 	}
-	return
+	return append([]int{n}, path...)
 }
-
-// StronglyConnectedComponents identifies strongly connected components
-// in a directed graph.
-//
-// Algorithm by David J. Pearce, from "An Improved Algorithm for Finding the
-// Strongly Connected Components of a Directed Graph".  It is algorithm 3,
-// PEA_FIND_SCC2 in
-// http://homepages.mcs.vuw.ac.nz/~djp/files/P05.pdf, accessed 22 Feb 2015.
-//
-// Returned is a list of components, each component is a list of nodes.
-/*
-func (g AdjacencyList) StronglyConnectedComponents() []int {
-	rindex := make([]int, len(g))
-	S := []int{}
-	index := 1
-	c := len(g) - 1
-	visit := func(v int) {
-		root := true
-		rindex[v] = index
-		index++
-		for _, w := range g[v] {
-			if rindex[w] == 0 {
-				visit(w)
-			}
-			if rindex[w] < rindex[v] {
-				rindex[v] = rindex[w]
-				root = false
-			}
-		}
-		if root {
-			index--
-			for top := len(S) - 1; top >= 0 && rindex[v] <= rindex[top]; top-- {
-				w = rindex[top]
-				S = S[:top]
-				rindex[w] = c
-				index--
-			}
-			rindex[v] = c
-			c--
-		} else {
-			S = append(S, v)
-		}
-	}
-	for v := range g {
-		if rindex[v] == 0 {
-			visit(v)
-		}
-	}
-	return rindex
-}
-*/
 
 // EulerianCycle finds an Eulerian cycle in a directed multigraph.
 //
@@ -345,4 +310,72 @@ func (g AdjacencyList) MaximalNonBranchingPaths() (p [][]int) {
 		p = append(p, n)
 	}
 	return p
+}
+
+// StronglyConnectedComponents identifies strongly connected components
+// in a directed graph.
+//
+// Algorithm by David J. Pearce, from "An Improved Algorithm for Finding the
+// Strongly Connected Components of a Directed Graph".  It is algorithm 3,
+// PEA_FIND_SCC2 in
+// http://homepages.mcs.vuw.ac.nz/~djp/files/P05.pdf, accessed 22 Feb 2015.
+//
+// Returned is a list of components, each component is a list of nodes.
+/*
+func (g AdjacencyList) StronglyConnectedComponents() []int {
+	rindex := make([]int, len(g))
+	S := []int{}
+	index := 1
+	c := len(g) - 1
+	visit := func(v int) {
+		root := true
+		rindex[v] = index
+		index++
+		for _, w := range g[v] {
+			if rindex[w] == 0 {
+				visit(w)
+			}
+			if rindex[w] < rindex[v] {
+				rindex[v] = rindex[w]
+				root = false
+			}
+		}
+		if root {
+			index--
+			for top := len(S) - 1; top >= 0 && rindex[v] <= rindex[top]; top-- {
+				w = rindex[top]
+				S = S[:top]
+				rindex[w] = c
+				index--
+			}
+			rindex[v] = c
+			c--
+		} else {
+			S = append(S, v)
+		}
+	}
+	for v := range g {
+		if rindex[v] == 0 {
+			visit(v)
+		}
+	}
+	return rindex
+}
+*/
+
+// Transpose, for directed graphs, constructs a new adjacency list that is
+// the transpose of g.
+//
+// For every arc from->to of g, the result will have an arc to->from.
+// Transpose also counts arcs as it traverses and returns m the number of arcs
+// in g (equal to the number of arcs in the result.)
+func (g AdjacencyList) Transpose() (t AdjacencyList, m int) {
+	t = make(AdjacencyList, len(g))
+	for n, nbs := range g {
+		for _, nb := range nbs {
+			t[nb] = append(t[nb], n)
+			m++
+		}
+	}
+	return
 }

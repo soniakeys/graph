@@ -28,6 +28,14 @@ type FromHalf struct {
 	Label int
 }
 
+// WeightFunc returns a weight for a given label.
+//
+// WeightFunc is a parameter type for various search functions.  The intent
+// is to return a weight corresponding to an arc label.  The name "weight"
+// is an abstract term.  An arc "weight" will typically have some application
+// specific meaning other than physical weight.
+type WeightFunc func(label int) (weight float64)
+
 // AddLabeledEdge adds an edge to a labeled graph.
 //
 // It can be useful for constructing undirected graphs.
@@ -63,13 +71,42 @@ func (p *LabeledAdjacencyList) AddEdge(e Edge, label int) {
 	}
 }
 
-// WeightFunc returns a weight for a given label.
+// DAGMaxLenPath finds a maximum length path in a directed acyclic graph.
 //
-// WeightFunc is a parameter type for various search functions.  The intent
-// is to return a weight corresponding to an arc label.  The name "weight"
-// is an abstract term.  An arc "weight" will typically have some application
-// specific meaning other than physical weight.
-type WeightFunc func(label int) (weight float64)
+// Length here means number of nodes or arcs, not a sum of arc weights.
+//
+// Argument order must be a topological ordering of g.
+//
+// Returned is a node beginning a maximum length path, and a path of arcs
+// starting from that node.
+func (g LabeledAdjacencyList) DAGMaxLenPath(order []int) (n int, path []Half) {
+	// dynamic programming. visit nodes in reverse order. for each, compute
+	// longest path as one plus longest of 'to' nodes.
+	// Visits each arc once.  Time complexity O(m).
+	//
+	// Similar code in dir.go.
+	mlp := make([][]Half, len(g)) // index by node number
+	for i := len(order) - 1; i >= 0; i-- {
+		fr := order[i] // node number
+		to := g[fr]
+		if len(to) == 0 {
+			continue
+		}
+		mt := to[0]
+		for _, to := range to[1:] {
+			if len(mlp[to.To]) > len(mlp[mt.To]) {
+				mt = to
+			}
+		}
+		p := append([]Half{mt}, mlp[mt.To]...)
+		mlp[fr] = p
+		if len(p) > len(path) {
+			n = fr
+			path = p
+		}
+	}
+	return
+}
 
 // FloydWarshall finds all pairs shortest distances for a simple weighted
 // graph without negative cycles.

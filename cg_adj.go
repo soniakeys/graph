@@ -13,6 +13,8 @@ import "math/big"
 //
 // Note that for an undirected graph witout loops, the number of edges --
 // the traditional meaning of graph size -- will be m/2.
+//
+// There are equivalent labeled and unlabeled versions of this method.
 func (g AdjacencyList) ArcSize() (m int) {
 	for _, to := range g {
 		m += len(to)
@@ -21,6 +23,8 @@ func (g AdjacencyList) ArcSize() (m int) {
 }
 
 // Balanced returns true if for every node in g, in-degree equals out-degree.
+//
+// There are equivalent labeled and unlabeled versions of this method.
 func (g AdjacencyList) Balanced() bool {
 	for n, in := range g.InDegree() {
 		if in != len(g[n]) {
@@ -38,6 +42,8 @@ func (g AdjacencyList) Balanced() bool {
 // If the component is bipartite, Bipartite returns true and a two-coloring
 // of the component.  Each color set is returned as a bitmap.  If the component
 // is not bipartite, Bipartite returns false and a representative odd cycle.
+//
+// There are equivalent labeled and unlabeled versions of this method.
 func (g AdjacencyList) Bipartite(n int) (b bool, c1, c2 *big.Int, oc []int) {
 	c1 = &big.Int{}
 	c2 = &big.Int{}
@@ -81,6 +87,8 @@ func (g AdjacencyList) Bipartite(n int) (b bool, c1, c2 *big.Int, oc []int) {
 //
 // BoundsOk returns true when no arcs point outside the bounds of g.
 // Otherwise it returns false and an example arc that points outside of g.
+//
+// There are equivalent labeled and unlabeled versions of this method.
 func (g AdjacencyList) BoundsOk() (ok bool, fr int, to int) {
 	for fr, to := range g {
 		for _, to := range to {
@@ -98,6 +106,8 @@ func (g AdjacencyList) BoundsOk() (ok bool, fr int, to int) {
 // Each call of the returned function returns the order and bits of a
 // connected component.  The returned function returns zeros after returning
 // all connected components.
+//
+// There are equivalent labeled and unlabeled versions of this method.
 //
 // See also ConnectedComponentReps, which has lighter weight return values.
 func (g AdjacencyList) ConnectedComponentBits() func() (order int, bits big.Int) {
@@ -136,6 +146,8 @@ func (g AdjacencyList) ConnectedComponentBits() func() (order int, bits big.Int)
 // Each call of the returned function returns the order and a member list of a
 // connected component.  The returned function returns zeros after returning
 // all connected components.
+//
+// There are equivalent labeled and unlabeled versions of this method.
 //
 // See also ConnectedComponentReps, which has lighter weight return values.
 func (g AdjacencyList) ConnectedComponentLists() func() []int {
@@ -176,6 +188,8 @@ func (g AdjacencyList) ConnectedComponentLists() func() []int {
 // From a representative node, other nodes in the component can be reached
 // by depth first traversal for example.
 //
+// There are equivalent labeled and unlabeled versions of this method.
+//
 // See also ConnectedComponentBits and ConnectedComponentLists which can
 // collect component members in a single traversal.
 func (g AdjacencyList) ConnectedComponentReps() (reps, orders []int) {
@@ -205,6 +219,8 @@ func (g AdjacencyList) ConnectedComponentReps() (reps, orders []int) {
 
 // Copy makes a copy of g, copying the underlying slices.
 // Copy also computes the arc size m, the number of arcs.
+//
+// There are equivalent labeled and unlabeled versions of this method.
 func (g AdjacencyList) Copy() (c AdjacencyList, m int) {
 	c = make(AdjacencyList, len(g))
 	for n, to := range g {
@@ -218,6 +234,8 @@ func (g AdjacencyList) Copy() (c AdjacencyList, m int) {
 //
 // Cyclic returns true if g contains at least one cycle.
 // Cyclic returns false if g is acyclic.
+//
+// There are equivalent labeled and unlabeled versions of this method.
 func (g AdjacencyList) Cyclic() bool {
 	var c bool
 	var temp, perm big.Int
@@ -251,6 +269,8 @@ func (g AdjacencyList) Cyclic() bool {
 	return c
 }
 
+//
+// There are equivalent labeled and unlabeled versions of this method.
 func (g AdjacencyList) Degeneracy() (k int, ord []int, cores []int) {
 	ord = make([]int, len(g))
 	var L big.Int
@@ -331,6 +351,8 @@ func (g AdjacencyList) Degeneracy() (k int, ord []int, cores []int) {
 //
 // It makes no sense for both bm and v to be nil.  In this case DepthFirst
 // returns false immediately.
+//
+// There are equivalent labeled and unlabeled versions of this method.
 func (g AdjacencyList) DepthFirst(start int, bm *big.Int, v Visitor) (ok bool) {
 	if bm == nil {
 		if v == nil {
@@ -360,6 +382,8 @@ func (g AdjacencyList) DepthFirst(start int, bm *big.Int, v Visitor) (ok bool) {
 // FromList transposes a graph into a FromList, typically to encode a tree.
 //
 // Results may not be meaningful for non-trees.
+//
+// There are equivalent labeled and unlabeled versions of this method.
 func (g AdjacencyList) FromList() FromList {
 	// init paths
 	paths := make([]PathEnd, len(g))
@@ -404,6 +428,8 @@ func (g AdjacencyList) FromList() FromList {
 }
 
 // InDegree computes the in-degree of each node in g
+//
+// There are equivalent labeled and unlabeled versions of this method.
 func (g AdjacencyList) InDegree() []int {
 	ind := make([]int, len(g))
 	for _, nbs := range g {
@@ -418,6 +444,8 @@ func (g AdjacencyList) InDegree() []int {
 //
 // IsTreeDirected returns true if the subgraph reachable from
 // root is a tree.  It does not validate that the entire graph is a tree.
+//
+// There are equivalent labeled and unlabeled versions of this method.
 func (g AdjacencyList) IsTreeDirected(root int) bool {
 	var v big.Int
 	var df func(int) bool
@@ -441,6 +469,8 @@ func (g AdjacencyList) IsTreeDirected(root int) bool {
 // IsTreeUndirected returns true if the connected component
 // containing argument root is a tree.  It does not validate
 // that the entire graph is a tree.
+//
+// There are equivalent labeled and unlabeled versions of this method.
 func (g AdjacencyList) IsTreeUndirected(root int) bool {
 	var v big.Int
 	var df func(int, int) bool
@@ -469,12 +499,16 @@ func (g AdjacencyList) IsTreeUndirected(root int) bool {
 // Tarjan's algorithm.
 //
 // Returned is a list of components, each component is a list of nodes.
+//
+// There are equivalent labeled and unlabeled versions of this method.
 func (g AdjacencyList) Tarjan() (scc [][]int) {
 	// See "Depth-first search and linear graph algorithms", Robert Tarjan,
 	// SIAM J. Comput. Vol. 1, No. 2, June 1972.
 	//
 	// Implementation here from Wikipedia pseudocode,
 	// http://en.wikipedia.org/w/index.php?title=Tarjan%27s_strongly_connected_components_algorithm&direction=prev&oldid=647184742
+	//
+	// There are equivalent labeled and unlabeled versions of this method.
 	var indexed, stacked big.Int
 	index := make([]int, len(g))
 	lowlink := make([]int, len(g))
@@ -528,6 +562,8 @@ func (g AdjacencyList) Tarjan() (scc [][]int) {
 // For an acyclic graph, return value order is a permutation of node numbers
 // in topologically sorted order and cycle will be nil.  If the graph is found
 // to be cyclic, order will be nil and cycle will be the path of a found cycle.
+//
+// There are equivalent labeled and unlabeled versions of this method.
 func (g AdjacencyList) Topological() (order, cycle []int) {
 	order = make([]int, len(g))
 	i := len(order)
@@ -587,6 +623,8 @@ func (g AdjacencyList) Topological() (order, cycle []int) {
 //
 // This function is based on the algorithm by Arthur Kahn and requires the
 // transpose of g be passed as the argument.
+//
+// There are equivalent labeled and unlabeled versions of this method.
 func (g AdjacencyList) TopologicalKahn(tr AdjacencyList) (order, cycle []int) {
 	// code follows Wikipedia pseudocode.
 	var L, S []int

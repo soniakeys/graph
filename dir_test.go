@@ -25,6 +25,24 @@ func ExampleAdjacencyList_Cyclic() {
 	// true
 }
 
+func ExampleAdjacencyList_DAGMaxLenPath() {
+	// arcs directed right:
+	//      /---\
+	//  3--4  1--0--2
+	g := graph.AdjacencyList{
+		3: {4},
+		4: {0},
+		1: {0},
+		0: {2},
+	}
+	o, _ := g.Topological()
+	fmt.Println(o)
+	fmt.Println(g.DAGMaxLenPath(o))
+	// Output:
+	// [3 4 1 0 2]
+	// [3 4 0 2]
+}
+
 func ExampleAdjacencyList_IsTreeDirected() {
 	// Example graph
 	// Arcs point down unless otherwise indicated

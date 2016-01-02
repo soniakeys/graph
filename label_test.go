@@ -9,19 +9,31 @@ import (
 	"github.com/soniakeys/graph"
 )
 
-func ExampleLabeledAdjacencyList_NegativeArc() {
+func ExampleLabledAdjacencyList_DAGMaxLenPath() {
+	// arcs directed right:
+	//           (M)
+	//    (W)  /------\
+	//  3-----4  1-----0-----2
+	//             (S)   (P)
 	g := graph.LabeledAdjacencyList{
-		2: {{To: 0, Label: 0}, {To: 1, Label: 1}},
+		3: {{To: 4, Label: 'W'}},
+		4: {{To: 0, Label: 'M'}},
+		1: {{To: 0, Label: 'S'}},
+		0: {{To: 2, Label: 'P'}},
 	}
-	arcWeights := []float64{0, .5}
-	w := func(label int) float64 { return arcWeights[label] }
-	fmt.Println(g.NegativeArc(w))
-	g[0] = []graph.Half{{To: 1, Label: len(arcWeights)}}
-	arcWeights = append(arcWeights, -2)
-	fmt.Println(g.NegativeArc(w))
+	o, _ := g.Topological()
+	fmt.Println("order:", o)
+	n, p := g.DAGMaxLenPath(o)
+	fmt.Printf("path from %d: %v\n", n, p)
+	fmt.Print("label path: ")
+	for _, h := range p {
+		fmt.Print(string(h.Label))
+	}
+	fmt.Println()
 	// Output:
-	// false
-	// true
+	// order: [3 4 1 0 2]
+	// path from 3: [{4 87} {0 77} {2 80}]
+	// label path: WMP
 }
 
 func ExampleLabeledAdjacencyList_BoundsOk() {
@@ -87,6 +99,21 @@ func ExampleLabeledAdjacencyList_FloydWarshall_negative() {
 	// [ 0  0 -1 -2]
 	// [ 4  4  0  2]
 	// [ 2  5  1  0]
+}
+
+func ExampleLabeledAdjacencyList_NegativeArc() {
+	g := graph.LabeledAdjacencyList{
+		2: {{To: 0, Label: 0}, {To: 1, Label: 1}},
+	}
+	arcWeights := []float64{0, .5}
+	w := func(label int) float64 { return arcWeights[label] }
+	fmt.Println(g.NegativeArc(w))
+	g[0] = []graph.Half{{To: 1, Label: len(arcWeights)}}
+	arcWeights = append(arcWeights, -2)
+	fmt.Println(g.NegativeArc(w))
+	// Output:
+	// false
+	// true
 }
 
 func ExampleLabeledAdjacencyList_Transpose() {
