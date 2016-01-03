@@ -401,12 +401,12 @@ func ExampleHeuristic_Monotonic() {
 }
 
 func ExampleBellmanFord() {
-	//              /--------3------->4<-------9
-	//              |        ^   (1)  |   (7)  |
+	//              /--------3        4<-------9
+	//              |        ^        |   (6)  ^
 	//              |(1)     |        |        |
 	//              |        |(-2)    |(3)     |
 	//    (wt: 10)  v   (2)  |        v        |
-	//  1---------->2------->6<-------5<-------/
+	//  1---------->2------->6<-------5--------/
 	//  |           ^        ^   (-1)    (-10)
 	//  |(8)        |        |
 	//  |           |(-4)    |(-1)
@@ -415,19 +415,23 @@ func ExampleBellmanFord() {
 	g := graph.LabeledAdjacencyList{
 		1: {{2, 10}, {8, 8}},
 		2: {{6, 2}},
-		3: {{2, 1}, {4, 1}},
+		3: {{2, 1}},
 		4: {{5, 3}},
-		5: {{6, -1}},
+		5: {{6, -1}, {9, -10}},
 		6: {{3, -2}},
 		7: {{6, -1}, {2, -4}},
 		8: {{7, 1}},
-		9: {{5, -10}, {4, 7}},
+		9: {{4, 6}},
 	}
 	w := func(label int) float64 { return float64(label) }
 	b := graph.NewBellmanFord(g, w)
+	// graph contains negative cycle somewhere
+	fmt.Println("negative cycle:", b.NegativeCycle())
+
+	// but negative cycle not reached starting at node 1
 	start := 1
 	fmt.Println("start:", start)
-	if !b.Run(start) {
+	if !b.Start(start) {
 		fmt.Println("negative cycle")
 		return
 	}
@@ -438,6 +442,8 @@ func ExampleBellmanFord() {
 		fmt.Printf("%d       %d   %4.0f   %d\n",
 			n, e.Len, b.Dist[n], b.Tree.PathTo(n, p))
 	}
+	// Output:
+	// negative cycle: true
 	// start: 1
 	// end   path  path
 	// node  len   dist   path
@@ -445,8 +451,8 @@ func ExampleBellmanFord() {
 	// 1       1      0   [1]
 	// 2       4      5   [1 8 7 2]
 	// 3       6      5   [1 8 7 2 6 3]
-	// 4       7      6   [1 8 7 2 6 3 4]
-	// 5       8      9   [1 8 7 2 6 3 4 5]
+	// 4       0   +Inf   []
+	// 5       0   +Inf   []
 	// 6       5      7   [1 8 7 2 6]
 	// 7       3      9   [1 8 7]
 	// 8       2      8   [1 8]

@@ -847,17 +847,20 @@ func (b *BellmanFord) Reset() {
 	b.Tree.reset()
 }
 
-// Run runs the BellmanFord algorithm, which finds shortest paths from start
+// Start runs the BellmanFord algorithm to finds shortest paths from start
 // to all nodes reachable from start.
 //
 // The algorithm allows negative edge weights but not negative cycles.
-// Run returns true if the algorithm completes successfully.  In this case
-// b.Result will be populated with a FromList encoding shortest paths
-// found.
+// Start returns true if the algorithm completes successfully.  In this case
+// FromList b.Tree will encode the shortest paths found.
 //
-// Run returns false in the case that it encounters a negative cycle.
-// In this case values in b.Result are meaningless.
-func (b *BellmanFord) Run(start int) (ok bool) {
+// Start returns false in the case that it encounters a negative cycle
+// reachable from start.  In this case values in b.Result are meaningless.
+//
+// Negative cycles are only detected when reachable from start.  A negative
+// cycle not reachable from start will not prevent the algorithm from finding
+// shortest paths reachable from start.
+func (b *BellmanFord) Start(start int) (ok bool) {
 	inf := math.Inf(1)
 	for i := range b.Dist {
 		b.Dist[i] = inf
@@ -894,4 +897,40 @@ func (b *BellmanFord) Run(start int) (ok bool) {
 		}
 	}
 	return true
+}
+
+// NegativeCycle returns true if the graph contains any negative cycle.
+//
+// Path information is not computed.
+//
+// Note the sense of the returned value is opposite that of BellmanFord.Start().
+func (b *BellmanFord) NegativeCycle() bool {
+	for i := range b.Dist {
+		b.Dist[i] = 0
+	}
+	for _ = range b.Graph[1:] {
+		imp := false
+		for from, nbs := range b.Graph {
+			d1 := b.Dist[from]
+			for _, nb := range nbs {
+				d2 := d1 + b.Weight(nb.Label)
+				if d2 < b.Dist[nb.To] {
+					b.Dist[nb.To] = d2
+					imp = true
+				}
+			}
+		}
+		if !imp {
+			break
+		}
+	}
+	for from, nbs := range b.Graph {
+		d1 := b.Dist[from]
+		for _, nb := range nbs {
+			if d1+b.Weight(nb.Label) < b.Dist[nb.To] {
+				return true // negative cycle
+			}
+		}
+	}
+	return false
 }

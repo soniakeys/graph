@@ -181,7 +181,7 @@ func testSSSP(tc testCase, t *testing.T) {
 	t.Log("tc.start:", tc.start)
 	d.AllPaths(tc.start)
 	b := graph.NewBellmanFord(tc.l, w)
-	b.Run(tc.start)
+	b.Start(tc.start)
 	// result objects should be identical
 	dr := d.Tree
 	br := b.Tree
