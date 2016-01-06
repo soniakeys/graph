@@ -95,27 +95,50 @@ func ExampleAdjacencyList_TopologicalKahn() {
 	// [] [1 2 3]
 }
 
-func ExampleAdjacencyList_Tarjan() {
+func ExampleAdjacencyList_TarjanCondensation() {
+	// input:          condensation:
+	// /---0---\        /---0
+	// |   |\--/        |   |
+	// |   v            |   v
+	// |   5<=>4---\    |   1--\
+	// |   |   |   |    |   |  |
+	// v   v   |   |    |   v  |
+	// 7<=>6   |   |    \-->2  |
+	//     |   v   v        |  v
+	//     \-->3<--2        \->3
+	//         |   ^
+	//         |   |
+	//         \-->1
 	g := graph.AdjacencyList{
-		0: {1},
-		1: {4, 2, 5},
-		2: {3, 6},
-		3: {2, 7},
-		4: {5, 0},
-		5: {6},
-		6: {5},
-		7: {3, 6},
+		0: {0, 5, 7},
+		5: {4, 6},
+		4: {5, 2, 3},
+		7: {6},
+		6: {7, 3},
+		3: {1},
+		1: {2},
+		2: {3},
 	}
-	scc := g.Tarjan()
-	for _, c := range scc {
-		fmt.Println(c)
+	scc, cd := g.TarjanCondensation()
+	fmt.Println(len(scc), "components:")
+	for cn, c := range scc {
+		fmt.Println(cn, c)
 	}
-	fmt.Println(len(scc))
+	fmt.Println("condensation:")
+	for cn, to := range cd {
+		fmt.Println(cn, to)
+	}
 	// Output:
-	// [6 5]
-	// [7 3 2]
-	// [4 1 0]
-	// 3
+	// 4 components:
+	// 0 [0]
+	// 1 [4 5]
+	// 2 [7 6]
+	// 3 [1 3 2]
+	// condensation:
+	// 0 [1 2]
+	// 1 [3 2]
+	// 2 [3]
+	// 3 []
 }
 
 func ExampleAdjacencyList_Transpose() {

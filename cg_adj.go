@@ -499,8 +499,12 @@ func (g AdjacencyList) IsTreeUndirected(root int) bool {
 // Tarjan's algorithm.
 //
 // Returned is a list of components, each component is a list of nodes.
+// A property of the algorithm is that components are ordered in reverse
+// topological order of the condensation.
 //
 // There are equivalent labeled and unlabeled versions of this method.
+//
+// See also TarjanForward and TarjanCondensation.
 func (g AdjacencyList) Tarjan() (scc [][]int) {
 	// See "Depth-first search and linear graph algorithms", Robert Tarjan,
 	// SIAM J. Comput. Vol. 1, No. 2, June 1972.
@@ -554,7 +558,52 @@ func (g AdjacencyList) Tarjan() (scc [][]int) {
 			sc(n)
 		}
 	}
-	return scc
+	return
+}
+
+// TarjanForward returns strongly connected components.
+//
+// It returns components in the reverse order of Tarjan, for situations
+// where a forward topological ordering is easier.
+func (g AdjacencyList) TarjanForward() (scc [][]int) {
+	scc = g.Tarjan()
+	last := len(scc) - 1
+	for i, ci := range scc[:len(scc)/2] {
+		scc[i], scc[last-i] = scc[last-i], ci
+	}
+	return
+}
+
+// TarjanCondensation returns strongly connected components and their
+// condensation graph.
+//
+// Components are ordered in a forward topological ordering.
+func (g AdjacencyList) TarjanCondensation() (scc [][]int, cd AdjacencyList) {
+	scc = g.TarjanForward()
+	cd = make(AdjacencyList, len(scc)) // return value
+	cond := make([]int, len(g))        // mapping from g node to cd node
+	for cn := len(scc) - 1; cn >= 0; cn-- {
+		c := scc[cn]
+		for _, n := range c {
+			cond[n] = cn // map g node to cd node
+		}
+		m := map[int]struct{}{} // for the children
+		for _, n := range c {
+			for _, to := range g[n] {
+				if ct := cond[to]; ct != cn {
+					m[cond[to]] = struct{}{}
+				}
+			}
+		}
+		tos := make([]int, len(m))
+		j := 0
+		for to := range m {
+			tos[j] = to
+			j++
+		}
+		cd[cn] = tos
+	}
+	return
 }
 
 // Topological, for directed acyclic graphs, computes a topological sort of g.
