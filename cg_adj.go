@@ -269,10 +269,14 @@ func (g AdjacencyList) Cyclic() bool {
 	return c
 }
 
+// Degeneracy computes k-degeneracy, vertex ordering and k-cores.
+//
+// See Wikipedia https://en.wikipedia.org/wiki/Degeneracy_(graph_theory)
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g AdjacencyList) Degeneracy() (k int, ord []int, cores []int) {
-	ord = make([]int, len(g))
+func (g AdjacencyList) Degeneracy() (k int, ordering []int, cores []int) {
+	// WP algorithm
+	ordering = make([]int, len(g))
 	var L big.Int
 	d := make([]int, len(g))
 	var D [][]int
@@ -303,7 +307,7 @@ func (g AdjacencyList) Degeneracy() (k int, ord []int, cores []int) {
 		last := len(Di) - 1
 		v := Di[last]
 		// Add v to ordering, remove from Di
-		ord[ox] = v
+		ordering[ox] = v
 		L.SetBit(&L, v, 1)
 		D[i] = Di[:last]
 		// move neighbors
@@ -327,7 +331,7 @@ func (g AdjacencyList) Degeneracy() (k int, ord []int, cores []int) {
 			D[dn] = append(D[dn], nb)
 		}
 	}
-	cores[k] = len(ord)
+	cores[k] = len(ordering)
 	return
 }
 
