@@ -169,6 +169,56 @@ func ExampleBreadthFirst2_AllPaths() {
 	// 6 [1 4 6]
 }
 
+func ExampleDAGPath_AllPaths() {
+	// arcs are directed right:
+	//   (11)
+	// 0------2         4
+	//                   \(11)
+	//      (11)    (10)  \   (30)   (10)
+	//    1-------3--------5-------7-------9
+	//                      \     /
+	//                   (10)\   /(20)
+	//                        \ /
+	//                         6------8
+	//                           (10)
+	g := graph.LabeledAdjacencyList{
+		0: {{To: 2, Label: 11}},
+		1: {{3, 11}},
+		3: {{5, 10}},
+		4: {{5, 11}},
+		5: {{6, 10}, {7, 30}},
+		6: {{7, 20}, {8, 10}},
+		7: {{9, 10}},
+		9: {},
+	}
+	o := []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+	d := graph.NewDAGPath(g, o, func(l int) float64 { return float64(l) })
+	reached := d.AllPaths(3)
+	fmt.Println("node  path dist  path len  leaf")
+	for n, pd := range d.Dist {
+		fmt.Printf("%d  %9.0f  %9d %7d\n",
+			n, pd, d.Tree.Paths[n].Len, d.Tree.Leaves.Bit(n))
+	}
+	fmt.Println()
+	fmt.Println("Nodes reached:       ", reached)
+	fmt.Println("Max path len:        ", d.Tree.MaxLen)
+	// Output:
+	// node  path dist  path len  leaf
+	// 0          0          0       0
+	// 1          0          0       0
+	// 2          0          0       0
+	// 3          0          1       0
+	// 4          0          0       0
+	// 5         10          2       0
+	// 6         20          3       0
+	// 7         40          3       0
+	// 8         30          4       1
+	// 9         50          4       1
+	//
+	// Nodes reached:        6
+	// Max path len:         4
+}
+
 func ExampleLabeledAdjacencyList_DijkstraPath() {
 	// arcs are directed right:
 	//          (wt: 11)

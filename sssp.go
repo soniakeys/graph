@@ -272,6 +272,95 @@ func (b *BreadthFirst2) Traverse(start int, v Visitor) int {
 	return nReached
 }
 
+// A DAGPath object allows shortest path searches on a directed acyclic graph.
+//
+// DAGPath methods find paths of shortest distance where distance is the
+// sum of arc weights.  Where multiple paths exist with the same distance,
+// DAGPath methods return a path with the minimum number of nodes.
+//
+// Construct with NewDAGPath.
+type DAGPath struct {
+	Graph    LabeledAdjacencyList // input graph
+	Ordering []int                // topological ordering
+	Weight   WeightFunc           // input weight function
+	Tree     FromList             // result paths
+	Dist     []float64            // in Tree, distances for result paths
+}
+
+// NewDAGPath creates a DAGPath object that allows shortest path searches.
+//
+// Argument g is the graph to be searched, and must be a directed acyclic
+// graph.  Argument o must be a topological ordering of g.
+//
+// The graph g will not be modified by any DAGPath methods.  NewDAGPath
+// initializes the DAGPath object for the length (number of nodes) of g.
+// If you add nodes to your graph, abandon any previously created DAGPath
+// object and call NewDAGPath again.
+//
+// Searches on a single DAGPath object can be run consecutively but not
+// concurrently.  Searches can be run concurrently however, on DAGPath
+// objects obtained with separate calls to NewDAGPath, even with the same
+// graph argument to NewDAGPath.
+func NewDAGPath(g LabeledAdjacencyList, o []int, w WeightFunc) *DAGPath {
+	return &DAGPath{
+		Graph:    g,
+		Ordering: o,
+		Weight:   w,
+		Tree:     NewFromList(len(g)),
+		Dist:     make([]float64, len(g)),
+	}
+}
+
+// AllPaths finds shortest paths from argument start to all nodes reachable
+// from start.
+func (d *DAGPath) AllPaths(start int) (reached int) {
+	return d.search(start, -1)
+}
+
+func (d *DAGPath) search(start, end int) (reached int) {
+	// search ordering for start
+	o := 0
+	for d.Ordering[o] != start {
+		o++
+	}
+	g := d.Graph
+	p := d.Tree.Paths
+	p[start] = PathEnd{From: -1, Len: 1}
+	d.Tree.MaxLen = 1
+	leaves := &d.Tree.Leaves
+	leaves.SetBit(leaves, start, 1)
+	reached = 1
+	for n := start; n != end; n = d.Ordering[o] {
+		if p[n].Len > 0 && len(g[n]) > 0 {
+			nDist := d.Dist[n]
+			candLen := p[n].Len + 1 // len for any candidate arc followed from n
+			for _, to := range g[n] {
+				leaves.SetBit(leaves, to.To, 1)
+				candDist := nDist + d.Weight(to.Label)
+				switch {
+				case p[to.To].Len == 0: // first path to node to.To
+					reached++
+				case candDist < d.Dist[to.To]: // better distance
+				case candDist == d.Dist[to.To] && candLen < p[to.To].Len: // same distance but better path length
+				default:
+					continue
+				}
+				d.Dist[to.To] = candDist
+				p[to.To] = PathEnd{From: n, Len: candLen}
+				if candLen > d.Tree.MaxLen {
+					d.Tree.MaxLen = candLen
+				}
+			}
+			leaves.SetBit(leaves, n, 0)
+		}
+		o++
+		if o == len(d.Ordering) {
+			break
+		}
+	}
+	return
+}
+
 // A Dijkstra object allows shortest path searches by Dijkstra's algorithm.
 //
 // Dijkstra methods find paths of shortest distance where distance is the
@@ -494,6 +583,18 @@ func NewAStar(g LabeledAdjacencyList, w WeightFunc) *AStar {
 	}
 }
 
+// AllPaths finds shortest paths from start to all nodes reachable
+// from start.
+//
+// AllPaths returns number of paths found, equivalent to the number of nodes
+// reached, including the path ending at start.  Path results are left in
+// d.Result.
+// AllPaths finds shortest paths from start to all nodes reachable
+// from start.
+//
+// AllPaths returns number of paths found, equivalent to the number of nodes
+// reached, including the path ending at start.  Path results are left in
+// d.Result.
 // rNode holds data for a "reached" node
 type rNode struct {
 	nx    int
