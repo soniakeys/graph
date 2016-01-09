@@ -587,19 +587,16 @@ func (g LabeledAdjacencyList) TarjanCondensation() (scc [][]int, cd AdjacencyLis
 		for _, n := range c {
 			cond[n] = cn // map g node to cd node
 		}
-		m := map[int]struct{}{} // for the children
+		var tos []int // list of 'to' nodes
+		var m big.Int // tos map
+		m.SetBit(&m, cn, 1)
 		for _, n := range c {
 			for _, to := range g[n] {
-				if ct := cond[to.To]; ct != cn {
-					m[cond[to.To]] = struct{}{}
+				if ct := cond[to.To]; m.Bit(ct) == 0 {
+					m.SetBit(&m, ct, 1)
+					tos = append(tos, ct)
 				}
 			}
-		}
-		tos := make([]int, len(m))
-		j := 0
-		for to := range m {
-			tos[j] = to
-			j++
 		}
 		cd[cn] = tos
 	}
