@@ -15,8 +15,8 @@ import (
 
 // DAGMaxLenPath finds a maximum length path in a directed acyclic graph.
 //
-// Argument order must be a topological ordering of g.
-func (g AdjacencyList) DAGMaxLenPath(order []int) (path []int) {
+// Argument ordering must be a topological ordering of g.
+func (g AdjacencyList) DAGMaxLenPath(ordering []int) (path []int) {
 	// dynamic programming. visit nodes in reverse order. for each, compute
 	// longest path as one plus longest of 'to' nodes.
 	// Visits each arc once.  O(m).
@@ -24,8 +24,8 @@ func (g AdjacencyList) DAGMaxLenPath(order []int) (path []int) {
 	// Similar code in label.go
 	var n int
 	mlp := make([][]int, len(g)) // index by node number
-	for i := len(order) - 1; i >= 0; i-- {
-		fr := order[i] // node number
+	for i := len(ordering) - 1; i >= 0; i-- {
+		fr := ordering[i] // node number
 		to := g[fr]
 		if len(to) == 0 {
 			continue

@@ -22,7 +22,7 @@ func ExampleLabledAdjacencyList_DAGMaxLenPath() {
 		0: {{To: 2, Label: 'P'}},
 	}
 	o, _ := g.Topological()
-	fmt.Println("order:", o)
+	fmt.Println("ordering:", o)
 	n, p := g.DAGMaxLenPath(o)
 	fmt.Printf("path from %d: %v\n", n, p)
 	fmt.Print("label path: ")
@@ -31,7 +31,7 @@ func ExampleLabledAdjacencyList_DAGMaxLenPath() {
 	}
 	fmt.Println()
 	// Output:
-	// order: [3 4 1 0 2]
+	// ordering: [3 4 1 0 2]
 	// path from 3: [{4 87} {0 77} {2 80}]
 	// label path: WMP
 }

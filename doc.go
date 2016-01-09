@@ -52,6 +52,12 @@
 // represent "parallel arcs."  A graph with no loops or parallel arcs
 // is "simple."  A graph that allows parallel arcs is a "multigraph"
 //
+// The "size" of a graph traditionally means the number of edges.  This
+// package uses "arc size" to mean the number of arcs in a graph.  For an
+// undirected graph without loops, arc size is 2 * size.  The "order" of
+// a graph is the number of nodes.  An "ordering" though means an ordered
+// list of nodes.
+//
 // A number of graph search algorithms use a concept of arc "weights."
 // The sum of arc weights along a path is a "distance."  In contrast, the
 // number of nodes in a path, including start and end nodes, is the path's

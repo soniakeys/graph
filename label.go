@@ -75,19 +75,19 @@ func (p *LabeledAdjacencyList) AddEdge(e Edge, label int) {
 //
 // Length here means number of nodes or arcs, not a sum of arc weights.
 //
-// Argument order must be a topological ordering of g.
+// Argument ordering must be a topological ordering of g.
 //
 // Returned is a node beginning a maximum length path, and a path of arcs
 // starting from that node.
-func (g LabeledAdjacencyList) DAGMaxLenPath(order []int) (n int, path []Half) {
+func (g LabeledAdjacencyList) DAGMaxLenPath(ordering []int) (n int, path []Half) {
 	// dynamic programming. visit nodes in reverse order. for each, compute
 	// longest path as one plus longest of 'to' nodes.
 	// Visits each arc once.  Time complexity O(m).
 	//
 	// Similar code in dir.go.
 	mlp := make([][]Half, len(g)) // index by node number
-	for i := len(order) - 1; i >= 0; i-- {
-		fr := order[i] // node number
+	for i := len(ordering) - 1; i >= 0; i-- {
+		fr := ordering[i] // node number
 		to := g[fr]
 		if len(to) == 0 {
 			continue

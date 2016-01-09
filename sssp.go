@@ -26,7 +26,7 @@ type BreadthFirst struct {
 // Graphs may be directed or undirected.
 //
 // The graph g will not be modified by any BreadthFirst methods.
-// NewBreadthFirst initializes the BreadthFirst object for the length
+// NewBreadthFirst initializes the BreadthFirst object for the order
 // (number of nodes) of g.  If you add nodes to your graph, abandon any
 // previously created BreadthFirst object and call NewBreadthFirst again.
 //
@@ -276,6 +276,7 @@ func (b *BreadthFirst2) Traverse(start int, v Visitor) int {
 // on a directed acyclic graph.
 //
 // DAGPath methods measure path distance as the sum of arc weights.
+// Negative arc weights are allowed.
 // Where multiple paths exist with the same distance, the path length
 // (number of nodes) is used as a tie breaker.
 //
@@ -296,7 +297,7 @@ type DAGPath struct {
 // graph.  Argument o must be a topological ordering of g.
 //
 // The graph g will not be modified by any DAGPath methods.  NewDAGPath
-// initializes the DAGPath object for the length (number of nodes) of g.
+// initializes the DAGPath object for the order (number of nodes) of g.
 // If you add nodes to your graph, abandon any previously created DAGPath
 // object and call NewDAGPath again.
 //
@@ -452,7 +453,7 @@ type Dijkstra struct {
 // allowed.
 //
 // The graph g will not be modified by any Dijkstra methods.  NewDijkstra
-// initializes the Dijkstra object for the length (number of nodes) of g.
+// initializes the Dijkstra object for the order (number of nodes) of g.
 // If you add nodes to your graph, abandon any previously created Dijkstra
 // object and call NewDijkstra again.
 //
@@ -626,7 +627,7 @@ type AStar struct {
 // Graphs may be directed or undirected.
 //
 // The graph g will not be modified by any AStar methods. NewAStar initializes
-// the AStar object for the length (number of nodes) of g. If you add nodes
+// the AStar object for the order (number of nodes) of g. If you add nodes
 // to your graph, abandon any previously created Dijkstra object and call
 // NewAStar again.
 //
@@ -992,7 +993,7 @@ type BellmanFord struct {
 // allowed.
 //
 // The graph g will not be modified by any BellmanFord methods.  NewBellmanFord
-// initializes the BellmanFord object for the length (number of nodes) of g.
+// initializes the BellmanFord object for the order (number of nodes) of g.
 // If you add nodes to your graph, abandon any previously created BellmanFord
 // object and call NewBellmanFord again.
 //

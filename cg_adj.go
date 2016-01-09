@@ -103,9 +103,9 @@ func (g AdjacencyList) BoundsOk() (ok bool, fr int, to int) {
 // ConnectedComponentBits, for undirected graphs, returns a function that
 // iterates over connected components of g, returning a member bitmap for each.
 //
-// Each call of the returned function returns the order and bits of a
-// connected component.  The returned function returns zeros after returning
-// all connected components.
+// Each call of the returned function returns the order (number of nodes)
+// and bits of a connected component.  The returned function returns zeros
+// after returning all connected components.
 //
 // There are equivalent labeled and unlabeled versions of this method.
 //
@@ -143,8 +143,8 @@ func (g AdjacencyList) ConnectedComponentBits() func() (order int, bits big.Int)
 // ConnectedComponentLists, for undirected graphs, returns a function that
 // iterates over connected components of g, returning the member list of each.
 //
-// Each call of the returned function returns the order and a member list of a
-// connected component.  The returned function returns zeros after returning
+// Each call of the returned function returns a node list of a
+// connected component.  The returned function returns nil after returning
 // all connected components.
 //
 // There are equivalent labeled and unlabeled versions of this method.
@@ -605,14 +605,15 @@ func (g AdjacencyList) TarjanCondensation() (scc [][]int, cd AdjacencyList) {
 
 // Topological, for directed acyclic graphs, computes a topological sort of g.
 //
-// For an acyclic graph, return value order is a permutation of node numbers
+// For an acyclic graph, return value ordering is a permutation of node numbers
 // in topologically sorted order and cycle will be nil.  If the graph is found
-// to be cyclic, order will be nil and cycle will be the path of a found cycle.
+// to be cyclic, ordering will be nil and cycle will be the path of a found
+// cycle.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g AdjacencyList) Topological() (order, cycle []int) {
-	order = make([]int, len(g))
-	i := len(order)
+func (g AdjacencyList) Topological() (ordering, cycle []int) {
+	ordering = make([]int, len(g))
+	i := len(ordering)
 	var temp, perm big.Int
 	var cycleFound bool
 	var cycleStart int
@@ -631,12 +632,12 @@ func (g AdjacencyList) Topological() (order, cycle []int) {
 			df(nb)
 			if cycleFound {
 				if cycleStart >= 0 {
-					// a little hack: order won't be needed so repurpose the
+					// a little hack: orderng won't be needed so repurpose the
 					// slice as cycle.  this is read out in reverse order
 					// as the recursion unwinds.
-					x := len(order) - 1 - len(cycle)
-					order[x] = n
-					cycle = order[x:]
+					x := len(ordering) - 1 - len(cycle)
+					ordering[x] = n
+					cycle = ordering[x:]
 					if n == cycleStart {
 						cycleStart = -1
 					}
@@ -647,7 +648,7 @@ func (g AdjacencyList) Topological() (order, cycle []int) {
 		temp.SetBit(&temp, n, 0)
 		perm.SetBit(&perm, n, 1)
 		i--
-		order[i] = n
+		ordering[i] = n
 	}
 	for n := range g {
 		if perm.Bit(n) == 1 {
@@ -658,20 +659,21 @@ func (g AdjacencyList) Topological() (order, cycle []int) {
 			return nil, cycle
 		}
 	}
-	return order, nil
+	return ordering, nil
 }
 
 // TopologicalKahn, for directed acyclic graphs, computes a topological sort of g.
 //
-// For an acyclic graph, return value order is a permutation of node numbers
+// For an acyclic graph, return value ordering is a permutation of node numbers
 // in topologically sorted order and cycle will be nil.  If the graph is found
-// to be cyclic, order will be nil and cycle will be the path of a found cycle.
+// to be cyclic, ordering will be nil and cycle will be the path of a found
+// cycle.
 //
 // This function is based on the algorithm by Arthur Kahn and requires the
 // transpose of g be passed as the argument.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g AdjacencyList) TopologicalKahn(tr AdjacencyList) (order, cycle []int) {
+func (g AdjacencyList) TopologicalKahn(tr AdjacencyList) (ordering, cycle []int) {
 	// code follows Wikipedia pseudocode.
 	var L, S []int
 	// rem for "remaining edges," this function makes a local copy of the
