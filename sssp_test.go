@@ -192,7 +192,9 @@ func ExampleDAGPath_AllPaths() {
 		9: {},
 	}
 	o := []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
-	d := graph.NewDAGPath(g, o, func(l int) float64 { return float64(l) })
+	d := graph.NewDAGPath(g, o,
+		func(l int) float64 { return float64(l) },
+		false)
 	reached := d.AllPaths(3)
 	fmt.Println("node  path dist  path len  leaf")
 	for n, pd := range d.Dist {
@@ -217,6 +219,82 @@ func ExampleDAGPath_AllPaths() {
 	//
 	// Nodes reached:        6
 	// Max path len:         4
+}
+
+func ExampleDAGPath_Path_shortest() {
+	// arcs are directed right:
+	//             4
+	//        (-3)/ \(-2)
+	//           /   \
+	//    (10)  /     \   (5)    (10)
+	// 3-------1-------0-------6-------2
+	//           (-10)  \     /
+	//                   \   /
+	//                 (2)\ /(3)
+	//                     5
+	g := graph.LabeledAdjacencyList{
+		0: {{To: 5, Label: 2}, {6, 5}},
+		1: {{0, -10}, {4, -3}},
+		3: {{1, 10}},
+		4: {{0, -2}},
+		5: {{6, 3}},
+		6: {{2, 10}},
+	}
+	o, _ := g.Topological()
+	fmt.Println("Ordering:", o)
+	d := graph.NewDAGPath(g, o,
+		func(l int) float64 { return float64(l) },
+		false)
+	start, end := 3, 2
+	if !d.Path(start, end) {
+		fmt.Println("not found")
+	}
+	fmt.Println("Path length:", d.Tree.Paths[end].Len)
+	fmt.Println("Path:", d.Tree.PathTo(end, nil))
+	fmt.Println("Distance:", d.Dist[end])
+	// Output:
+	// Ordering: [3 1 4 0 5 6 2]
+	// Path length: 5
+	// Path: [3 1 0 6 2]
+	// Distance: 15
+}
+
+func ExampleDAGPath_Path_longest() {
+	// arcs are directed right:
+	//             4
+	//        (-3)/ \(-2)
+	//           /   \
+	//    (10)  /     \   (5)    (10)
+	// 3-------1-------0-------6-------2
+	//           (-10)  \     /
+	//                   \   /
+	//                 (2)\ /(3)
+	//                     5
+	g := graph.LabeledAdjacencyList{
+		0: {{To: 5, Label: 2}, {6, 5}},
+		1: {{0, -10}, {4, -3}},
+		3: {{1, 10}},
+		4: {{0, -2}},
+		5: {{6, 3}},
+		6: {{2, 10}},
+	}
+	o, _ := g.Topological()
+	fmt.Println("Ordering:", o)
+	d := graph.NewDAGPath(g, o,
+		func(l int) float64 { return float64(l) },
+		true)
+	start, end := 3, 2
+	if !d.Path(start, end) {
+		fmt.Println("not found")
+	}
+	fmt.Println("Path length:", d.Tree.Paths[end].Len)
+	fmt.Println("Path:", d.Tree.PathTo(end, nil))
+	fmt.Println("Distance:", d.Dist[end])
+	// Output:
+	// Ordering: [3 1 4 0 5 6 2]
+	// Path length: 7
+	// Path: [3 1 4 0 5 6 2]
+	// Distance: 20
 }
 
 func ExampleLabeledAdjacencyList_DijkstraPath() {

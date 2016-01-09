@@ -272,22 +272,25 @@ func (b *BreadthFirst2) Traverse(start int, v Visitor) int {
 	return nReached
 }
 
-// A DAGPath object allows shortest path searches on a directed acyclic graph.
+// A DAGPath object allows searches for either shortest or longest paths
+// on a directed acyclic graph.
 //
-// DAGPath methods find paths of shortest distance where distance is the
-// sum of arc weights.  Where multiple paths exist with the same distance,
-// DAGPath methods return a path with the minimum number of nodes.
+// DAGPath methods measure path distance as the sum of arc weights.
+// Where multiple paths exist with the same distance, the path length
+// (number of nodes) is used as a tie breaker.
 //
 // Construct with NewDAGPath.
 type DAGPath struct {
 	Graph    LabeledAdjacencyList // input graph
 	Ordering []int                // topological ordering
 	Weight   WeightFunc           // input weight function
+	Longest  bool                 // find longest path rather than shortest
 	Tree     FromList             // result paths
 	Dist     []float64            // in Tree, distances for result paths
 }
 
-// NewDAGPath creates a DAGPath object that allows shortest path searches.
+// NewDAGPath creates a DAGPath object that allows shortest or longest
+// path searches.
 //
 // Argument g is the graph to be searched, and must be a directed acyclic
 // graph.  Argument o must be a topological ordering of g.
@@ -301,18 +304,71 @@ type DAGPath struct {
 // concurrently.  Searches can be run concurrently however, on DAGPath
 // objects obtained with separate calls to NewDAGPath, even with the same
 // graph argument to NewDAGPath.
-func NewDAGPath(g LabeledAdjacencyList, o []int, w WeightFunc) *DAGPath {
+func NewDAGPath(g LabeledAdjacencyList, ordering []int, w WeightFunc, longest bool) *DAGPath {
 	return &DAGPath{
 		Graph:    g,
-		Ordering: o,
+		Ordering: ordering,
 		Weight:   w,
+		Longest:  longest,
 		Tree:     NewFromList(len(g)),
 		Dist:     make([]float64, len(g)),
 	}
 }
 
-// AllPaths finds shortest paths from argument start to all nodes reachable
-// from start.
+// DAGShortestPath finds a single shortest path.
+//
+// Shortest means minimum sum of arc weights.
+//
+// Returned is the path and distance as returned by FromList.PathTo.
+//
+// This is a convenience method.  See the DAGPath type for more options.
+func (g LabeledAdjacencyList) DAGShortestPath(start, end int, w WeightFunc) ([]int, float64, error) {
+	return g.dagPath(start, end, w, false)
+}
+
+// DAGLongestPath finds a single longest path.
+//
+// Longest means maximum sum of arc weights.
+//
+// Returned is the path and distance as returned by FromList.PathTo.
+//
+// This is a convenience method.  See the DAGPath type for more options.
+func (g LabeledAdjacencyList) DAGLongestPath(start, end int, w WeightFunc) ([]int, float64, error) {
+	return g.dagPath(start, end, w, true)
+}
+
+func (g LabeledAdjacencyList) dagPath(start, end int, w WeightFunc, longest bool) ([]int, float64, error) {
+	o, _ := g.Topological()
+	if o == nil {
+		return nil, 0, fmt.Errorf("not a DAG")
+	}
+	d := NewDAGPath(g, o, w, longest)
+	d.Path(start, end)
+	if d.Tree.Paths[end].Len == 0 {
+		return nil, 0, fmt.Errorf("no path from %d to %d", start, end)
+	}
+	return d.Tree.PathTo(end, nil), d.Dist[end], nil
+}
+
+// Path finds a single path.
+//
+// Path returns true if a path exists, false if not. The path can be recovered
+// from the receiver.  Path returns as soon as the shortest path to end is
+// found; it does not explore the remainder of the graph.
+func (d *DAGPath) Path(start, end int) bool {
+	d.search(start, end)
+	return d.Tree.Paths[end].Len > 0
+}
+
+// Reset from any previous run.
+func (d *DAGPath) Reset() {
+	d.Tree.reset()
+	for i := range d.Dist {
+		d.Dist[i] = 0
+	}
+}
+
+// AllPaths finds paths from argument start to all nodes reachable from start.
 func (d *DAGPath) AllPaths(start int) (reached int) {
 	return d.search(start, -1)
 }
@@ -322,6 +378,15 @@ func (d *DAGPath) search(start, end int) (reached int) {
 	o := 0
 	for d.Ordering[o] != start {
 		o++
+	}
+	var fBetter func(cand, ext float64) bool
+	var iBetter func(cand, ext int) bool
+	if d.Longest {
+		fBetter = func(cand, ext float64) bool { return cand > ext }
+		iBetter = func(cand, ext int) bool { return cand > ext }
+	} else {
+		fBetter = func(cand, ext float64) bool { return cand < ext }
+		iBetter = func(cand, ext int) bool { return cand < ext }
 	}
 	g := d.Graph
 	p := d.Tree.Paths
@@ -340,8 +405,8 @@ func (d *DAGPath) search(start, end int) (reached int) {
 				switch {
 				case p[to.To].Len == 0: // first path to node to.To
 					reached++
-				case candDist < d.Dist[to.To]: // better distance
-				case candDist == d.Dist[to.To] && candLen < p[to.To].Len: // same distance but better path length
+				case fBetter(candDist, d.Dist[to.To]): // better distance
+				case candDist == d.Dist[to.To] && iBetter(candLen, p[to.To].Len): // same distance but better path length
 				default:
 					continue
 				}
