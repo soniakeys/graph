@@ -3,7 +3,11 @@
 
 package graph
 
-import "math/big"
+import (
+	"math/big"
+
+	"github.com/willf/bitset"
+)
 
 // cg_adj.go is code generated from cg_label.go by directive in graph.go.
 // Editing cg_label.go is okay.
@@ -98,6 +102,47 @@ func (g LabeledAdjacencyList) BoundsOk() (ok bool, fr int, to Half) {
 		}
 	}
 	return true, -1, to
+}
+
+func (g LabeledAdjacencyList) BronKerbosch1() chan []int {
+	ch := make(chan []int)
+	go func() {
+		R := bitset.New(uint(len(g)))
+		var f func(P, X *bitset.BitSet)
+		f = func(P, X *bitset.BitSet) {
+			switch {
+			case P.Any():
+				for n, ok := P.NextSet(0); ok; n, ok = P.NextSet(n + 1) {
+					R.Set(n)
+					var p2, x2 bitset.BitSet
+					for _, to := range g[n] {
+						if P.Test(uint(to.To)) {
+							p2.Set(uint(to.To))
+						}
+						if X.Test(uint(to.To)) {
+							x2.Set(uint(to.To))
+						}
+					}
+					f(&p2, &x2)
+					R.SetTo(n, false)
+					P.SetTo(n, false)
+					X.Set(n)
+				}
+			case X.None():
+				var n uint
+				n--
+				c := make([]int, R.Count())
+				for i := range c {
+					n, _ = R.NextSet(n + 1)
+					c[i] = int(n)
+				}
+				ch <- c
+			}
+		}
+		f(bitset.New(uint(len(g))).Complement(), bitset.New(uint(len(g))))
+		close(ch)
+	}()
+	return ch
 }
 
 // ConnectedComponentBits, for undirected graphs, returns a function that
