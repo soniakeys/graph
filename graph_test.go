@@ -30,7 +30,7 @@ func ExampleOneBits() {
 	// Output:
 	// 11111
 }
-	
+
 func ExampleAdjacencyList_Simple() {
 	g := graph.AdjacencyList{
 		2: {0, 1},

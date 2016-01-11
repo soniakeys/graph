@@ -104,6 +104,22 @@ func (g LabeledAdjacencyList) BoundsOk() (ok bool, fr int, to Half) {
 	return true, -1, to
 }
 
+// BronKerbosch1 finds maximal cliques in an undirected graph.
+//
+// The graph must not contain parallel edges or loops.
+//
+// See https://en.wikipedia.org/wiki/Clique_(graph_theory) and
+// https://en.wikipedia.org/wiki/Bron–Kerbosch_algorithm for background.
+//
+// This method implements the BronKerbosch1 algorithm of WP; that is,
+// the original algorithm without improvements.
+//
+// The method sends all maximal cliques in g on the returned channel, then
+// closes the channel.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+//
+// See also more sophisticated variants BronKerbosch2 and BronKerbosch3.
 func (g LabeledAdjacencyList) BronKerbosch1() chan []int {
 	ch := make(chan []int)
 	go func() {
@@ -151,6 +167,29 @@ func (g LabeledAdjacencyList) BronKerbosch1() chan []int {
 	return ch
 }
 
+// BKPivotMinP is a strategy for BronKerbosch methods.
+//
+// To use it, take the method value (see golang.org/ref/spec#Method_values)
+// and pass it as the argument to BronKerbosch2 or 3.
+//
+// The strategy is to simply pick the first node in P.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g LabeledAdjacencyList) BKPivotMinP(P, X *bitset.BitSet) int {
+	n, _ := P.NextSet(0)
+	return int(n)
+}
+
+// BKPivotMaxDegree is a strategy for BronKerbosch methods.
+//
+// To use it, take the method value (see golang.org/ref/spec#Method_values)
+// and pass it as the argument to BronKerbosch2 or 3.
+//
+// The strategy is to pick the node from P or X with the maximum degree
+// (number of edges) in g.  Note this is a shortcut from evaluating degrees
+// in P.
+//
+// There are equivalent labeled and unlabeled versions of this method.
 func (g LabeledAdjacencyList) BKPivotMaxDegree(P, X *bitset.BitSet) int {
 	// choose pivot u as highest degree node from P or X
 	n, ok := P.NextSet(0)
@@ -176,6 +215,27 @@ func (g LabeledAdjacencyList) BKPivotMaxDegree(P, X *bitset.BitSet) int {
 	return int(u)
 }
 
+// BronKerbosch2 finds maximal cliques in an undirected graph.
+//
+// The graph must not contain parallel edges or loops.
+//
+// See https://en.wikipedia.org/wiki/Clique_(graph_theory) and
+// https://en.wikipedia.org/wiki/Bron–Kerbosch_algorithm for background.
+//
+// This method implements the BronKerbosch2 algorithm of WP; that is,
+// the original algorithm plus pivoting.
+//
+// The argument is a pivot function that must return a node of P or X.
+// P is guaranteed to contain at least one node.  X is not.
+// For example see BKPivotMaxDegree.
+//
+// The method sends all maximal cliques in g on the returned channel, then
+// closes the channel.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+//
+// See also simpler variant BronKerbosch1 and more sophisticated variant
+// BronKerbosch3.
 func (g LabeledAdjacencyList) BronKerbosch2(pivot func(P, X *bitset.BitSet) int) chan []int {
 	ch := make(chan []int)
 	go func() {
@@ -229,6 +289,26 @@ func (g LabeledAdjacencyList) BronKerbosch2(pivot func(P, X *bitset.BitSet) int)
 	return ch
 }
 
+// BronKerbosch3 finds maximal cliques in an undirected graph.
+//
+// The graph must not contain parallel edges or loops.
+//
+// See https://en.wikipedia.org/wiki/Clique_(graph_theory) and
+// https://en.wikipedia.org/wiki/Bron–Kerbosch_algorithm for background.
+//
+// This method implements the BronKerbosch3 algorithm of WP; that is,
+// the original algorithm with pivoting and degeneracy ordering.
+//
+// The argument is a pivot function that must return a node of P or X.
+// P is guaranteed to contain at least one node.  X is not.
+// For example see BKPivotMaxDegree.
+//
+// The method sends all maximal cliques in g on the returned channel, then
+// closes the channel.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+//
+// See also simpler variants BronKerbosch1 and BronKerbosch2.
 func (g LabeledAdjacencyList) BronKerbosch3(pivot func(P, X *bitset.BitSet) int) chan []int {
 	ch := make(chan []int)
 	go func() {
