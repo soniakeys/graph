@@ -20,6 +20,16 @@ import (
 
 var one = big.NewInt(1)
 
+// OneBits sets a big.Int to a number that is all 1s in binary.
+//
+// It's a utility function useful for initializing a bitmap of a graph
+// to all ones; that is, with a bit set to 1 for each node of the graph.
+//
+// OneBits modifies b, then returns b for convenience.
+func OneBits(b *big.Int, n int) *big.Int {
+	return b.Sub(b.Lsh(one, uint(n)), one)
+}
+
 // An AdjacencyList represents a graph as a list of neighbors for each node.
 // The "node ID" of a node is simply it's slice index in the AdjacencyList.
 //

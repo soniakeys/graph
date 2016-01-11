@@ -5,6 +5,7 @@ package graph_test
 
 import (
 	"fmt"
+	"math/big"
 
 	"github.com/soniakeys/graph"
 )
@@ -22,6 +23,14 @@ func ExampleAdjacencyList_BoundsOk() {
 	// false 0 9
 }
 
+func ExampleOneBits() {
+	g := make(graph.AdjacencyList, 5)
+	var b big.Int
+	fmt.Printf("%b\n", graph.OneBits(&b, len(g)))
+	// Output:
+	// 11111
+}
+	
 func ExampleAdjacencyList_Simple() {
 	g := graph.AdjacencyList{
 		2: {0, 1},

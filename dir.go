@@ -266,16 +266,14 @@ func newEulerian(g AdjacencyList, m int) *eulerian {
 		m: m,
 		p: make([]int, m+1),
 	}
-	e.uv.Lsh(one, uint(len(g)))
-	e.uv.Sub(&e.uv, one)
+	OneBits(&e.uv, len(g))
 	return e
 }
 
 func (g AdjacencyList) MaximalNonBranchingPaths() (p [][]int) {
 	ind := g.InDegree()
 	var uv big.Int
-	uv.Lsh(one, uint(len(g)))
-	uv.Sub(&uv, one)
+	OneBits(&uv, len(g))
 	for v, vTo := range g {
 		if !(ind[v] == 1 && len(vTo) == 1) {
 			for _, w := range vTo {

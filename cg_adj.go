@@ -600,7 +600,7 @@ func (g AdjacencyList) FromList() FromList {
 	}
 	// init leaves
 	var leaves big.Int
-	leaves.Sub(leaves.Lsh(one, uint(len(g))), one)
+	OneBits(&leaves, len(g))
 	// iterate over arcs, setting from pointers and and marking non-leaves.
 	for fr, to := range g {
 		for _, to := range to {
