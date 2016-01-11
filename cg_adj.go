@@ -107,14 +107,18 @@ func (g AdjacencyList) BoundsOk() (ok bool, fr int, to int) {
 func (g AdjacencyList) BronKerbosch1() chan []int {
 	ch := make(chan []int)
 	go func() {
-		R := bitset.New(uint(len(g)))
-		var f func(P, X *bitset.BitSet)
-		f = func(P, X *bitset.BitSet) {
+		var f func(R, P, X *bitset.BitSet)
+		f = func(R, P, X *bitset.BitSet) {
 			switch {
 			case P.Any():
+				r2 := bitset.New(uint(len(g)))
+				p2 := bitset.New(uint(len(g)))
+				x2 := bitset.New(uint(len(g)))
 				for n, ok := P.NextSet(0); ok; n, ok = P.NextSet(n + 1) {
-					R.Set(n)
-					var p2, x2 bitset.BitSet
+					R.Copy(r2)
+					r2.Set(n)
+					p2.ClearAll()
+					x2.ClearAll()
 					for _, to := range g[n] {
 						if P.Test(uint(to)) {
 							p2.Set(uint(to))
@@ -123,8 +127,7 @@ func (g AdjacencyList) BronKerbosch1() chan []int {
 							x2.Set(uint(to))
 						}
 					}
-					f(&p2, &x2)
-					R.SetTo(n, false)
+					f(r2, p2, x2)
 					P.SetTo(n, false)
 					X.Set(n)
 				}
@@ -139,7 +142,163 @@ func (g AdjacencyList) BronKerbosch1() chan []int {
 				ch <- c
 			}
 		}
-		f(bitset.New(uint(len(g))).Complement(), bitset.New(uint(len(g))))
+		R := bitset.New(uint(len(g)))
+		P := bitset.New(uint(len(g))).Complement()
+		X := bitset.New(uint(len(g)))
+		f(R, P, X)
+		close(ch)
+	}()
+	return ch
+}
+
+func (g AdjacencyList) BKPivotMaxDegree(P, X *bitset.BitSet) int {
+	// choose pivot u as highest degree node from P or X
+	n, ok := P.NextSet(0)
+	u := n
+	maxDeg := len(g[u])
+	for { // scan P
+		n, ok = P.NextSet(n + 1)
+		if !ok {
+			break
+		}
+		if d := len(g[n]); d > maxDeg {
+			u = n
+			maxDeg = d
+		}
+	}
+	// scan X
+	for n, ok = X.NextSet(0); ok; n, ok = X.NextSet(n + 1) {
+		if d := len(g[n]); d > maxDeg {
+			u = n
+			maxDeg = d
+		}
+	}
+	return int(u)
+}
+
+func (g AdjacencyList) BronKerbosch2(pivot func(P, X *bitset.BitSet) int) chan []int {
+	ch := make(chan []int)
+	go func() {
+		var f func(R, P, X *bitset.BitSet)
+		f = func(R, P, X *bitset.BitSet) {
+			switch {
+			case P.Any():
+				r2 := bitset.New(uint(len(g)))
+				p2 := bitset.New(uint(len(g)))
+				x2 := bitset.New(uint(len(g)))
+				// compute P \ N(u).  next 5 lines are only difference from BK1
+				pnu := P.Clone()
+				for _, to := range g[pivot(P, X)] {
+					pnu.SetTo(uint(to), false)
+				}
+				for n, ok := pnu.NextSet(0); ok; n, ok = pnu.NextSet(n + 1) {
+					// remaining code like BK1
+					R.Copy(r2)
+					r2.Set(n)
+					p2.ClearAll()
+					x2.ClearAll()
+					for _, to := range g[n] {
+						if P.Test(uint(to)) {
+							p2.Set(uint(to))
+						}
+						if X.Test(uint(to)) {
+							x2.Set(uint(to))
+						}
+					}
+					f(r2, p2, x2)
+					P.SetTo(n, false)
+					X.Set(n)
+				}
+			case X.None():
+				var n uint
+				n--
+				c := make([]int, R.Count())
+				for i := range c {
+					n, _ = R.NextSet(n + 1)
+					c[i] = int(n)
+				}
+				ch <- c
+			}
+		}
+		R := bitset.New(uint(len(g)))
+		P := bitset.New(uint(len(g))).Complement()
+		X := bitset.New(uint(len(g)))
+		f(R, P, X)
+		close(ch)
+	}()
+	return ch
+}
+
+func (g AdjacencyList) BronKerbosch3(pivot func(P, X *bitset.BitSet) int) chan []int {
+	ch := make(chan []int)
+	go func() {
+		var f func(R, P, X *bitset.BitSet)
+		f = func(R, P, X *bitset.BitSet) {
+			switch {
+			case P.Any():
+				r2 := bitset.New(uint(len(g)))
+				p2 := bitset.New(uint(len(g)))
+				x2 := bitset.New(uint(len(g)))
+				// compute P \ N(u).  next 5 lines are only difference from BK1
+				pnu := P.Clone()
+				for _, to := range g[pivot(P, X)] {
+					pnu.SetTo(uint(to), false)
+				}
+				for n, ok := pnu.NextSet(0); ok; n, ok = pnu.NextSet(n + 1) {
+					// remaining code like BK1
+					R.Copy(r2)
+					r2.Set(n)
+					p2.ClearAll()
+					x2.ClearAll()
+					for _, to := range g[n] {
+						if P.Test(uint(to)) {
+							p2.Set(uint(to))
+						}
+						if X.Test(uint(to)) {
+							x2.Set(uint(to))
+						}
+					}
+					f(r2, p2, x2)
+					P.SetTo(n, false)
+					X.Set(n)
+				}
+			case X.None():
+				var n uint
+				n--
+				c := make([]int, R.Count())
+				for i := range c {
+					n, _ = R.NextSet(n + 1)
+					c[i] = int(n)
+				}
+				ch <- c
+			}
+		}
+
+		R := bitset.New(uint(len(g)))
+		P := bitset.New(uint(len(g))).Complement()
+		X := bitset.New(uint(len(g)))
+		// code above same as BK2
+		// code below new to BK3
+		_, ord, _ := g.Degeneracy()
+		p2 := bitset.New(uint(len(g)))
+		x2 := bitset.New(uint(len(g)))
+		for _, n := range ord {
+			R.Set(uint(n))
+			p2.ClearAll()
+			x2.ClearAll()
+			for _, to := range g[n] {
+				if P.Test(uint(to)) {
+					p2.Set(uint(to))
+				}
+				if X.Test(uint(to)) {
+					x2.Set(uint(to))
+				}
+			}
+			f(R, p2, x2)
+			R.SetTo(uint(n), false)
+			P.SetTo(uint(n), false)
+			X.Set(uint(n))
+		}
 		close(ch)
 	}()
 	return ch
@@ -543,6 +702,41 @@ func (g AdjacencyList) IsTreeUndirected(root int) bool {
 	}
 	return true
 }
+
+/*
+MaxmimalClique finds a maximal clique containing the node n.
+
+Not sure this is good for anything.  It produces a single maximal clique
+but there can be multiple maximal cliques containing a given node.
+This algorithm just returns one of them, not even necessarily the
+largest one.
+
+func (g LabeledAdjacencyList) MaximalClique(n int) []int {
+	c := []int{n}
+	var m bitset.BitSet
+	m.Set(uint(n))
+	for fr, to := range g {
+		if fr == n {
+			continue
+		}
+		if len(to) < len(c) {
+			continue
+		}
+		f := 0
+		for _, to := range to {
+			if m.Test(uint(to.To)) {
+				f++
+				if f == len(c) {
+					c = append(c, to.To)
+					m.Set(uint(to.To))
+					break
+				}
+			}
+		}
+	}
+	return c
+}
+*/
 
 // Tarjan identifies strongly connected components in a directed graph using
 // Tarjan's algorithm.

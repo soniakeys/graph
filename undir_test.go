@@ -59,6 +59,52 @@ func ExampleAdjacencyList_BronKerbosch1() {
 	// [4 5]
 }
 
+func ExampleAdjacencyList_BronKerbosch2() {
+	// 0--4--5-
+	//    |  | \
+	//    3--2--1
+	var g graph.AdjacencyList
+	g.AddEdge(0, 4)
+	g.AddEdge(4, 5)
+	g.AddEdge(4, 3)
+	g.AddEdge(3, 2)
+	g.AddEdge(5, 2)
+	g.AddEdge(5, 1)
+	g.AddEdge(2, 1)
+	for c := range g.BronKerbosch2(g.BKPivotMaxDegree) {
+		fmt.Println(c)
+	}
+	// Output:
+	// [0 4]
+	// [2 3]
+	// [1 2 5]
+	// [3 4]
+	// [4 5]
+}
+
+func ExampleAdjacencyList_BronKerbosch3() {
+	// 0--4--5-
+	//    |  | \
+	//    3--2--1
+	var g graph.AdjacencyList
+	g.AddEdge(0, 4)
+	g.AddEdge(4, 5)
+	g.AddEdge(4, 3)
+	g.AddEdge(3, 2)
+	g.AddEdge(5, 2)
+	g.AddEdge(5, 1)
+	g.AddEdge(2, 1)
+	for c := range g.BronKerbosch3(g.BKPivotMaxDegree) {
+		fmt.Println(c)
+	}
+	// Output:
+	// [0 4]
+	// [3 4]
+	// [4 5]
+	// [2 3]
+	// [1 2 5]
+}
+
 func ExampleAdjacencyList_UndirectedCopy_simple() {
 	//    0
 	//   / \
