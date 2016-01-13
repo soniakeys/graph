@@ -36,7 +36,7 @@ type FromHalf struct {
 // specific meaning other than physical weight.
 type WeightFunc func(label int) (weight float64)
 
-// AddLabeledEdge adds an edge to a labeled graph.
+// AddEdge adds an edge to a labeled graph.
 //
 // It can be useful for constructing undirected graphs.
 //
@@ -48,7 +48,7 @@ type WeightFunc func(label int) (weight float64)
 // The pointer receiver allows the method to expand the graph as needed
 // to include the values n1 and n2.  If n1 or n2 happen to be greater than
 // len(*p) the method does not panic, but simply expands the graph.
-func (p *LabeledAdjacencyList) AddEdge(e Edge, label int) {
+func (p *LabeledAdjacencyList) AddEdge(e LabeledEdge) {
 	// Similar code in AdjacencyList.AddEdge.
 
 	// determine max of the two end points
@@ -64,10 +64,10 @@ func (p *LabeledAdjacencyList) AddEdge(e Edge, label int) {
 		g = *p
 	}
 	// create one half-arc,
-	g[e.N1] = append(g[e.N1], Half{To: e.N2, Label: label})
+	g[e.N1] = append(g[e.N1], Half{To: e.N2, Label: e.Label})
 	// and except for loops, create the reciprocal
 	if e.N1 != e.N2 {
-		g[e.N2] = append(g[e.N2], Half{To: e.N1, Label: label})
+		g[e.N2] = append(g[e.N2], Half{To: e.N1, Label: e.Label})
 	}
 }
 
@@ -239,12 +239,6 @@ func (g LabeledAdjacencyList) Simple() (s bool, n int) {
 	return true, -1
 }
 
-// LabeledEdge is used as a function return type.
-type LabeledEdge struct {
-	N1, N2 int
-	Label  int
-}
-
 // TarjanBiconnectedComponents, for undirected simple graphs.
 //
 // A list of components is returned, with each component represented as an
@@ -272,7 +266,7 @@ func (g LabeledAdjacencyList) TarjanBiconnectedComponents() (components [][]Labe
 		lowpt[v] = i
 		for _, w := range g[v] {
 			if number[w.To] == 0 {
-				stack = append(stack, LabeledEdge{v, w.To, w.Label})
+				stack = append(stack, LabeledEdge{Edge{v, w.To}, w.Label})
 				biconnect(w.To, v)
 				if lowpt[w.To] < lowpt[v] {
 					lowpt[v] = lowpt[w.To]
@@ -291,7 +285,7 @@ func (g LabeledAdjacencyList) TarjanBiconnectedComponents() (components [][]Labe
 					components = append(components, bcc)
 				}
 			} else if number[w.To] < number[v] && w.To != u {
-				stack = append(stack, LabeledEdge{v, w.To, w.Label})
+				stack = append(stack, LabeledEdge{Edge{v, w.To}, w.Label})
 				if number[w.To] < lowpt[v] {
 					lowpt[v] = number[w.To]
 				}
@@ -386,4 +380,40 @@ func (g LabeledAdjacencyList) UnlabeledTranspose() (t AdjacencyList, m int) {
 		}
 	}
 	return
+}
+
+// LabeledEdge is an undirected edge with an associated label.
+type LabeledEdge struct {
+	Edge
+	Label int
+}
+
+// WeightedEdgeList is a graph representation.
+//
+// It is a labeled edge list, with an associated weight function to return
+// a weight given an edge label.
+//
+// Also associated is the order, or number of nodes of the graph.
+// All nodes occurring in the edge list must be strictly less than Order.
+//
+// WeigtedEdgeList sorts by weight, obtained by calling the weight function.
+// If weight computation is expensive, consider supplying a cached or
+// memoized version.
+type WeightedEdgeList struct {
+	Order int
+	WeightFunc
+	Edges []LabeledEdge
+}
+
+// Len implements sort.Interface.
+func (l WeightedEdgeList) Len() int { return len(l.Edges) }
+
+// Less implements sort.Interface.
+func (l WeightedEdgeList) Less(i, j int) bool {
+	return l.WeightFunc(l.Edges[i].Label) < l.WeightFunc(l.Edges[j].Label)
+}
+
+// Swap implements sort.Interface.
+func (l WeightedEdgeList) Swap(i, j int) {
+	l.Edges[i], l.Edges[j] = l.Edges[j], l.Edges[i]
 }

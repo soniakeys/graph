@@ -5,7 +5,121 @@ package graph
 
 import (
 	"container/heap"
+	"sort"
 )
+
+type dsElement struct {
+	from int
+	rank int
+}
+
+type disjointSet struct {
+	set []dsElement
+}
+
+func newDisjointSet(n int) disjointSet {
+	set := make([]dsElement, n)
+	for i := range set {
+		set[i].from = -1
+	}
+	return disjointSet{set}
+}
+
+func (ds disjointSet) find(n int) int {
+	// fast paths for n == root or from root.
+	// no updates need in these cases.
+	s := ds.set
+	fr := s[n].from
+	if fr < 0 { // n is root
+		return n
+	}
+	n, fr = fr, s[fr].from
+	if fr < 0 { // n is from root
+		return n
+	}
+	// otherwise updates needed.
+	// two iterative passes (rather than recursion or stack)
+	// pass 1: find root
+	r := fr
+	for {
+		f := s[r].from
+		if f < 0 {
+			break
+		}
+		r = f
+	}
+	// pass 2: update froms
+	for {
+		s[n].from = r
+		if fr == r {
+			return r
+		}
+		n = fr
+		fr = s[n].from
+	}
+}
+
+// Kruskal implements Kruskal's algorithm for constructing a minimum spanning
+// tree on an undirected graph.
+//
+// The tree is returned as a FromList, with leaf nodes indicated, but without
+// path lengths or MaxPathLen set.  Also returned is a parallel list of labels
+// and a total distance for the returned tree.
+//
+// The edge list of the receiver is sorted as a side effect of this method.
+// See KruskalSorted for a version that relies on the edge list being already
+// sorted.
+func (l WeightedEdgeList) Kruskal() (f FromList, labels []int, dist float64) {
+	sort.Sort(l)
+	return l.KruskalSorted()
+}
+
+// KruskalSorted implements Kruskal's algorithm for constructing a minimum
+// spanning tree on an undirected graph.
+//
+// When called, the edge list of the reciever must be already sorted by weight.
+// See Kruskal for a version that accepts an unsorted edge list.
+//
+// The tree is returned as a FromList, with leaf nodes indicated, but without
+// path lengths or MaxPathLen set.  Also returned is a parallel list of labels
+// and a total distance for the returned tree.
+func (l WeightedEdgeList) KruskalSorted() (f FromList, labels []int, dist float64) {
+	ds := newDisjointSet(l.Order)
+	// also initialize FromList as isolated nodes
+	paths := make([]PathEnd, l.Order)
+	for i := range paths {
+		paths[i].From = -1
+	}
+	f.Paths = paths
+	OneBits(&f.Leaves, l.Order)
+	labels = make([]int, l.Order)
+	// Kruskal for sorted edge list:
+	for _, e := range l.Edges {
+		x := e.N1
+		y := e.N2
+		xr := ds.find(x)
+		yr := ds.find(y)
+		if xr == yr {
+			continue
+		}
+		switch xe, ye := &ds.set[xr], &ds.set[yr]; {
+		case xe.rank < ye.rank:
+			xe.from = yr
+			x, y = y, x // swap so y is the "smaller" one
+		case xe.rank == ye.rank:
+			xe.rank++
+			fallthrough
+		default:
+			ye.from = xr
+		}
+		// add arc so y comes from x
+		paths[y].From = x
+		labels[y] = e.Label
+		f.Leaves.SetBit(&f.Leaves, x, 0)
+		dist += l.WeightFunc(e.Label)
+	}
+	return
+}
 
 // Prim implements the Jarník-Prim-Dijkstra algorithm for constructing
 // a minimum spanning tree on an undirected graph.

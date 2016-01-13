@@ -72,6 +72,18 @@ func (t *FromList) BoundsOk() (ok bool, n int) {
 	return true, -1
 }
 
+// Root finds the root of a node in a FromList.
+func (t *FromList) Root(n int) int {
+	p := t.Paths
+	for {
+		fr := p[n].From
+		if fr < 0 {
+			return n
+		}
+		n = fr
+	}
+}
+
 // PathTo decodes a FromList, recovering a single path.
 //
 // The path is returned as a list of nodes where the first element will be
