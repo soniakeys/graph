@@ -25,7 +25,8 @@ type testCase struct {
 
 	h Heuristic
 
-	start, end, m int
+	start, end NI
+	m          int
 }
 
 var s = rand.New(rand.NewSource(59))
@@ -42,7 +43,7 @@ func r(nNodes, nArcs int, seed int64) testCase {
 		coords[i].y = s.Float64()
 	}
 	// random start
-	tc := testCase{start: s.Intn(nNodes)}
+	tc := testCase{start: NI(s.Intn(nNodes))}
 	// end is point at distance nearest target distance
 	const target = .3
 	nearest := 2.
@@ -50,13 +51,13 @@ func r(nNodes, nArcs int, seed int64) testCase {
 	for i, c2 := range coords {
 		d := math.Abs(target - math.Hypot(c2.x-c1.x, c2.y-c1.y))
 		if d < nearest {
-			tc.end = i
+			tc.end = NI(i)
 			nearest = d
 		}
 	}
 	// with end chosen, define heuristic
 	ce := coords[tc.end]
-	tc.h = func(n int) float64 {
+	tc.h = func(n NI) float64 {
 		cn := &coords[n]
 		return math.Hypot(ce.x-cn.x, ce.y-cn.y)
 	}
@@ -71,10 +72,10 @@ arc:
 			panic(fmt.Sprint("tooFar", tooFar, "dup", dup, "nArcs", nArcs,
 				"nNodes", nNodes, "seed", seed))
 		}
-		n1 := s.Intn(nNodes)
+		n1 := NI(s.Intn(nNodes))
 		n2 := n1
 		for n2 == n1 {
-			n2 = s.Intn(nNodes) // no graph loops
+			n2 = NI(s.Intn(nNodes)) // no graph loops
 		}
 		c1 := &coords[n1]
 		c2 := &coords[n2]

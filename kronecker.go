@@ -73,10 +73,10 @@ func kronecker(scale uint, edgeFactor float64, dir bool) (g AdjacencyList, m int
 	}
 	p := rand.Perm(nNodes) // mapping to shuffle IDs of non-isolated nodes
 	px := 0
-	r := make([]int, N)
+	r := make([]NI, N)
 	for i := range r {
 		if bm.Bit(i) == 1 {
-			r[i] = p[px] // fill lookup table
+			r[i] = NI(p[px]) // fill lookup table
 			px++
 		}
 	}

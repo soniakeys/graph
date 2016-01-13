@@ -40,7 +40,7 @@ func ExampleBreadthFirst_Path() {
 		3: {5},
 		6: {5, 6},
 	})
-	start, end := 1, 3
+	var start, end graph.NI = 1, 3
 	if !b.Path(start, end) {
 		return
 	}
@@ -72,9 +72,9 @@ func ExampleBreadthFirst_AllPaths() {
 	})
 	b.AllPaths(1)
 	fmt.Println("Max path length:", b.Result.MaxLen)
-	p := make([]int, b.Result.MaxLen)
+	p := make([]graph.NI, b.Result.MaxLen)
 	for n := range b.Graph {
-		fmt.Println(n, b.Result.PathTo(n, p))
+		fmt.Println(n, b.Result.PathTo(graph.NI(n), p))
 	}
 	// Output:
 	// Max path length: 4
@@ -120,7 +120,7 @@ func ExampleBreadthFirst2_Path() {
 	}
 	t, m := g.Transpose()
 	b := graph.NewBreadthFirst2(g, t, m)
-	start, end := 1, 3
+	var start, end graph.NI = 1, 3
 	if !b.Path(start, end) {
 		return
 	}
@@ -154,9 +154,9 @@ func ExampleBreadthFirst2_AllPaths() {
 	b := graph.NewBreadthFirst2(g, t, m)
 	b.AllPaths(1)
 	fmt.Println("Max path length:", b.Result.MaxLen)
-	p := make([]int, b.Result.MaxLen)
+	p := make([]graph.NI, b.Result.MaxLen)
 	for n := range b.To {
-		fmt.Println(n, b.Result.PathTo(n, p))
+		fmt.Println(n, b.Result.PathTo(graph.NI(n), p))
 	}
 	// Output:
 	// Max path length: 4
@@ -191,7 +191,7 @@ func ExampleDAGPath_AllPaths() {
 		7: {{9, 10}},
 		9: {},
 	}
-	o := []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+	o := []graph.NI{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
 	d := graph.NewDAGPath(g, o,
 		func(l int) float64 { return float64(l) },
 		false)
@@ -245,7 +245,7 @@ func ExampleDAGPath_Path_shortest() {
 	d := graph.NewDAGPath(g, o,
 		func(l int) float64 { return float64(l) },
 		false)
-	start, end := 3, 2
+	var start, end graph.NI = 3, 2
 	if !d.Path(start, end) {
 		fmt.Println("not found")
 	}
@@ -283,7 +283,7 @@ func ExampleDAGPath_Path_longest() {
 	d := graph.NewDAGPath(g, o,
 		func(l int) float64 { return float64(l) },
 		true)
-	start, end := 3, 2
+	var start, end graph.NI = 3, 2
 	if !d.Path(start, end) {
 		fmt.Println("not found")
 	}
@@ -348,7 +348,7 @@ func ExampleDijkstra_Path() {
 	}
 	w := func(label int) float64 { return float64(label) }
 	d := graph.NewDijkstra(g, w)
-	start, end := 1, 5
+	var start, end graph.NI = 1, 5
 	if !d.Path(start, end) {
 		return
 	}
@@ -391,10 +391,10 @@ func ExampleDijkstra_AllPaths() {
 	// column len is from Result, and will be equal to len(path).
 	// column dist is from Result, and will be equal to sum.
 	fmt.Println("node:  path                  len  dist")
-	p := make([]int, d.Tree.MaxLen)
+	p := make([]graph.NI, d.Tree.MaxLen)
 	for nd := range g {
 		r := &d.Tree.Paths[nd]
-		path := d.Tree.PathTo(nd, p)
+		path := d.Tree.PathTo(graph.NI(nd), p)
 		if r.Len > 0 {
 			fmt.Printf("%d:     %-23s %d    %2.0f\n",
 				nd, fmt.Sprint(path), r.Len, d.Dist[nd])
@@ -432,7 +432,7 @@ func ExampleLabeledAdjacencyList_AStarAPath() {
 	}
 	w := func(label int) float64 { return float64(label) }
 	h4 := []float64{19, 20, 10, 6, 0, 9}
-	h := func(from int) float64 { return h4[from] }
+	h := func(from graph.NI) float64 { return h4[from] }
 	p, l := g.AStarAPath(0, 4, h, w)
 	fmt.Println("Shortest path:", p)
 	fmt.Println("Path length:", l)
@@ -463,7 +463,7 @@ func ExampleAStarMPath() {
 	}
 	w := func(label int) float64 { return float64(label) }
 	h4 := []float64{19, 20, 10, 6, 0, 9}
-	h := func(from int) float64 { return h4[from] }
+	h := func(from graph.NI) float64 { return h4[from] }
 	p, l := g.AStarMPath(0, 4, h, w)
 	fmt.Println("Shortest path:", p)
 	fmt.Println("Path length:", l)
@@ -494,7 +494,7 @@ func ExampleHeuristic_Admissable() {
 	}
 	w := func(label int) float64 { return float64(label) }
 	h4 := []float64{19, 20, 10, 6, 0, 9}
-	var h graph.Heuristic = func(from int) float64 { return h4[from] }
+	var h graph.Heuristic = func(from graph.NI) float64 { return h4[from] }
 	fmt.Println(h.Admissable(g, w, 4))
 	// Output:
 	// true
@@ -522,7 +522,7 @@ func ExampleHeuristic_Monotonic() {
 	}
 	w := func(label int) float64 { return float64(label) }
 	h4 := []float64{19, 20, 10, 6, 0, 9}
-	var h graph.Heuristic = func(from int) float64 { return h4[from] }
+	var h graph.Heuristic = func(from graph.NI) float64 { return h4[from] }
 	fmt.Println(h.Monotonic(g, w))
 	// Output:
 	// true
@@ -557,7 +557,7 @@ func ExampleBellmanFord() {
 	fmt.Println("negative cycle:", b.NegativeCycle())
 
 	// but negative cycle not reached starting at node 1
-	start := 1
+	start := graph.NI(1)
 	fmt.Println("start:", start)
 	if !b.Start(start) {
 		fmt.Println("negative cycle")
@@ -565,10 +565,10 @@ func ExampleBellmanFord() {
 	}
 	fmt.Println("end   path  path")
 	fmt.Println("node  len   dist   path")
-	p := make([]int, b.Tree.MaxLen)
+	p := make([]graph.NI, b.Tree.MaxLen)
 	for n, e := range b.Tree.Paths {
 		fmt.Printf("%d       %d   %4.0f   %d\n",
-			n, e.Len, b.Dist[n], b.Tree.PathTo(n, p))
+			n, e.Len, b.Dist[n], b.Tree.PathTo(graph.NI(n), p))
 	}
 	// Output:
 	// negative cycle: true

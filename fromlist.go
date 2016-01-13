@@ -37,7 +37,7 @@ type FromList struct {
 //
 // A PathEnd list is an element type of FromList.
 type PathEnd struct {
-	From int // a "from" half arc, the node the arc comes from
+	From NI  // a "from" half arc, the node the arc comes from
 	Len  int // number of nodes in path from start
 }
 
@@ -63,17 +63,17 @@ func (t *FromList) reset() {
 //
 // BoundsOk returns true when all from values are less than len(t).
 // Otherwise it returns false and a node with a from value >= len(t).
-func (t *FromList) BoundsOk() (ok bool, n int) {
+func (t *FromList) BoundsOk() (ok bool, n NI) {
 	for n, e := range t.Paths {
-		if e.From >= len(t.Paths) {
-			return false, n
+		if int(e.From) >= len(t.Paths) {
+			return false, NI(n)
 		}
 	}
 	return true, -1
 }
 
 // Root finds the root of a node in a FromList.
-func (t *FromList) Root(n int) int {
+func (t *FromList) Root(n NI) NI {
 	p := t.Paths
 	for {
 		fr := p[n].From
@@ -97,7 +97,7 @@ func (t *FromList) Root(n int) int {
 // it will be used, otherwise a new slice is created for the result.
 //
 // See also function PathTo.
-func (t *FromList) PathTo(end int, p []int) []int {
+func (t *FromList) PathTo(end NI, p []NI) []NI {
 	return PathTo(t.Paths, end, p)
 }
 
@@ -110,7 +110,7 @@ func (t *FromList) PathTo(end int, p []int) []int {
 // it will be used, otherwise a new slice is created for the result.
 //
 // See also method FromList.PathTo.
-func PathTo(paths []PathEnd, end int, p []int) []int {
+func PathTo(paths []PathEnd, end NI, p []NI) []NI {
 	n := paths[end].Len
 	if n == 0 {
 		return nil
@@ -118,7 +118,7 @@ func PathTo(paths []PathEnd, end int, p []int) []int {
 	if cap(p) >= n {
 		p = p[:n]
 	} else {
-		p = make([]int, n)
+		p = make([]NI, n)
 	}
 	for {
 		n--
@@ -133,9 +133,9 @@ func PathTo(paths []PathEnd, end int, p []int) []int {
 // CommonAncestor returns the common ancestor of a and b.
 //
 // It returns -1 if a or b are invalid node numbers.
-func (t *FromList) CommonAncestor(a, b int) int {
+func (t *FromList) CommonAncestor(a, b NI) NI {
 	p := t.Paths
-	if a < 0 || b < 0 || a >= len(p) || b >= len(p) {
+	if a < 0 || b < 0 || a >= NI(len(p)) || b >= NI(len(p)) {
 		return -1
 	}
 	if p[a].Len < p[b].Len {
@@ -159,7 +159,7 @@ func (t *FromList) Transpose() AdjacencyList {
 		if p.From == -1 {
 			continue
 		}
-		g[p.From] = append(g[p.From], n)
+		g[p.From] = append(g[p.From], NI(n))
 	}
 	return g
 }
@@ -172,7 +172,7 @@ func (t *FromList) Undirected() AdjacencyList {
 			continue
 		}
 		g[n] = append(g[n], p.From)
-		g[p.From] = append(g[p.From], n)
+		g[p.From] = append(g[p.From], NI(n))
 	}
 	return g
 }
@@ -186,7 +186,7 @@ func (t *FromList) UndirectedLabeled() LabeledAdjacencyList {
 			continue
 		}
 		g[n] = append(g[n], Half{To: p.From, Label: n})
-		g[p.From] = append(g[p.From], Half{n, n})
+		g[p.From] = append(g[p.From], Half{NI(n), n})
 	}
 	return g
 }

@@ -46,9 +46,9 @@ func NewBreadthFirst(g AdjacencyList) *BreadthFirst {
 //
 // Returned is the path as list of nodes.
 // The result is nil if no path was found.
-func (g AdjacencyList) BreadthFirstPath(start, end int) []int {
+func (g AdjacencyList) BreadthFirstPath(start, end NI) []NI {
 	b := NewBreadthFirst(g)
-	b.Traverse(start, func(n int) bool { return n != end })
+	b.Traverse(start, func(n NI) bool { return n != end })
 	return b.Result.PathTo(end, nil)
 }
 
@@ -56,8 +56,8 @@ func (g AdjacencyList) BreadthFirstPath(start, end int) []int {
 //
 // Path returns true if a path exists, false if not.  The path can be recovered
 // from b.Result.
-func (b *BreadthFirst) Path(start, end int) bool {
-	b.Traverse(start, func(n int) bool { return n != end })
+func (b *BreadthFirst) Path(start, end NI) bool {
+	b.Traverse(start, func(n NI) bool { return n != end })
 	return b.Result.Paths[end].Len > 0
 }
 
@@ -67,8 +67,8 @@ func (b *BreadthFirst) Path(start, end int) bool {
 // AllPaths returns number of paths found, equivalent to the number of nodes
 // reached, including the path ending at start.  Path results are left in
 // d.Result.
-func (b *BreadthFirst) AllPaths(start int) int {
-	return b.Traverse(start, func(int) bool { return true })
+func (b *BreadthFirst) AllPaths(start NI) int {
+	return b.Traverse(start, func(NI) bool { return true })
 }
 
 // A Visitor function is an argument to graph traversal methods.
@@ -77,7 +77,7 @@ func (b *BreadthFirst) AllPaths(start int) int {
 // The argument n is the node being visited.  If the visitor function
 // returns true, the traversal will continue.  If the visitor function
 // returns false, the traversal will terminate immediately.
-type Visitor func(n int) (ok bool)
+type Visitor func(n NI) (ok bool)
 
 // Traverse traverses a graph in breadth first order starting from node start.
 //
@@ -88,7 +88,7 @@ type Visitor func(n int) (ok bool)
 //
 // Traverse returns the number of nodes successfully visited; if search is
 // is terminated by a false return from v, that node is not counted.
-func (b *BreadthFirst) Traverse(start int, v Visitor) int {
+func (b *BreadthFirst) Traverse(start NI, v Visitor) int {
 	b.Result.reset()
 	rp := b.Result.Paths
 	level := 1
@@ -99,10 +99,10 @@ func (b *BreadthFirst) Traverse(start int, v Visitor) int {
 	}
 	nReached := 1 // accumulated for a return value
 	// the frontier consists of nodes all at the same level
-	frontier := []int{start}
+	frontier := []NI{start}
 	for {
 		level++
-		var next []int
+		var next []NI
 		for _, n := range frontier {
 			for _, nb := range b.Graph[n] {
 				if rp[nb].Len == 0 {
@@ -150,23 +150,23 @@ func NewBreadthFirst2(to, from AdjacencyList, m int) *BreadthFirst2 {
 //
 // Returned is the path as list of nodes.
 // The result is nil if no path was found.
-func (g AdjacencyList) BreadthFirst2Path(start, end int) []int {
+func (g AdjacencyList) BreadthFirst2Path(start, end NI) []NI {
 	t, m := g.Transpose()
 	b := NewBreadthFirst2(g, t, m)
-	b.Traverse(start, func(n int) bool { return n != end })
+	b.Traverse(start, func(n NI) bool { return n != end })
 	return b.Result.PathTo(end, nil)
 }
 
-func (b *BreadthFirst2) Path(start, end int) bool {
-	b.Traverse(start, func(n int) bool { return n != end })
+func (b *BreadthFirst2) Path(start, end NI) bool {
+	b.Traverse(start, func(n NI) bool { return n != end })
 	return b.Result.Paths[end].Len > 0
 }
 
-func (b *BreadthFirst2) AllPaths(start int) int {
-	return b.Traverse(start, func(int) bool { return true })
+func (b *BreadthFirst2) AllPaths(start NI) int {
+	return b.Traverse(start, func(NI) bool { return true })
 }
 
-func (b *BreadthFirst2) Traverse(start int, v Visitor) int {
+func (b *BreadthFirst2) Traverse(start NI, v Visitor) int {
 	b.Result.reset()
 	rp := b.Result.Paths
 	level := 1
@@ -177,7 +177,7 @@ func (b *BreadthFirst2) Traverse(start int, v Visitor) int {
 	}
 	nReached := 1 // accumulated for a return value
 	// the frontier consists of nodes all at the same level
-	frontier := []int{start}
+	frontier := []NI{start}
 	mf := len(b.To[start])      // number of arcs leading out from frontier
 	ctb := b.M / 10             // threshold change from top-down to bottom-up
 	k14 := 14 * b.M / len(b.To) // 14 * mean degree
@@ -189,7 +189,7 @@ func (b *BreadthFirst2) Traverse(start int, v Visitor) int {
 	for {
 		// top down step
 		level++
-		var next []int
+		var next []NI
 		for _, n := range frontier {
 			for _, nb := range b.To[n] {
 				if rp[nb].Len == 0 {
@@ -261,7 +261,7 @@ func (b *BreadthFirst2) Traverse(start int, v Visitor) int {
 		for n := range b.To {
 			//			if fBits.Bit(n) == 1 {
 			if fBits[n] {
-				frontier = append(frontier, n)
+				frontier = append(frontier, NI(n))
 				mf += len(b.To[n])
 				fBits[n] = false
 			}
@@ -283,7 +283,7 @@ func (b *BreadthFirst2) Traverse(start int, v Visitor) int {
 // Construct with NewDAGPath.
 type DAGPath struct {
 	Graph    LabeledAdjacencyList // input graph
-	Ordering []int                // topological ordering
+	Ordering []NI                 // topological ordering
 	Weight   WeightFunc           // input weight function
 	Longest  bool                 // find longest path rather than shortest
 	Tree     FromList             // result paths
@@ -305,7 +305,7 @@ type DAGPath struct {
 // concurrently.  Searches can be run concurrently however, on DAGPath
 // objects obtained with separate calls to NewDAGPath, even with the same
 // graph argument to NewDAGPath.
-func NewDAGPath(g LabeledAdjacencyList, ordering []int, w WeightFunc, longest bool) *DAGPath {
+func NewDAGPath(g LabeledAdjacencyList, ordering []NI, w WeightFunc, longest bool) *DAGPath {
 	return &DAGPath{
 		Graph:    g,
 		Ordering: ordering,
@@ -323,7 +323,7 @@ func NewDAGPath(g LabeledAdjacencyList, ordering []int, w WeightFunc, longest bo
 // Returned is the path and distance as returned by FromList.PathTo.
 //
 // This is a convenience method.  See the DAGPath type for more options.
-func (g LabeledAdjacencyList) DAGShortestPath(start, end int, w WeightFunc) ([]int, float64, error) {
+func (g LabeledAdjacencyList) DAGShortestPath(start, end NI, w WeightFunc) ([]NI, float64, error) {
 	return g.dagPath(start, end, w, false)
 }
 
@@ -334,11 +334,11 @@ func (g LabeledAdjacencyList) DAGShortestPath(start, end int, w WeightFunc) ([]i
 // Returned is the path and distance as returned by FromList.PathTo.
 //
 // This is a convenience method.  See the DAGPath type for more options.
-func (g LabeledAdjacencyList) DAGLongestPath(start, end int, w WeightFunc) ([]int, float64, error) {
+func (g LabeledAdjacencyList) DAGLongestPath(start, end NI, w WeightFunc) ([]NI, float64, error) {
 	return g.dagPath(start, end, w, true)
 }
 
-func (g LabeledAdjacencyList) dagPath(start, end int, w WeightFunc, longest bool) ([]int, float64, error) {
+func (g LabeledAdjacencyList) dagPath(start, end NI, w WeightFunc, longest bool) ([]NI, float64, error) {
 	o, _ := g.Topological()
 	if o == nil {
 		return nil, 0, fmt.Errorf("not a DAG")
@@ -356,7 +356,7 @@ func (g LabeledAdjacencyList) dagPath(start, end int, w WeightFunc, longest bool
 // Path returns true if a path exists, false if not. The path can be recovered
 // from the receiver.  Path returns as soon as the shortest path to end is
 // found; it does not explore the remainder of the graph.
-func (d *DAGPath) Path(start, end int) bool {
+func (d *DAGPath) Path(start, end NI) bool {
 	d.search(start, end)
 	return d.Tree.Paths[end].Len > 0
 }
@@ -370,11 +370,11 @@ func (d *DAGPath) Reset() {
 }
 
 // AllPaths finds paths from argument start to all nodes reachable from start.
-func (d *DAGPath) AllPaths(start int) (reached int) {
+func (d *DAGPath) AllPaths(start NI) (reached int) {
 	return d.search(start, -1)
 }
 
-func (d *DAGPath) search(start, end int) (reached int) {
+func (d *DAGPath) search(start, end NI) (reached int) {
 	// search ordering for start
 	o := 0
 	for d.Ordering[o] != start {
@@ -394,14 +394,14 @@ func (d *DAGPath) search(start, end int) (reached int) {
 	p[start] = PathEnd{From: -1, Len: 1}
 	d.Tree.MaxLen = 1
 	leaves := &d.Tree.Leaves
-	leaves.SetBit(leaves, start, 1)
+	leaves.SetBit(leaves, int(start), 1)
 	reached = 1
 	for n := start; n != end; n = d.Ordering[o] {
 		if p[n].Len > 0 && len(g[n]) > 0 {
 			nDist := d.Dist[n]
 			candLen := p[n].Len + 1 // len for any candidate arc followed from n
 			for _, to := range g[n] {
-				leaves.SetBit(leaves, to.To, 1)
+				leaves.SetBit(leaves, int(to.To), 1)
 				candDist := nDist + d.Weight(to.Label)
 				switch {
 				case p[to.To].Len == 0: // first path to node to.To
@@ -417,7 +417,7 @@ func (d *DAGPath) search(start, end int) (reached int) {
 					d.Tree.MaxLen = candLen
 				}
 			}
-			leaves.SetBit(leaves, n, 0)
+			leaves.SetBit(leaves, int(n), 0)
 		}
 		o++
 		if o == len(d.Ordering) {
@@ -464,7 +464,7 @@ type Dijkstra struct {
 func NewDijkstra(g LabeledAdjacencyList, w WeightFunc) *Dijkstra {
 	r := make([]tentResult, len(g))
 	for i := range r {
-		r[i].nx = i
+		r[i].nx = NI(i)
 	}
 	return &Dijkstra{
 		Graph:  g,
@@ -477,7 +477,7 @@ func NewDijkstra(g LabeledAdjacencyList, w WeightFunc) *Dijkstra {
 
 type tentResult struct {
 	dist float64 // tentative distance, sum of arc weights
-	nx   int     // slice index, "node id"
+	nx   NI      // slice index, "node id"
 	fx   int     // heap.Fix index
 	done bool
 }
@@ -487,7 +487,7 @@ type tent []*tentResult
 // DijkstraPath finds a single shortest path.
 //
 // Returned is the path and distance as returned by FromList.PathTo.
-func (g LabeledAdjacencyList) DijkstraPath(start, end int, w WeightFunc) ([]int, float64) {
+func (g LabeledAdjacencyList) DijkstraPath(start, end NI, w WeightFunc) ([]NI, float64) {
 	d := NewDijkstra(g, w)
 	d.Path(start, end)
 	return d.Tree.PathTo(end, nil), d.Dist[end]
@@ -498,7 +498,7 @@ func (g LabeledAdjacencyList) DijkstraPath(start, end int, w WeightFunc) ([]int,
 // Path returns true if a path exists, false if not. The path can be recovered
 // from b.Result.  Path returns as soon as the shortest path to end is found;
 // it does not explore the remainder of the graph.
-func (d *Dijkstra) Path(start, end int) bool {
+func (d *Dijkstra) Path(start, end NI) bool {
 	d.search(start, end)
 	return d.Tree.Paths[end].Len > 0
 }
@@ -509,7 +509,7 @@ func (d *Dijkstra) Path(start, end int) bool {
 // AllPaths returns number of paths found, equivalent to the number of nodes
 // reached, including the path ending at start.  Path results are left in
 // d.Result.
-func (d *Dijkstra) AllPaths(start int) (nFound int) {
+func (d *Dijkstra) AllPaths(start NI) (nFound int) {
 	return d.search(start, -1)
 }
 
@@ -527,7 +527,7 @@ func (d *Dijkstra) Reset() {
 }
 
 // returns number of nodes reached (= number of shortest paths found)
-func (d *Dijkstra) search(start, end int) (reached int) {
+func (d *Dijkstra) search(start, end NI) (reached int) {
 	current := start
 	rp := d.Tree.Paths
 	rp[current] = PathEnd{Len: 1, From: -1} // path length at start is 1 node
@@ -638,7 +638,7 @@ type AStar struct {
 func NewAStar(g LabeledAdjacencyList, w WeightFunc) *AStar {
 	r := make([]rNode, len(g))
 	for i := range r {
-		r[i].nx = i
+		r[i].nx = NI(i)
 	}
 	return &AStar{
 		Graph:  g,
@@ -663,7 +663,7 @@ func NewAStar(g LabeledAdjacencyList, w WeightFunc) *AStar {
 // d.Result.
 // rNode holds data for a "reached" node
 type rNode struct {
-	nx    int
+	nx    NI
 	state int8    // state constants defined below
 	f     float64 // "g+h", path dist + heuristic estimate
 	fx    int     // heap.Fix index
@@ -694,18 +694,19 @@ type openHeap []*rNode
 //
 // See AStarA for additional notes on implementing heuristic functions for
 // AStar search methods.
-type Heuristic func(from int) float64
+type Heuristic func(from NI) float64
 
 // Admissable returns true if heuristic h is admissable on graph g relative to
 // the given end node.
 //
 // If h is inadmissable, the string result describes a counter example.
-func (h Heuristic) Admissable(g LabeledAdjacencyList, w WeightFunc, end int) (bool, string) {
+func (h Heuristic) Admissable(g LabeledAdjacencyList, w WeightFunc, end NI) (bool, string) {
 	// invert graph
 	inv := make(LabeledAdjacencyList, len(g))
 	for from, nbs := range g {
 		for _, nb := range nbs {
-			inv[nb.To] = append(inv[nb.To], Half{To: from, Label: nb.Label})
+			inv[nb.To] = append(inv[nb.To],
+				Half{To: NI(from), Label: nb.Label})
 		}
 	}
 	// run dijkstra
@@ -718,10 +719,10 @@ func (h Heuristic) Admissable(g LabeledAdjacencyList, w WeightFunc, end int) (bo
 		if d.Tree.Paths[n].Len == 0 {
 			continue // no path, any heuristic estimate is fine.
 		}
-		if !(h(n) <= d.Dist[n]) {
+		if !(h(NI(n)) <= d.Dist[n]) {
 			return false, fmt.Sprintf("h(%d) = %g, "+
 				"required to be <= found shortest path (%g)",
-				n, h(n), d.Dist[n])
+				n, h(NI(n)), d.Dist[n])
 		}
 	}
 	return true, ""
@@ -734,7 +735,7 @@ func (h Heuristic) Monotonic(g LabeledAdjacencyList, w WeightFunc) (bool, string
 	// precompute
 	hv := make([]float64, len(g))
 	for n := range g {
-		hv[n] = h(n)
+		hv[n] = h(NI(n))
 	}
 	// iterate over all edges
 	for from, nbs := range g {
@@ -788,7 +789,7 @@ func (a *AStar) Reset() {
 //
 // If AStarA finds a path it returns true.  The path can be decoded from
 // a.Result.
-func (a *AStar) AStarA(start, end int, h Heuristic) bool {
+func (a *AStar) AStarA(start, end NI, h Heuristic) bool {
 	// NOTE: AStarM is largely duplicate code.
 
 	// start node is reached initially
@@ -853,7 +854,7 @@ func (a *AStar) AStarA(start, end int, h Heuristic) bool {
 // See documentation on the AStarA method of the AStar type.
 //
 // Returned is the path and distance as returned by FromList.PathTo.
-func (g LabeledAdjacencyList) AStarAPath(start, end int, h Heuristic, w WeightFunc) ([]int, float64) {
+func (g LabeledAdjacencyList) AStarAPath(start, end NI, h Heuristic, w WeightFunc) ([]NI, float64) {
 	a := NewAStar(g, w)
 	a.AStarA(start, end, h)
 	return a.Tree.PathTo(end, nil), a.Dist[end]
@@ -865,7 +866,7 @@ func (g LabeledAdjacencyList) AStarAPath(start, end int, h Heuristic, w WeightFu
 // not be meaningful if argument h is non-monotonic.
 //
 // See AStarA for general usage.  See Heuristic for notes on monotonicity.
-func (a *AStar) AStarM(start, end int, h Heuristic) bool {
+func (a *AStar) AStarM(start, end NI, h Heuristic) bool {
 	// NOTE: AStarM is largely code duplicated from AStarA.
 	// Differences are noted in comments in this method.
 
@@ -944,7 +945,7 @@ func (a *AStar) AStarM(start, end int, h Heuristic) bool {
 // See documentation on the AStarM method of the AStar type.
 //
 // Returned is the path and distance as returned by FromList.PathTo.
-func (g LabeledAdjacencyList) AStarMPath(start, end int, h Heuristic, w WeightFunc) ([]int, float64) {
+func (g LabeledAdjacencyList) AStarMPath(start, end NI, h Heuristic, w WeightFunc) ([]NI, float64) {
 	a := NewAStar(g, w)
 	a.AStarM(start, end, h)
 	return a.Tree.PathTo(end, nil), a.Dist[end]
@@ -1027,7 +1028,7 @@ func (b *BellmanFord) Reset() {
 // Negative cycles are only detected when reachable from start.  A negative
 // cycle not reachable from start will not prevent the algorithm from finding
 // shortest paths reachable from start.
-func (b *BellmanFord) Start(start int) (ok bool) {
+func (b *BellmanFord) Start(start NI) (ok bool) {
 	inf := math.Inf(1)
 	for i := range b.Dist {
 		b.Dist[i] = inf
@@ -1045,7 +1046,7 @@ func (b *BellmanFord) Start(start int) (ok bool) {
 				to := &rp[nb.To]
 				// TODO improve to break ties
 				if fp.Len > 0 && d2 < b.Dist[nb.To] {
-					*to = PathEnd{From: from, Len: fp.Len + 1}
+					*to = PathEnd{From: NI(from), Len: fp.Len + 1}
 					b.Dist[nb.To] = d2
 					imp = true
 				}

@@ -36,7 +36,7 @@ func ExampleAdjacencyList_Simple() {
 		2: {0, 1},
 	}
 	fmt.Println(g.Simple())
-	g[1] = []int{1} // loop
+	g[1] = []graph.NI{1} // loop
 	fmt.Println(g.Simple())
 	g[1] = nil
 	g[2] = append(g[2], 0) // parallel arc

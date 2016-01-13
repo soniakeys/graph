@@ -9,7 +9,7 @@
 package graph
 
 // Edge is an undirected edge between nodes N1 and N2.
-type Edge struct{ N1, N2 int }
+type Edge struct{ N1, N2 NI }
 
 // AddEdge adds an edge to a graph.
 //
@@ -21,7 +21,7 @@ type Edge struct{ N1, N2 int }
 // The pointer receiver allows the method to expand the graph as needed
 // to include the values n1 and n2.  If n1 or n2 happen to be greater than
 // len(*p) the method does not panic, but simply expands the graph.
-func (p *AdjacencyList) AddEdge(n1, n2 int) {
+func (p *AdjacencyList) AddEdge(n1, n2 NI) {
 	// Similar code in LabeledAdjacencyList.AddEdge.
 
 	// determine max of the two end points
@@ -31,7 +31,7 @@ func (p *AdjacencyList) AddEdge(n1, n2 int) {
 	}
 	// expand graph if needed, to include both
 	g := *p
-	if max >= len(g) {
+	if int(max) >= len(g) {
 		*p = make(AdjacencyList, max+1)
 		copy(*p, g)
 		g = *p
@@ -48,18 +48,18 @@ func (p *AdjacencyList) AddEdge(n1, n2 int) {
 //
 // Returns true when all non-loop arcs are paired in reciprocal pairs with
 // matching labels.  Otherwise returns false and an example unpaired arc.
-func (g AdjacencyList) IsUndirected() (u bool, from, to int) {
+func (g AdjacencyList) IsUndirected() (u bool, from, to NI) {
 	unpaired := make(AdjacencyList, len(g))
 	for fr, to := range g {
 	arc: // for each arc in g
 		for _, to := range to {
-			if to == fr {
+			if to == NI(fr) {
 				continue // loop
 			}
 			// search unpaired arcs
 			ut := unpaired[to]
 			for i, u := range ut {
-				if u == fr { // found reciprocal
+				if u == NI(fr) { // found reciprocal
 					last := len(ut) - 1
 					ut[i] = ut[last]
 					unpaired[to] = ut[:last]
@@ -72,7 +72,7 @@ func (g AdjacencyList) IsUndirected() (u bool, from, to int) {
 	}
 	for fr, to := range unpaired {
 		if len(to) > 0 {
-			return false, fr, to[0]
+			return false, NI(fr), to[0]
 		}
 	}
 	return true, -1, -1
@@ -85,7 +85,7 @@ func (g AdjacencyList) UndirectedCopy() AdjacencyList {
 	for fr, to := range g {
 	arc: // for each arc in g
 		for _, to := range to {
-			if to == fr {
+			if to == NI(fr) {
 				continue // loop
 			}
 			// search wanted arcs
@@ -99,7 +99,7 @@ func (g AdjacencyList) UndirectedCopy() AdjacencyList {
 				}
 			}
 			// arc not found, add to reciprocal to wanted list
-			rw[to] = append(rw[to], fr)
+			rw[to] = append(rw[to], NI(fr))
 		}
 	}
 	// add missing reciprocals
@@ -122,8 +122,8 @@ func (g AdjacencyList) TarjanBiconnectedComponents() (components [][]Edge) {
 	lowpt := make([]int, len(g))
 	var stack []Edge
 	var i int
-	var biconnect func(int, int)
-	biconnect = func(v, u int) {
+	var biconnect func(NI, NI)
+	biconnect = func(v, u NI) {
 		i++
 		number[v] = i
 		lowpt[v] = i
@@ -157,7 +157,7 @@ func (g AdjacencyList) TarjanBiconnectedComponents() (components [][]Edge) {
 	}
 	for w := range g {
 		if number[w] == 0 {
-			biconnect(w, 0)
+			biconnect(NI(w), 0)
 		}
 	}
 	return

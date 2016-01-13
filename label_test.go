@@ -176,9 +176,9 @@ func ExampleLabeledAdjacencyList_Unlabeled() {
 	// 2, []graph.Half{graph.Half{To:0, Label:7}, graph.Half{To:1, Label:9}}
 	//
 	// Unlabeled:
-	// 0, []int{}
-	// 1, []int{}
-	// 2, []int{0, 1}
+	// 0, []graph.NI{}
+	// 1, []graph.NI{}
+	// 2, []graph.NI{0, 1}
 }
 
 func ExampleLabeledAdjacencyList_UnlabeledTranspose() {

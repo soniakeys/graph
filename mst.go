@@ -9,7 +9,7 @@ import (
 )
 
 type dsElement struct {
-	from int
+	from NI
 	rank int
 }
 
@@ -25,7 +25,7 @@ func newDisjointSet(n int) disjointSet {
 	return disjointSet{set}
 }
 
-func (ds disjointSet) find(n int) int {
+func (ds disjointSet) find(n NI) NI {
 	// fast paths for n == root or from root.
 	// no updates need in these cases.
 	s := ds.set
@@ -115,7 +115,7 @@ func (l WeightedEdgeList) KruskalSorted() (f FromList, labels []int, dist float6
 		// add arc so y comes from x
 		paths[y].From = x
 		labels[y] = e.Label
-		f.Leaves.SetBit(&f.Leaves, x, 0)
+		f.Leaves.SetBit(&f.Leaves, int(x), 0)
 		dist += l.WeightFunc(e.Label)
 	}
 	return
@@ -138,7 +138,7 @@ type Prim struct {
 func NewPrim(g LabeledAdjacencyList, w WeightFunc) *Prim {
 	b := make([]prNode, len(g))
 	for n := range b {
-		b[n].nx = n
+		b[n].nx = NI(n)
 		b[n].fx = -1
 	}
 	return &Prim{
@@ -150,7 +150,7 @@ func NewPrim(g LabeledAdjacencyList, w WeightFunc) *Prim {
 }
 
 type prNode struct {
-	nx   int
+	nx   NI
 	from FromHalf
 	wt   float64 // p.Weight(from.Label)
 	fx   int
@@ -179,7 +179,7 @@ func (p *Prim) Reset() {
 // components.  Note that Result.Start can contain only the most recent start
 // node.  To complete the forest representation you must retain a separate
 // list of start nodes.
-func (p *Prim) Span(start int) int {
+func (p *Prim) Span(start NI) int {
 	rp := p.Tree.Paths
 	var frontier prHeap
 	rp[start] = PathEnd{From: -1, Len: 1}

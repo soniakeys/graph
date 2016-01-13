@@ -16,14 +16,14 @@ import (
 // DAGMaxLenPath finds a maximum length path in a directed acyclic graph.
 //
 // Argument ordering must be a topological ordering of g.
-func (g AdjacencyList) DAGMaxLenPath(ordering []int) (path []int) {
+func (g AdjacencyList) DAGMaxLenPath(ordering []NI) (path []NI) {
 	// dynamic programming. visit nodes in reverse order. for each, compute
 	// longest path as one plus longest of 'to' nodes.
 	// Visits each arc once.  O(m).
 	//
 	// Similar code in label.go
-	var n int
-	mlp := make([][]int, len(g)) // index by node number
+	var n NI
+	mlp := make([][]NI, len(g)) // index by node number
 	for i := len(ordering) - 1; i >= 0; i-- {
 		fr := ordering[i] // node number
 		to := g[fr]
@@ -36,14 +36,14 @@ func (g AdjacencyList) DAGMaxLenPath(ordering []int) (path []int) {
 				mt = to
 			}
 		}
-		p := append([]int{mt}, mlp[mt]...)
+		p := append([]NI{mt}, mlp[mt]...)
 		mlp[fr] = p
 		if len(p) > len(path) {
 			n = fr
 			path = p
 		}
 	}
-	return append([]int{n}, path...)
+	return append([]NI{n}, path...)
 }
 
 // EulerianCycle finds an Eulerian cycle in a directed multigraph.
@@ -58,7 +58,7 @@ func (g AdjacencyList) DAGMaxLenPath(ordering []int) (path []int) {
 //
 // Internally, EulerianCycle copies the entire graph g.
 // See EulerianCycleD for a more space efficient version.
-func (g AdjacencyList) EulerianCycle() ([]int, error) {
+func (g AdjacencyList) EulerianCycle() ([]NI, error) {
 	c, m := g.Copy()
 	return c.EulerianCycleD(m)
 }
@@ -77,7 +77,7 @@ func (g AdjacencyList) EulerianCycle() ([]int, error) {
 // nodes are the same.
 //
 // * Otherwise, result is nil, error
-func (g AdjacencyList) EulerianCycleD(m int) ([]int, error) {
+func (g AdjacencyList) EulerianCycleD(m int) ([]NI, error) {
 	if len(g) == 0 {
 		return nil, nil
 	}
@@ -108,7 +108,7 @@ func (g AdjacencyList) EulerianCycleD(m int) ([]int, error) {
 // It works, but contains an extra loop that I think spoils the time
 // complexity.  Probably still pretty fast in practice, but a different
 // graph representation might be better.
-func (g AdjacencyList) EulerianCycleUndirD(m int) ([]int, error) {
+func (g AdjacencyList) EulerianCycleUndirD(m int) ([]NI, error) {
 	if len(g) == 0 {
 		return nil, nil
 	}
@@ -138,12 +138,12 @@ func (g AdjacencyList) EulerianCycleUndirD(m int) ([]int, error) {
 //
 // Internally, EulerianPath copies the entire graph g.
 // See EulerianPathD for a more space efficient version.
-func (g AdjacencyList) EulerianPath() ([]int, error) {
+func (g AdjacencyList) EulerianPath() ([]NI, error) {
 	ind := g.InDegree()
-	var start int
+	var start NI
 	for n, to := range g {
 		if len(to) > ind[n] {
-			start = n
+			start = NI(n)
 			break
 		}
 	}
@@ -165,7 +165,7 @@ func (g AdjacencyList) EulerianPath() ([]int, error) {
 // The path result is a list of nodes, where the first node is start.
 //
 // * Otherwise, result is nil, error
-func (g AdjacencyList) EulerianPathD(m, start int) ([]int, error) {
+func (g AdjacencyList) EulerianPathD(m int, start NI) ([]NI, error) {
 	if len(g) == 0 {
 		return nil, nil
 	}
@@ -194,7 +194,7 @@ func (g AdjacencyList) EulerianPathD(m, start int) ([]int, error) {
 // mark nodes visited, push nodes on stack, remove arcs from g.
 func (e *eulerian) push() {
 	for u := e.top(); ; {
-		e.uv.SetBit(&e.uv, u, 0) // reset unvisited bit
+		e.uv.SetBit(&e.uv, int(u), 0) // reset unvisited bit
 		arcs := e.g[u]
 		if len(arcs) == 0 {
 			return // stuck
@@ -210,7 +210,7 @@ func (e *eulerian) push() {
 // like push, but for for undirected graphs.
 func (e *eulerian) pushUndir() {
 	for u := e.top(); ; {
-		e.uv.SetBit(&e.uv, u, 0)
+		e.uv.SetBit(&e.uv, int(u), 0)
 		arcs := e.g[u]
 		if len(arcs) == 0 {
 			return
@@ -252,11 +252,11 @@ type eulerian struct {
 	uv big.Int       // unvisited
 	// low end of p is stack of unfinished nodes
 	// high end is finished path
-	p []int // stack + path
-	s int   // stack pointer
+	p []NI // stack + path
+	s int  // stack pointer
 }
 
-func (e *eulerian) top() int {
+func (e *eulerian) top() NI {
 	return e.p[e.s]
 }
 
@@ -264,27 +264,27 @@ func newEulerian(g AdjacencyList, m int) *eulerian {
 	e := &eulerian{
 		g: g,
 		m: m,
-		p: make([]int, m+1),
+		p: make([]NI, m+1),
 	}
 	OneBits(&e.uv, len(g))
 	return e
 }
 
-func (g AdjacencyList) MaximalNonBranchingPaths() (p [][]int) {
+func (g AdjacencyList) MaximalNonBranchingPaths() (p [][]NI) {
 	ind := g.InDegree()
 	var uv big.Int
 	OneBits(&uv, len(g))
 	for v, vTo := range g {
 		if !(ind[v] == 1 && len(vTo) == 1) {
 			for _, w := range vTo {
-				n := []int{v, w}
+				n := []NI{NI(v), w}
 				uv.SetBit(&uv, v, 0)
-				uv.SetBit(&uv, w, 0)
+				uv.SetBit(&uv, int(w), 0)
 				wTo := g[w]
 				for ind[w] == 1 && len(wTo) == 1 {
 					u := wTo[0]
 					n = append(n, u)
-					uv.SetBit(&uv, u, 0)
+					uv.SetBit(&uv, int(u), 0)
 					w = u
 					wTo = g[w]
 				}
@@ -294,11 +294,11 @@ func (g AdjacencyList) MaximalNonBranchingPaths() (p [][]int) {
 		}
 	}
 	for b := uv.BitLen(); b > 0; b = uv.BitLen() {
-		v := b - 1
-		n := []int{v}
+		v := NI(b - 1)
+		n := []NI{v}
 		for w := v; ; {
 			w = g[w][0]
-			uv.SetBit(&uv, w, 0)
+			uv.SetBit(&uv, int(w), 0)
 			n = append(n, w)
 			if w == v {
 				break
@@ -371,7 +371,7 @@ func (g AdjacencyList) Transpose() (t AdjacencyList, m int) {
 	t = make(AdjacencyList, len(g))
 	for n, nbs := range g {
 		for _, nb := range nbs {
-			t[nb] = append(t[nb], n)
+			t[nb] = append(t[nb], NI(n))
 			m++
 		}
 	}

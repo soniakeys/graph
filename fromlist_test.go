@@ -94,10 +94,10 @@ func ExampleFromList_PathTo() {
 	fmt.Println(t.PathTo(1, nil))
 	fmt.Println()
 	// preallocate buffer, enumerate paths to all leaves
-	p := make([]int, t.MaxLen)
+	p := make([]graph.NI, t.MaxLen)
 	for n := range t.Paths {
 		if t.Leaves.Bit(n) == 1 {
-			fmt.Println(t.PathTo(n, p))
+			fmt.Println(t.PathTo(graph.NI(n), p))
 		}
 	}
 	// Output:

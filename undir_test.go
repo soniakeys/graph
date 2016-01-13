@@ -297,8 +297,8 @@ func ExampleAdjacencyList_ConnectedComponentReps_collectingLists() {
 	}
 	rep, _ := g.ConnectedComponentReps()
 	for _, r := range rep {
-		var m []int
-		g.DepthFirst(r, nil, func(n int) bool {
+		var m []graph.NI
+		g.DepthFirst(r, nil, func(n graph.NI) bool {
 			m = append(m, n)
 			return true
 		})

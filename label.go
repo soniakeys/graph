@@ -17,14 +17,14 @@ type LabeledAdjacencyList [][]Half
 //
 // Halfs can be composed to form a labeled adjacency list.
 type Half struct {
-	To    int // node ID, usable as a slice index
+	To    NI  // node ID, usable as a slice index
 	Label int // half-arc ID for application data
 }
 
 // FromHalf is a half arc, representing a labeled arc and the "neighbor" node
 // that the arc originates from.
 type FromHalf struct {
-	From  int
+	From  NI
 	Label int
 }
 
@@ -58,7 +58,7 @@ func (p *LabeledAdjacencyList) AddEdge(e LabeledEdge) {
 	}
 	// expand graph if needed, to include both
 	g := *p
-	if max >= len(g) {
+	if max >= NI(len(g)) {
 		*p = make(LabeledAdjacencyList, max+1)
 		copy(*p, g)
 		g = *p
@@ -79,7 +79,7 @@ func (p *LabeledAdjacencyList) AddEdge(e LabeledEdge) {
 //
 // Returned is a node beginning a maximum length path, and a path of arcs
 // starting from that node.
-func (g LabeledAdjacencyList) DAGMaxLenPath(ordering []int) (n int, path []Half) {
+func (g LabeledAdjacencyList) DAGMaxLenPath(ordering []NI) (n NI, path []Half) {
 	// dynamic programming. visit nodes in reverse order. for each, compute
 	// longest path as one plus longest of 'to' nodes.
 	// Visits each arc once.  Time complexity O(m).
@@ -165,18 +165,18 @@ func solveFW(d [][]float64) {
 // Note the requirement that reciprocal pairs have matching labels is
 // an additional test not present in the otherwise equivalent unlabled version
 // of IsUndirected.
-func (g LabeledAdjacencyList) IsUndirected() (u bool, from int, to Half) {
+func (g LabeledAdjacencyList) IsUndirected() (u bool, from NI, to Half) {
 	unpaired := make(LabeledAdjacencyList, len(g))
 	for fr, to := range g {
 	arc: // for each arc in g
 		for _, to := range to {
-			if to.To == fr {
+			if to.To == NI(fr) {
 				continue // loop
 			}
 			// search unpaired arcs
 			ut := unpaired[to.To]
 			for i, u := range ut {
-				if u.To == fr && u.Label == to.Label { // found reciprocal
+				if u.To == NI(fr) && u.Label == to.Label { // found reciprocal
 					last := len(ut) - 1
 					ut[i] = ut[last]
 					unpaired[to.To] = ut[:last]
@@ -189,7 +189,7 @@ func (g LabeledAdjacencyList) IsUndirected() (u bool, from int, to Half) {
 	}
 	for fr, to := range unpaired {
 		if len(to) > 0 {
-			return false, fr, to[0]
+			return false, NI(fr), to[0]
 		}
 	}
 	return true, -1, to
@@ -216,8 +216,8 @@ func (g LabeledAdjacencyList) NegativeArc(w WeightFunc) bool {
 // to the graph being simple.
 //
 // See also the eqivalent unlabeled Simple.
-func (g LabeledAdjacencyList) Simple() (s bool, n int) {
-	var t []int
+func (g LabeledAdjacencyList) Simple() (s bool, n NI) {
+	var t NodeList
 	for n, nbs := range g {
 		if len(nbs) == 0 {
 			continue
@@ -226,13 +226,13 @@ func (g LabeledAdjacencyList) Simple() (s bool, n int) {
 		for _, nb := range nbs {
 			t = append(t, nb.To)
 		}
-		sort.Ints(t)
-		if t[0] == n {
-			return false, n
+		sort.Sort(t)
+		if t[0] == NI(n) {
+			return false, NI(n)
 		}
 		for i, nb := range t[1:] {
-			if nb == n || nb == t[i] {
-				return false, n
+			if nb == NI(n) || nb == t[i] {
+				return false, NI(n)
 			}
 		}
 	}
@@ -259,8 +259,8 @@ func (g LabeledAdjacencyList) TarjanBiconnectedComponents() (components [][]Labe
 	lowpt := make([]int, len(g))
 	var stack []LabeledEdge
 	var i int
-	var biconnect func(int, int)
-	biconnect = func(v, u int) {
+	var biconnect func(NI, NI)
+	biconnect = func(v, u NI) {
 		i++
 		number[v] = i
 		lowpt[v] = i
@@ -294,7 +294,7 @@ func (g LabeledAdjacencyList) TarjanBiconnectedComponents() (components [][]Labe
 	}
 	for w := range g {
 		if number[w] == 0 {
-			biconnect(w, 0)
+			biconnect(NI(w), 0)
 		}
 	}
 	return
@@ -310,7 +310,7 @@ func (g LabeledAdjacencyList) Transpose() (t LabeledAdjacencyList, m int) {
 	t = make(LabeledAdjacencyList, len(g))
 	for n, nbs := range g {
 		for _, nb := range nbs {
-			t[nb.To] = append(t[nb.To], Half{To: n, Label: nb.Label})
+			t[nb.To] = append(t[nb.To], Half{To: NI(n), Label: nb.Label})
 			m++
 		}
 	}
@@ -325,7 +325,7 @@ func (g LabeledAdjacencyList) UndirectedCopy() LabeledAdjacencyList {
 	for fr, to := range g {
 	arc: // for each arc in g
 		for _, to := range to {
-			if to.To == fr {
+			if to.To == NI(fr) {
 				continue // arc is a loop
 			}
 			// search wanted arcs
@@ -339,7 +339,7 @@ func (g LabeledAdjacencyList) UndirectedCopy() LabeledAdjacencyList {
 				}
 			}
 			// arc not found, add to reciprocal to wanted list
-			rw[to.To] = append(rw[to.To], Half{To: fr, Label: to.Label})
+			rw[to.To] = append(rw[to.To], Half{To: NI(fr), Label: to.Label})
 		}
 	}
 	// add missing reciprocals
@@ -353,7 +353,7 @@ func (g LabeledAdjacencyList) UndirectedCopy() LabeledAdjacencyList {
 func (g LabeledAdjacencyList) Unlabeled() AdjacencyList {
 	a := make(AdjacencyList, len(g))
 	for n, nbs := range g {
-		to := make([]int, len(nbs))
+		to := make([]NI, len(nbs))
 		for i, nb := range nbs {
 			to[i] = nb.To
 		}
@@ -375,7 +375,7 @@ func (g LabeledAdjacencyList) UnlabeledTranspose() (t AdjacencyList, m int) {
 	t = make(AdjacencyList, len(g))
 	for n, nbs := range g {
 		for _, nb := range nbs {
-			t[nb.To] = append(t[nb.To], n)
+			t[nb.To] = append(t[nb.To], NI(n))
 			m++
 		}
 	}

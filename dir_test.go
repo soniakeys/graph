@@ -18,7 +18,7 @@ func ExampleAdjacencyList_Cyclic() {
 		3: {},
 	}
 	fmt.Println(g.Cyclic())
-	g[3] = []int{2}
+	g[3] = []graph.NI{2}
 	fmt.Println(g.Cyclic())
 	// Output:
 	// false
@@ -71,7 +71,7 @@ func ExampleAdjacencyList_Topological() {
 		4: {3, 2},
 	}
 	fmt.Println(g.Topological())
-	g[2] = []int{3}
+	g[2] = []graph.NI{3}
 	fmt.Println(g.Topological())
 	// Output:
 	// [4 3 1 2 0] []
@@ -87,7 +87,7 @@ func ExampleAdjacencyList_TopologicalKahn() {
 	tr, _ := g.Transpose()
 	fmt.Println(g.TopologicalKahn(tr))
 
-	g[2] = []int{3}
+	g[2] = []graph.NI{3}
 	tr, _ = g.Transpose()
 	fmt.Println(g.TopologicalKahn(tr))
 	// Output:
@@ -180,7 +180,7 @@ func ExampleAdjacencyList_EulerianCycleUndir() {
 }
 
 func TestEulerianCycle(t *testing.T) {
-	same := func(a, b []int) bool {
+	same := func(a, b []graph.NI) bool {
 		if len(a) != len(b) {
 			return false
 		}
@@ -194,15 +194,15 @@ func TestEulerianCycle(t *testing.T) {
 	var msg string
 	for _, tc := range []struct {
 		g     graph.AdjacencyList
-		cycle []int
+		cycle []graph.NI
 		ok    bool
 	}{
 		{nil, nil, true},
-		{graph.AdjacencyList{nil}, []int{0}, true},    // 1 node, 0 arcs
-		{graph.AdjacencyList{{0}}, []int{0, 0}, true}, // loop
-		{graph.AdjacencyList{nil, nil}, nil, false},   // not connected
-		{graph.AdjacencyList{{1}, nil}, nil, false},   // not balanced
-		{graph.AdjacencyList{nil, {0}}, nil, false},   // not balanced
+		{graph.AdjacencyList{nil}, []graph.NI{0}, true},    // 1 node, 0 arcs
+		{graph.AdjacencyList{{0}}, []graph.NI{0, 0}, true}, // loop
+		{graph.AdjacencyList{nil, nil}, nil, false},        // not connected
+		{graph.AdjacencyList{{1}, nil}, nil, false},        // not balanced
+		{graph.AdjacencyList{nil, {0}}, nil, false},        // not balanced
 	} {
 		got, err := tc.g.EulerianCycle()
 		switch {
@@ -235,7 +235,7 @@ func ExampleAdjacencyList_EulerianPath() {
 }
 
 func TestEulerianPath(t *testing.T) {
-	same := func(a, b []int) bool {
+	same := func(a, b []graph.NI) bool {
 		if len(a) != len(b) {
 			return false
 		}
@@ -249,14 +249,14 @@ func TestEulerianPath(t *testing.T) {
 	var msg string
 	for _, tc := range []struct {
 		g    graph.AdjacencyList
-		path []int
+		path []graph.NI
 		ok   bool
 	}{
 		{nil, nil, true},
-		{graph.AdjacencyList{nil}, []int{0}, true},    // 1 node, 0 arcs
-		{graph.AdjacencyList{{0}}, []int{0, 0}, true}, // loop
-		{graph.AdjacencyList{{1}, nil}, []int{0, 1}, true},
-		{graph.AdjacencyList{nil, {0}}, []int{1, 0}, true},
+		{graph.AdjacencyList{nil}, []graph.NI{0}, true},    // 1 node, 0 arcs
+		{graph.AdjacencyList{{0}}, []graph.NI{0, 0}, true}, // loop
+		{graph.AdjacencyList{{1}, nil}, []graph.NI{0, 1}, true},
+		{graph.AdjacencyList{nil, {0}}, []graph.NI{1, 0}, true},
 		{graph.AdjacencyList{nil, nil}, nil, false},         // not connected
 		{graph.AdjacencyList{{1}, nil, {1}}, nil, false},    // two starts
 		{graph.AdjacencyList{nil, nil, {0, 1}}, nil, false}, // two ends

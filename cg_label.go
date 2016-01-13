@@ -48,22 +48,22 @@ func (g LabeledAdjacencyList) Balanced() bool {
 // is not bipartite, Bipartite returns false and a representative odd cycle.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g LabeledAdjacencyList) Bipartite(n int) (b bool, c1, c2 *big.Int, oc []int) {
+func (g LabeledAdjacencyList) Bipartite(n NI) (b bool, c1, c2 *big.Int, oc []NI) {
 	c1 = &big.Int{}
 	c2 = &big.Int{}
 	b = true
 	var open bool
-	var df func(n int, c1, c2 *big.Int)
-	df = func(n int, c1, c2 *big.Int) {
-		c1.SetBit(c1, n, 1)
+	var df func(n NI, c1, c2 *big.Int)
+	df = func(n NI, c1, c2 *big.Int) {
+		c1.SetBit(c1, int(n), 1)
 		for _, nb := range g[n] {
-			if c1.Bit(nb.To) == 1 {
+			if c1.Bit(int(nb.To)) == 1 {
 				b = false
-				oc = []int{nb.To, n}
+				oc = []NI{nb.To, n}
 				open = true
 				return
 			}
-			if c2.Bit(nb.To) == 1 {
+			if c2.Bit(int(nb.To)) == 1 {
 				continue
 			}
 			df(nb.To, c2, c1)
@@ -93,11 +93,11 @@ func (g LabeledAdjacencyList) Bipartite(n int) (b bool, c1, c2 *big.Int, oc []in
 // Otherwise it returns false and an example arc that points outside of g.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g LabeledAdjacencyList) BoundsOk() (ok bool, fr int, to Half) {
+func (g LabeledAdjacencyList) BoundsOk() (ok bool, fr NI, to Half) {
 	for fr, to := range g {
 		for _, to := range to {
-			if to.To < 0 || to.To >= len(g) {
-				return false, fr, to
+			if to.To < 0 || to.To >= NI(len(g)) {
+				return false, NI(fr), to
 			}
 		}
 	}
@@ -398,22 +398,22 @@ func (g LabeledAdjacencyList) ConnectedComponentBits() func() (order int, bits b
 	var vg big.Int  // nodes visited in graph
 	var vc *big.Int // nodes visited in current component
 	var nc int
-	var df func(int)
-	df = func(n int) {
-		vg.SetBit(&vg, n, 1)
-		vc.SetBit(vc, n, 1)
+	var df func(NI)
+	df = func(n NI) {
+		vg.SetBit(&vg, int(n), 1)
+		vc.SetBit(vc, int(n), 1)
 		nc++
 		for _, nb := range g[n] {
-			if vg.Bit(nb.To) == 0 {
+			if vg.Bit(int(nb.To)) == 0 {
 				df(nb.To)
 			}
 		}
 		return
 	}
-	n := 0
+	var n NI
 	return func() (o int, bits big.Int) {
-		for ; n < len(g); n++ {
-			if vg.Bit(n) == 0 {
+		for ; n < NI(len(g)); n++ {
+			if vg.Bit(int(n)) == 0 {
 				vc = &bits
 				nc = 0
 				df(n)
@@ -434,24 +434,24 @@ func (g LabeledAdjacencyList) ConnectedComponentBits() func() (order int, bits b
 // There are equivalent labeled and unlabeled versions of this method.
 //
 // See also ConnectedComponentReps, which has lighter weight return values.
-func (g LabeledAdjacencyList) ConnectedComponentLists() func() []int {
+func (g LabeledAdjacencyList) ConnectedComponentLists() func() []NI {
 	var vg big.Int // nodes visited in graph
-	var m []int    // members of current component
-	var df func(int)
-	df = func(n int) {
-		vg.SetBit(&vg, n, 1)
+	var m []NI     // members of current component
+	var df func(NI)
+	df = func(n NI) {
+		vg.SetBit(&vg, int(n), 1)
 		m = append(m, n)
 		for _, nb := range g[n] {
-			if vg.Bit(nb.To) == 0 {
+			if vg.Bit(int(nb.To)) == 0 {
 				df(nb.To)
 			}
 		}
 		return
 	}
-	n := 0
-	return func() []int {
-		for ; n < len(g); n++ {
-			if vg.Bit(n) == 0 {
+	var n NI
+	return func() []NI {
+		for ; n < NI(len(g)); n++ {
+			if vg.Bit(int(n)) == 0 {
 				m = nil
 				df(n)
 				return m
@@ -476,15 +476,15 @@ func (g LabeledAdjacencyList) ConnectedComponentLists() func() []int {
 //
 // See also ConnectedComponentBits and ConnectedComponentLists which can
 // collect component members in a single traversal.
-func (g LabeledAdjacencyList) ConnectedComponentReps() (reps, orders []int) {
+func (g LabeledAdjacencyList) ConnectedComponentReps() (reps []NI, orders []int) {
 	var c big.Int
 	var o int
-	var df func(int)
-	df = func(n int) {
-		c.SetBit(&c, n, 1)
+	var df func(NI)
+	df = func(n NI) {
+		c.SetBit(&c, int(n), 1)
 		o++
 		for _, nb := range g[n] {
-			if c.Bit(nb.To) == 0 {
+			if c.Bit(int(nb.To)) == 0 {
 				df(nb.To)
 			}
 		}
@@ -492,9 +492,9 @@ func (g LabeledAdjacencyList) ConnectedComponentReps() (reps, orders []int) {
 	}
 	for n := range g {
 		if c.Bit(n) == 0 {
-			reps = append(reps, n)
+			reps = append(reps, NI(n))
 			o = 0
-			df(n)
+			df(NI(n))
 			orders = append(orders, o)
 		}
 	}
@@ -523,30 +523,30 @@ func (g LabeledAdjacencyList) Copy() (c LabeledAdjacencyList, m int) {
 func (g LabeledAdjacencyList) Cyclic() bool {
 	var c bool
 	var temp, perm big.Int
-	var df func(int)
-	df = func(n int) {
+	var df func(NI)
+	df = func(n NI) {
 		switch {
-		case temp.Bit(n) == 1:
+		case temp.Bit(int(n)) == 1:
 			c = true
 			return
-		case perm.Bit(n) == 1:
+		case perm.Bit(int(n)) == 1:
 			return
 		}
-		temp.SetBit(&temp, n, 1)
+		temp.SetBit(&temp, int(n), 1)
 		for _, nb := range g[n] {
 			df(nb.To)
 			if c {
 				return
 			}
 		}
-		temp.SetBit(&temp, n, 0)
-		perm.SetBit(&perm, n, 1)
+		temp.SetBit(&temp, int(n), 0)
+		perm.SetBit(&perm, int(n), 1)
 	}
 	for n := range g {
 		if perm.Bit(n) == 1 {
 			continue
 		}
-		if df(n); c {
+		if df(NI(n)); c {
 			break
 		}
 	}
@@ -558,19 +558,19 @@ func (g LabeledAdjacencyList) Cyclic() bool {
 // See Wikipedia https://en.wikipedia.org/wiki/Degeneracy_(graph_theory)
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g LabeledAdjacencyList) Degeneracy() (k int, ordering []int, cores []int) {
+func (g LabeledAdjacencyList) Degeneracy() (k int, ordering []NI, cores []int) {
 	// WP algorithm
-	ordering = make([]int, len(g))
+	ordering = make([]NI, len(g))
 	var L big.Int
 	d := make([]int, len(g))
-	var D [][]int
+	var D [][]NI
 	for v, nb := range g {
 		dv := len(nb)
 		d[v] = dv
 		for len(D) <= dv {
 			D = append(D, nil)
 		}
-		D[dv] = append(D[dv], v)
+		D[dv] = append(D[dv], NI(v))
 	}
 	for ox := range g {
 		// find a non-empty D
@@ -592,11 +592,11 @@ func (g LabeledAdjacencyList) Degeneracy() (k int, ordering []int, cores []int) 
 		v := Di[last]
 		// Add v to ordering, remove from Di
 		ordering[ox] = v
-		L.SetBit(&L, v, 1)
+		L.SetBit(&L, int(v), 1)
 		D[i] = Di[:last]
 		// move neighbors
 		for _, nb := range g[v] {
-			if L.Bit(nb.To) == 1 {
+			if L.Bit(int(nb.To)) == 1 {
 				continue
 			}
 			dn := d[nb.To] // old number of neighbors of nb
@@ -641,7 +641,7 @@ func (g LabeledAdjacencyList) Degeneracy() (k int, ordering []int, cores []int) 
 // returns false immediately.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g LabeledAdjacencyList) DepthFirst(start int, bm *big.Int, v Visitor) (ok bool) {
+func (g LabeledAdjacencyList) DepthFirst(start NI, bm *big.Int, v Visitor) (ok bool) {
 	if bm == nil {
 		if v == nil {
 			return false
@@ -649,12 +649,12 @@ func (g LabeledAdjacencyList) DepthFirst(start int, bm *big.Int, v Visitor) (ok 
 		bm = new(big.Int)
 	}
 	ok = true
-	var df func(n int)
-	df = func(n int) {
-		if bm.Bit(n) == 1 {
+	var df func(n NI)
+	df = func(n NI) {
+		if bm.Bit(int(n)) == 1 {
 			return
 		}
-		bm.SetBit(bm, n, 1)
+		bm.SetBit(bm, int(n), 1)
 		if v != nil && !v(n) {
 			ok = false
 			return
@@ -684,13 +684,13 @@ func (g LabeledAdjacencyList) FromList() FromList {
 	// iterate over arcs, setting from pointers and and marking non-leaves.
 	for fr, to := range g {
 		for _, to := range to {
-			paths[to.To].From = fr
+			paths[to.To].From = NI(fr)
 			leaves.SetBit(&leaves, fr, 0)
 		}
 	}
 	// f to set path lengths
-	var leng func(int) int
-	leng = func(n int) int {
+	var leng func(NI) int
+	leng = func(n NI) int {
 		if l := paths[n].Len; l > 0 {
 			return l
 		}
@@ -707,7 +707,7 @@ func (g LabeledAdjacencyList) FromList() FromList {
 	maxLen := 0
 	for i := range paths {
 		if leaves.Bit(i) == 1 {
-			if l := leng(i); l > maxLen {
+			if l := leng(NI(i)); l > maxLen {
 				maxLen = l
 			}
 		}
@@ -734,14 +734,14 @@ func (g LabeledAdjacencyList) InDegree() []int {
 // root is a tree.  It does not validate that the entire graph is a tree.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g LabeledAdjacencyList) IsTreeDirected(root int) bool {
+func (g LabeledAdjacencyList) IsTreeDirected(root NI) bool {
 	var v big.Int
-	var df func(int) bool
-	df = func(n int) bool {
-		if v.Bit(n) == 1 {
+	var df func(NI) bool
+	df = func(n NI) bool {
+		if v.Bit(int(n)) == 1 {
 			return false
 		}
-		v.SetBit(&v, n, 1)
+		v.SetBit(&v, int(n), 1)
 		for _, to := range g[n] {
 			if !df(to.To) {
 				return false
@@ -759,14 +759,14 @@ func (g LabeledAdjacencyList) IsTreeDirected(root int) bool {
 // that the entire graph is a tree.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g LabeledAdjacencyList) IsTreeUndirected(root int) bool {
+func (g LabeledAdjacencyList) IsTreeUndirected(root NI) bool {
 	var v big.Int
-	var df func(int, int) bool
-	df = func(fr, n int) bool {
-		if v.Bit(n) == 1 {
+	var df func(NI, NI) bool
+	df = func(fr, n NI) bool {
+		if v.Bit(int(n)) == 1 {
 			return false
 		}
-		v.SetBit(&v, n, 1)
+		v.SetBit(&v, int(n), 1)
 		for _, to := range g[n] {
 			if to.To != fr && !df(n, to.To) {
 				return false
@@ -774,7 +774,7 @@ func (g LabeledAdjacencyList) IsTreeUndirected(root int) bool {
 		}
 		return true
 	}
-	v.SetBit(&v, root, 1)
+	v.SetBit(&v, int(root), 1)
 	for _, to := range g[root] {
 		if !df(root, to.To) {
 			return false
@@ -828,7 +828,7 @@ func (g LabeledAdjacencyList) MaximalClique(n int) []int {
 // There are equivalent labeled and unlabeled versions of this method.
 //
 // See also TarjanForward and TarjanCondensation.
-func (g LabeledAdjacencyList) Tarjan() (scc [][]int) {
+func (g LabeledAdjacencyList) Tarjan() (scc [][]NI) {
 	// See "Depth-first search and linear graph algorithms", Robert Tarjan,
 	// SIAM J. Comput. Vol. 1, No. 2, June 1972.
 	//
@@ -840,34 +840,34 @@ func (g LabeledAdjacencyList) Tarjan() (scc [][]int) {
 	index := make([]int, len(g))
 	lowlink := make([]int, len(g))
 	x := 0
-	var S []int
-	var sc func(int)
-	sc = func(n int) {
+	var S []NI
+	var sc func(NI)
+	sc = func(n NI) {
 		index[n] = x
-		indexed.SetBit(&indexed, n, 1)
+		indexed.SetBit(&indexed, int(n), 1)
 		lowlink[n] = x
 		x++
 		S = append(S, n)
-		stacked.SetBit(&stacked, n, 1)
+		stacked.SetBit(&stacked, int(n), 1)
 		for _, nb := range g[n] {
-			if indexed.Bit(nb.To) == 0 {
+			if indexed.Bit(int(nb.To)) == 0 {
 				sc(nb.To)
 				if lowlink[nb.To] < lowlink[n] {
 					lowlink[n] = lowlink[nb.To]
 				}
-			} else if stacked.Bit(nb.To) == 1 {
+			} else if stacked.Bit(int(nb.To)) == 1 {
 				if index[nb.To] < lowlink[n] {
 					lowlink[n] = index[nb.To]
 				}
 			}
 		}
 		if lowlink[n] == index[n] {
-			var c []int
+			var c []NI
 			for {
 				last := len(S) - 1
 				w := S[last]
 				S = S[:last]
-				stacked.SetBit(&stacked, w, 0)
+				stacked.SetBit(&stacked, int(w), 0)
 				c = append(c, w)
 				if w == n {
 					scc = append(scc, c)
@@ -878,7 +878,7 @@ func (g LabeledAdjacencyList) Tarjan() (scc [][]int) {
 	}
 	for n := range g {
 		if indexed.Bit(n) == 0 {
-			sc(n)
+			sc(NI(n))
 		}
 	}
 	return
@@ -888,7 +888,7 @@ func (g LabeledAdjacencyList) Tarjan() (scc [][]int) {
 //
 // It returns components in the reverse order of Tarjan, for situations
 // where a forward topological ordering is easier.
-func (g LabeledAdjacencyList) TarjanForward() (scc [][]int) {
+func (g LabeledAdjacencyList) TarjanForward() (scc [][]NI) {
 	scc = g.Tarjan()
 	last := len(scc) - 1
 	for i, ci := range scc[:len(scc)/2] {
@@ -901,22 +901,22 @@ func (g LabeledAdjacencyList) TarjanForward() (scc [][]int) {
 // condensation graph.
 //
 // Components are ordered in a forward topological ordering.
-func (g LabeledAdjacencyList) TarjanCondensation() (scc [][]int, cd AdjacencyList) {
+func (g LabeledAdjacencyList) TarjanCondensation() (scc [][]NI, cd AdjacencyList) {
 	scc = g.TarjanForward()
 	cd = make(AdjacencyList, len(scc)) // return value
-	cond := make([]int, len(g))        // mapping from g node to cd node
+	cond := make([]NI, len(g))         // mapping from g node to cd node
 	for cn := len(scc) - 1; cn >= 0; cn-- {
 		c := scc[cn]
 		for _, n := range c {
-			cond[n] = cn // map g node to cd node
+			cond[n] = NI(cn) // map g node to cd node
 		}
-		var tos []int // list of 'to' nodes
+		var tos []NI  // list of 'to' nodes
 		var m big.Int // tos map
 		m.SetBit(&m, cn, 1)
 		for _, n := range c {
 			for _, to := range g[n] {
-				if ct := cond[to.To]; m.Bit(ct) == 0 {
-					m.SetBit(&m, ct, 1)
+				if ct := cond[to.To]; m.Bit(int(ct)) == 0 {
+					m.SetBit(&m, int(ct), 1)
 					tos = append(tos, ct)
 				}
 			}
@@ -934,23 +934,23 @@ func (g LabeledAdjacencyList) TarjanCondensation() (scc [][]int, cd AdjacencyLis
 // cycle.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g LabeledAdjacencyList) Topological() (ordering, cycle []int) {
-	ordering = make([]int, len(g))
+func (g LabeledAdjacencyList) Topological() (ordering, cycle []NI) {
+	ordering = make([]NI, len(g))
 	i := len(ordering)
 	var temp, perm big.Int
 	var cycleFound bool
-	var cycleStart int
-	var df func(int)
-	df = func(n int) {
+	var cycleStart NI
+	var df func(NI)
+	df = func(n NI) {
 		switch {
-		case temp.Bit(n) == 1:
+		case temp.Bit(int(n)) == 1:
 			cycleFound = true
 			cycleStart = n
 			return
-		case perm.Bit(n) == 1:
+		case perm.Bit(int(n)) == 1:
 			return
 		}
-		temp.SetBit(&temp, n, 1)
+		temp.SetBit(&temp, int(n), 1)
 		for _, nb := range g[n] {
 			df(nb.To)
 			if cycleFound {
@@ -968,8 +968,8 @@ func (g LabeledAdjacencyList) Topological() (ordering, cycle []int) {
 				return
 			}
 		}
-		temp.SetBit(&temp, n, 0)
-		perm.SetBit(&perm, n, 1)
+		temp.SetBit(&temp, int(n), 0)
+		perm.SetBit(&perm, int(n), 1)
 		i--
 		ordering[i] = n
 	}
@@ -977,7 +977,7 @@ func (g LabeledAdjacencyList) Topological() (ordering, cycle []int) {
 		if perm.Bit(n) == 1 {
 			continue
 		}
-		df(n)
+		df(NI(n))
 		if cycleFound {
 			return nil, cycle
 		}
@@ -996,16 +996,16 @@ func (g LabeledAdjacencyList) Topological() (ordering, cycle []int) {
 // transpose of g be passed as the argument.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g LabeledAdjacencyList) TopologicalKahn(tr AdjacencyList) (ordering, cycle []int) {
+func (g LabeledAdjacencyList) TopologicalKahn(tr AdjacencyList) (ordering, cycle []NI) {
 	// code follows Wikipedia pseudocode.
-	var L, S []int
+	var L, S []NI
 	// rem for "remaining edges," this function makes a local copy of the
 	// in-degrees and consumes that instead of consuming an input.
 	rem := make([]int, len(g))
 	for n, fr := range tr {
 		if len(fr) == 0 {
 			// accumulate "set of all nodes with no incoming edges"
-			S = append(S, n)
+			S = append(S, NI(n))
 		} else {
 			// initialize rem from in-degree
 			rem[n] = len(fr)
@@ -1034,7 +1034,7 @@ func (g LabeledAdjacencyList) TopologicalKahn(tr AdjacencyList) (ordering, cycle
 			// recover cyclic nodes
 			for _, nb := range g[c] {
 				if rem[nb.To] > 0 {
-					cycle = append(cycle, c)
+					cycle = append(cycle, NI(c))
 					break
 				}
 			}
