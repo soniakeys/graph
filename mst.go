@@ -5,6 +5,7 @@ package graph
 
 import (
 	"container/heap"
+	"math/big"
 	"sort"
 )
 
@@ -60,11 +61,20 @@ func (ds disjointSet) find(n NI) NI {
 }
 
 // Kruskal implements Kruskal's algorithm for constructing a minimum spanning
-// tree on an undirected graph.
+// forest on an undirected graph.
 //
-// The tree is returned as a FromList, with leaf nodes indicated, but without
-// path lengths or MaxPathLen set.  Also returned is a parallel list of labels
-// and a total distance for the returned tree.
+// While the input graph is interpreted as undirected, the receiver edge list
+// does not actually need to contain reciprocal arcs.  A property of the
+// algorithm is that arc direction is ignored.  Thus only a single arc out of
+// a reciprocal pair must be present in the edge list.  Reciprocal arcs (and
+// parallel arcs) are allowed though, and do not affect the result.
+//
+// The forest is returned as a FromList, with leaf nodes indicated, but without
+// path lengths or MaxPathLen set.  See FromList.RecalcLen if you need path
+// lengths.
+//
+// Also returned is a parallel list of labels and a total distance for the
+// returned forest.
 //
 // The edge list of the receiver is sorted as a side effect of this method.
 // See KruskalSorted for a version that relies on the edge list being already
@@ -77,12 +87,21 @@ func (l WeightedEdgeList) Kruskal() (f FromList, labels []int, dist float64) {
 // KruskalSorted implements Kruskal's algorithm for constructing a minimum
 // spanning tree on an undirected graph.
 //
+// While the input graph is interpreted as undirected, the receiver edge list
+// does not actually need to contain reciprocal arcs.  A property of the
+// algorithm is that arc direction is ignored.  Thus only a single arc out of
+// a reciprocal pair must be present in the edge list.  Reciprocal arcs (and
+// parallel arcs) are allowed though, and do not affect the result.
+//
 // When called, the edge list of the reciever must be already sorted by weight.
 // See Kruskal for a version that accepts an unsorted edge list.
 //
-// The tree is returned as a FromList, with leaf nodes indicated, but without
-// path lengths or MaxPathLen set.  Also returned is a parallel list of labels
-// and a total distance for the returned tree.
+// The forest is returned as a FromList, with leaf nodes indicated, but without
+// path lengths or MaxPathLen set.  See FromList.RecalcLen if you need path
+// lengths.
+//
+// Also returned is a parallel list of labels and a total distance for the
+// returned forest.
 func (l WeightedEdgeList) KruskalSorted() (f FromList, labels []int, dist float64) {
 	ds := newDisjointSet(l.Order)
 	// also initialize FromList as isolated nodes
@@ -128,12 +147,13 @@ func (l WeightedEdgeList) KruskalSorted() (f FromList, labels []int, dist float6
 type Prim struct {
 	Graph  LabeledAdjacencyList
 	Weight WeightFunc
-	Tree   FromList
+	Forest FromList
+	Labels []int
 
 	best []prNode // slice backs heap
 }
 
-// NewPrim constructs a new Prim object.  Argument g should represent an
+// NewPrim constructs a new Prim object.  Argument g must be an
 // undirected graph.
 func NewPrim(g LabeledAdjacencyList, w WeightFunc) *Prim {
 	b := make([]prNode, len(g))
@@ -144,7 +164,8 @@ func NewPrim(g LabeledAdjacencyList, w WeightFunc) *Prim {
 	return &Prim{
 		Graph:  g,
 		Weight: w,
-		Tree:   NewFromList(len(g)),
+		Forest: NewFromList(len(g)),
+		Labels: make([]int, len(g)),
 		best:   b,
 	}
 }
@@ -164,7 +185,7 @@ type prHeap []*prNode
 // graph.  To recompute following addition or deletion of nodes, simply
 // abandon the Prim object and create a new one.
 func (p *Prim) Reset() {
-	p.Tree.reset()
+	p.Forest.reset()
 	b := p.best
 	for n := range b {
 		b[n].fx = -1
@@ -176,15 +197,33 @@ func (p *Prim) Reset() {
 //
 // If a graph has multiple connected components, a spanning forest can be
 // accumulated by calling Span successively on representative nodes of the
-// components.  Note that Result.Start can contain only the most recent start
-// node.  To complete the forest representation you must retain a separate
-// list of start nodes.
-func (p *Prim) Span(start NI) int {
-	rp := p.Tree.Paths
+// components.
+//
+// Argument start will become the root of a tree created in the FromList
+// p.Forest.  Leaves of the tree will be set in p.Forest.Leaves.  If the graph
+// consists of a single connected component, or if Span is called for only a
+// single connected component, this will represent leaves of the spanning tree.
+// In this case nil can be passed for the argument leaves.
+//
+// If Span is called multiple times to compute a spanning forest, leaves will
+// accumulate for the forest.  In this case if leaves for individual trees are
+// of interest, pass a non-nil zero-value for the argument leaves and it will
+// be populated with leaves for the single tree spanned by the call.
+//
+// Returned are the number of nodes spanned for the single tree (which will be
+// the order of the connected component) and the total spanned distance for the
+// single tree.
+func (p *Prim) Span(start NI, leaves *big.Int) (numSpanned int, dist float64) {
+	rp := p.Forest.Paths
 	var frontier prHeap
 	rp[start] = PathEnd{From: -1, Len: 1}
 	b := p.best
-	nDone := 1
+	numSpanned = 1
+	fLeaves := &p.Forest.Leaves
+	fLeaves.SetBit(fLeaves, int(start), 1)
+	if leaves != nil {
+		leaves.SetBit(leaves, int(start), 1)
+	}
 	for a := start; ; {
 		for _, nb := range p.Graph[a] {
 			if rp[nb.To].Len > 0 {
@@ -208,10 +247,17 @@ func (p *Prim) Span(start NI) int {
 		a = bp.nx
 		rp[a].Len = rp[bp.from.From].Len + 1
 		rp[a].From = bp.from.From
-		//		p.Wt[a] = p.Weight(bp.from.Label)
-		nDone++
+		p.Labels[a] = bp.from.Label
+		dist += bp.wt
+		fLeaves.SetBit(fLeaves, int(bp.from.From), 0)
+		fLeaves.SetBit(fLeaves, int(a), 1)
+		if leaves != nil {
+			leaves.SetBit(leaves, int(bp.from.From), 0)
+			leaves.SetBit(leaves, int(a), 1)
+		}
+		numSpanned++
 	}
-	return nDone
+	return
 }
 
 func (h prHeap) Len() int           { return len(h) }

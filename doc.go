@@ -14,8 +14,8 @@
 //
 // Representation overview
 //
-// The package currently implements three graph representations through types
-// AdjacencyList, LabeledAdjacencyList, and FromList.
+// The package implements a number of graph representations through types
+// AdjacencyList, LabeledAdjacencyList, FromList, and WeightedEdgeList.
 //
 // AdjacencyList is the common "list of lists" representation.  It is a list
 // with one element for each node of the graph.  Each element is a list
@@ -24,10 +24,12 @@
 // LabeledAdjacencyList is similar, but each node-to-neighbor "arc" has an
 // associated label.
 //
-// FromList is a compact rooted tree respresentation.  Like AdjacencyList and
-// LabeledAdjacencyList, it is a list with one element for each node of the
-// graph.  Each element contains only a single neighbor however, its parent
-// in the tree, the "from" node.
+// FromList is a compact rooted tree (or forest) respresentation.  Like
+// AdjacencyList and LabeledAdjacencyList, it is a list with one element for
+// each node of the graph.  Each element contains only a single neighbor
+// however, its parent in the tree, the "from" node.
+//
+// WeightedEdgeList is currently used by Kruskal methods.
 //
 // Terminology
 //
@@ -68,10 +70,10 @@
 // Finally, this package documentation takes back the word "object" in some
 // places to refer to a Go value, especially a value of a type with methods.
 //
-// Single source shortest path searches on weighted graphs
+// Shortest path searches
 //
-// This package implements a number of single source shortest path searches.
-// These all work with graphs that are directed or undirected, and with graphs
+// This package implements a number of shortest path searches.  Most work
+// with weighted graphs that are directed or undirected, and with graphs
 // that may have loops or parallel arcs.  For weighted graphs, "Shortest"
 // is defined as the path distance (sum of arc weights) with path length
 // (number of nodes) breaking ties.  If multiple paths have the same minimum
@@ -84,8 +86,10 @@
 //  Dijkstra       Non-negative arc weights, single or all paths.
 //  AStar          Non-negative arc weights, heuristic guided, single path.
 //  BellmanFord    Negative arc weights allowed, no negative cycles, all paths.
+//  DAGPath        O(n) algorithm for DAGs, arc weights of any sign.
+//  FloydWarshall  all pairs end points, no negative cycles.
 //
-// These searches are all done in a similar way that involves creating a
+// These searches are done in a similar way that involves creating a
 // search object, running a search method on the object, and decoding a result
 // structure.  Convenience functions are provided that perform these
 // steps for single path searches.

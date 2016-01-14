@@ -108,6 +108,61 @@ func ExampleFromList_PathTo() {
 	// [3]
 }
 
+func ExampleFromList_RecalcLeaves() {
+	// tree: arcs directed down.
+	//   0
+	//  / \
+	// 1   2
+	//      \
+	//       3
+	f := graph.FromList{Paths: []graph.PathEnd{
+		0: {From: -1},
+		1: {From: 0},
+		2: {From: 0},
+		3: {From: 2},
+	}}
+	f.RecalcLeaves()
+	fmt.Println("Node  Leaf")
+	for n := range f.Paths {
+		fmt.Println(n, "      ", f.Leaves.Bit(n))
+	}
+	// Output:
+	// Node  Leaf
+	// 0        0
+	// 1        1
+	// 2        0
+	// 3        1
+}
+
+func ExampleFromList_RecalcLen() {
+	// tree: arcs directed down.
+	//   0
+	//  / \
+	// 1   2
+	//      \
+	//       3
+	f := graph.FromList{Paths: []graph.PathEnd{
+		0: {From: -1},
+		1: {From: 0},
+		2: {From: 0},
+		3: {From: 2},
+	}}
+	f.RecalcLeaves() // Leaves required for RecalcLen
+	f.RecalcLen()
+	fmt.Println("Node  Path len")
+	for n := range f.Paths {
+		fmt.Println(n, "          ", f.Paths[n].Len)
+	}
+	fmt.Println("MaxLen:", f.MaxLen)
+	// Output:
+	// Node  Path len
+	// 0            1
+	// 1            2
+	// 2            2
+	// 3            3
+	// MaxLen: 3
+}
+
 func ExampleFromList_Transpose() {
 	// tree: arcs are directed down.
 	//    0   3
@@ -166,7 +221,7 @@ func ExampleFromList_UndirectedLabeled() {
 		2: {From: 0},
 		3: {From: -1},
 	}}
-	g := t.UndirectedLabeled()
+	g := t.UndirectedLabeled(nil)
 	for n, fr := range g {
 		fmt.Printf("%d %#v\n", n, fr)
 	}

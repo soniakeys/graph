@@ -7,8 +7,8 @@ package graph
 
 import "math/big"
 
-// FromList represents a rooted tree where each node is associated with
-// a half arc identifying an arc "from" another node.
+// FromList represents a rooted tree (or forest) where each node is associated
+// with a half arc identifying an arc "from" another node.
 //
 // Other terms for this data structure include "parent list",
 // "predecessor list", "in-tree", "inverse arborescence", and "spaghetti stack."//
@@ -49,12 +49,12 @@ func NewFromList(n int) FromList {
 // reset initializes a FromList in preparation for a search.  Search methods
 // will call this function and you don't typically call it from application
 // code.
-func (t *FromList) reset() {
-	for n := range t.Paths {
-		t.Paths[n] = PathEnd{From: -1, Len: 0}
+func (f *FromList) reset() {
+	for n := range f.Paths {
+		f.Paths[n] = PathEnd{From: -1, Len: 0}
 	}
-	t.Leaves = big.Int{}
-	t.MaxLen = 0
+	f.Leaves = big.Int{}
+	f.MaxLen = 0
 }
 
 // BoundsOk validates the "from" values in the list.
@@ -63,25 +63,57 @@ func (t *FromList) reset() {
 //
 // BoundsOk returns true when all from values are less than len(t).
 // Otherwise it returns false and a node with a from value >= len(t).
-func (t *FromList) BoundsOk() (ok bool, n NI) {
-	for n, e := range t.Paths {
-		if int(e.From) >= len(t.Paths) {
+func (f *FromList) BoundsOk() (ok bool, n NI) {
+	for n, e := range f.Paths {
+		if int(e.From) >= len(f.Paths) {
 			return false, NI(n)
 		}
 	}
 	return true, -1
 }
 
-// Root finds the root of a node in a FromList.
-func (t *FromList) Root(n NI) NI {
-	p := t.Paths
-	for {
-		fr := p[n].From
-		if fr < 0 {
-			return n
-		}
-		n = fr
+// CommonAncestor returns the common ancestor of a and b.
+//
+// It returns -1 if a or b are invalid node numbers.
+func (f *FromList) CommonAncestor(a, b NI) NI {
+	p := f.Paths
+	if a < 0 || b < 0 || a >= NI(len(p)) || b >= NI(len(p)) {
+		return -1
 	}
+	if p[a].Len < p[b].Len {
+		a, b = b, a
+	}
+	for bl := p[b].Len; p[a].Len > bl; {
+		a = p[a].From
+	}
+	for a != b {
+		a = p[a].From
+		b = p[b].From
+	}
+	return a
+}
+
+// Labeled contructs the corresponding directed graph with
+// edge labels.
+//
+// The argument labels can be nil.  In this case labels are generated matching
+// the path indexes.  This corresponds to the to, or child node.
+//
+// If labels is non-nil, it must be the same length as t.Paths and is used
+// to look up label numbers by the path index.
+func (f *FromList) Labeled(labels []int) LabeledAdjacencyList {
+	g := make(LabeledAdjacencyList, len(f.Paths))
+	for n, p := range f.Paths {
+		if p.From == -1 {
+			continue
+		}
+		l := n
+		if labels != nil {
+			l = labels[n]
+		}
+		g[p.From] = append(g[p.From], Half{NI(n), l})
+	}
+	return g
 }
 
 // PathTo decodes a FromList, recovering a single path.
@@ -97,8 +129,8 @@ func (t *FromList) Root(n NI) NI {
 // it will be used, otherwise a new slice is created for the result.
 //
 // See also function PathTo.
-func (t *FromList) PathTo(end NI, p []NI) []NI {
-	return PathTo(t.Paths, end, p)
+func (f *FromList) PathTo(end NI, p []NI) []NI {
+	return PathTo(f.Paths, end, p)
 }
 
 // PathTo decodes a single path from a PathEnd list.
@@ -130,32 +162,67 @@ func PathTo(paths []PathEnd, end NI, p []NI) []NI {
 	}
 }
 
-// CommonAncestor returns the common ancestor of a and b.
+// RecalcLeaves recomputes the Leaves member of f.
+func (f *FromList) RecalcLeaves() {
+	p := f.Paths
+	lv := &f.Leaves
+	OneBits(lv, len(p))
+	for n := range f.Paths {
+		if fr := p[n].From; fr >= 0 {
+			lv.SetBit(lv, int(fr), 0)
+		}
+	}
+}
+
+// RecalcLen recomputes Len for each path end, and recomputes MaxLen.
 //
-// It returns -1 if a or b are invalid node numbers.
-func (t *FromList) CommonAncestor(a, b NI) NI {
-	p := t.Paths
-	if a < 0 || b < 0 || a >= NI(len(p)) || b >= NI(len(p)) {
-		return -1
+// RecalcLen relies on the Leaves member being valid.  If it is not known
+// to be valid, call RecalcLeaves before calling RecalcLen.
+func (f *FromList) RecalcLen() {
+	p := f.Paths
+	var setLen func(NI) int
+	setLen = func(n NI) int {
+		switch {
+		case p[n].Len > 0:
+			return p[n].Len
+		case p[n].From < 0:
+			p[n].Len = 1
+			return 1
+		}
+		l := 1 + setLen(p[n].From)
+		p[n].Len = l
+		return l
 	}
-	if p[a].Len < p[b].Len {
-		a, b = b, a
+	for n := range f.Paths {
+		p[n].Len = 0
 	}
-	for bl := p[b].Len; p[a].Len > bl; {
-		a = p[a].From
+	f.MaxLen = 0
+	lv := &f.Leaves
+	for n := range f.Paths {
+		if lv.Bit(n) == 1 {
+			if l := setLen(NI(n)); l > f.MaxLen {
+				f.MaxLen = l
+			}
+		}
 	}
-	for a != b {
-		a = p[a].From
-		b = p[b].From
+}
+
+// Root finds the root of a node in a FromList.
+func (f *FromList) Root(n NI) NI {
+	for p := f.Paths; ; {
+		fr := p[n].From
+		if fr < 0 {
+			return n
+		}
+		n = fr
 	}
-	return a
 }
 
 // Transpose contructs the directed graph with arcs in the opposite direction
 // of the FromList.  That is, from root toward leaves.
-func (t *FromList) Transpose() AdjacencyList {
-	g := make(AdjacencyList, len(t.Paths))
-	for n, p := range t.Paths {
+func (f *FromList) Transpose() AdjacencyList {
+	g := make(AdjacencyList, len(f.Paths))
+	for n, p := range f.Paths {
 		if p.From == -1 {
 			continue
 		}
@@ -165,9 +232,9 @@ func (t *FromList) Transpose() AdjacencyList {
 }
 
 // Undirected contructs the undirected graph corresponding to the FromList.
-func (t *FromList) Undirected() AdjacencyList {
-	g := make(AdjacencyList, len(t.Paths))
-	for n, p := range t.Paths {
+func (f *FromList) Undirected() AdjacencyList {
+	g := make(AdjacencyList, len(f.Paths))
+	for n, p := range f.Paths {
 		if p.From == -1 {
 			continue
 		}
@@ -179,14 +246,24 @@ func (t *FromList) Undirected() AdjacencyList {
 
 // UndirectedLabeled contructs the corresponding undirected graph with
 // edge labels.
-func (t *FromList) UndirectedLabeled() LabeledAdjacencyList {
-	g := make(LabeledAdjacencyList, len(t.Paths))
-	for n, p := range t.Paths {
+//
+// The argument labels can be nil.  In this case labels are generated matching
+// the path indexes.  This corresponds to the to, or child node.
+//
+// If labels is non-nil, it must be the same length as t.Paths and is used
+// to look up label numbers by the path index.
+func (f *FromList) UndirectedLabeled(labels []int) LabeledAdjacencyList {
+	g := make(LabeledAdjacencyList, len(f.Paths))
+	for n, p := range f.Paths {
 		if p.From == -1 {
 			continue
 		}
-		g[n] = append(g[n], Half{To: p.From, Label: n})
-		g[p.From] = append(g[p.From], Half{NI(n), n})
+		l := n
+		if labels != nil {
+			l = labels[n]
+		}
+		g[n] = append(g[n], Half{To: p.From, Label: l})
+		g[p.From] = append(g[p.From], Half{NI(n), l})
 	}
 	return g
 }

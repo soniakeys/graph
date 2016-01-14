@@ -108,6 +108,16 @@ func (g LabeledAdjacencyList) DAGMaxLenPath(ordering []NI) (n NI, path []Half) {
 	return
 }
 
+// Edgelist constructs the edge list rerpresentation of a graph.
+func (g LabeledAdjacencyList) EdgeList() (el []LabeledEdge) {
+	for fr, to := range g {
+		for _, to := range to {
+			el = append(el, LabeledEdge{Edge{NI(fr), to.To}, to.Label})
+		}
+	}
+	return
+}
+
 // FloydWarshall finds all pairs shortest distances for a simple weighted
 // graph without negative cycles.
 //
