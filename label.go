@@ -109,6 +109,9 @@ func (g LabeledAdjacencyList) DAGMaxLenPath(ordering []NI) (n NI, path []Half) {
 }
 
 // Edgelist constructs the edge list rerpresentation of a graph.
+//
+// An edge is returned for each arc of the graph.  For undirected graphs
+// this includes reciprocal edges.
 func (g LabeledAdjacencyList) EdgeList() (el []LabeledEdge) {
 	for fr, to := range g {
 		for _, to := range to {
