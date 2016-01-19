@@ -520,14 +520,14 @@ func (g LabeledAdjacencyList) Copy() (c LabeledAdjacencyList, m int) {
 // Cyclic returns false if g is acyclic.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g LabeledAdjacencyList) Cyclic() bool {
-	var c bool
+func (g LabeledAdjacencyList) Cyclic() (cyclic bool, fr NI, to Half) {
+	fr, to.To = -1, -1
 	var temp, perm big.Int
 	var df func(NI)
 	df = func(n NI) {
 		switch {
 		case temp.Bit(int(n)) == 1:
-			c = true
+			cyclic = true
 			return
 		case perm.Bit(int(n)) == 1:
 			return
@@ -535,7 +535,10 @@ func (g LabeledAdjacencyList) Cyclic() bool {
 		temp.SetBit(&temp, int(n), 1)
 		for _, nb := range g[n] {
 			df(nb.To)
-			if c {
+			if cyclic {
+				if fr < 0 {
+					fr, to = n, nb
+				}
 				return
 			}
 		}
@@ -546,11 +549,11 @@ func (g LabeledAdjacencyList) Cyclic() bool {
 		if perm.Bit(n) == 1 {
 			continue
 		}
-		if df(NI(n)); c {
+		if df(NI(n)); cyclic { // short circuit as soon as a cycle is found
 			break
 		}
 	}
-	return c
+	return
 }
 
 // Degeneracy computes k-degeneracy, vertex ordering and k-cores.

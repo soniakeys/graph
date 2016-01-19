@@ -10,21 +10,6 @@ import (
 	"github.com/soniakeys/graph"
 )
 
-func ExampleAdjacencyList_Cyclic() {
-	g := graph.AdjacencyList{
-		0: {1, 2},
-		1: {2},
-		2: {3},
-		3: {},
-	}
-	fmt.Println(g.Cyclic())
-	g[3] = []graph.NI{2}
-	fmt.Println(g.Cyclic())
-	// Output:
-	// false
-	// true
-}
-
 func ExampleAdjacencyList_DAGMaxLenPath() {
 	// arcs directed right:
 	//      /---\
