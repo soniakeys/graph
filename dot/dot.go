@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"math/big"
 	"strconv"
 
 	"github.com/soniakeys/graph"
@@ -16,32 +17,25 @@ type AttrVal struct {
 }
 
 type Config struct {
-	Indent       string
 	Directed     bool
-	UndirectArcs bool
-	NodeLabel    func(graph.NI) string
 	EdgeLabel    func(int) string
 	GraphAttr    []AttrVal
+	Indent       string
+	NodeLabel    func(graph.NI) string
+	PathAttr     func([]graph.NI) (string, string)
 	RankLeaves   bool
+	UndirectArcs bool
 }
 
 var Defaults = Config{
-	Indent:    "  ",
 	Directed:  true,
-	NodeLabel: func(n graph.NI) string { return strconv.Itoa(int(n)) },
 	EdgeLabel: func(l int) string { return strconv.Itoa(l) },
-}
-
-func Indent(i string) func(*Config) {
-	return func(c *Config) { c.Indent = i }
+	Indent:    "  ",
+	NodeLabel: func(n graph.NI) string { return strconv.Itoa(int(n)) },
 }
 
 func Directed(d bool) func(*Config) {
 	return func(c *Config) { c.Directed = d }
-}
-
-func NodeLabel(f func(graph.NI) string) func(*Config) {
-	return func(c *Config) { c.NodeLabel = f }
 }
 
 func EdgeLabel(f func(int) string) func(*Config) {
@@ -58,6 +52,18 @@ func GraphAttr(attr, val string) func(*Config) {
 		}
 		c.GraphAttr = append(c.GraphAttr, AttrVal{attr, val})
 	}
+}
+
+func Indent(i string) func(*Config) {
+	return func(c *Config) { c.Indent = i }
+}
+
+func NodeLabel(f func(graph.NI) string) func(*Config) {
+	return func(c *Config) { c.NodeLabel = f }
+}
+
+func PathAttr(f func([]graph.NI) (string, string)) func(*Config) {
+	return func(c *Config) { c.PathAttr = f }
 }
 
 func RankLeaves(r bool) func(*Config) {
@@ -129,24 +135,59 @@ func writeALDirected(g graph.AdjacencyList, cf *Config, b *bufio.Writer) error {
 }
 
 func writeALEdgeStmt(fr int, to []graph.NI, op string, cf *Config, b *bufio.Writer) error {
-	switch len(to) {
-	case 0:
-	case 1:
+	// fast paths
+	if len(to) == 0 {
+		return nil
+	}
+	if len(to) == 1 {
 		_, err := fmt.Fprintf(b, "%s%s %s %s\n",
 			cf.Indent, cf.NodeLabel(graph.NI(fr)), op, cf.NodeLabel(to[0]))
-		if err != nil {
-			return err
-		}
-	default:
-		_, err := fmt.Fprintf(b, "%s%s %s {%s",
-			cf.Indent, cf.NodeLabel(graph.NI(fr)), op, cf.NodeLabel(to[0]))
-		if err != nil {
-			return err
-		}
-		for _, to := range to[1:] {
-			if _, err := fmt.Fprintf(b, " %s", cf.NodeLabel(to)); err != nil {
+		return err
+	}
+	// otherwise it's complicated.  we like to use a subgraph rhs to keep
+	// output compact, but graphviz (some version) won't separate parallel
+	// arcs in a subgraph, so in that case we write multiple edge statments.
+	_, err := fmt.Fprintf(b, "%s%s %s ",
+		cf.Indent, cf.NodeLabel(graph.NI(fr)), op)
+	if err != nil {
+		return err
+	}
+	var s1 big.Int
+	m := map[graph.NI]int{} // multiset of defered duplicates
+	c := "{"
+	// first pass is over the to-list, the slice
+	for _, to := range to {
+		if s1.Bit(int(to)) == 0 {
+			if _, err := b.WriteString(c + cf.NodeLabel(to)); err != nil {
 				return err
 			}
+			c = " "
+			s1.SetBit(&s1, int(to), 1)
+		} else {
+			m[to]++
+		}
+	}
+	if _, err := b.WriteString("}\n"); err != nil {
+		return err
+	}
+	// make additional passes over the map until it's fully consumed
+	for len(m) > 0 {
+		_, err := fmt.Fprintf(b, "%s%s %s ",
+			cf.Indent, cf.NodeLabel(graph.NI(fr)), op)
+		if err != nil {
+			return err
+		}
+		c1 := "{"
+		for n, c := range m {
+			if _, err := b.WriteString(c1 + cf.NodeLabel(n)); err != nil {
+				return err
+			}
+			if c == 1 {
+				delete(m, n)
+			} else {
+				m[n]--
+			}
+			c1 = " "
 		}
 		if _, err := b.WriteString("}\n"); err != nil {
 			return err

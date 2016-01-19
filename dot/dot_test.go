@@ -27,6 +27,26 @@ func ExampleStringAdjacencyList() {
 	// }
 }
 
+func ExampleStringAdjacencyList_parallelArcs() {
+	// arcs directed down:
+	// 0  4
+	// | /|
+	// |/ |
+	// 2  3
+	g := graph.AdjacencyList{
+		0: {2},
+		4: {2, 3},
+	}
+	// (default indent is 2)
+	s, _ := dot.StringAdjacencyList(g, dot.Indent(""))
+	fmt.Println(s)
+	// Output:
+	// digraph {
+	// 0 -> 2
+	// 4 -> {2 3}
+	// }
+}
+
 func ExampleIndent() {
 	// arcs directed down:
 	// 0  4
