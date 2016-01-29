@@ -1,3 +1,32 @@
+// Package dot writes graphs from package graph in the Graphviz dot format.
+//
+// The goal for the package is to output graphs simply and efficiently.
+//
+// There is no goal to provide a rich API to the many capabilities of the
+// dot format.  For detailed control over the rendered graph, the dot output
+// of this package should be edited by hand or by some other dot file software.
+// Note this other software does not need to be related to the Go language.
+//
+// The scheme
+//
+// The dot package is a separate package from graph.  It includes graph;
+// graph knows nothing of dot.  This keeps the graph package uncluttered by
+// file format specific code.  Dot functions are functions then, not methods
+// of graph representations.
+//
+// For each graph representation there is a Write function that takes a graph,
+// an io.Writer, and optional arguments.  For convenience, there is also a
+// String function that does not require an io.Writer and simply returns the
+// dot format as a string.
+//
+// Optional arguments are variadic and consist of calls to configuration
+// functions defined in this package.  Not all configuration functions are
+// meaningful for all graph types.  When a Write or String function is called
+// it (1) initializes a Config struct from the package variable Defaults,
+// then (2) in some cases initializes some members according to the graph type,
+// then (3) calls the config functions in order.  Each config function can
+// modify the Config struct.  After processing options, the funcion generates
+// a dot file using the options specified in the Config struct.
 package dot
 
 import (
@@ -11,11 +40,18 @@ import (
 	"github.com/soniakeys/graph"
 )
 
+// AttrVal represents the dot format concept of an attribute-value pair.
 type AttrVal struct {
 	Attr string
 	Val  string
 }
 
+// Config holds options that control the dot output.
+//
+// See Overview/Scheme for an overview of how this works.  Generally you will
+// not set members of a Config struct directly.  There is an option function
+// for each member.  To set a member, pass the option function as an optional
+// argument to a Write or String function.
 type Config struct {
 	Directed     bool
 	EdgeLabel    func(int) string
@@ -27,6 +63,9 @@ type Config struct {
 	UndirectArcs bool
 }
 
+// Defaults holds a package default Config struct.
+//
+// Defaults is copied as the first configuration step.  See Overview/Scheme.
 var Defaults = Config{
 	Directed:  true,
 	EdgeLabel: func(l int) string { return strconv.Itoa(l) },
@@ -34,15 +73,39 @@ var Defaults = Config{
 	NodeLabel: func(n graph.NI) string { return strconv.Itoa(int(n)) },
 }
 
+// Directed specifies whether to write a dot format directected or undirected
+// graph.
+//
+// The default, Directed(true), specifies a dot format directected graph,
+// or "digraph."  In this case the Write or string function outputs each arc
+// of the graph as a dot format directed edge.
+//
+// Directed(false) specifies a dot format undirected graph or simply a "graph."
+// In this case the Write or String function requires that all arcs between
+// distinct nodes occur in reciprocal pairs.  For each pair the function
+// outputs a single edge in dot format.
 func Directed(d bool) func(*Config) {
 	return func(c *Config) { c.Directed = d }
 }
 
+// EdgeLabel specifies a function to generate edge label strings for the
+// dot format given the arc label integers of graph package.
+//
+// The default function is simply strconv.Itoa of the graph package arc label.
 func EdgeLabel(f func(int) string) func(*Config) {
 	return func(c *Config) { c.EdgeLabel = f }
 }
 
+// GraphAttr adds a dot format graph attribute.
+//
+// Graph attributes are held in a slice, and so are ordered.  This function
+// updates the value of the last matching attribute if it exists, or adds a
+// new attribute to the end of the list.
 func GraphAttr(attr, val string) func(*Config) {
+	// why?  can we make the user do this after output?  If there's a
+	// graph package motivation the example should show it (rather than
+	// the current cosmetic bgcolor attribute.)  Okay, so FromList uses
+	// rankdir, but that could be hardcoded.
 	return func(c *Config) {
 		for i := len(c.GraphAttr) - 1; i >= 0; i-- {
 			if c.GraphAttr[i].Attr == attr {
@@ -54,26 +117,56 @@ func GraphAttr(attr, val string) func(*Config) {
 	}
 }
 
+// Indent specifies an indent string for the body of the dot format.
+//
+// The default is two spaces.
 func Indent(i string) func(*Config) {
 	return func(c *Config) { c.Indent = i }
 }
 
+// NodeLabel specifies a function to generate node label strings for the
+// dot format given the node integers of graph package.
+//
+// The default function is simply strconv.Itoa of the graph package node
+// integer.
 func NodeLabel(f func(graph.NI) string) func(*Config) {
 	return func(c *Config) { c.NodeLabel = f }
 }
 
+// PathAttr WIP, currently unused.
 func PathAttr(f func([]graph.NI) (string, string)) func(*Config) {
+	// two strings, one for node attr and one for edge attr?
 	return func(c *Config) { c.PathAttr = f }
 }
 
+// RankLeaves, meaningful for the FromList graph type, creates a subgraph with
+// "rank=same" for leaves of the FromList.
+//
+// Graphviz then renders them all in a line.
+//
+// RankLeaves is set to true by default for the FromList type.  Specify
+// RankLeaves(false) to allow leaves to float to different levels.
 func RankLeaves(r bool) func(*Config) {
+	// consider removing this option to reduce API surface.
+	// just hard code FromList to always rank leaves?
 	return func(c *Config) { c.RankLeaves = r }
 }
 
+// UndirectArcs, for the WeightedEdgeList graph type, specifies to write
+// each element of the edge list as a dot file undirected edge.
+//
+// Note that while Directed(false) requires arcs to occur in reciprocal pairs
+// This option does not, and does not collapse reciprocal arc pairs to single
+// dot format edges.
+//
+// See WriteWeightedEdgeList for more detail.
 func UndirectArcs(u bool) func(*Config) {
 	return func(c *Config) { c.UndirectArcs = u }
 }
 
+// StringAdjacencyList generates a dot format string for an AdjacencyList.
+//
+// See WriteAdjacencyList for options.
 func StringAdjacencyList(g graph.AdjacencyList, options ...func(*Config)) (string, error) {
 	var b bytes.Buffer
 	if err := WriteAdjacencyList(g, &b, options...); err != nil {
@@ -82,6 +175,14 @@ func StringAdjacencyList(g graph.AdjacencyList, options ...func(*Config)) (strin
 	return b.String(), nil
 }
 
+// WriteAdjacencyList writes dot format text for an AdjacencyList to an
+// io.Writer.
+//
+// Supported options:
+//   Directed
+//   GraphAttr
+//   Indent
+//   NodeLabel
 func WriteAdjacencyList(g graph.AdjacencyList, w io.Writer, options ...func(*Config)) error {
 	cf := Defaults
 	for _, o := range options {
@@ -234,6 +335,10 @@ func writeALUndirected(g graph.AdjacencyList, cf *Config, b *bufio.Writer) error
 	return nil
 }
 
+// StringLabeledAdjacencyList generates a dot format string for a
+// LabeledAdjacencyList.
+//
+// See WriteLabeledAdjacencyList for options.
 func StringLabeledAdjacencyList(g graph.LabeledAdjacencyList, options ...func(*Config)) (string, error) {
 	var b bytes.Buffer
 	if err := WriteLabeledAdjacencyList(g, &b, options...); err != nil {
@@ -242,6 +347,15 @@ func StringLabeledAdjacencyList(g graph.LabeledAdjacencyList, options ...func(*C
 	return b.String(), nil
 }
 
+// WriteLabeledAdjacencyList writes dot format text for a LabeledAdjacencyList
+// to an io.Writer.
+//
+// Supported options:
+//   Directed
+//   GraphAttr
+//   Indent
+//   NodeLabel
+//   EdgeLabel
 func WriteLabeledAdjacencyList(g graph.LabeledAdjacencyList, w io.Writer, options ...func(*Config)) error {
 	cf := Defaults
 	for _, o := range options {
@@ -320,6 +434,10 @@ func writeLALUndirected(g graph.LabeledAdjacencyList, cf *Config, b *bufio.Write
 	return nil
 }
 
+// StringFromList (that's "String" "FromList", not "String" from "List")
+// generates a dot format string for a graph.FromList.
+//
+// See WriteFromList for options.
 func StringFromList(g graph.FromList, options ...func(*Config)) (string, error) {
 	var b bytes.Buffer
 	if err := WriteFromList(g, &b, options...); err != nil {
@@ -328,6 +446,14 @@ func StringFromList(g graph.FromList, options ...func(*Config)) (string, error) 
 	return b.String(), nil
 }
 
+// WriteFromList writes dot format text for a graph.FromList
+// to an io.Writer.
+//
+// Supported options:
+//   GraphAttr
+//   Indent
+//   NodeLabel
+//   RankLeaves
 func WriteFromList(g graph.FromList, w io.Writer, options ...func(*Config)) error {
 	cf := Defaults
 	GraphAttr("rankdir", "BT")(&cf)
@@ -369,6 +495,10 @@ func WriteFromList(g graph.FromList, w io.Writer, options ...func(*Config)) erro
 	return writeTail(b)
 }
 
+// StringWeightedEdgeList generates a dot format string for a
+// graph.WeightedEdgeList.
+//
+// See WriteWeightedEdgeList for options.
 func StringWeightedEdgeList(g graph.WeightedEdgeList, options ...func(*Config)) (string, error) {
 	var b bytes.Buffer
 	if err := WriteWeightedEdgeList(g, &b, options...); err != nil {
@@ -377,6 +507,16 @@ func StringWeightedEdgeList(g graph.WeightedEdgeList, options ...func(*Config)) 
 	return b.String(), nil
 }
 
+// WriteWeightedEdgeList writes dot format text for a graph.WeightedEdgeList
+// to an io.Writer.
+//
+// Supported options:
+//   Directed
+//   EdgeLabel
+//   GraphAttr
+//   Indent
+//   NodeLabel
+//   UndirectArcs
 func WriteWeightedEdgeList(g graph.WeightedEdgeList, w io.Writer, options ...func(*Config)) error {
 	cf := Defaults
 	cf.Directed = false
