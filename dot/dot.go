@@ -1,11 +1,10 @@
 // Package dot writes graphs from package graph in the Graphviz dot format.
 //
-// The goal for the package is to output graphs simply and efficiently.
+// This package provides a minimal capability to output graphs simply and
+// efficiently.
 //
 // There is no goal to provide a rich API to the many capabilities of the
-// dot format.  For detailed control over the rendered graph, the dot output
-// of this package should be edited by hand or by some other dot file software.
-// Note this other software does not need to be related to the Go language.
+// dot format.  Someday, maybe, another package.  Not now.
 //
 // The scheme
 //
@@ -40,12 +39,6 @@ import (
 	"github.com/soniakeys/graph"
 )
 
-// AttrVal represents the dot format concept of an attribute-value pair.
-type AttrVal struct {
-	Attr string
-	Val  string
-}
-
 // Config holds options that control the dot output.
 //
 // See Overview/Scheme for an overview of how this works.  Generally you will
@@ -55,11 +48,8 @@ type AttrVal struct {
 type Config struct {
 	Directed     bool
 	EdgeLabel    func(int) string
-	GraphAttr    []AttrVal
 	Indent       string
 	NodeLabel    func(graph.NI) string
-	PathAttr     func([]graph.NI) (string, string)
-	RankLeaves   bool
 	UndirectArcs bool
 }
 
@@ -77,7 +67,7 @@ var Defaults = Config{
 // graph.
 //
 // The default, Directed(true), specifies a dot format directected graph,
-// or "digraph."  In this case the Write or string function outputs each arc
+// or "digraph."  In this case the Write or String function outputs each arc
 // of the graph as a dot format directed edge.
 //
 // Directed(false) specifies a dot format undirected graph or simply a "graph."
@@ -96,27 +86,6 @@ func EdgeLabel(f func(int) string) func(*Config) {
 	return func(c *Config) { c.EdgeLabel = f }
 }
 
-// GraphAttr adds a dot format graph attribute.
-//
-// Graph attributes are held in a slice, and so are ordered.  This function
-// updates the value of the last matching attribute if it exists, or adds a
-// new attribute to the end of the list.
-func GraphAttr(attr, val string) func(*Config) {
-	// why?  can we make the user do this after output?  If there's a
-	// graph package motivation the example should show it (rather than
-	// the current cosmetic bgcolor attribute.)  Okay, so FromList uses
-	// rankdir, but that could be hardcoded.
-	return func(c *Config) {
-		for i := len(c.GraphAttr) - 1; i >= 0; i-- {
-			if c.GraphAttr[i].Attr == attr {
-				c.GraphAttr[i].Val = val
-				return
-			}
-		}
-		c.GraphAttr = append(c.GraphAttr, AttrVal{attr, val})
-	}
-}
-
 // Indent specifies an indent string for the body of the dot format.
 //
 // The default is two spaces.
@@ -133,31 +102,12 @@ func NodeLabel(f func(graph.NI) string) func(*Config) {
 	return func(c *Config) { c.NodeLabel = f }
 }
 
-// PathAttr WIP, currently unused.
-func PathAttr(f func([]graph.NI) (string, string)) func(*Config) {
-	// two strings, one for node attr and one for edge attr?
-	return func(c *Config) { c.PathAttr = f }
-}
-
-// RankLeaves, meaningful for the FromList graph type, creates a subgraph with
-// "rank=same" for leaves of the FromList.
-//
-// Graphviz then renders them all in a line.
-//
-// RankLeaves is set to true by default for the FromList type.  Specify
-// RankLeaves(false) to allow leaves to float to different levels.
-func RankLeaves(r bool) func(*Config) {
-	// consider removing this option to reduce API surface.
-	// just hard code FromList to always rank leaves?
-	return func(c *Config) { c.RankLeaves = r }
-}
-
 // UndirectArcs, for the WeightedEdgeList graph type, specifies to write
 // each element of the edge list as a dot file undirected edge.
 //
-// Note that while Directed(false) requires arcs to occur in reciprocal pairs
-// This option does not, and does not collapse reciprocal arc pairs to single
-// dot format edges.
+// Note that while Directed(false) requires arcs to occur in reciprocal pairs,
+// UndirectArcs(true) does not, and does not collapse reciprocal arc pairs to
+// single dot format edges.
 //
 // See WriteWeightedEdgeList for more detail.
 func UndirectArcs(u bool) func(*Config) {
@@ -180,7 +130,6 @@ func StringAdjacencyList(g graph.AdjacencyList, options ...func(*Config)) (strin
 //
 // Supported options:
 //   Directed
-//   GraphAttr
 //   Indent
 //   NodeLabel
 func WriteAdjacencyList(g graph.AdjacencyList, w io.Writer, options ...func(*Config)) error {
@@ -210,17 +159,11 @@ func writeHead(cf *Config, b *bufio.Writer) error {
 	if _, err := fmt.Fprintf(b, "%s {\n", t); err != nil {
 		return err
 	}
-	for _, av := range cf.GraphAttr {
-		_, err := fmt.Fprintf(b, "%s%s = %s\n", cf.Indent, av.Attr, av.Val)
-		if err != nil {
-			return err
-		}
-	}
 	return nil
 }
 
 func writeTail(b *bufio.Writer) error {
-	if _, err := b.WriteString("}\n"); err != nil {
+	if err := b.WriteByte('}'); err != nil {
 		return err
 	}
 	return b.Flush()
@@ -352,7 +295,6 @@ func StringLabeledAdjacencyList(g graph.LabeledAdjacencyList, options ...func(*C
 //
 // Supported options:
 //   Directed
-//   GraphAttr
 //   Indent
 //   NodeLabel
 //   EdgeLabel
@@ -450,18 +392,19 @@ func StringFromList(g graph.FromList, options ...func(*Config)) (string, error) 
 // to an io.Writer.
 //
 // Supported options:
-//   GraphAttr
 //   Indent
 //   NodeLabel
-//   RankLeaves
 func WriteFromList(g graph.FromList, w io.Writer, options ...func(*Config)) error {
 	cf := Defaults
-	GraphAttr("rankdir", "BT")(&cf)
 	for _, o := range options {
 		o(&cf)
 	}
 	b := bufio.NewWriter(w)
 	if err := writeHead(&cf, b); err != nil {
+		return err
+	}
+	_, err := b.WriteString(cf.Indent + "rankdir = BT\n")
+	if err != nil {
 		return err
 	}
 	for n, e := range g.Paths {
@@ -475,7 +418,7 @@ func WriteFromList(g graph.FromList, w io.Writer, options ...func(*Config)) erro
 			return err
 		}
 	}
-	if cf.RankLeaves {
+	if g.Leaves.BitLen() > 0 {
 		if _, err := b.WriteString(cf.Indent + "{rank = same"); err != nil {
 			return err
 		}
@@ -510,10 +453,20 @@ func StringWeightedEdgeList(g graph.WeightedEdgeList, options ...func(*Config)) 
 // WriteWeightedEdgeList writes dot format text for a graph.WeightedEdgeList
 // to an io.Writer.
 //
+// The WeightedEdgeList, as used by the Kruskal methods, is a bit strange
+// in that Kruskal interprets it as an undirected graph, but does not require
+// that reciprocal edges be present.  Depending on how you construct a
+// WeightedEdgeList, you may or may not have reciprocal edges.  If you do
+// have reciprocal edges, the Directed(false) option is appropriate for
+// collapsing reciprocals as usual and writing an undirected dot file.
+// If, for Kruskal, for example, you constructed a WeightedEdgeList without
+// reciprocals, then the UndirectArcs(true) is appropriate for writing an
+// undirected dot file.  Specifying neither option and using the default of
+// Directed(true) will produce a directed dot file.
+//
 // Supported options:
 //   Directed
 //   EdgeLabel
-//   GraphAttr
 //   Indent
 //   NodeLabel
 //   UndirectArcs

@@ -30,20 +30,20 @@ func ExampleStringAdjacencyList() {
 func ExampleStringAdjacencyList_parallelArcs() {
 	// arcs directed down:
 	// 0  4
-	// | /|
-	// |/ |
+	// | /|\
+	// |/ |/
 	// 2  3
 	g := graph.AdjacencyList{
 		0: {2},
-		4: {2, 3},
+		4: {2, 3, 3},
 	}
-	// (default indent is 2)
 	s, _ := dot.StringAdjacencyList(g, dot.Indent(""))
 	fmt.Println(s)
 	// Output:
 	// digraph {
 	// 0 -> 2
 	// 4 -> {2 3}
+	// 4 -> {3}
 	// }
 }
 
@@ -83,14 +83,27 @@ func ExampleDirected() {
 		2: {3, 4},
 		4: {},
 	}
+	// default is directed
+	s, _ := dot.StringAdjacencyList(g, dot.Indent(""))
+	fmt.Println(s)
+	fmt.Println()
+
+	// Directed(false) generates error witout reciprocal arcs
 	_, err := dot.StringAdjacencyList(g, dot.Directed(false))
 	fmt.Println("Error:", err)
 	fmt.Println()
 
+	// undirected
 	g = g.UndirectedCopy()
-	s, _ := dot.StringAdjacencyList(g, dot.Directed(false), dot.Indent(""))
+	s, _ = dot.StringAdjacencyList(g, dot.Directed(false), dot.Indent(""))
 	fmt.Println(s)
+
 	// Output:
+	// digraph {
+	// 0 -> 3
+	// 2 -> {3 4}
+	// }
+	//
 	// Error: directed graph
 	//
 	// graph {
@@ -133,7 +146,7 @@ func ExampleNodeLabel_construction() {
 	// B  C
 	var g graph.AdjacencyList
 
-	// graph construction mechanism
+	// example graph construction mechanism
 	labels := []string{}
 	nodes := map[string]graph.NI{}
 	node := func(l string) graph.NI {
@@ -217,34 +230,11 @@ func ExampleEdgeLabel() {
 }
 
 func ExampleStringFromList() {
-	//   0
-	//  / \
-	// 1   2
-	//      \
-	//       3
-	f := graph.FromList{Paths: []graph.PathEnd{
-		0: {From: -1},
-		1: {From: 0},
-		2: {From: 0},
-		3: {From: 2},
-	}}
-	s, _ := dot.StringFromList(f, dot.Indent(""))
-	fmt.Println(s)
-	// Output:
-	// digraph {
-	// rankdir = BT
-	// 1 -> 0
-	// 2 -> 0
-	// 3 -> 2
-	// }
-}
-
-func ExampleStringFromList_leavesRanked() {
-	//   0
-	//  / \
-	// 1   2
-	//      \
-	//       3
+	//     0
+	//    / \
+	//   /   2
+	//  /     \
+	// 1       3
 	f := graph.FromList{Paths: []graph.PathEnd{
 		0: {From: -1},
 		1: {From: 0},
@@ -253,7 +243,7 @@ func ExampleStringFromList_leavesRanked() {
 	}}
 	f.Leaves.SetBit(&f.Leaves, 1, 1)
 	f.Leaves.SetBit(&f.Leaves, 3, 1)
-	s, _ := dot.StringFromList(f, dot.Indent(""), dot.RankLeaves(true))
+	s, _ := dot.StringFromList(f, dot.Indent(""))
 	fmt.Println(s)
 	// Output:
 	// digraph {
@@ -262,28 +252,6 @@ func ExampleStringFromList_leavesRanked() {
 	// 2 -> 0
 	// 3 -> 2
 	// {rank = same 1 3}
-	// }
-}
-
-func ExampleGraphAttr() {
-	// arcs directed down:
-	// 0  4
-	// | /|
-	// |/ |
-	// 2  3
-	g := graph.AdjacencyList{
-		0: {2},
-		4: {2, 3},
-	}
-	s, _ := dot.StringAdjacencyList(g,
-		dot.GraphAttr("bgcolor", "honeydew"),
-		dot.Indent(""))
-	fmt.Println(s)
-	// Output:
-	// digraph {
-	// bgcolor = honeydew
-	// 0 -> 2
-	// 4 -> {2 3}
 	// }
 }
 
