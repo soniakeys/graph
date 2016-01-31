@@ -79,7 +79,7 @@ func (ds disjointSet) find(n NI) NI {
 // The edge list of the receiver is sorted as a side effect of this method.
 // See KruskalSorted for a version that relies on the edge list being already
 // sorted.
-func (l WeightedEdgeList) Kruskal() (f FromList, labels []int, dist float64) {
+func (l WeightedEdgeList) Kruskal() (f FromList, labels []LI, dist float64) {
 	sort.Sort(l)
 	return l.KruskalSorted()
 }
@@ -102,7 +102,7 @@ func (l WeightedEdgeList) Kruskal() (f FromList, labels []int, dist float64) {
 //
 // Also returned is a parallel list of labels and a total distance for the
 // returned forest.
-func (l WeightedEdgeList) KruskalSorted() (f FromList, labels []int, dist float64) {
+func (l WeightedEdgeList) KruskalSorted() (f FromList, labels []LI, dist float64) {
 	ds := newDisjointSet(l.Order)
 	// also initialize FromList as isolated nodes
 	paths := make([]PathEnd, l.Order)
@@ -111,7 +111,7 @@ func (l WeightedEdgeList) KruskalSorted() (f FromList, labels []int, dist float6
 	}
 	f.Paths = paths
 	OneBits(&f.Leaves, l.Order)
-	labels = make([]int, l.Order)
+	labels = make([]LI, l.Order)
 	// Kruskal for sorted edge list:
 	for _, e := range l.Edges {
 		x := e.N1
@@ -133,9 +133,9 @@ func (l WeightedEdgeList) KruskalSorted() (f FromList, labels []int, dist float6
 		}
 		// add arc so y comes from x
 		paths[y].From = x
-		labels[y] = e.Label
+		labels[y] = e.LI
 		f.Leaves.SetBit(&f.Leaves, int(x), 0)
-		dist += l.WeightFunc(e.Label)
+		dist += l.WeightFunc(e.LI)
 	}
 	return
 }
@@ -148,7 +148,7 @@ type Prim struct {
 	Graph  LabeledAdjacencyList
 	Weight WeightFunc
 	Forest FromList
-	Labels []int
+	Labels []LI
 
 	best []prNode // slice backs heap
 }
@@ -165,7 +165,7 @@ func NewPrim(g LabeledAdjacencyList, w WeightFunc) *Prim {
 		Graph:  g,
 		Weight: w,
 		Forest: NewFromList(len(g)),
-		Labels: make([]int, len(g)),
+		Labels: make([]LI, len(g)),
 		best:   b,
 	}
 }

@@ -12,20 +12,23 @@ import (
 // node, connected by labeled arcs.
 type LabeledAdjacencyList [][]Half
 
+// LI is a label integer, used for associating labels with arcs.
+type LI int32
+
 // Half is a half arc, representing a labeled arc and the "neighbor" node
 // that the arc leads to.
 //
 // Halfs can be composed to form a labeled adjacency list.
 type Half struct {
-	To    NI  // node ID, usable as a slice index
-	Label int // half-arc ID for application data
+	To    NI // node ID, usable as a slice index
+	Label LI // half-arc ID for application data
 }
 
 // FromHalf is a half arc, representing a labeled arc and the "neighbor" node
 // that the arc originates from.
 type FromHalf struct {
 	From  NI
-	Label int
+	Label LI
 }
 
 // WeightFunc returns a weight for a given label.
@@ -34,7 +37,7 @@ type FromHalf struct {
 // is to return a weight corresponding to an arc label.  The name "weight"
 // is an abstract term.  An arc "weight" will typically have some application
 // specific meaning other than physical weight.
-type WeightFunc func(label int) (weight float64)
+type WeightFunc func(label LI) (weight float64)
 
 // AddEdge adds an edge to a labeled graph.
 //
@@ -64,10 +67,10 @@ func (p *LabeledAdjacencyList) AddEdge(e LabeledEdge) {
 		g = *p
 	}
 	// create one half-arc,
-	g[e.N1] = append(g[e.N1], Half{To: e.N2, Label: e.Label})
+	g[e.N1] = append(g[e.N1], Half{To: e.N2, Label: e.LI})
 	// and except for loops, create the reciprocal
 	if e.N1 != e.N2 {
-		g[e.N2] = append(g[e.N2], Half{To: e.N1, Label: e.Label})
+		g[e.N2] = append(g[e.N2], Half{To: e.N1, Label: e.LI})
 	}
 }
 
@@ -398,7 +401,7 @@ func (g LabeledAdjacencyList) UnlabeledTranspose() (t AdjacencyList, m int) {
 // LabeledEdge is an undirected edge with an associated label.
 type LabeledEdge struct {
 	Edge
-	Label int
+	LI
 }
 
 // WeightedEdgeList is a graph representation.
@@ -423,7 +426,7 @@ func (l WeightedEdgeList) Len() int { return len(l.Edges) }
 
 // Less implements sort.Interface.
 func (l WeightedEdgeList) Less(i, j int) bool {
-	return l.WeightFunc(l.Edges[i].Label) < l.WeightFunc(l.Edges[j].Label)
+	return l.WeightFunc(l.Edges[i].LI) < l.WeightFunc(l.Edges[j].LI)
 }
 
 // Swap implements sort.Interface.

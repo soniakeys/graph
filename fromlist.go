@@ -101,13 +101,13 @@ func (f *FromList) CommonAncestor(a, b NI) NI {
 //
 // If labels is non-nil, it must be the same length as t.Paths and is used
 // to look up label numbers by the path index.
-func (f *FromList) Labeled(labels []int) LabeledAdjacencyList {
+func (f *FromList) Labeled(labels []LI) LabeledAdjacencyList {
 	g := make(LabeledAdjacencyList, len(f.Paths))
 	for n, p := range f.Paths {
 		if p.From == -1 {
 			continue
 		}
-		l := n
+		l := LI(n)
 		if labels != nil {
 			l = labels[n]
 		}
@@ -252,13 +252,13 @@ func (f *FromList) Undirected() AdjacencyList {
 //
 // If labels is non-nil, it must be the same length as t.Paths and is used
 // to look up label numbers by the path index.
-func (f *FromList) UndirectedLabeled(labels []int) LabeledAdjacencyList {
+func (f *FromList) UndirectedLabeled(labels []LI) LabeledAdjacencyList {
 	g := make(LabeledAdjacencyList, len(f.Paths))
 	for n, p := range f.Paths {
 		if p.From == -1 {
 			continue
 		}
-		l := n
+		l := LI(n)
 		if labels != nil {
 			l = labels[n]
 		}

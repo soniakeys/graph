@@ -36,7 +36,7 @@ func TestSSSPBig(t *testing.T) {
 func BenchmarkDijkstra1e3(b *testing.B) {
 	// 1000 nodes, 3000 edges
 	tc := r1k
-	w := func(label int) float64 { return tc.w[label] }
+	w := func(label graph.LI) float64 { return tc.w[label] }
 	d := graph.NewDijkstra(tc.l, w)
 	for i := 0; i < b.N; i++ {
 		d.AllPaths(tc.start)
@@ -46,7 +46,7 @@ func BenchmarkDijkstra1e3(b *testing.B) {
 func BenchmarkDijkstra1e4(b *testing.B) {
 	// 10k nodes, 50k edges
 	tc := r10k
-	w := func(label int) float64 { return tc.w[label] }
+	w := func(label graph.LI) float64 { return tc.w[label] }
 	d := graph.NewDijkstra(tc.l, w)
 	for i := 0; i < b.N; i++ {
 		d.AllPaths(tc.start)
@@ -56,7 +56,7 @@ func BenchmarkDijkstra1e4(b *testing.B) {
 func BenchmarkDijkstra1e5(b *testing.B) {
 	// 100k nodes, 1m edges
 	tc := r100k
-	w := func(label int) float64 { return tc.w[label] }
+	w := func(label graph.LI) float64 { return tc.w[label] }
 	d := graph.NewDijkstra(tc.l, w)
 	for i := 0; i < b.N; i++ {
 		d.AllPaths(tc.start)

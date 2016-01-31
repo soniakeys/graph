@@ -27,7 +27,7 @@ func ExamplePrim_Span() {
 	g.AddEdge(graph.LabeledEdge{graph.Edge{2, 0}, 5})
 	g.AddEdge(graph.LabeledEdge{graph.Edge{3, 4}, 2})
 	// weight function
-	w := func(arcLabel int) float64 { return float64(arcLabel) }
+	w := func(arcLabel graph.LI) float64 { return float64(arcLabel) }
 
 	// get connected components
 	reps, orders := g.ConnectedComponentReps()
@@ -103,7 +103,7 @@ func ExampleWeightedEdgeList_Kruskal() {
 	//     |/     |      |
 	//     1------2------3
 	//       (50)   (20)
-	w := func(l int) float64 { return float64(l) }
+	w := func(l graph.LI) float64 { return float64(l) }
 	// undirected graph
 	g := &graph.LabeledAdjacencyList{}
 	g.AddEdge(graph.LabeledEdge{graph.Edge{0, 1}, 30})
@@ -147,7 +147,7 @@ func ExampleWeightedEdgeList_KruskalSorted() {
 	//     |/     |      |
 	//     1------2------3
 	//       (50)   (20)
-	w := func(l int) float64 { return float64(l) }
+	w := func(l graph.LI) float64 { return float64(l) }
 	// Bypass construction of an undirected graph if you can, by directly
 	// constructing an edge list.  No need for reciprocal edges.  Also if
 	// you can, construct it already sorted by weight.
@@ -186,7 +186,7 @@ func TestPrim100(t *testing.T) {
 	for i, r := range reps {
 		t.Logf("%2d %4d\n", r, orders[i])
 	}
-	p := graph.NewPrim(r100.l, func(l int) float64 { return r100.w[l] })
+	p := graph.NewPrim(r100.l, func(l graph.LI) float64 { return r100.w[l] })
 
 	// construct spanning tree for each component
 	for i, r := range reps {
@@ -200,7 +200,7 @@ func TestPrim100(t *testing.T) {
 
 func BenchmarkPrim100(b *testing.B) {
 	reps, _ := r100.g.ConnectedComponentReps()
-	p := graph.NewPrim(r100.l, func(l int) float64 { return r100.w[l] })
+	p := graph.NewPrim(r100.l, func(l graph.LI) float64 { return r100.w[l] })
 	for i := 0; i < b.N; i++ {
 		p.Reset()
 		for _, r := range reps {

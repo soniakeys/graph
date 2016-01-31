@@ -89,7 +89,7 @@ arc:
 			}
 		}
 		tc.w[i] = dist
-		tc.l[n1] = append(tc.l[n1], graph.Half{To: n2, Label: i})
+		tc.l[n1] = append(tc.l[n1], graph.Half{To: n2, Label: graph.LI(i)})
 		i++
 	}
 	// variants
@@ -146,7 +146,7 @@ func k(scale uint, ef float64, nStarts int) (kt kronTest) {
 }
 
 func testSSSP(tc testCase, t *testing.T) {
-	w := func(label int) float64 { return tc.w[label] }
+	w := func(label graph.LI) float64 { return tc.w[label] }
 	d := graph.NewDijkstra(tc.l, w)
 	d.Path(tc.start, tc.end)
 	pathD := d.Tree.PathTo(tc.end, nil)
@@ -201,7 +201,7 @@ func testSSSP(tc testCase, t *testing.T) {
 	}
 	*/
 	// breadth first, compare to dijkstra with unit weights
-	d.Weight = func(int) float64 { return 1 }
+	d.Weight = func(graph.LI) float64 { return 1 }
 	d.Reset()
 	d.AllPaths(tc.start)
 	ur := d.Tree
@@ -265,7 +265,7 @@ func TestSSSP(t *testing.T) {
 func BenchmarkDijkstra100(b *testing.B) {
 	// 100 nodes, 200 edges
 	tc := r100
-	w := func(label int) float64 { return tc.w[label] }
+	w := func(label graph.LI) float64 { return tc.w[label] }
 	d := graph.NewDijkstra(tc.l, w)
 	for i := 0; i < b.N; i++ {
 		d.AllPaths(tc.start)

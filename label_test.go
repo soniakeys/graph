@@ -90,7 +90,7 @@ func ExampleLabeledAdjacencyList_FloydWarshall_negative() {
 		2: {{To: 1, Label: 4}, {To: 3, Label: 3}},
 		3: {{To: 0, Label: 2}},
 	}
-	d := g.FloydWarshall(func(l int) float64 { return float64(l) })
+	d := g.FloydWarshall(func(l graph.LI) float64 { return float64(l) })
 	for _, di := range d {
 		fmt.Printf("%2.0f\n", di)
 	}
@@ -106,9 +106,9 @@ func ExampleLabeledAdjacencyList_NegativeArc() {
 		2: {{To: 0, Label: 0}, {To: 1, Label: 1}},
 	}
 	arcWeights := []float64{0, .5}
-	w := func(label int) float64 { return arcWeights[label] }
+	w := func(label graph.LI) float64 { return arcWeights[label] }
 	fmt.Println(g.NegativeArc(w))
-	g[0] = []graph.Half{{To: 1, Label: len(arcWeights)}}
+	g[0] = []graph.Half{{To: 1, Label: graph.LI(len(arcWeights))}}
 	arcWeights = append(arcWeights, -2)
 	fmt.Println(g.NegativeArc(w))
 	// Output:

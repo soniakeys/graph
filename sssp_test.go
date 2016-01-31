@@ -193,7 +193,7 @@ func ExampleDAGPath_AllPaths() {
 	}
 	o := []graph.NI{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
 	d := graph.NewDAGPath(g, o,
-		func(l int) float64 { return float64(l) },
+		func(l graph.LI) float64 { return float64(l) },
 		false)
 	reached := d.AllPaths(3)
 	fmt.Println("node  path dist  path len  leaf")
@@ -243,7 +243,7 @@ func ExampleDAGPath_Path_shortest() {
 	o, _ := g.Topological()
 	fmt.Println("Ordering:", o)
 	d := graph.NewDAGPath(g, o,
-		func(l int) float64 { return float64(l) },
+		func(l graph.LI) float64 { return float64(l) },
 		false)
 	var start, end graph.NI = 3, 2
 	if !d.Path(start, end) {
@@ -281,7 +281,7 @@ func ExampleDAGPath_Path_longest() {
 	o, _ := g.Topological()
 	fmt.Println("Ordering:", o)
 	d := graph.NewDAGPath(g, o,
-		func(l int) float64 { return float64(l) },
+		func(l graph.LI) float64 { return float64(l) },
 		true)
 	var start, end graph.NI = 3, 2
 	if !d.Path(start, end) {
@@ -317,7 +317,7 @@ func ExampleLabeledAdjacencyList_DijkstraPath() {
 		4: {{To: 5, Label: 7}},
 		6: {{To: 5, Label: 9}},
 	}
-	w := func(label int) float64 { return float64(label) }
+	w := func(label graph.LI) float64 { return float64(label) }
 	p, l := g.DijkstraPath(1, 5, w)
 	fmt.Println("Shortest path:", p)
 	fmt.Println("Path length:", l)
@@ -346,7 +346,7 @@ func ExampleDijkstra_Path() {
 		4: {{To: 5, Label: 7}},
 		6: {{To: 5, Label: 9}},
 	}
-	w := func(label int) float64 { return float64(label) }
+	w := func(label graph.LI) float64 { return float64(label) }
 	d := graph.NewDijkstra(g, w)
 	var start, end graph.NI = 1, 5
 	if !d.Path(start, end) {
@@ -385,7 +385,7 @@ func ExampleDijkstra_AllPaths() {
 		4: {{To: 5, Label: 9}},
 		5: {},
 	}
-	w := func(label int) float64 { return float64(label) }
+	w := func(label graph.LI) float64 { return float64(label) }
 	d := graph.NewDijkstra(g, w)
 	fmt.Println(d.AllPaths(2), "paths found.")
 	// column len is from Result, and will be equal to len(path).
@@ -430,7 +430,7 @@ func ExampleLabeledAdjacencyList_AStarAPath() {
 		4: {{To: 5, Label: 9}},
 		5: {},
 	}
-	w := func(label int) float64 { return float64(label) }
+	w := func(label graph.LI) float64 { return float64(label) }
 	h4 := []float64{19, 20, 10, 6, 0, 9}
 	h := func(from graph.NI) float64 { return h4[from] }
 	p, l := g.AStarAPath(0, 4, h, w)
@@ -461,7 +461,7 @@ func ExampleAStarMPath() {
 		4: {{To: 5, Label: 9}},
 		5: {},
 	}
-	w := func(label int) float64 { return float64(label) }
+	w := func(label graph.LI) float64 { return float64(label) }
 	h4 := []float64{19, 20, 10, 6, 0, 9}
 	h := func(from graph.NI) float64 { return h4[from] }
 	p, l := g.AStarMPath(0, 4, h, w)
@@ -492,7 +492,7 @@ func ExampleHeuristic_Admissable() {
 		4: {{To: 5, Label: 9}},
 		5: {},
 	}
-	w := func(label int) float64 { return float64(label) }
+	w := func(label graph.LI) float64 { return float64(label) }
 	h4 := []float64{19, 20, 10, 6, 0, 9}
 	var h graph.Heuristic = func(from graph.NI) float64 { return h4[from] }
 	fmt.Println(h.Admissable(g, w, 4))
@@ -520,7 +520,7 @@ func ExampleHeuristic_Monotonic() {
 		4: {{To: 5, Label: 9}},
 		5: {},
 	}
-	w := func(label int) float64 { return float64(label) }
+	w := func(label graph.LI) float64 { return float64(label) }
 	h4 := []float64{19, 20, 10, 6, 0, 9}
 	var h graph.Heuristic = func(from graph.NI) float64 { return h4[from] }
 	fmt.Println(h.Monotonic(g, w))
@@ -551,7 +551,7 @@ func ExampleBellmanFord() {
 		8: {{7, 1}},
 		9: {{4, 6}},
 	}
-	w := func(label int) float64 { return float64(label) }
+	w := func(label graph.LI) float64 { return float64(label) }
 	b := graph.NewBellmanFord(g, w)
 	// graph contains negative cycle somewhere
 	fmt.Println("negative cycle:", b.NegativeCycle())

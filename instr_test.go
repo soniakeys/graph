@@ -91,7 +91,7 @@ arc:
 			}
 		}
 		tc.w[i] = dist
-		tc.l[n1] = append(tc.l[n1], Half{To: n2, Label: i})
+		tc.l[n1] = append(tc.l[n1], Half{To: n2, Label: LI(i)})
 		i++
 	}
 	// variants
@@ -104,7 +104,7 @@ arc:
 
 func TestInstr(t *testing.T) {
 	ti := func(tc testCase) {
-		w := func(label int) float64 { return tc.w[label] }
+		w := func(label LI) float64 { return tc.w[label] }
 		d := NewDijkstra(tc.l, w)
 		d.Path(tc.start, tc.end)
 		t.Log("NV AV:", d.ndVis, d.arcVis)
