@@ -51,7 +51,7 @@ type WeightFunc func(label LI) (weight float64)
 // The pointer receiver allows the method to expand the graph as needed
 // to include the values n1 and n2.  If n1 or n2 happen to be greater than
 // len(*p) the method does not panic, but simply expands the graph.
-func (p *LabeledAdjacencyList) AddEdge(e LabeledEdge) {
+func (p *LabeledAdjacencyList) AddEdge(e Edge, l LI) {
 	// Similar code in AdjacencyList.AddEdge.
 
 	// determine max of the two end points
@@ -67,10 +67,10 @@ func (p *LabeledAdjacencyList) AddEdge(e LabeledEdge) {
 		g = *p
 	}
 	// create one half-arc,
-	g[e.N1] = append(g[e.N1], Half{To: e.N2, Label: e.LI})
+	g[e.N1] = append(g[e.N1], Half{To: e.N2, Label: l})
 	// and except for loops, create the reciprocal
 	if e.N1 != e.N2 {
-		g[e.N2] = append(g[e.N2], Half{To: e.N1, Label: e.LI})
+		g[e.N2] = append(g[e.N2], Half{To: e.N1, Label: l})
 	}
 }
 

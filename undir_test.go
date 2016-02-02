@@ -200,9 +200,9 @@ func ExampleAdjacencyList_UndirectedCopy_loopMultigraph() {
 }
 
 func ExampleAdjacencyList_IsUndirected() {
-	//    0  2--\
-	//   /   |  |
-	//  1    \--/
+	// 0<--    2<--\
+	//  \  \   |   |
+	//   -->1  \---/
 	g := graph.AdjacencyList{
 		0: {1},
 		1: {0},
@@ -210,9 +210,9 @@ func ExampleAdjacencyList_IsUndirected() {
 	}
 	ud, _, _ := g.IsUndirected()
 	fmt.Println(ud)
-	//   0
-	//  /
-	// 1<--2
+	// 0<--
+	//  \  \
+	//   -->1<--2
 	g = graph.AdjacencyList{
 		0: {1},
 		1: {0},

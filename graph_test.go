@@ -32,17 +32,43 @@ func ExampleOneBits() {
 }
 
 func ExampleAdjacencyList_Simple() {
+	// arcs directed down
+	//   2
+	//  / \
+	// 0   1
 	g := graph.AdjacencyList{
 		2: {0, 1},
 	}
 	fmt.Println(g.Simple())
-	g[1] = []graph.NI{1} // loop
-	fmt.Println(g.Simple())
-	g[1] = nil
-	g[2] = append(g[2], 0) // parallel arc
-	fmt.Println(g.Simple())
 	// Output:
 	// true -1
+}
+
+func ExampleAdjacencyList_Simple_loop() {
+	// arcs directed down
+	//   2
+	//  / \
+	// 0   1---\
+	//      \--/
+	g := graph.AdjacencyList{
+		2: {0, 1},
+		1: {1}, // loop
+	}
+	fmt.Println(g.Simple())
+	// Output:
 	// false 1
+}
+
+func ExampleAdjacencyList_Simple_parallelArc() {
+	// arcs directed down
+	//   2
+	//  /|\
+	//  |/ \
+	//  0   1
+	g := graph.AdjacencyList{
+		2: {0, 1, 0},
+	}
+	fmt.Println(g.Simple())
+	// Output:
 	// false 2
 }

@@ -15,15 +15,18 @@ import (
 
 // ArcSize returns the number of arcs in g.
 //
-// Note that for an undirected graph witout loops, the number of edges --
-// the traditional meaning of graph size -- will be m/2.
+// Note that for an undirected graph without loops, the number of undirected
+// edges -- the traditional meaning of graph size -- will be ArcSize()/2.
+// On the other hand, if g is an undirected graph that has or may have loops,
+// g.ArcSize()/2 is not a meaningful quantity.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g AdjacencyList) ArcSize() (m int) {
+func (g AdjacencyList) ArcSize() int {
+	m := 0
 	for _, to := range g {
 		m += len(to)
 	}
-	return
+	return m
 }
 
 // Balanced returns true if for every node in g, in-degree equals out-degree.

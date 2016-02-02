@@ -11,20 +11,26 @@ import (
 
 func ExampleLabledAdjacencyList_DAGMaxLenPath() {
 	// arcs directed right:
-	//           (M)
-	//    (W)  /------\
-	//  3-----4  1-----0-----2
-	//             (S)   (P)
+	//            (M)
+	//    (W)  /---------\
+	//  3-----4   1-------0-----2
+	//         \    (S)  /  (P)
+	//          \       /
+	//           \-----/ (Q)
 	g := graph.LabeledAdjacencyList{
-		3: {{To: 4, Label: 'W'}},
-		4: {{To: 0, Label: 'M'}},
-		1: {{To: 0, Label: 'S'}},
-		0: {{To: 2, Label: 'P'}},
+		3: {{To: 0, Label: 'Q'}, {4, 'W'}},
+		4: {{0, 'M'}},
+		1: {{0, 'S'}},
+		0: {{2, 'P'}},
 	}
 	o, _ := g.Topological()
 	fmt.Println("ordering:", o)
 	n, p := g.DAGMaxLenPath(o)
-	fmt.Printf("path from %d: %v\n", n, p)
+	fmt.Printf("path from %d:", n)
+	for _, e := range p {
+		fmt.Printf(" {%d, '%c'}", e.To, e.Label)
+	}
+	fmt.Println()
 	fmt.Print("label path: ")
 	for _, h := range p {
 		fmt.Print(string(h.Label))
@@ -32,7 +38,7 @@ func ExampleLabledAdjacencyList_DAGMaxLenPath() {
 	fmt.Println()
 	// Output:
 	// ordering: [3 4 1 0 2]
-	// path from 3: [{4 87} {0 77} {2 80}]
+	// path from 3: {4, 'W'} {0, 'M'} {2, 'P'}
 	// label path: WMP
 }
 
@@ -57,28 +63,50 @@ func ExampleLabeledAdjacencyList_BoundsOk() {
 }
 
 func ExampleLabeledAdjacencyList_IsUndirected() {
-	// multigraph, edges with different labels
-	//               ----0
-	//  (Label: 0)  /   /  (Label: 1)
-	//             1----
+	//             0<--
+	// (label 'A')  \  \ (matching label 'A' on reciprocal)
+	//               -->1
+	// 2<--\
+	// |   | (label 'B' on loop)
+	// \---/
 	g := graph.LabeledAdjacencyList{
-		0: {{To: 1, Label: 0}, {To: 1, Label: 1}},
-		1: {{To: 0, Label: 0}, {To: 0, Label: 1}},
+		0: {{To: 1, Label: 'A'}},
+		1: {{0, 'A'}},
+		2: {{2, 'B'}},
 	}
-	ud, _, _ := g.IsUndirected()
-	fmt.Println(ud)
-	// directed graph, arcs with different labels
-	//               --->0
-	//  (Label: 0)  /   /  (Label: 1)
-	//             1<---
-	g = graph.LabeledAdjacencyList{
-		0: {{To: 1, Label: 1}},
-		1: {{To: 0, Label: 0}},
-	}
-	fmt.Println(g.IsUndirected())
+	ok, _, _ := g.IsUndirected()
+	fmt.Println(ok)
 	// Output:
 	// true
-	// false 0 {1 1}
+}
+
+func ExampleLabeledAdjacencyList_IsUndirected_undirectedMultigraph() {
+	// lines shown here are edges (arcs with reciprocals.)
+	//               0---
+	//  (Label: 'A')  \  \  (Label: 'B')
+	//                 ---1
+	g := &graph.LabeledAdjacencyList{}
+	g.AddEdge(graph.Edge{0, 1}, 'A')
+	g.AddEdge(graph.Edge{0, 1}, 'B')
+	ok, _, _ := g.IsUndirected()
+	fmt.Println(ok)
+	// Output:
+	// true
+}
+
+func ExampleLabeledAdjacencyList_IsUndirected_labelMismatch() {
+	// directed graph, arcs with different labels
+	//               0<--
+	//  (Label: 'A')  \  \  (Label: 'B')
+	//                 -->1
+	g := graph.LabeledAdjacencyList{
+		0: {{To: 1, Label: 'A'}},
+		1: {{To: 0, Label: 'B'}},
+	}
+	ok, fr, to := g.IsUndirected()
+	fmt.Printf("%t %d {%d %c}\n", ok, fr, to.To, to.Label)
+	// Output:
+	// false 0 {1 A}
 }
 
 // A directed graph with negative arc weights.

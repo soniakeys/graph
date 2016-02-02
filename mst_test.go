@@ -22,10 +22,10 @@ func ExamplePrim_Span() {
 	//  (1)-----(0)
 	//       3
 	g := &graph.LabeledAdjacencyList{}
-	g.AddEdge(graph.LabeledEdge{graph.Edge{0, 1}, 3})
-	g.AddEdge(graph.LabeledEdge{graph.Edge{1, 2}, 4})
-	g.AddEdge(graph.LabeledEdge{graph.Edge{2, 0}, 5})
-	g.AddEdge(graph.LabeledEdge{graph.Edge{3, 4}, 2})
+	g.AddEdge(graph.Edge{0, 1}, 3)
+	g.AddEdge(graph.Edge{1, 2}, 4)
+	g.AddEdge(graph.Edge{2, 0}, 5)
+	g.AddEdge(graph.Edge{3, 4}, 2)
 	// weight function
 	w := func(arcLabel graph.LI) float64 { return float64(arcLabel) }
 
@@ -106,13 +106,13 @@ func ExampleWeightedEdgeList_Kruskal() {
 	w := func(l graph.LI) float64 { return float64(l) }
 	// undirected graph
 	g := &graph.LabeledAdjacencyList{}
-	g.AddEdge(graph.LabeledEdge{graph.Edge{0, 1}, 30})
-	g.AddEdge(graph.LabeledEdge{graph.Edge{0, 4}, 10})
-	g.AddEdge(graph.LabeledEdge{graph.Edge{1, 2}, 50})
-	g.AddEdge(graph.LabeledEdge{graph.Edge{1, 4}, 40})
-	g.AddEdge(graph.LabeledEdge{graph.Edge{2, 3}, 20})
-	g.AddEdge(graph.LabeledEdge{graph.Edge{2, 4}, 60})
-	g.AddEdge(graph.LabeledEdge{graph.Edge{3, 4}, 70})
+	g.AddEdge(graph.Edge{0, 1}, 30)
+	g.AddEdge(graph.Edge{0, 4}, 10)
+	g.AddEdge(graph.Edge{1, 2}, 50)
+	g.AddEdge(graph.Edge{1, 4}, 40)
+	g.AddEdge(graph.Edge{2, 3}, 20)
+	g.AddEdge(graph.Edge{2, 4}, 60)
+	g.AddEdge(graph.Edge{3, 4}, 70)
 	// convert to edge list for Kruskal, but no need to sort it.
 	// Kruskal will sort it.
 	l := graph.WeightedEdgeList{
