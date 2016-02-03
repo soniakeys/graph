@@ -10,6 +10,24 @@ import (
 
 // A LabledAdjacencyList represents a graph as a list of neighbors for each
 // node, connected by labeled arcs.
+//
+// Arc labels are not necessarily unique arc IDs.  Different arcs can have
+// the same label.
+//
+// Arc labels are commonly used to assocate a weight with an arc.  Arc labels
+// are general purpose however and can be used to associate arbitrary
+// information with an arc.
+//
+// Methods implementing weighted graph algorithms will commonly take a
+// weight function that turns a label int into a float64 weight.
+//
+// If only a small amount of information -- such as an integer weight or
+// a single printable character -- needs to be associated, it can sometimes
+// be possible to encode the information directly into the label int.  For
+// more generality, some lookup scheme will be needed.
+//
+// In an undirected labeled graph, reciprocal arcs must have identical labels.
+// Note this does not preclude parallel arcs with different labels.
 type LabeledAdjacencyList [][]Half
 
 // LI is a label integer, used for associating labels with arcs.
@@ -21,14 +39,7 @@ type LI int32
 // Halfs can be composed to form a labeled adjacency list.
 type Half struct {
 	To    NI // node ID, usable as a slice index
-	Label LI // half-arc ID for application data
-}
-
-// FromHalf is a half arc, representing a labeled arc and the "neighbor" node
-// that the arc originates from.
-type FromHalf struct {
-	From  NI
-	Label LI
+	Label LI // half-arc ID for application data, often a weight
 }
 
 // WeightFunc returns a weight for a given label.

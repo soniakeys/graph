@@ -170,9 +170,19 @@ func NewPrim(g LabeledAdjacencyList, w WeightFunc) *Prim {
 	}
 }
 
+// fromHalf is a half arc, representing a labeled arc and the "neighbor" node
+// that the arc originates from.
+//
+// (This used to be exported when there was a LabeledFromList.  Currently
+// unexported now that it seems to have much more limited use.)
+type fromHalf struct {
+	From  NI
+	Label LI
+}
+
 type prNode struct {
 	nx   NI
-	from FromHalf
+	from fromHalf
 	wt   float64 // p.Weight(from.Label)
 	fx   int
 }
@@ -231,11 +241,11 @@ func (p *Prim) Span(start NI, leaves *big.Int) (numSpanned int, dist float64) {
 			}
 			switch bp := &b[nb.To]; {
 			case bp.fx == -1: // new node for frontier
-				bp.from = FromHalf{From: a, Label: nb.Label}
+				bp.from = fromHalf{From: a, Label: nb.Label}
 				bp.wt = p.Weight(nb.Label)
 				heap.Push(&frontier, bp)
 			case p.Weight(nb.Label) < bp.wt: // better arc
-				bp.from = FromHalf{From: a, Label: nb.Label}
+				bp.from = fromHalf{From: a, Label: nb.Label}
 				bp.wt = p.Weight(nb.Label)
 				heap.Fix(&frontier, bp.fx)
 			}
