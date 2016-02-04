@@ -34,11 +34,11 @@
 // Code generation
 //
 // A number of methods on AdjacencyList are applicable to LabeledAdjacencyList
-// simply by ignoring the label.  In these cases code generation is used to
-// to provide methods on both types from a single source implementation.
-// These methods are documented with sentence "There are equivalent labeled
-// and unlabeled versions of this method" and examples are provided only for
-// the unlabled version.
+// simply by ignoring the label.  In these cases code generation provides
+// methods on both types from a single source implementation. These methods
+// are documented with the sentence "There are equivalent labeled and unlabeled
+// versions of this method" and examples are provided only for the unlabled
+// version.
 //
 // Terminology
 //
@@ -47,34 +47,37 @@
 // of an arc.  It uses "start" and "end" to refer to endpoints of a search
 // or traversal.
 //
-// The usage of "to" and "from" is perhaps most strange.  Throughout the
-// the package they are used as adjectives, for example to refer to the
-// "from node" of an arc or the "to node".  The type "FromList" is named
-// to indicate it stores a list of "from" values.
+// The usage of "to" and "from" is perhaps most strange.  In common speech
+// they are prepositions, but throughout this package they are used as
+// adjectives, for example to refer to the "from node" of an arc or the
+// "to node".  The type "FromList" is named to indicate it stores a list of
+// "from" values.
 //
 // A "half arc" refers to just one end of an arc, either the to or from end.
 //
 // Two arcs are "reciprocal" if they connect two distinct nodes n1 and n2,
 // one arc leading from n1 to n2 and the other arc leading from n2 to n1.
-// "Undirected graphs" are represented with reciprocal arcs.
+// Undirected graphs are represented with reciprocal arcs.
 //
 // A node that is a neighbor of itself represents a "loop."  Duplicate
 // neighbors (when a node appears more than once in the same neighbor list)
 // represent "parallel arcs."  A graph with no loops or parallel arcs
 // is "simple."  A graph that allows parallel arcs is a "multigraph"
 //
-// The "size" of a graph traditionally means the number of edges.  This
-// package uses "arc size" to mean the number of arcs in a graph.  For an
-// undirected graph without loops, arc size is 2 * size.  The "order" of
-// a graph is the number of nodes.  An "ordering" though means an ordered
-// list of nodes.
+// The "size" of a graph traditionally means the number of undirected edges.
+// This package uses "arc size" to mean the number of arcs in a graph.  For an
+// undirected graph without loops, arc size is 2 * size.
+//
+// The "order" of a graph is the number of nodes.  An "ordering" though means
+// an ordered list of nodes.
 //
 // A number of graph search algorithms use a concept of arc "weights."
 // The sum of arc weights along a path is a "distance."  In contrast, the
 // number of nodes in a path, including start and end nodes, is the path's
 // "length."  (Yes, mixing weights and lengths would be nonsense physically,
 // but the terms used here are just distinct terms for abstract values.
-// The actual meaning to an application is not relevant within this package.)
+// The actual meaning to an application is likely to be something else
+// entirely and is not relevant within this package.)
 //
 // Finally, this package documentation takes back the word "object" in some
 // places to refer to a Go value, especially a value of a type with methods.

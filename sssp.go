@@ -272,8 +272,8 @@ func (b *BreadthFirst2) Traverse(start NI, v Visitor) int {
 	return nReached
 }
 
-// A DAGPath object allows searches for either shortest or longest paths
-// on a directed acyclic graph.
+// A DAGPath object allows searches for paths of either shortest or longest
+// distance in a directed acyclic graph.
 //
 // DAGPath methods measure path distance as the sum of arc weights.
 // Negative arc weights are allowed.
@@ -290,8 +290,8 @@ type DAGPath struct {
 	Dist     []float64            // in Tree, distances for result paths
 }
 
-// NewDAGPath creates a DAGPath object that allows shortest or longest
-// path searches.
+// NewDAGPath creates a DAGPath object that allows path searches of either
+// shortest or longest distance.
 //
 // Argument g is the graph to be searched, and must be a directed acyclic
 // graph.  Argument o must be a topological ordering of g.
@@ -316,25 +316,25 @@ func NewDAGPath(g LabeledAdjacencyList, ordering []NI, w WeightFunc, longest boo
 	}
 }
 
-// DAGShortestPath finds a single shortest path.
+// DAGMinDistPath finds a single shortest path.
 //
 // Shortest means minimum sum of arc weights.
 //
 // Returned is the path and distance as returned by FromList.PathTo.
 //
 // This is a convenience method.  See the DAGPath type for more options.
-func (g LabeledAdjacencyList) DAGShortestPath(start, end NI, w WeightFunc) ([]NI, float64, error) {
+func (g LabeledAdjacencyList) DAGMinDistPath(start, end NI, w WeightFunc) ([]NI, float64, error) {
 	return g.dagPath(start, end, w, false)
 }
 
-// DAGLongestPath finds a single longest path.
+// DAGMaxDistPath finds a single longest path.
 //
 // Longest means maximum sum of arc weights.
 //
 // Returned is the path and distance as returned by FromList.PathTo.
 //
 // This is a convenience method.  See the DAGPath type for more options.
-func (g LabeledAdjacencyList) DAGLongestPath(start, end NI, w WeightFunc) ([]NI, float64, error) {
+func (g LabeledAdjacencyList) DAGMaxDistPath(start, end NI, w WeightFunc) ([]NI, float64, error) {
 	return g.dagPath(start, end, w, true)
 }
 
