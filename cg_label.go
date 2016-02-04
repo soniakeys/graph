@@ -112,7 +112,7 @@ func (g LabeledAdjacencyList) BoundsOk() (ok bool, fr NI, to Half) {
 // The graph must not contain parallel edges or loops.
 //
 // See https://en.wikipedia.org/wiki/Clique_(graph_theory) and
-// https://en.wikipedia.org/wiki/Bron–Kerbosch_algorithm for background.
+// https://en.wikipedia.org/wiki/Bron%E2%80%93Kerbosch_algorithm for background.
 //
 // This method implements the BronKerbosch1 algorithm of WP; that is,
 // the original algorithm without improvements.
@@ -223,7 +223,7 @@ func (g LabeledAdjacencyList) BKPivotMaxDegree(P, X *bitset.BitSet) int {
 // The graph must not contain parallel edges or loops.
 //
 // See https://en.wikipedia.org/wiki/Clique_(graph_theory) and
-// https://en.wikipedia.org/wiki/Bron–Kerbosch_algorithm for background.
+// https://en.wikipedia.org/wiki/Bron%E2%80%93Kerbosch_algorithm for background.
 //
 // This method implements the BronKerbosch2 algorithm of WP; that is,
 // the original algorithm plus pivoting.
@@ -297,7 +297,7 @@ func (g LabeledAdjacencyList) BronKerbosch2(pivot func(P, X *bitset.BitSet) int)
 // The graph must not contain parallel edges or loops.
 //
 // See https://en.wikipedia.org/wiki/Clique_(graph_theory) and
-// https://en.wikipedia.org/wiki/Bron–Kerbosch_algorithm for background.
+// https://en.wikipedia.org/wiki/Bron%E2%80%93Kerbosch_algorithm for background.
 //
 // This method implements the BronKerbosch3 algorithm of WP; that is,
 // the original algorithm with pivoting and degeneracy ordering.
