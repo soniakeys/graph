@@ -184,6 +184,43 @@ func solveFW(d [][]float64) {
 	}
 }
 
+// HasParallelSort identifies if a graph contains parallel arcs, multiple arcs
+// that lead from a node to the same node.
+//
+// If the graph has parallel arcs, the results fr and to represent an example
+// where there are parallel arcs from node fr to node to.
+//
+// If there are no parallel arcs, the method returns -1 -1.
+//
+// Multiple loops on a node count as parallel arcs.
+//
+// "Sort" in the method name indicates that sorting is used to detect parallel
+// arcs.  Compared to method HasParallelMap, this may give better performance
+// for small or sparse graphs but will have asymtotically worse performance for
+// large dense graphs.
+func (g LabeledAdjacencyList) HasParallelSort() (fr, to NI) {
+	var t NodeList
+	for n, to := range g {
+		if len(to) == 0 {
+			continue
+		}
+		// slightly different code needed here compared to AdjacencyList
+		t = t[:0]
+		for _, to := range to {
+			t = append(t, to.To)
+		}
+		sort.Sort(t)
+		t0 := t[0]
+		for _, to := range t[1:] {
+			if to == t0 {
+				return NI(n), t0
+			}
+			t0 = to
+		}
+	}
+	return -1, -1
+}
+
 // IsUndirected returns true if g represents an undirected graph.
 //
 // Returns true when all non-loop arcs are paired in reciprocal pairs with

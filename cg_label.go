@@ -721,6 +721,57 @@ func (g LabeledAdjacencyList) FromList() FromList {
 	return FromList{paths, leaves, maxLen}
 }
 
+// HasLoop identifies if a graph contains a loop, an arc that leads from a
+// a node back to the same node.
+//
+// If the graph has a loop, the result is an example node that has a loop.
+//
+// If there are no loops, the method returns -1.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g LabeledAdjacencyList) HasLoop() NI {
+	for fr, to := range g {
+		for _, to := range to {
+			if NI(fr) == to.To {
+				return to.To
+			}
+		}
+	}
+	return -1
+}
+
+// HasParallelMap identifies if a graph contains parallel arcs, multiple arcs
+// that lead from a node to the same node.
+//
+// If the graph has parallel arcs, the results fr and to represent an example
+// where there are parallel arcs from node fr to node to.
+//
+// If there are no parallel arcs, the method returns -1 -1.
+//
+// Multiple loops on a node count as parallel arcs.
+//
+// "Map" in the method name indicates that a Go map is used to detect parallel
+// arcs.  Compared to method HasParallelSort, this gives better asymtotic
+// performance for large dense graphs but may have increased overhead for
+// small or sparse graphs.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g LabeledAdjacencyList) HasParallelMap() (fr, to NI) {
+	for n, to := range g {
+		if len(to) == 0 {
+			continue
+		}
+		m := map[NI]struct{}{}
+		for _, to := range to {
+			if _, ok := m[to.To]; ok {
+				return NI(n), to.To
+			}
+			m[to.To] = struct{}{}
+		}
+	}
+	return -1, -1
+}
+
 // InDegree computes the in-degree of each node in g
 //
 // There are equivalent labeled and unlabeled versions of this method.
@@ -732,6 +783,27 @@ func (g LabeledAdjacencyList) InDegree() []int {
 		}
 	}
 	return ind
+}
+
+// IsSimple checks for loops and parallel arcs.
+//
+// A graph is "simple" if it has no loops or parallel arcs.
+//
+// IsSimple returns true, -1 for simple graphs.  If a loop or parallel arc is
+// found, simple returns false and a node that represents a counterexample
+// to the graph being simple.
+//
+// See also separate methods HasLoop and HasParallel.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g LabeledAdjacencyList) IsSimple() (ok bool, n NI) {
+	if n = g.HasLoop(); n >= 0 {
+		return
+	}
+	if n, _ = g.HasParallelSort(); n >= 0 {
+		return
+	}
+	return true, -1
 }
 
 // IsTreeDirected identifies trees in directed graphs.

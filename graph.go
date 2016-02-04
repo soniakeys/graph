@@ -50,29 +50,35 @@ func (l NodeList) Swap(i, j int)      { l[i], l[j] = l[j], l[i] }
 // create reciprocal neighbors.
 type AdjacencyList [][]NI
 
-// Simple checks for loops and parallel arcs.
+// HasParallelSort identifies if a graph contains parallel arcs, multiple arcs
+// that lead from a node to the same node.
 //
-// A graph is "simple" if it has no loops or parallel arcs.
+// If the graph has parallel arcs, the results fr and to represent an example
+// where there are parallel arcs from node fr to node to.
 //
-// Simple returns true, -1 for simple graphs.  If a loop or parallel arc is
-// found, simple returns false and and a node that represents a counterexample
-// to the graph being simple.
-func (g AdjacencyList) Simple() (s bool, n NI) {
+// If there are no parallel arcs, the method returns -1 -1.
+//
+// Multiple loops on a node count as parallel arcs.
+//
+// "Sort" in the method name indicates that sorting is used to detect parallel
+// arcs.  Compared to method HasParallelMap, this may give better performance
+// for small or sparse graphs but will have asymtotically worse performance for
+// large dense graphs.
+func (g AdjacencyList) HasParallelSort() (fr, to NI) {
 	var t NodeList
-	for n, nbs := range g {
-		if len(nbs) == 0 {
+	for n, to := range g {
+		if len(to) == 0 {
 			continue
 		}
-		t = append(t[:0], nbs...)
+		t = append(t[:0], to...)
 		sort.Sort(t)
-		if t[0] == NI(n) {
-			return false, NI(n)
-		}
-		for i, nb := range t[1:] {
-			if nb == NI(n) || nb == t[i] {
-				return false, NI(n)
+		t0 := t[0]
+		for _, to := range t[1:] {
+			if to == t0 {
+				return NI(n), t0
 			}
+			t0 = to
 		}
 	}
-	return true, -1
+	return -1, -1
 }

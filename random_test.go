@@ -102,7 +102,7 @@ arc:
 
 func TestR(t *testing.T) {
 	tc := r100
-	if s, cx := tc.g.Simple(); !s {
+	if s, cx := tc.g.IsSimple(); !s {
 		t.Fatal(len(tc.w), "not simple at node", cx)
 	}
 }

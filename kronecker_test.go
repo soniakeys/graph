@@ -8,7 +8,7 @@ import (
 
 func TestKroneckerDir(t *testing.T) {
 	g, _ := graph.KroneckerDir(10, 10)
-	if s, n := g.Simple(); !s {
+	if s, n := g.IsSimple(); !s {
 		t.Fatalf("KroneckerDir returned non-simple graph.  Node %d to: %v",
 			n, g[n])
 	}
@@ -16,7 +16,7 @@ func TestKroneckerDir(t *testing.T) {
 
 func TestKroneckerUndir(t *testing.T) {
 	g, _ := graph.KroneckerUndir(10, 10)
-	if s, n := g.Simple(); !s {
+	if s, n := g.IsSimple(); !s {
 		t.Fatalf("KroneckerUndir returned non-simple graph.  Node %d to: %v",
 			n, g[n])
 	}

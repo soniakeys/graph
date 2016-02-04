@@ -721,6 +721,32 @@ func (g AdjacencyList) FromList() FromList {
 	return FromList{paths, leaves, maxLen}
 }
 
+func (g AdjacencyList) HasLoop() NI {
+	for fr, to := range g {
+		for _, to := range to {
+			if NI(fr) == to {
+				return to
+			}
+		}
+	}
+	return -1
+}
+func (g AdjacencyList) HasParallelMap() (fr, to NI) {
+	for n, to := range g {
+		if len(to) == 0 {
+			continue
+		}
+		m := map[NI]struct{}{}
+		for _, to := range to {
+			if _, ok := m[to]; ok {
+				return NI(n), to
+			}
+			m[to] = struct{}{}
+		}
+	}
+	return -1, -1
+}
+
 // InDegree computes the in-degree of each node in g
 //
 // There are equivalent labeled and unlabeled versions of this method.
@@ -732,6 +758,25 @@ func (g AdjacencyList) InDegree() []int {
 		}
 	}
 	return ind
+}
+
+// IsSimple checks for loops and parallel arcs.
+//
+// A graph is "simple" if it has no loops or parallel arcs.
+//
+// IsSimple returns true, -1 for simple graphs.  If a loop or parallel arc is
+// found, simple returns false and a node that represents a counterexample
+// to the graph being simple.
+//
+// See also separate methods HasLoop and HasParallel.
+func (g AdjacencyList) IsSimple() (ok bool, n NI) {
+	if n = g.HasLoop(); n >= 0 {
+		return
+	}
+	if n, _ = g.HasParallelSort(); n >= 0 {
+		return
+	}
+	return true, -1
 }
 
 // IsTreeDirected identifies trees in directed graphs.

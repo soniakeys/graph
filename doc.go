@@ -31,6 +31,15 @@
 //
 // WeightedEdgeList is currently used by Kruskal methods.
 //
+// Code generation
+//
+// A number of methods on AdjacencyList are applicable to LabeledAdjacencyList
+// simply by ignoring the label.  In these cases code generation is used to
+// to provide methods on both types from a single source implementation.
+// These methods are documented with sentence "There are equivalent labeled
+// and unlabeled versions of this method" and examples are provided only for
+// the unlabled version.
+//
 // Terminology
 //
 // This package uses the term "node" rather than "vertex."  It uses "arc"

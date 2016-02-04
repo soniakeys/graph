@@ -179,3 +179,15 @@ func TestAdjacencyList_DepthFirst_bothNil(t *testing.T) {
 		t.Fatal("DepthFirst both nil must return false")
 	}
 }
+
+func ExampleAdjacencyList_HasLoop() {
+	g := graph.AdjacencyList{
+		1: {0},
+	}
+	fmt.Println(g.HasLoop()) // -1 result means no loop
+	g[0] = []graph.NI{0}     // add loop
+	fmt.Println(g.HasLoop()) // 0 result means loop on node 0
+	// Output:
+	// -1
+	// 0
+}
