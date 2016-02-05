@@ -270,6 +270,18 @@ func newEulerian(g AdjacencyList, m int) *eulerian {
 	return e
 }
 
+// MaximalNonBranchingPaths returns a list of paths in g that are
+// "maximal" and "non-branching".
+//
+// A non-branching path is one where path nodes other than the first and last
+// have exactly one arc leading in and one arc leading out, thus there is no
+// possibility to branch away to a different path.
+//
+// A maximal non-branching path cannot be extended to a longer non-branching
+// path by including another node at either end.
+//
+// In the case of a cyclic non-branching path, the first and last elements
+// of the path will be the same node, indicating a cycle.
 func (g AdjacencyList) MaximalNonBranchingPaths() (p [][]NI) {
 	ind := g.InDegree()
 	var uv big.Int

@@ -356,7 +356,11 @@ func ExampleAdjacencyList_ConnectedComponentLists() {
 	// [2]
 }
 
-func ExampleTarjanBiconnectedComponents() {
+func ExampleAdjacencyList_TarjanBiconnectedComponents() {
+	// undirected edges:
+	// 3---2---1---7---9
+	//  \ / \ / \   \ /
+	//   4   5---6   8
 	g := graph.AdjacencyList{}
 	g.AddEdge(3, 4)
 	g.AddEdge(3, 2)

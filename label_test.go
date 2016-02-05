@@ -62,6 +62,19 @@ func ExampleLabeledAdjacencyList_BoundsOk() {
 	// false 0 {9 -1}
 }
 
+func ExampleLabeledAdjacencyList_HasParallelSort() {
+	g := graph.LabeledAdjacencyList{
+		1: {{0, 0}},
+	}
+	fmt.Println(g.HasParallelSort())      // result -1 -1 means no parallel arc
+	g[1] = append(g[1], graph.Half{0, 0}) // add parallel arc
+	// result 1 0 means parallel arc from node 1 to node 0
+	fmt.Println(g.HasParallelSort())
+	// Output:
+	// -1 -1
+	// 1 0
+}
+
 func ExampleLabeledAdjacencyList_IsUndirected() {
 	//             0<--
 	// (label 'A')  \  \ (matching label 'A' on reciprocal)
@@ -142,6 +155,49 @@ func ExampleLabeledAdjacencyList_NegativeArc() {
 	// Output:
 	// false
 	// true
+}
+
+func ExampleLabeledAdjacencyList_TarjanBiconnectedComponents() {
+	// undirected edges:
+	// 3---2---1---7---9
+	//  \ / \ / \   \ /
+	//   4   5---6   8
+	g := graph.LabeledAdjacencyList{}
+	g.AddEdge(graph.Edge{3, 4}, 0)
+	g.AddEdge(graph.Edge{3, 2}, 0)
+	g.AddEdge(graph.Edge{2, 4}, 0)
+	g.AddEdge(graph.Edge{2, 5}, 0)
+	g.AddEdge(graph.Edge{2, 1}, 0)
+	g.AddEdge(graph.Edge{5, 1}, 0)
+	g.AddEdge(graph.Edge{6, 1}, 0)
+	g.AddEdge(graph.Edge{6, 5}, 0)
+	g.AddEdge(graph.Edge{7, 1}, 0)
+	g.AddEdge(graph.Edge{7, 9}, 0)
+	g.AddEdge(graph.Edge{7, 8}, 0)
+	g.AddEdge(graph.Edge{9, 8}, 0)
+	for _, bcc := range g.TarjanBiconnectedComponents() {
+		fmt.Println("Edges:")
+		for _, e := range bcc {
+			fmt.Println(e.Edge)
+		}
+	}
+	// Output:
+	// Edges:
+	// {4 2}
+	// {3 4}
+	// {2 3}
+	// Edges:
+	// {6 1}
+	// {5 6}
+	// {5 1}
+	// {2 5}
+	// {1 2}
+	// Edges:
+	// {8 7}
+	// {9 8}
+	// {7 9}
+	// Edges:
+	// {1 7}
 }
 
 func ExampleLabeledAdjacencyList_Transpose() {

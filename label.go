@@ -271,38 +271,6 @@ func (g LabeledAdjacencyList) NegativeArc(w WeightFunc) bool {
 	return false
 }
 
-// Simple checks for loops and parallel arcs.
-//
-// A graph is "simple" if it has no loops or parallel arcs.
-//
-// Simple returns true, -1 for simple graphs.  If a loop or parallel arc is
-// found, simple returns false and and a node that represents a counterexample
-// to the graph being simple.
-//
-// See also the eqivalent unlabeled Simple.
-func (g LabeledAdjacencyList) Simple() (s bool, n NI) {
-	var t NodeList
-	for n, nbs := range g {
-		if len(nbs) == 0 {
-			continue
-		}
-		t = t[:0]
-		for _, nb := range nbs {
-			t = append(t, nb.To)
-		}
-		sort.Sort(t)
-		if t[0] == NI(n) {
-			return false, NI(n)
-		}
-		for i, nb := range t[1:] {
-			if nb == NI(n) || nb == t[i] {
-				return false, NI(n)
-			}
-		}
-	}
-	return true, -1
-}
-
 // TarjanBiconnectedComponents, for undirected simple graphs.
 //
 // A list of components is returned, with each component represented as an
