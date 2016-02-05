@@ -270,19 +270,28 @@ func newEulerian(g AdjacencyList, m int) *eulerian {
 	return e
 }
 
-// MaximalNonBranchingPaths returns a list of paths in g that are
+// MaximalNonBranchingPaths finds all paths in a directed graph that are
 // "maximal" and "non-branching".
 //
 // A non-branching path is one where path nodes other than the first and last
-// have exactly one arc leading in and one arc leading out, thus there is no
-// possibility to branch away to a different path.
+// have exactly one arc leading to the node and one arc leading from the node,
+// thus there is no possibility to branch away to a different path.
 //
 // A maximal non-branching path cannot be extended to a longer non-branching
 // path by including another node at either end.
 //
 // In the case of a cyclic non-branching path, the first and last elements
 // of the path will be the same node, indicating a cycle.
-func (g AdjacencyList) MaximalNonBranchingPaths() (p [][]NI) {
+//
+// Paths are sent on the returned channel.  The channel is closed after all
+// paths are sent.
+func (g AdjacencyList) MaximalNonBranchingPaths() chan []NI {
+	ch := make(chan []NI)
+	go g.mnbp(ch)
+	return ch
+}
+
+func (g AdjacencyList) mnbp(ch chan []NI) {
 	ind := g.InDegree()
 	var uv big.Int
 	OneBits(&uv, len(g))
@@ -300,8 +309,7 @@ func (g AdjacencyList) MaximalNonBranchingPaths() (p [][]NI) {
 					w = u
 					wTo = g[w]
 				}
-				// path
-				p = append(p, n)
+				ch <- n // path
 			}
 		}
 	}
@@ -316,10 +324,9 @@ func (g AdjacencyList) MaximalNonBranchingPaths() (p [][]NI) {
 				break
 			}
 		}
-		// isolated cycle
-		p = append(p, n)
+		ch <- n // isolated cycle
 	}
-	return p
+	close(ch)
 }
 
 // StronglyConnectedComponents identifies strongly connected components

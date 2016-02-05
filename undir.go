@@ -111,7 +111,16 @@ func (g AdjacencyList) UndirectedCopy() AdjacencyList {
 }
 
 // TarjanBiconnectedComponents, for undirected simple graphs.
-func (g AdjacencyList) TarjanBiconnectedComponents() (components [][]Edge) {
+//
+// Components are sent as edge lists on the returned channel.
+// The channel is closed after all components are sent.
+func (g AdjacencyList) TarjanBiconnectedComponents() chan []Edge {
+	ch := make(chan []Edge)
+	go g.tarjanBcc(ch)
+	return ch
+}
+
+func (g AdjacencyList) tarjanBcc(ch chan []Edge) {
 	// Implemented closely to pseudocode in "Depth-first search and linear
 	// graph algorithms", Robert Tarjan, SIAM J. Comput. Vol. 1, No. 2,
 	// June 1972.
@@ -146,7 +155,7 @@ func (g AdjacencyList) TarjanBiconnectedComponents() (components [][]Edge) {
 					bcc = append(bcc, stack[top])
 					stack = stack[:top]
 					top--
-					components = append(components, bcc)
+					ch <- bcc
 				}
 			} else if number[w] < number[v] && w != u {
 				stack = append(stack, Edge{v, w})
@@ -161,7 +170,7 @@ func (g AdjacencyList) TarjanBiconnectedComponents() (components [][]Edge) {
 			biconnect(NI(w), 0)
 		}
 	}
-	return
+	close(ch)
 }
 
 /* half-baked.  Read the 72 paper.  Maybe revisit at some point.

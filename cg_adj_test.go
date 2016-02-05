@@ -191,3 +191,69 @@ func ExampleAdjacencyList_HasLoop() {
 	// -1
 	// 0
 }
+
+func ExampleAdjacencyList_Tarjan() {
+	// /---0---\
+	// |   |\--/
+	// |   v
+	// |   5<=>4---\
+	// |   |   |   |
+	// v   v   |   |
+	// 7<=>6   |   |
+	//     |   v   v
+	//     \-->3<--2
+	//         |   ^
+	//         |   |
+	//         \-->1
+	g := graph.AdjacencyList{
+		0: {0, 5, 7},
+		5: {4, 6},
+		4: {5, 2, 3},
+		7: {6},
+		6: {7, 3},
+		3: {1},
+		1: {2},
+		2: {3},
+	}
+	for c := range g.Tarjan() {
+		fmt.Println(c)
+	}
+	// Output:
+	// [1 3 2]
+	// [7 6]
+	// [4 5]
+	// [0]
+}
+
+func ExampleAdjacencyList_TarjanForward() {
+	// /---0---\
+	// |   |\--/
+	// |   v
+	// |   5<=>4---\
+	// |   |   |   |
+	// v   v   |   |
+	// 7<=>6   |   |
+	//     |   v   v
+	//     \-->3<--2
+	//         |   ^
+	//         |   |
+	//         \-->1
+	g := graph.AdjacencyList{
+		0: {0, 5, 7},
+		5: {4, 6},
+		4: {5, 2, 3},
+		7: {6},
+		6: {7, 3},
+		3: {1},
+		1: {2},
+		2: {3},
+	}
+	for _, c := range g.TarjanForward() {
+		fmt.Println(c)
+	}
+	// Output:
+	// [0]
+	// [4 5]
+	// [7 6]
+	// [1 3 2]
+}

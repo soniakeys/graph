@@ -222,7 +222,7 @@ func ExampleAdjacencyList_MaximalNonBranchingPaths() {
 		5: {6},
 		6: {5},
 	}
-	for _, p := range g.MaximalNonBranchingPaths() {
+	for p := range g.MaximalNonBranchingPaths() {
 		fmt.Println(p)
 	}
 	// Output:

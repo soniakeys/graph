@@ -273,11 +273,17 @@ func (g LabeledAdjacencyList) NegativeArc(w WeightFunc) bool {
 
 // TarjanBiconnectedComponents, for undirected simple graphs.
 //
-// A list of components is returned, with each component represented as an
-// edge list.
+// Components are sent as edge lists on the returned channel.
+// The channel is closed after all components are sent.
 //
 // See also the eqivalent unlabeled TarjanBiconnectedComponents.
-func (g LabeledAdjacencyList) TarjanBiconnectedComponents() (components [][]LabeledEdge) {
+func (g LabeledAdjacencyList) TarjanBiconnectedComponents() chan []LabeledEdge {
+	ch := make(chan []LabeledEdge)
+	go g.tarjanBcc(ch)
+	return ch
+}
+
+func (g LabeledAdjacencyList) tarjanBcc(ch chan []LabeledEdge) {
 	// Implemented closely to pseudocode in "Depth-first search and linear
 	// graph algorithms", Robert Tarjan, SIAM J. Comput. Vol. 1, No. 2,
 	// June 1972.
@@ -314,7 +320,7 @@ func (g LabeledAdjacencyList) TarjanBiconnectedComponents() (components [][]Labe
 					bcc = append(bcc, stack[top])
 					stack = stack[:top]
 					top--
-					components = append(components, bcc)
+					ch <- bcc
 				}
 			} else if number[w.To] < number[v] && w.To != u {
 				stack = append(stack, LabeledEdge{Edge{v, w.To}, w.Label})
@@ -329,7 +335,7 @@ func (g LabeledAdjacencyList) TarjanBiconnectedComponents() (components [][]Labe
 			biconnect(NI(w), 0)
 		}
 	}
-	return
+	close(ch)
 }
 
 // Transpose, for directed graphs, constructs a new adjacency list that is

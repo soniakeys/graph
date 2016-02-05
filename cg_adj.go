@@ -899,21 +899,27 @@ func (g LabeledAdjacencyList) MaximalClique(n int) []int {
 // Tarjan identifies strongly connected components in a directed graph using
 // Tarjan's algorithm.
 //
-// Returned is a list of components, each component is a list of nodes.
-// A property of the algorithm is that components are ordered in reverse
-// topological order of the condensation.
+// Components are sent on the returned channel.  Each component is a list of
+// nodes.  A property of the algorithm is that components are sent in reverse
+// topological order of the condensation.  (See
+// https://en.wikipedia.org/wiki/Strongly_connected_component#Definitions
+// for description of condensation.)
 //
 // There are equivalent labeled and unlabeled versions of this method.
 //
 // See also TarjanForward and TarjanCondensation.
-func (g AdjacencyList) Tarjan() (scc [][]NI) {
+func (g AdjacencyList) Tarjan() chan []NI {
+	ch := make(chan []NI)
+	go g.tarjan(ch)
+	return ch
+}
+
+func (g AdjacencyList) tarjan(ch chan []NI) {
 	// See "Depth-first search and linear graph algorithms", Robert Tarjan,
 	// SIAM J. Comput. Vol. 1, No. 2, June 1972.
 	//
 	// Implementation here from Wikipedia pseudocode,
 	// http://en.wikipedia.org/w/index.php?title=Tarjan%27s_strongly_connected_components_algorithm&direction=prev&oldid=647184742
-	//
-	// There are equivalent labeled and unlabeled versions of this method.
 	var indexed, stacked big.Int
 	index := make([]int, len(g))
 	lowlink := make([]int, len(g))
@@ -948,7 +954,7 @@ func (g AdjacencyList) Tarjan() (scc [][]NI) {
 				stacked.SetBit(&stacked, int(w), 0)
 				c = append(c, w)
 				if w == n {
-					scc = append(scc, c)
+					ch <- c
 					break
 				}
 			}
@@ -959,7 +965,7 @@ func (g AdjacencyList) Tarjan() (scc [][]NI) {
 			sc(NI(n))
 		}
 	}
-	return
+	close(ch)
 }
 
 // TarjanForward returns strongly connected components.
@@ -967,7 +973,9 @@ func (g AdjacencyList) Tarjan() (scc [][]NI) {
 // It returns components in the reverse order of Tarjan, for situations
 // where a forward topological ordering is easier.
 func (g AdjacencyList) TarjanForward() (scc [][]NI) {
-	scc = g.Tarjan()
+	for c := range g.Tarjan() {
+		scc = append(scc, c)
+	}
 	last := len(scc) - 1
 	for i, ci := range scc[:len(scc)/2] {
 		scc[i], scc[last-i] = scc[last-i], ci

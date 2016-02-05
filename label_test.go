@@ -175,7 +175,7 @@ func ExampleLabeledAdjacencyList_TarjanBiconnectedComponents() {
 	g.AddEdge(graph.Edge{7, 9}, 0)
 	g.AddEdge(graph.Edge{7, 8}, 0)
 	g.AddEdge(graph.Edge{9, 8}, 0)
-	for _, bcc := range g.TarjanBiconnectedComponents() {
+	for bcc := range g.TarjanBiconnectedComponents() {
 		fmt.Println("Edges:")
 		for _, e := range bcc {
 			fmt.Println(e.Edge)
