@@ -32,7 +32,6 @@ func ExampleFromList_BoundsOk() {
 }
 
 func ExampleFromList_CommonAncestor() {
-	// tree: arcs are directed down.
 	//       4
 	//      /
 	//     1
@@ -50,6 +49,59 @@ func ExampleFromList_CommonAncestor() {
 	fmt.Println(t.CommonAncestor(2, 3))
 	// Output:
 	// 1
+}
+
+func ExampleFromList_Labeled() {
+	//   0
+	//  / \
+	// 1   2
+	//      \
+	//       3
+	f := graph.FromList{Paths: []graph.PathEnd{
+		0: {From: -1},
+		1: {From: 0},
+		2: {From: 0},
+		3: {From: 2},
+	}}
+	for fr, to := range f.Labeled(nil) {
+		fmt.Println(fr, to)
+	}
+	// Output:
+	// 0 [{1 1} {2 2}]
+	// 1 []
+	// 2 [{3 3}]
+	// 3 []
+}
+
+func ExampleFromList_Labeled_indexed() {
+	//      0
+	// 'A' / \ 'B'
+	//    1   2
+	//         \ 'C'
+	//          3
+	f := graph.FromList{Paths: []graph.PathEnd{
+		0: {From: -1},
+		1: {From: 0},
+		2: {From: 0},
+		3: {From: 2},
+	}}
+	labels := []graph.LI{
+		1: 'A',
+		2: 'B',
+		3: 'C',
+	}
+	for fr, to := range f.Labeled(labels) {
+		fmt.Print(fr)
+		for _, to := range to {
+			fmt.Printf(" {%d %c}", to.To, to.Label)
+		}
+		fmt.Println()
+	}
+	// Output:
+	// 0 {1 A} {2 B}
+	// 1
+	// 2 {3 C}
+	// 3
 }
 
 func ExamplePathTo() {
@@ -109,7 +161,6 @@ func ExampleFromList_PathTo() {
 }
 
 func ExampleFromList_RecalcLeaves() {
-	// tree: arcs directed down.
 	//   0
 	//  / \
 	// 1   2
@@ -135,7 +186,6 @@ func ExampleFromList_RecalcLeaves() {
 }
 
 func ExampleFromList_RecalcLen() {
-	// tree: arcs directed down.
 	//   0
 	//  / \
 	// 1   2
@@ -163,8 +213,26 @@ func ExampleFromList_RecalcLen() {
 	// MaxLen: 3
 }
 
+func ExampleFromList_Root() {
+	//       4
+	//      /
+	//     1
+	//    / \
+	//   2   0
+	//  /
+	// 3
+	t := &graph.FromList{Paths: []graph.PathEnd{
+		4: {From: -1},
+		1: {From: 4},
+		2: {From: 1},
+		0: {From: 1},
+		3: {From: 2},
+	}}
+	fmt.Println(t.Root(2))
+	// Output:
+	// 4
+}
 func ExampleFromList_Transpose() {
-	// tree: arcs are directed down.
 	//    0   3
 	//   / \
 	//  1   2
@@ -186,7 +254,6 @@ func ExampleFromList_Transpose() {
 }
 
 func ExampleFromList_Undirected() {
-	// tree: arcs are directed down.
 	//    0   3
 	//   / \
 	//  1   2
@@ -211,7 +278,6 @@ func ExampleFromList_Undirected() {
 }
 
 func ExampleFromList_UndirectedLabeled() {
-	// tree: arcs are directed down.
 	//    0   3
 	//   / \
 	//  1   2

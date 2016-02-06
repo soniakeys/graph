@@ -297,6 +297,70 @@ func ExampleDAGPath_Path_longest() {
 	// Distance: 20
 }
 
+func ExampleLabeledAdjacencyList_DAGMinDistPath() {
+	// arcs are directed right:
+	//             4
+	//        (-3)/ \(-2)
+	//           /   \
+	//    (10)  /     \   (5)    (10)
+	// 3-------1-------0-------6-------2
+	//           (-10)  \     /
+	//                   \   /
+	//                 (2)\ /(3)
+	//                     5
+	g := graph.LabeledAdjacencyList{
+		0: {{To: 5, Label: 2}, {6, 5}},
+		1: {{0, -10}, {4, -3}},
+		3: {{1, 10}},
+		4: {{0, -2}},
+		5: {{6, 3}},
+		6: {{2, 10}},
+	}
+	var start, end graph.NI = 3, 2
+	w := func(l graph.LI) float64 { return float64(l) }
+	p, dist, err := g.DAGMinDistPath(start, end, w)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("Path:", p)
+	fmt.Println("Distance:", dist)
+	// Output:
+	// Path: [3 1 0 6 2]
+	// Distance: 15
+}
+
+func ExampleLabeledAdjacencyList_DAGMaxDistPath() {
+	// arcs are directed right:
+	//             4
+	//        (-3)/ \(-2)
+	//           /   \
+	//    (10)  /     \   (5)    (10)
+	// 3-------1-------0-------6-------2
+	//           (-10)  \     /
+	//                   \   /
+	//                 (2)\ /(3)
+	//                     5
+	g := graph.LabeledAdjacencyList{
+		0: {{To: 5, Label: 2}, {6, 5}},
+		1: {{0, -10}, {4, -3}},
+		3: {{1, 10}},
+		4: {{0, -2}},
+		5: {{6, 3}},
+		6: {{2, 10}},
+	}
+	var start, end graph.NI = 3, 2
+	w := func(l graph.LI) float64 { return float64(l) }
+	p, dist, err := g.DAGMaxDistPath(start, end, w)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("Path:", p)
+	fmt.Println("Distance:", dist)
+	// Output:
+	// Path: [3 1 4 0 5 6 2]
+	// Distance: 20
+}
+
 func ExampleLabeledAdjacencyList_DijkstraPath() {
 	// arcs are directed right:
 	//          (wt: 11)
