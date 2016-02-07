@@ -51,59 +51,6 @@ func ExampleFromList_CommonAncestor() {
 	// 1
 }
 
-func ExampleFromList_Labeled() {
-	//   0
-	//  / \
-	// 1   2
-	//      \
-	//       3
-	f := graph.FromList{Paths: []graph.PathEnd{
-		0: {From: -1},
-		1: {From: 0},
-		2: {From: 0},
-		3: {From: 2},
-	}}
-	for fr, to := range f.Labeled(nil) {
-		fmt.Println(fr, to)
-	}
-	// Output:
-	// 0 [{1 1} {2 2}]
-	// 1 []
-	// 2 [{3 3}]
-	// 3 []
-}
-
-func ExampleFromList_Labeled_indexed() {
-	//      0
-	// 'A' / \ 'B'
-	//    1   2
-	//         \ 'C'
-	//          3
-	f := graph.FromList{Paths: []graph.PathEnd{
-		0: {From: -1},
-		1: {From: 0},
-		2: {From: 0},
-		3: {From: 2},
-	}}
-	labels := []graph.LI{
-		1: 'A',
-		2: 'B',
-		3: 'C',
-	}
-	for fr, to := range f.Labeled(labels) {
-		fmt.Print(fr)
-		for _, to := range to {
-			fmt.Printf(" {%d %c}", to.To, to.Label)
-		}
-		fmt.Println()
-	}
-	// Output:
-	// 0 {1 A} {2 B}
-	// 1
-	// 2 {3 C}
-	// 3
-}
-
 func ExamplePathTo() {
 	//       4  3
 	//      /
@@ -251,6 +198,59 @@ func ExampleFromList_Transpose() {
 	// 1 []
 	// 2 []
 	// 3 []
+}
+
+func ExampleFromList_TransposeLabeled() {
+	//   0
+	//  / \
+	// 1   2
+	//      \
+	//       3
+	f := graph.FromList{Paths: []graph.PathEnd{
+		0: {From: -1},
+		1: {From: 0},
+		2: {From: 0},
+		3: {From: 2},
+	}}
+	for fr, to := range f.TransposeLabeled(nil) {
+		fmt.Println(fr, to)
+	}
+	// Output:
+	// 0 [{1 1} {2 2}]
+	// 1 []
+	// 2 [{3 3}]
+	// 3 []
+}
+
+func ExampleFromList_TransposeLabeled_indexed() {
+	//      0
+	// 'A' / \ 'B'
+	//    1   2
+	//         \ 'C'
+	//          3
+	f := graph.FromList{Paths: []graph.PathEnd{
+		0: {From: -1},
+		1: {From: 0},
+		2: {From: 0},
+		3: {From: 2},
+	}}
+	labels := []graph.LI{
+		1: 'A',
+		2: 'B',
+		3: 'C',
+	}
+	for fr, to := range f.TransposeLabeled(labels) {
+		fmt.Print(fr)
+		for _, to := range to {
+			fmt.Printf(" {%d %c}", to.To, to.Label)
+		}
+		fmt.Println()
+	}
+	// Output:
+	// 0 {1 A} {2 B}
+	// 1
+	// 2 {3 C}
+	// 3
 }
 
 func ExampleFromList_Undirected() {

@@ -93,29 +93,6 @@ func (f *FromList) CommonAncestor(a, b NI) NI {
 	return a
 }
 
-// Labeled contructs the corresponding directed graph with
-// edge labels.
-//
-// The argument labels can be nil.  In this case labels are generated matching
-// the path indexes.  This corresponds to the to, or child node.
-//
-// If labels is non-nil, it must be the same length as t.Paths and is used
-// to look up label numbers by the path index.
-func (f *FromList) Labeled(labels []LI) LabeledAdjacencyList {
-	g := make(LabeledAdjacencyList, len(f.Paths))
-	for n, p := range f.Paths {
-		if p.From == -1 {
-			continue
-		}
-		l := LI(n)
-		if labels != nil {
-			l = labels[n]
-		}
-		g[p.From] = append(g[p.From], Half{NI(n), l})
-	}
-	return g
-}
-
 // PathTo decodes a FromList, recovering a single path.
 //
 // The path is returned as a list of nodes where the first element will be
@@ -227,6 +204,30 @@ func (f *FromList) Transpose() AdjacencyList {
 			continue
 		}
 		g[p.From] = append(g[p.From], NI(n))
+	}
+	return g
+}
+
+// TransposeLabeled contructs the labeled directed graph with arcs in the
+// opposite direction of the FromList.  That is, from the root toward the
+// leaves.
+//
+// The argument labels can be nil.  In this case labels are generated matching
+// the path indexes.  This corresponds to the to, or child node.
+//
+// If labels is non-nil, it must be the same length as t.Paths and is used
+// to look up label numbers by the path index.
+func (f *FromList) TransposeLabeled(labels []LI) LabeledAdjacencyList {
+	g := make(LabeledAdjacencyList, len(f.Paths))
+	for n, p := range f.Paths {
+		if p.From == -1 {
+			continue
+		}
+		l := LI(n)
+		if labels != nil {
+			l = labels[n]
+		}
+		g[p.From] = append(g[p.From], Half{NI(n), l})
 	}
 	return g
 }
