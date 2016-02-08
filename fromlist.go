@@ -240,7 +240,9 @@ func (f *FromList) Undirected() AdjacencyList {
 			continue
 		}
 		g[n] = append(g[n], p.From)
-		g[p.From] = append(g[p.From], NI(n))
+		if p.From != NI(n) {
+			g[p.From] = append(g[p.From], NI(n))
+		}
 	}
 	return g
 }
@@ -264,7 +266,9 @@ func (f *FromList) UndirectedLabeled(labels []LI) LabeledAdjacencyList {
 			l = labels[n]
 		}
 		g[n] = append(g[n], Half{To: p.From, Label: l})
-		g[p.From] = append(g[p.From], Half{NI(n), l})
+		if p.From != NI(n) {
+			g[p.From] = append(g[p.From], Half{NI(n), l})
+		}
 	}
 	return g
 }
