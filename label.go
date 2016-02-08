@@ -126,6 +126,8 @@ func (g LabeledAdjacencyList) DAGMaxLenPath(ordering []NI) (n NI, path []Half) {
 //
 // An edge is returned for each arc of the graph.  For undirected graphs
 // this includes reciprocal edges.
+//
+// See also WeightedEdgeList method.
 func (g LabeledAdjacencyList) EdgeList() (el []LabeledEdge) {
 	for fr, to := range g {
 		for _, to := range to {
@@ -454,4 +456,17 @@ func (l WeightedEdgeList) Less(i, j int) bool {
 // Swap implements sort.Interface.
 func (l WeightedEdgeList) Swap(i, j int) {
 	l.Edges[i], l.Edges[j] = l.Edges[j], l.Edges[i]
+}
+
+// WeightedEdgeList constructs a WeightedEdgeList object from a
+// LabeledAdjacencyList.
+//
+// Internally it calls g.EdgeList() to obtain the Edges member.
+// See LabeledAdjacencyList.EdgeList().
+func (g LabeledAdjacencyList) WeightedEdgeList(w WeightFunc) *WeightedEdgeList {
+	return &WeightedEdgeList{
+		Order:      len(g),
+		WeightFunc: w,
+		Edges:      g.EdgeList(),
+	}
 }

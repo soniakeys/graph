@@ -115,11 +115,7 @@ func ExampleWeightedEdgeList_Kruskal() {
 	g.AddEdge(graph.Edge{3, 4}, 70)
 	// convert to edge list for Kruskal, but no need to sort it.
 	// Kruskal will sort it.
-	l := graph.WeightedEdgeList{
-		Order:      len(*g),
-		WeightFunc: w,
-		Edges:      g.EdgeList(),
-	}
+	l := g.WeightedEdgeList(w)
 
 	f, labels, dist := l.Kruskal()
 
