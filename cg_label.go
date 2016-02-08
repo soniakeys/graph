@@ -673,12 +673,15 @@ func (g LabeledAdjacencyList) DepthFirst(start NI, bm *big.Int, v Visitor) (ok b
 	return
 }
 
-// FromList transposes a graph into a FromList, typically to encode a tree.
+// FromList transposes a graph into a FromList, encoding a tree or forest.
 //
-// Results may not be meaningful for non-trees.
+// Returns FromList, -1 as long as g represents a tree.
+//
+// If any node n in g is the to-node of more than one node, then g does not
+// represent a tree and the method returns (nil, n).
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g LabeledAdjacencyList) FromList() FromList {
+func (g LabeledAdjacencyList) FromList() (*FromList, NI) {
 	// init paths
 	paths := make([]PathEnd, len(g))
 	for i := range paths {
@@ -690,6 +693,9 @@ func (g LabeledAdjacencyList) FromList() FromList {
 	// iterate over arcs, setting from pointers and and marking non-leaves.
 	for fr, to := range g {
 		for _, to := range to {
+			if paths[to.To].From >= 0 {
+				return nil, to.To
+			}
 			paths[to.To].From = NI(fr)
 			leaves.SetBit(&leaves, fr, 0)
 		}
@@ -718,7 +724,7 @@ func (g LabeledAdjacencyList) FromList() FromList {
 			}
 		}
 	}
-	return FromList{paths, leaves, maxLen}
+	return &FromList{paths, leaves, maxLen}, -1
 }
 
 // HasLoop identifies if a graph contains a loop, an arc that leads from a

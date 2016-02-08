@@ -183,17 +183,17 @@ func ExampleAdjacencyList_FromList() {
 		4: {2, 1},
 		1: {0},
 	}
-	l := g.FromList()
+	f, _ := g.FromList()
 	fmt.Println("Paths:")
 	fmt.Println("N  From  Len")
-	for n, e := range l.Paths {
+	for n, e := range f.Paths {
 		fmt.Printf("%d %4d %5d\n", n, e.From, e.Len)
 	}
 	fmt.Println("Leaves:")
 	fmt.Println("43210")
 	fmt.Println("-----")
-	fmt.Printf("%05b\n", &l.Leaves)
-	fmt.Println("MaxLen:", l.MaxLen)
+	fmt.Printf("%05b\n", &f.Leaves)
+	fmt.Println("MaxLen:", f.MaxLen)
 	// Output:
 	// Paths:
 	// N  From  Len
@@ -207,6 +207,23 @@ func ExampleAdjacencyList_FromList() {
 	// -----
 	// 01101
 	// MaxLen: 3
+}
+
+func ExampleAdjacencyList_FromList_nonTree() {
+	//    0
+	//   / \
+	//  1   2
+	//   \ /
+	//    3
+	g := graph.AdjacencyList{
+		0: {1, 2},
+		1: {3},
+		2: {3},
+		3: {},
+	}
+	fmt.Println(g.FromList())
+	// Output:
+	// <nil> 3
 }
 
 func ExampleAdjacencyList_MaximalNonBranchingPaths() {
