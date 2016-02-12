@@ -1137,3 +1137,20 @@ func (g LabeledAdjacencyList) TopologicalKahn(tr AdjacencyList) (ordering, cycle
 	}
 	return L, nil
 }
+
+// UndirectedDegree for undirected graphs, returns the degree of a node.
+//
+// The degree of a node in an undirected graph is the number of incident
+// edges, where loops count twice.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g LabeledAdjacencyList) UndirectedDegree(n NI) int {
+	to := g[n]
+	d := len(to) // "out" degree
+	for _, to := range g[n] {
+		if to.To == n {
+			d++ // loops count twice
+		}
+	}
+	return d
+}

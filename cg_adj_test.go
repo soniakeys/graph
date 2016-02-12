@@ -257,3 +257,20 @@ func ExampleAdjacencyList_TarjanForward() {
 	// [7 6]
 	// [1 3 2]
 }
+
+func ExampleAdjacencyList_UndirectedDegree() {
+	// 0---1--\
+	//      \-/
+	g := graph.AdjacencyList{
+		0: {1},
+		1: {0, 1},
+	}
+	ok, _, _ := g.IsUndirected()
+	fmt.Println(ok)
+	fmt.Println(g.UndirectedDegree(0))
+	fmt.Println(g.UndirectedDegree(1))
+	// Output:
+	// true
+	// 1
+	// 3
+}
