@@ -299,3 +299,82 @@ func ExampleLabeledAdjacencyList_UnlabeledTranspose() {
 	// 2 []
 	// 2 arcs
 }
+
+func ExampleLabeledAdjacencyList_WeightedInDegree() {
+	//  0
+	//  | (weight = label: 3)
+	//  v
+	//  1
+	//  | (4)
+	//  v
+	//  2<-\
+	//  \--/ (5)
+	g := graph.LabeledAdjacencyList{
+		0: {{To: 1, Label: 3}},
+		1: {{2, 4}},
+		2: {{2, 5}},
+	}
+	w := func(l graph.LI) float64 { return float64(l) }
+	fmt.Println(g.WeightedInDegree(w))
+	// Output:
+	// [0 3 9]
+}
+
+func ExampleLabeledAdjacencyList_WeightedOutDegree() {
+	//  0
+	//  | (weight = label: 3)
+	//  v
+	//  1
+	//  | (4)
+	//  v
+	//  2<-\
+	//  \--/ (5)
+	g := graph.LabeledAdjacencyList{
+		0: {{To: 1, Label: 3}},
+		1: {{2, 4}},
+		2: {{2, 5}},
+	}
+	w := func(l graph.LI) float64 { return float64(l) }
+	fmt.Println("node  weighted out degree")
+	for n := range g {
+		fmt.Println(n, "   ", g.WeightedOutDegree(graph.NI(n), w))
+	}
+	// Output:
+	// node  weighted out degree
+	// 0     3
+	// 1     4
+	// 2     5
+}
+
+func ExampleLabeledAdjacencyList_WeightedOutDegree_undirected() {
+	//  0
+	//  | (weight = label: 3)
+	//  |
+	//  1
+	//  | (4)
+	//  |
+	//  2--\
+	//  \--/ (5)
+	g := graph.LabeledAdjacencyList{
+		0: {{To: 1, Label: 3}},
+		1: {{0, 3}, {2, 4}},
+		2: {{1, 4}, {2, 5}},
+	}
+	w := func(l graph.LI) float64 { return float64(l) }
+	ok, _, _ := g.IsUndirected()
+	fmt.Println("undirected:", ok)
+	fmt.Println()
+	fmt.Println("node  weighted out-degree  weighted in-degree")
+	ind := g.WeightedInDegree(w)
+	for n := range g {
+		fmt.Println(n, "   ", g.WeightedOutDegree(graph.NI(n), w),
+			"                  ", ind[n])
+	}
+	// Output:
+	// undirected: true
+	//
+	// node  weighted out-degree  weighted in-degree
+	// 0     3                    3
+	// 1     7                    7
+	// 2     9                    9
+}

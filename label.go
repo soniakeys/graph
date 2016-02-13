@@ -470,3 +470,51 @@ func (g LabeledAdjacencyList) WeightedEdgeList(w WeightFunc) *WeightedEdgeList {
 		Edges:      g.EdgeList(),
 	}
 }
+
+// WeightedInDegree computes the weighted in-degree of each node in g
+// for a given weight function w.
+//
+// The weighted in-degree of a node is the sum of weights of arcs going to
+// the node.
+//
+// A weighted degree of a node is often termed the "strength" of a node.
+//
+// See note for undirected graphs at LabeledAdjacencyList.WeightedOutDegree.
+func (g LabeledAdjacencyList) WeightedInDegree(w WeightFunc) []float64 {
+	ind := make([]float64, len(g))
+	for _, to := range g {
+		for _, to := range to {
+			ind[to.To] += w(to.Label)
+		}
+	}
+	return ind
+}
+
+// WeightedOutDegree computes the weighted out-degree of the specified node
+// for a given weight function w.
+//
+// The weighted out-degree of a node is the sum of weights of arcs going from
+// the node.
+//
+// A weighted degree of a node is often termed the "strength" of a node.
+//
+// Note for undirected graphs, the WeightedOutDegree result for a node will
+// equal the WeightedInDegree for the node.  You can use WeightedInDegree if
+// you have need for the weighted degrees of all nodes or use WeightedOutDegree
+// to compute the weighted degrees of individual nodes.  In either case loops
+// are counted just once, unlike the (unweighted) UndirectedDegree methods.
+func (g LabeledAdjacencyList) WeightedOutDegree(n NI, w WeightFunc) (d float64) {
+	for _, to := range g[n] {
+		d += w(to.Label)
+	}
+	return
+}
+
+// More about loops and strength:  I didn't see consensus on this especially
+// in the case of undirected graphs.  Some sources said to add in-degree and
+// out-degree, which would seemingly double both loops and non-loops.
+// Some said to double loops.  Some said sum the edge weights and had no
+// comment on loops.  R of course makes everything an option.  The meaning
+// of "strength" where loops exist is unclear.  So while I could write an
+// UndirectedWeighted degree function that doubles loops but not edges,
+// I'm going to just leave this for now.
