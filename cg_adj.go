@@ -478,7 +478,8 @@ func (g AdjacencyList) ConnectedComponentLists() func() []NI {
 // There are equivalent labeled and unlabeled versions of this method.
 //
 // See also ConnectedComponentBits and ConnectedComponentLists which can
-// collect component members in a single traversal.
+// collect component members in a single traversal, and IsConnected which
+// is an even simpler boolean test.
 func (g AdjacencyList) ConnectedComponentReps() (reps []NI, orders []int) {
 	var c big.Int
 	var o int
@@ -791,6 +792,31 @@ func (g AdjacencyList) InDegree() []int {
 		}
 	}
 	return ind
+}
+
+// IsConnected tests if an undirected graph is a single connected component.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+//
+// See also ConnectedComponentReps for a method returning more information.
+func (g AdjacencyList) IsConnected() bool {
+	if len(g) == 0 {
+		return true
+	}
+	var b big.Int
+	OneBits(&b, len(g))
+	var df func(int)
+	df = func(n int) {
+		b.SetBit(&b, n, 0)
+		for _, to := range g[n] {
+			to := int(to)
+			if b.Bit(to) == 1 {
+				df(to)
+			}
+		}
+	}
+	df(0)
+	return b.BitLen() == 0
 }
 
 // IsSimple checks for loops and parallel arcs.
