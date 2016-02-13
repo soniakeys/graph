@@ -62,17 +62,24 @@ func ExampleLabeledAdjacencyList_BoundsOk() {
 	// false 0 {9 -1}
 }
 
-func ExampleLabeledAdjacencyList_HasParallelSort() {
+func ExampleLabeledAdjacencyList_HasParallelSort_parallelArcs() {
+	g := graph.LabeledAdjacencyList{
+		1: {{0, 0}, {0, 0}},
+	}
+	// result true 1 0 means parallel arc from node 1 to node 0
+	fmt.Println(g.HasParallelSort())
+	// Output:
+	// true 1 0
+}
+
+func ExampleLabeledAdjacencyList_HasParallelSort_noParallelArcs() {
 	g := graph.LabeledAdjacencyList{
 		1: {{0, 0}},
 	}
-	fmt.Println(g.HasParallelSort())      // result -1 -1 means no parallel arc
-	g[1] = append(g[1], graph.Half{0, 0}) // add parallel arc
-	// result 1 0 means parallel arc from node 1 to node 0
+	// result false -1 -1 means no parallel arc
 	fmt.Println(g.HasParallelSort())
 	// Output:
-	// -1 -1
-	// 1 0
+	// false -1 -1
 }
 
 func ExampleLabeledAdjacencyList_IsUndirected() {

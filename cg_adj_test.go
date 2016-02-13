@@ -43,6 +43,36 @@ func ExampleAdjacencyList_ArcSize() {
 	// 5
 }
 
+func ExampleAdjacencyList_ArcSize_handshakingLemma() {
+	// undirected graph with three edges:
+	//   0
+	//   |
+	//   1   2
+	//  / \
+	// 3   4
+	g := graph.AdjacencyList{
+		0: {1},
+		1: {0, 3, 4},
+		3: {1},
+		4: {1},
+	}
+	ok, _, _ := g.IsUndirected()
+	fmt.Println("undirected:", ok)
+	ok, _ = g.HasLoop()
+	fmt.Println("has loop:  ", ok)
+	// for undirected g without loops, degree == out-degree == len(to)
+	degSum := 0
+	for _, to := range g {
+		degSum += len(to)
+	}
+	// for undirected g without loops, ArcSize is 2 * number of edges
+	fmt.Println(degSum, "==", g.ArcSize())
+	// Output:
+	// undirected: true
+	// has loop:   false
+	// 6 == 6
+}
+
 func ExampleAdjacencyList_Balanced() {
 	// 2
 	// |
@@ -180,16 +210,63 @@ func TestAdjacencyList_DepthFirst_bothNil(t *testing.T) {
 	}
 }
 
-func ExampleAdjacencyList_HasLoop() {
+func ExampleAdjacencyList_HasLoop_loop() {
+	g := graph.AdjacencyList{
+		2: {2},
+	}
+	fmt.Println(g.HasLoop())
+	// Output:
+	// true 2
+}
+
+func ExampleAdjacencyList_HasLoop_noLoop() {
 	g := graph.AdjacencyList{
 		1: {0},
 	}
-	fmt.Println(g.HasLoop()) // -1 result means no loop
-	g[0] = []graph.NI{0}     // add loop
-	fmt.Println(g.HasLoop()) // 0 result means loop on node 0
+	lp, _ := g.HasLoop()
+	fmt.Println("has loop:", lp)
 	// Output:
-	// -1
-	// 0
+	// has loop: false
+}
+
+func ExampleAdjacencyList_HasParallelMap_parallelArcs() {
+	g := graph.AdjacencyList{
+		1: {0, 0},
+	}
+	// result true 1 0 means parallel arcs from node 1 to node 0
+	fmt.Println(g.HasParallelMap())
+	// Output:
+	// true 1 0
+}
+
+func ExampleAdjacencyList_HasParallelMap_noParallelArcs() {
+	g := graph.AdjacencyList{
+		1: {0},
+	}
+	fmt.Println(g.HasParallelMap()) // result false -1 -1 means no parallel arc
+	// Output:
+	// false -1 -1
+}
+
+func ExampleAdjacencyList_InDegree() {
+	// arcs directed down:
+	//  0     2
+	//  |
+	//  1
+	//  |\
+	//  | \
+	//  3  4<-\
+	//     \--/
+	g := graph.AdjacencyList{
+		0: {1},
+		1: {3, 4},
+		4: {4},
+	}
+	fmt.Println("node:    0 1 2 3 4")
+	fmt.Println("in-deg:", g.InDegree())
+	// Output:
+	// node:    0 1 2 3 4
+	// in-deg: [0 1 0 1 2]
 }
 
 func ExampleAdjacencyList_Tarjan() {

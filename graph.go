@@ -56,7 +56,7 @@ type AdjacencyList [][]NI
 // If the graph has parallel arcs, the results fr and to represent an example
 // where there are parallel arcs from node fr to node to.
 //
-// If there are no parallel arcs, the method returns -1 -1.
+// If there are no parallel arcs, the method returns false -1 -1.
 //
 // Multiple loops on a node count as parallel arcs.
 //
@@ -64,7 +64,7 @@ type AdjacencyList [][]NI
 // arcs.  Compared to method HasParallelMap, this may give better performance
 // for small or sparse graphs but will have asymtotically worse performance for
 // large dense graphs.
-func (g AdjacencyList) HasParallelSort() (fr, to NI) {
+func (g AdjacencyList) HasParallelSort() (has bool, fr, to NI) {
 	var t NodeList
 	for n, to := range g {
 		if len(to) == 0 {
@@ -75,10 +75,10 @@ func (g AdjacencyList) HasParallelSort() (fr, to NI) {
 		t0 := t[0]
 		for _, to := range t[1:] {
 			if to == t0 {
-				return NI(n), t0
+				return true, NI(n), t0
 			}
 			t0 = to
 		}
 	}
-	return -1, -1
+	return false, -1, -1
 }

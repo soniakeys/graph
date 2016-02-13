@@ -23,30 +23,24 @@ func ExampleAdjacencyList_BoundsOk() {
 	// false 0 9
 }
 
-func ExampleAdjacencyList_HasParallelMap() {
+func ExampleAdjacencyList_HasParallelSort_parallelArcs() {
 	g := graph.AdjacencyList{
-		1: {0},
+		1: {0, 0},
 	}
-	fmt.Println(g.HasParallelMap()) // result -1 -1 means no parallel arc
-	g[1] = append(g[1], 0)          // add parallel arc
-	// result 1 0 means parallel arc from node 1 to node 0
-	fmt.Println(g.HasParallelMap())
-	// Output:
-	// -1 -1
-	// 1 0
-}
-
-func ExampleAdjacencyList_HasParallelSort() {
-	g := graph.AdjacencyList{
-		1: {0},
-	}
-	fmt.Println(g.HasParallelSort()) // result -1 -1 means no parallel arc
-	g[1] = append(g[1], 0)           // add parallel arc
-	// result 1 0 means parallel arc from node 1 to node 0
+	// result true 1 0 means parallel arcs from node 1 to node 0
 	fmt.Println(g.HasParallelSort())
 	// Output:
-	// -1 -1
-	// 1 0
+	// true 1 0
+}
+
+func ExampleAdjacencyList_HasParallelSort_noParallelArcs() {
+	g := graph.AdjacencyList{
+		1: {0},
+	}
+	// result false -1 -1 means no parallel arc
+	fmt.Println(g.HasParallelSort())
+	// Output:
+	// false -1 -1
 }
 
 func ExampleAdjacencyList_IsSimple() {

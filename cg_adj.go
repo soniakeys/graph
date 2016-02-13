@@ -732,27 +732,29 @@ func (g AdjacencyList) FromList() (*FromList, NI) {
 //
 // If the graph has a loop, the result is an example node that has a loop.
 //
-// If there are no loops, the method returns -1.
+// If g contains a loop, the method returns true and an example of a node
+// with a loop.  If there are no loops in g, the method returns false, -1.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g AdjacencyList) HasLoop() NI {
+func (g AdjacencyList) HasLoop() (bool, NI) {
 	for fr, to := range g {
 		for _, to := range to {
 			if NI(fr) == to {
-				return to
+				return true, to
 			}
 		}
 	}
-	return -1
+	return false, -1
 }
 
 // HasParallelMap identifies if a graph contains parallel arcs, multiple arcs
 // that lead from a node to the same node.
 //
-// If the graph has parallel arcs, the results fr and to represent an example
-// where there are parallel arcs from node fr to node to.
+// If the graph has parallel arcs, the method returns true and
+// results fr and to represent an example where there are parallel arcs
+// from node fr to node to.
 //
-// If there are no parallel arcs, the method returns -1 -1.
+// If there are no parallel arcs, the method returns false, -1 -1.
 //
 // Multiple loops on a node count as parallel arcs.
 //
@@ -762,7 +764,7 @@ func (g AdjacencyList) HasLoop() NI {
 // small or sparse graphs.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g AdjacencyList) HasParallelMap() (fr, to NI) {
+func (g AdjacencyList) HasParallelMap() (has bool, fr, to NI) {
 	for n, to := range g {
 		if len(to) == 0 {
 			continue
@@ -770,12 +772,12 @@ func (g AdjacencyList) HasParallelMap() (fr, to NI) {
 		m := map[NI]struct{}{}
 		for _, to := range to {
 			if _, ok := m[to]; ok {
-				return NI(n), to
+				return true, NI(n), to
 			}
 			m[to] = struct{}{}
 		}
 	}
-	return -1, -1
+	return false, -1, -1
 }
 
 // InDegree computes the in-degree of each node in g
@@ -803,11 +805,11 @@ func (g AdjacencyList) InDegree() []int {
 //
 // There are equivalent labeled and unlabeled versions of this method.
 func (g AdjacencyList) IsSimple() (ok bool, n NI) {
-	if n = g.HasLoop(); n >= 0 {
-		return
+	if lp, n := g.HasLoop(); lp {
+		return false, n
 	}
-	if n, _ = g.HasParallelSort(); n >= 0 {
-		return
+	if pa, n, _ := g.HasParallelSort(); pa {
+		return false, n
 	}
 	return true, -1
 }
@@ -1143,13 +1145,16 @@ func (g AdjacencyList) TopologicalKahn(tr AdjacencyList) (ordering, cycle []NI) 
 // The degree of a node in an undirected graph is the number of incident
 // edges, where loops count twice.
 //
+// If g is known to be loop-free, the result is simply equivalent to len(g[n]).
+// See handshaking lemma example at AdjacencyList.ArcSize.
+//
 // There are equivalent labeled and unlabeled versions of this method.
 func (g AdjacencyList) UndirectedDegree(n NI) int {
 	to := g[n]
-	d := len(to) // "out" degree
+	d := len(to) // just "out" degree,
 	for _, to := range g[n] {
 		if to == n {
-			d++ // loops count twice
+			d++ // except loops count twice
 		}
 	}
 	return d
