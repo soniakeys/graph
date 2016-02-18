@@ -223,6 +223,15 @@ func TestAdjacencyList_DepthFirst_bothNil(t *testing.T) {
 	}
 }
 
+func ExampleAdjacencyList_HasArc() {
+	g := graph.AdjacencyList{
+		2: {0, 2, 0, 1, 1},
+	}
+	fmt.Println(g.HasArc(2, 1))
+	// Output:
+	// true 3
+}
+
 func ExampleAdjacencyList_HasLoop_loop() {
 	g := graph.AdjacencyList{
 		2: {2},

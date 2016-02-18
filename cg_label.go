@@ -728,6 +728,21 @@ func (g LabeledAdjacencyList) FromList() (*FromList, NI) {
 	return &FromList{paths, leaves, maxLen}, -1
 }
 
+// HasArc returns true if g has any arc from node fr to node to.
+//
+// Also returned is the index within the slice of arcs from node fr.
+// If no arc from fr to to is present, HasArc returns false, -1.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g LabeledAdjacencyList) HasArc(fr, to NI) (bool, int) {
+	for x, h := range g[fr] {
+		if h.To == to {
+			return true, x
+		}
+	}
+	return false, -1
+}
+
 // HasLoop identifies if a graph contains a loop, an arc that leads from a
 // a node back to the same node.
 //
