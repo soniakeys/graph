@@ -62,6 +62,15 @@ func ExampleLabeledAdjacencyList_BoundsOk() {
 	// false 0 {9 -1}
 }
 
+func ExampleLabeledAdjacencyList_HasArcLabel() {
+	g := graph.LabeledAdjacencyList{
+		2: {{0, 10}, {2, 20}, {0, 30}},
+	}
+	fmt.Println(g.HasArcLabel(2, 0, 30))
+	// Output:
+	// true 2
+}
+
 func ExampleLabeledAdjacencyList_HasParallelSort_parallelArcs() {
 	g := graph.LabeledAdjacencyList{
 		1: {{0, 0}, {0, 0}},

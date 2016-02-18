@@ -186,6 +186,21 @@ func solveFW(d [][]float64) {
 	}
 }
 
+// HasArcLabel returns true if g has any arc from node fr to node to
+// with label l.
+//
+// Also returned is the index within the slice of arcs from node fr.
+// If no arc from fr to to is present, HasArcLabel returns false, -1.
+func (g LabeledAdjacencyList) HasArcLabel(fr, to NI, l LI) (bool, int) {
+	t := Half{to, l}
+	for x, h := range g[fr] {
+		if h == t {
+			return true, x
+		}
+	}
+	return false, -1
+}
+
 // HasParallelSort identifies if a graph contains parallel arcs, multiple arcs
 // that lead from a node to the same node.
 //
