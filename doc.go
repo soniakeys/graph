@@ -93,8 +93,8 @@
 // any of them.
 //
 //  Type name      Description, methods
-//  BestFirst      Unweigted arcs, traversal, single path search or all paths.
-//  BestFirst2     Direction-optimizing variant of BestFirst.
+//  BreadthFirst   Unweigted arcs, traversal, single path search or all paths.
+//  BreadthFirst2  Direction-optimizing variant of BreadthFirst.
 //  Dijkstra       Non-negative arc weights, single or all paths.
 //  AStar          Non-negative arc weights, heuristic guided, single path.
 //  BellmanFord    Negative arc weights allowed, no negative cycles, all paths.
