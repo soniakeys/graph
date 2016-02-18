@@ -26,6 +26,26 @@ func newDisjointSet(n int) disjointSet {
 	return disjointSet{set}
 }
 
+// return true if disjoint trees were combined.
+// false if x and y were already in the same tree.
+func (ds disjointSet) union(x, y NI) bool {
+	xr := ds.find(x)
+	yr := ds.find(y)
+	if xr == yr {
+		return false
+	}
+	switch xe, ye := &ds.set[xr], &ds.set[yr]; {
+	case xe.rank < ye.rank:
+		xe.from = yr
+	case xe.rank == ye.rank:
+		xe.rank++
+		fallthrough
+	default:
+		ye.from = xr
+	}
+	return true
+}
+
 func (ds disjointSet) find(n NI) NI {
 	// fast paths for n == root or from root.
 	// no updates need in these cases.
@@ -79,7 +99,7 @@ func (ds disjointSet) find(n NI) NI {
 // The edge list of the receiver is sorted as a side effect of this method.
 // See KruskalSorted for a version that relies on the edge list being already
 // sorted.
-func (l WeightedEdgeList) Kruskal() (f FromList, labels []LI, dist float64) {
+func (l WeightedEdgeList) Kruskal() (g LabeledAdjacencyList, dist float64) {
 	sort.Sort(l)
 	return l.KruskalSorted()
 }
@@ -102,40 +122,14 @@ func (l WeightedEdgeList) Kruskal() (f FromList, labels []LI, dist float64) {
 //
 // Also returned is a parallel list of labels and a total distance for the
 // returned forest.
-func (l WeightedEdgeList) KruskalSorted() (f FromList, labels []LI, dist float64) {
+func (l WeightedEdgeList) KruskalSorted() (g LabeledAdjacencyList, dist float64) {
 	ds := newDisjointSet(l.Order)
-	// also initialize FromList as isolated nodes
-	paths := make([]PathEnd, l.Order)
-	for i := range paths {
-		paths[i].From = -1
-	}
-	f.Paths = paths
-	OneBits(&f.Leaves, l.Order)
-	labels = make([]LI, l.Order)
-	// Kruskal for sorted edge list:
+	g = make(LabeledAdjacencyList, l.Order)
 	for _, e := range l.Edges {
-		x := e.N1
-		y := e.N2
-		xr := ds.find(x)
-		yr := ds.find(y)
-		if xr == yr {
-			continue
+		if ds.union(e.N1, e.N2) {
+			g.AddEdge(Edge{e.N1, e.N2}, e.LI)
+			dist += l.WeightFunc(e.LI)
 		}
-		switch xe, ye := &ds.set[xr], &ds.set[yr]; {
-		case xe.rank < ye.rank:
-			xe.from = yr
-			x, y = y, x // swap so y is the "smaller" one
-		case xe.rank == ye.rank:
-			xe.rank++
-			fallthrough
-		default:
-			ye.from = xr
-		}
-		// add arc so y comes from x
-		paths[y].From = x
-		labels[y] = e.LI
-		f.Leaves.SetBit(&f.Leaves, int(x), 0)
-		dist += l.WeightFunc(e.LI)
 	}
 	return
 }
