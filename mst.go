@@ -89,12 +89,9 @@ func (ds disjointSet) find(n NI) NI {
 // a reciprocal pair must be present in the edge list.  Reciprocal arcs (and
 // parallel arcs) are allowed though, and do not affect the result.
 //
-// The forest is returned as a FromList, with leaf nodes indicated, but without
-// path lengths or MaxPathLen set.  See FromList.RecalcLen if you need path
-// lengths.
+// The forest is returned as an undirected graph.
 //
-// Also returned is a parallel list of labels and a total distance for the
-// returned forest.
+// Also returned is a total distance for the returned forest.
 //
 // The edge list of the receiver is sorted as a side effect of this method.
 // See KruskalSorted for a version that relies on the edge list being already
@@ -116,12 +113,9 @@ func (l WeightedEdgeList) Kruskal() (g LabeledAdjacencyList, dist float64) {
 // When called, the edge list of the reciever must be already sorted by weight.
 // See Kruskal for a version that accepts an unsorted edge list.
 //
-// The forest is returned as a FromList, with leaf nodes indicated, but without
-// path lengths or MaxPathLen set.  See FromList.RecalcLen if you need path
-// lengths.
+// The forest is returned as an undirected graph.
 //
-// Also returned is a parallel list of labels and a total distance for the
-// returned forest.
+// Also returned is a total distance for the returned forest.
 func (l WeightedEdgeList) KruskalSorted() (g LabeledAdjacencyList, dist float64) {
 	ds := newDisjointSet(l.Order)
 	g = make(LabeledAdjacencyList, l.Order)
