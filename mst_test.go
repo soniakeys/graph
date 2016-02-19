@@ -117,21 +117,20 @@ func ExampleWeightedEdgeList_Kruskal() {
 	// Kruskal will sort it.
 	l := g.WeightedEdgeList(w)
 
-	f, labels, dist := l.Kruskal()
+	t, dist := l.Kruskal()
 
-	fmt.Println("node  from  distance  leaf")
-	for n, e := range f.Paths {
-		fmt.Printf("%d %8d %9.0f %5d\n",
-			n, e.From, w(labels[n]), f.Leaves.Bit(n))
+	fmt.Println("spanning tree as undirected graph:")
+	for n, to := range t {
+		fmt.Println(n, to)
 	}
 	fmt.Println("total distance: ", dist)
 	// Output:
-	// node  from  distance  leaf
-	// 0       -1         0     0
-	// 1        0        30     0
-	// 2        1        50     0
-	// 3        2        20     1
-	// 4        0        10     1
+	// spanning tree as undirected graph:
+	// 0 [{4 10} {1 30}]
+	// 1 [{0 30} {2 50}]
+	// 2 [{3 20} {1 50}]
+	// 3 [{2 20}]
+	// 4 [{0 10}]
 	// total distance:  110
 }
 
@@ -157,21 +156,20 @@ func ExampleWeightedEdgeList_KruskalSorted() {
 		{graph.Edge{3, 4}, 70},
 	}}
 
-	f, labels, dist := l.KruskalSorted()
+	t, dist := l.KruskalSorted()
 
-	fmt.Println("node  from  distance  leaf")
-	for n, e := range f.Paths {
-		fmt.Printf("%d %8d %9.0f %5d\n",
-			n, e.From, w(labels[n]), f.Leaves.Bit(n))
+	fmt.Println("spanning tree as undirected graph:")
+	for n, to := range t {
+		fmt.Println(n, to)
 	}
 	fmt.Println("total distance: ", dist)
 	// Output:
-	// node  from  distance  leaf
-	// 0       -1         0     0
-	// 1        0        30     0
-	// 2        1        50     0
-	// 3        2        20     1
-	// 4        0        10     1
+	// spanning tree as undirected graph:
+	// 0 [{4 10} {1 30}]
+	// 1 [{0 30} {2 50}]
+	// 2 [{3 20} {1 50}]
+	// 3 [{2 20}]
+	// 4 [{0 10}]
 	// total distance:  110
 }
 
