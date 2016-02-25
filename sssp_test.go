@@ -10,7 +10,7 @@ import (
 	"github.com/soniakeys/graph"
 )
 
-func ExampleBreadthFirstPath() {
+func ExampleAdjacencyList_BreadthFirstPath() {
 	// arcs are directed right:
 	//    1   3---5
 	//   / \ /   /
@@ -150,7 +150,7 @@ func ExampleBreadthFirst_Traverse_random() {
 	// visit 7 level 3
 }
 
-func ExampleBreadthFirst2Path() {
+func ExampleAdjacencyList_BreadthFirst2Path() {
 	// arcs are directed right:
 	//    1   3---5
 	//   / \ /   /
@@ -568,7 +568,7 @@ func ExampleLabeledAdjacencyList_AStarAPath() {
 	// Path length: 26
 }
 
-func ExampleAStarMPath() {
+func ExampleLabeledAdjacencyList_AStarMPath() {
 	// arcs are directed right:
 	//       -----------------------
 	//      /      (wt: 14)         \

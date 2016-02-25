@@ -257,7 +257,7 @@ func ExampleStringFromList() {
 	// }
 }
 
-func ExampleStringWeigtedEdgeList() {
+func ExampleStringWeightedEdgeList() {
 	//              (label 0, wt 1.6)
 	//          0----------------------2
 	// (label 1 |                     /

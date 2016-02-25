@@ -9,7 +9,7 @@ import (
 	"github.com/soniakeys/graph"
 )
 
-func ExampleLabledAdjacencyList_DAGMaxLenPath() {
+func ExampleLabeledAdjacencyList_DAGMaxLenPath() {
 	// arcs directed right:
 	//            (M)
 	//    (W)  /---------\
