@@ -29,6 +29,7 @@ func OneBits(b *big.Int, n int) *big.Int {
 // required to represent a graph.
 type NI int32
 
+// NodeList satisfies sort.Interface.
 type NodeList []NI
 
 func (l NodeList) Len() int           { return len(l) }
