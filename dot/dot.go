@@ -47,7 +47,7 @@ import (
 // argument to a Write or String function.
 type Config struct {
 	Directed     bool
-	EdgeLabel    func(int) string
+	EdgeLabel    func(graph.LI) string
 	Indent       string
 	NodeLabel    func(graph.NI) string
 	UndirectArcs bool
@@ -58,7 +58,7 @@ type Config struct {
 // Defaults is copied as the first configuration step.  See Overview/Scheme.
 var Defaults = Config{
 	Directed:  true,
-	EdgeLabel: func(l int) string { return strconv.Itoa(l) },
+	EdgeLabel: func(l graph.LI) string { return strconv.Itoa(int(l)) },
 	Indent:    "  ",
 	NodeLabel: func(n graph.NI) string { return strconv.Itoa(int(n)) },
 }
@@ -82,7 +82,7 @@ func Directed(d bool) func(*Config) {
 // dot format given the arc label integers of graph package.
 //
 // The default function is simply strconv.Itoa of the graph package arc label.
-func EdgeLabel(f func(int) string) func(*Config) {
+func EdgeLabel(f func(graph.LI) string) func(*Config) {
 	return func(c *Config) { c.EdgeLabel = f }
 }
 
@@ -473,7 +473,7 @@ func StringWeightedEdgeList(g graph.WeightedEdgeList, options ...func(*Config)) 
 func WriteWeightedEdgeList(g graph.WeightedEdgeList, w io.Writer, options ...func(*Config)) error {
 	cf := Defaults
 	cf.Directed = false
-	cf.EdgeLabel = func(l int) string {
+	cf.EdgeLabel = func(l graph.LI) string {
 		return fmt.Sprintf(`"%g"`, g.WeightFunc(l))
 	}
 	for _, o := range options {
@@ -503,11 +503,11 @@ edge:
 		// search unpaired arcs
 		u2 := unpaired[e.N2]
 		for i, u := range u2 {
-			if u.To == e.N1 && u.Label == e.Label { // found reciprocal
+			if u.To == e.N1 && u.Label == e.LI { // found reciprocal
 				// write the edge
 				_, err := fmt.Fprintf(b, "%s%s -- %s [label = %s]\n",
 					cf.Indent, cf.NodeLabel(e.N2), cf.NodeLabel(e.N1),
-					cf.EdgeLabel(e.Label))
+					cf.EdgeLabel(e.LI))
 				if err != nil {
 					return err
 				}
@@ -519,7 +519,7 @@ edge:
 			}
 		}
 		// reciprocal not found
-		unpaired[e.N1] = append(unpaired[e.N1], graph.Half{e.N2, e.Label})
+		unpaired[e.N1] = append(unpaired[e.N1], graph.Half{e.N2, e.LI})
 	}
 	for _, to := range unpaired {
 		if len(to) > 0 {
@@ -537,7 +537,7 @@ func writeWELAllArcs(g graph.WeightedEdgeList, cf *Config, b *bufio.Writer) erro
 	for _, e := range g.Edges {
 		_, err := fmt.Fprintf(b, "%s%s %s %s [label = %s]\n",
 			cf.Indent, cf.NodeLabel(e.N1), op, cf.NodeLabel(e.N2),
-			cf.EdgeLabel(e.Label))
+			cf.EdgeLabel(e.LI))
 		if err != nil {
 			return err
 		}

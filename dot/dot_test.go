@@ -214,7 +214,9 @@ func ExampleEdgeLabel() {
 		20: 1.7,
 		10: 2e117,
 	}
-	lf := func(l int) string { return fmt.Sprintf(`"%g"`, weights[l]) }
+	lf := func(l graph.LI) string {
+		return fmt.Sprintf(`"%g"`, weights[int(l)])
+	}
 	g := graph.LabeledAdjacencyList{
 		0: {{2, 30}},
 		4: {{2, 20}, {3, 10}},
@@ -269,7 +271,7 @@ func ExampleStringWeigtedEdgeList() {
 		2: 1.7,
 	}
 	g := graph.WeightedEdgeList{
-		WeightFunc: func(l int) float64 { return weights[l] },
+		WeightFunc: func(l graph.LI) float64 { return weights[int(l)] },
 		Order:      3,
 		Edges: []graph.LabeledEdge{
 			{graph.Edge{0, 1}, 1},
@@ -306,7 +308,7 @@ func ExampleUndirectArcs() {
 		2: 1.7,
 	}
 	g := graph.WeightedEdgeList{
-		WeightFunc: func(l int) float64 { return weights[l] },
+		WeightFunc: func(l graph.LI) float64 { return weights[int(l)] },
 		Order:      3,
 		Edges: []graph.LabeledEdge{
 			{graph.Edge{0, 1}, 1},
