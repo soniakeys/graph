@@ -1,7 +1,10 @@
 // Copyright 2014 Sonia Keys
 // License MIT: http://opensource.org/licenses/MIT
 
-// Graph is a simple and fast graph library.
+// Graph algorithms: Dijkstra, A*, Bellman Ford, Floyd Warshall;
+// Kruskal and Prim minimal spanning tree; topological sort and DAG longest
+// and shortest paths; Eulerian cycle and path; degeneracy and k-cores;
+// Bron Kerbosch clique finding; connected components; and others.
 //
 // This is a graph library of integer indexes.  To use it with application
 // data, associate data with integer indexes, perform searches or other
@@ -86,7 +89,7 @@
 //
 // This package implements a number of shortest path searches.  Most work
 // with weighted graphs that are directed or undirected, and with graphs
-// that may have loops or parallel arcs.  For weighted graphs, "Shortest"
+// that may have loops or parallel arcs.  For weighted graphs, "shortest"
 // is defined as the path distance (sum of arc weights) with path length
 // (number of nodes) breaking ties.  If multiple paths have the same minimum
 // distance with the same minumum length, search methods are free to return
