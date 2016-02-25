@@ -6,6 +6,7 @@ package graph_test
 import (
 	"fmt"
 	"math/big"
+	"math/rand"
 	"testing"
 
 	"github.com/soniakeys/graph"
@@ -221,6 +222,41 @@ func TestAdjacencyList_DepthFirst_bothNil(t *testing.T) {
 	if g.DepthFirst(0, nil, nil) {
 		t.Fatal("DepthFirst both nil must return false")
 	}
+}
+
+func ExampleAdjacencyList_DepthFirstRandom() {
+	//     ----0-----
+	//    /    |     \
+	//   1     2      3
+	//  /|\   /|\   / | \
+	// 4 5 6 7 8 9 10 11 12
+	g := graph.AdjacencyList{
+		0:  {1, 2, 3},
+		1:  {4, 5, 6},
+		2:  {7, 8, 9},
+		3:  {10, 11, 12},
+		12: {},
+	}
+	r := rand.New(rand.NewSource(12))
+	f := func(n graph.NI) (ok bool) {
+		fmt.Println("visit", n)
+		return true
+	}
+	g.DepthFirstRandom(0, nil, f, r)
+	// Output:
+	// visit 0
+	// visit 1
+	// visit 6
+	// visit 4
+	// visit 5
+	// visit 3
+	// visit 12
+	// visit 11
+	// visit 10
+	// visit 2
+	// visit 9
+	// visit 7
+	// visit 8
 }
 
 func ExampleAdjacencyList_HasArc() {

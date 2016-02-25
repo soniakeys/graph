@@ -5,6 +5,7 @@ package graph
 
 import (
 	"math/big"
+	"math/rand"
 
 	"github.com/willf/bitset"
 )
@@ -668,6 +669,39 @@ func (g AdjacencyList) DepthFirst(start NI, bm *big.Int, v Visitor) (ok bool) {
 		}
 		for _, nb := range g[n] {
 			df(nb)
+		}
+	}
+	df(start)
+	return
+}
+
+// DepthFirstRandom traverses a graph depth first, but following arcs in
+// random order among arcs from a single node.
+//
+// Usage is otherwise like the DepthFirst method.  See DepthFirst.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g AdjacencyList) DepthFirstRandom(start NI, bm *big.Int, v Visitor, r *rand.Rand) (ok bool) {
+	if bm == nil {
+		if v == nil {
+			return false
+		}
+		bm = new(big.Int)
+	}
+	ok = true
+	var df func(n NI)
+	df = func(n NI) {
+		if bm.Bit(int(n)) == 1 {
+			return
+		}
+		bm.SetBit(bm, int(n), 1)
+		if v != nil && !v(n) {
+			ok = false
+			return
+		}
+		to := g[n]
+		for _, i := range r.Perm(len(to)) {
+			df(to[i])
 		}
 	}
 	df(start)
