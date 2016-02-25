@@ -19,14 +19,14 @@ type CNF2 struct {
 
 func TwoSat(exp []CNF2) map[string]bool {
 	// scan clauses for unique variable names
-	varN := map[string]int{}
+	varN := map[string]graph.NI{}
 	for _, c := range exp {
 		varN[c.X] = 0
 		varN[c.Y] = 0
 	}
 	// map numbers
 	vars := make([]string, len(varN))
-	n := 0
+	var n graph.NI
 	for v := range varN {
 		vars[n] = v
 		varN[v] = n
@@ -36,8 +36,8 @@ func TwoSat(exp []CNF2) map[string]bool {
 	g := make(graph.AdjacencyList, 2*len(vars))
 	for _, c := range exp {
 		// var z bare is node 2z, negated is 2z+1
-		nx := varN[c.X]<<1 | int(c.XS^1)
-		ny := varN[c.Y]<<1 | int(c.YS)
+		nx := varN[c.X]<<1 | graph.NI(c.XS^1)
+		ny := varN[c.Y]<<1 | graph.NI(c.YS)
 		g[nx] = append(g[nx], ny) // ^X -> Y
 		ny ^= 1
 		g[ny] = append(g[ny], nx^1) // ^Y -> X
@@ -47,7 +47,7 @@ func TwoSat(exp []CNF2) map[string]bool {
 	m := map[string]bool{}
 	// (Tarjan returns components in reverse topological order, which is
 	// the needed processing order here.)
-	for _, c := range g.Tarjan() {
+	for c := range g.Tarjan() {
 		for i := range p {
 			p[i] = 0
 		}
