@@ -5,6 +5,7 @@ package graph_test
 
 import (
 	"fmt"
+	"math/rand"
 
 	"github.com/soniakeys/graph"
 )
@@ -85,6 +86,68 @@ func ExampleBreadthFirst_AllPaths() {
 	// 4 [1 4]
 	// 5 [1 4 3 5]
 	// 6 [1 4 6]
+}
+
+func ExampleBreadthFirst_Traverse() {
+	// arcs directed down
+	//    0--
+	//   /|  \
+	//  1 2   3
+	//   /|\  |\
+	//  4 5 6 7 8
+	b := graph.NewBreadthFirst(graph.AdjacencyList{
+		0: {1, 2, 3},
+		2: {4, 5, 6},
+		3: {7, 8},
+		8: {},
+	})
+	b.Traverse(0, func(n graph.NI) bool {
+		fmt.Println("visit", n, "level", b.Result.Paths[n].Len)
+		return true
+	})
+	// Output:
+	// visit 0 level 1
+	// visit 1 level 2
+	// visit 2 level 2
+	// visit 3 level 2
+	// visit 4 level 3
+	// visit 5 level 3
+	// visit 6 level 3
+	// visit 7 level 3
+	// visit 8 level 3
+}
+
+func ExampleBreadthFirst_Traverse_random() {
+	// arcs directed down
+	//    0--
+	//   /|  \
+	//  1 2   3
+	//   /|\  |\
+	//  4 5 6 7 8
+	b := graph.NewBreadthFirst(graph.AdjacencyList{
+		0: {1, 2, 3},
+		2: {4, 5, 6},
+		3: {7, 8},
+		8: {},
+	})
+
+	// only difference from non-random example
+	b.Rand = rand.New(rand.NewSource(8))
+
+	b.Traverse(0, func(n graph.NI) bool {
+		fmt.Println("visit", n, "level", b.Result.Paths[n].Len)
+		return true
+	})
+	// Output:
+	// visit 0 level 1
+	// visit 1 level 2
+	// visit 3 level 2
+	// visit 2 level 2
+	// visit 8 level 3
+	// visit 5 level 3
+	// visit 6 level 3
+	// visit 4 level 3
+	// visit 7 level 3
 }
 
 func ExampleBreadthFirst2Path() {

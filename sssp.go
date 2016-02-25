@@ -7,6 +7,7 @@ import (
 	"container/heap"
 	"fmt"
 	"math"
+	"math/rand"
 )
 
 // BreadthFirst associates a graph with a result object for returning
@@ -14,9 +15,15 @@ import (
 //
 // Construct with NewBreadthFirst.
 //
+// With all methods that traverse the graph, if the Rand member is left nil,
+// nodes are visited in the order they exist as to-arcs in the graph.
+// If Rand is assigned a random number generator, nodes are visited in random
+// order at each level.  See example at Traverse method.
+//
 // The search methods set Result.Paths and Result.MaxLen but not Result.Leaves.
 type BreadthFirst struct {
 	Graph  AdjacencyList
+	Rand   *rand.Rand
 	Result FromList
 }
 
@@ -84,35 +91,48 @@ type Visitor func(n NI) (ok bool)
 // Traverse calls the visitor function v for each node.  If v returns true,
 // the traversal will continue.  If v returns false, the traversal will
 // terminate immediately.  Traverse updates b.Result.Paths before calling v.
-// It updates b.Result.MaxLen after calling v, if v returns true.
 //
 // Traverse returns the number of nodes successfully visited; if search is
 // is terminated by a false return from v, that node is not counted.
 func (b *BreadthFirst) Traverse(start NI, v Visitor) int {
 	b.Result.reset()
 	rp := b.Result.Paths
-	level := 1
-	rp[start] = PathEnd{Len: level, From: -1}
-	if !v(start) {
-		b.Result.MaxLen = level
-		return -1
-	}
-	nReached := 1 // accumulated for a return value
+	nVisitOk := 0 // accumulated for a return value
 	// the frontier consists of nodes all at the same level
 	frontier := []NI{start}
+	level := 1
+	// assign path when node is put on frontier,
+	rp[start] = PathEnd{Len: level, From: -1}
 	for {
+		b.Result.MaxLen = level
 		level++
 		var next []NI
-		for _, n := range frontier {
-			for _, nb := range b.Graph[n] {
-				if rp[nb].Len == 0 {
-					rp[nb] = PathEnd{From: n, Len: level}
-					if !v(nb) {
-						b.Result.MaxLen = level
-						return -1
+		if b.Rand == nil {
+			for _, n := range frontier {
+				if !v(n) { // visit nodes as they come off frontier
+					return -1
+				}
+				nVisitOk++
+				for _, nb := range b.Graph[n] {
+					if rp[nb].Len == 0 {
+						next = append(next, nb)
+						rp[nb] = PathEnd{From: n, Len: level}
 					}
-					next = append(next, nb)
-					nReached++
+				}
+			}
+		} else { // take nodes off frontier at random
+			for _, i := range b.Rand.Perm(len(frontier)) {
+				n := frontier[i]
+				// remainder of block same as above
+				if !v(n) {
+					return -1
+				}
+				nVisitOk++
+				for _, nb := range b.Graph[n] {
+					if rp[nb].Len == 0 {
+						next = append(next, nb)
+						rp[nb] = PathEnd{From: n, Len: level}
+					}
 				}
 			}
 		}
@@ -121,8 +141,7 @@ func (b *BreadthFirst) Traverse(start NI, v Visitor) int {
 		}
 		frontier = next
 	}
-	b.Result.MaxLen = level - 1
-	return nReached
+	return nVisitOk
 }
 
 // BreadthFirst2 methods implement a direction-optimized strategy.
