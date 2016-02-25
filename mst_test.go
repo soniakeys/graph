@@ -175,17 +175,11 @@ func ExampleWeightedEdgeList_KruskalSorted() {
 
 func TestPrim100(t *testing.T) {
 	reps, orders := r100.g.ConnectedComponentReps()
-	t.Log(len(reps), "connected components:")
-	t.Log("rep  order")
-	for i, r := range reps {
-		t.Logf("%2d %4d\n", r, orders[i])
-	}
 	p := graph.NewPrim(r100.l, func(l graph.LI) float64 { return r100.w[l] })
 
 	// construct spanning tree for each component
 	for i, r := range reps {
 		ns, _ := p.Span(r, nil)
-		t.Logf("From node %d, %d nodes spanned.\n", r, ns)
 		if ns != orders[i] {
 			t.Fatal("Not all nodes spanned within a connected component.")
 		}

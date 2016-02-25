@@ -107,7 +107,6 @@ func TestInstr(t *testing.T) {
 		w := func(label LI) float64 { return tc.w[label] }
 		d := NewDijkstra(tc.l, w)
 		d.Path(tc.start, tc.end)
-		t.Log("NV AV:", d.ndVis, d.arcVis)
 		ndVis1 := d.ndVis
 		arcVis1 := d.arcVis
 		// test that repeating same search on same d has same signature

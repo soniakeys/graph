@@ -179,7 +179,6 @@ func testSSSP(tc testCase, t *testing.T) {
 	}
 	// test Bellman Ford against Dijkstra all paths
 	d.Reset()
-	t.Log("tc.start:", tc.start)
 	d.AllPaths(tc.start)
 	b := graph.NewBellmanFord(tc.l, w)
 	b.Start(tc.start)
