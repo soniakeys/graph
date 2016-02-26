@@ -118,70 +118,58 @@ func (g LabeledAdjacencyList) BoundsOk() (ok bool, fr NI, to Half) {
 // This method implements the BronKerbosch1 algorithm of WP; that is,
 // the original algorithm without improvements.
 //
-// The method sends all maximal cliques in g on the returned channel, then
-// closes the channel.
+// The method calls the emit argument for each maximal clique in g, as long
+// as emit returns true.  If emit returns false, BronKerbosch1 returns
+// immediately.
 //
 // There are equivalent labeled and unlabeled versions of this method.
 //
 // See also more sophisticated variants BronKerbosch2 and BronKerbosch3.
-func (g LabeledAdjacencyList) BronKerbosch1() chan []int {
-	ch := make(chan []int)
-	go func() {
-		var f func(R, P, X *bitset.BitSet)
-		f = func(R, P, X *bitset.BitSet) {
-			switch {
-			case P.Any():
-				r2 := bitset.New(uint(len(g)))
-				p2 := bitset.New(uint(len(g)))
-				x2 := bitset.New(uint(len(g)))
-				for n, ok := P.NextSet(0); ok; n, ok = P.NextSet(n + 1) {
-					R.Copy(r2)
-					r2.Set(n)
-					p2.ClearAll()
-					x2.ClearAll()
-					for _, to := range g[n] {
-						if P.Test(uint(to.To)) {
-							p2.Set(uint(to.To))
-						}
-						if X.Test(uint(to.To)) {
-							x2.Set(uint(to.To))
-						}
+func (g LabeledAdjacencyList) BronKerbosch1(emit func([]NI) bool) {
+	var f func(R, P, X *bitset.BitSet) bool
+	f = func(R, P, X *bitset.BitSet) bool {
+		switch {
+		case P.Any():
+			r2 := bitset.New(uint(len(g)))
+			p2 := bitset.New(uint(len(g)))
+			x2 := bitset.New(uint(len(g)))
+			for n, ok := P.NextSet(0); ok; n, ok = P.NextSet(n + 1) {
+				R.Copy(r2)
+				r2.Set(n)
+				p2.ClearAll()
+				x2.ClearAll()
+				for _, to := range g[n] {
+					if P.Test(uint(to.To)) {
+						p2.Set(uint(to.To))
 					}
-					f(r2, p2, x2)
-					P.SetTo(n, false)
-					X.Set(n)
+					if X.Test(uint(to.To)) {
+						x2.Set(uint(to.To))
+					}
 				}
-			case X.None():
-				var n uint
-				n--
-				c := make([]int, R.Count())
-				for i := range c {
-					n, _ = R.NextSet(n + 1)
-					c[i] = int(n)
+				if !f(r2, p2, x2) {
+					return false
 				}
-				ch <- c
+				P.SetTo(n, false)
+				X.Set(n)
+			}
+		case X.None():
+			var n uint
+			n--
+			c := make([]NI, R.Count())
+			for i := range c {
+				n, _ = R.NextSet(n + 1)
+				c[i] = NI(n)
+			}
+			if !emit(c) {
+				return false
 			}
 		}
-		R := bitset.New(uint(len(g)))
-		P := bitset.New(uint(len(g))).Complement()
-		X := bitset.New(uint(len(g)))
-		f(R, P, X)
-		close(ch)
-	}()
-	return ch
-}
-
-// BKPivotMinP is a strategy for BronKerbosch methods.
-//
-// To use it, take the method value (see golang.org/ref/spec#Method_values)
-// and pass it as the argument to BronKerbosch2 or 3.
-//
-// The strategy is to simply pick the first node in P.
-//
-// There are equivalent labeled and unlabeled versions of this method.
-func (g LabeledAdjacencyList) BKPivotMinP(P, X *bitset.BitSet) int {
-	n, _ := P.NextSet(0)
-	return int(n)
+		return true
+	}
+	R := bitset.New(uint(len(g)))
+	P := bitset.New(uint(len(g))).Complement()
+	X := bitset.New(uint(len(g)))
+	f(R, P, X)
 }
 
 // BKPivotMaxDegree is a strategy for BronKerbosch methods.
@@ -219,6 +207,19 @@ func (g LabeledAdjacencyList) BKPivotMaxDegree(P, X *bitset.BitSet) int {
 	return int(u)
 }
 
+// BKPivotMinP is a strategy for BronKerbosch methods.
+//
+// To use it, take the method value (see golang.org/ref/spec#Method_values)
+// and pass it as the argument to BronKerbosch2 or 3.
+//
+// The strategy is to simply pick the first node in P.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g LabeledAdjacencyList) BKPivotMinP(P, X *bitset.BitSet) int {
+	n, _ := P.NextSet(0)
+	return int(n)
+}
+
 // BronKerbosch2 finds maximal cliques in an undirected graph.
 //
 // The graph must not contain parallel edges or loops.
@@ -233,64 +234,65 @@ func (g LabeledAdjacencyList) BKPivotMaxDegree(P, X *bitset.BitSet) int {
 // P is guaranteed to contain at least one node.  X is not.
 // For example see BKPivotMaxDegree.
 //
-// The method sends all maximal cliques in g on the returned channel, then
-// closes the channel.
+// The method calls the emit argument for each maximal clique in g, as long
+// as emit returns true.  If emit returns false, BronKerbosch1 returns
+// immediately.
 //
 // There are equivalent labeled and unlabeled versions of this method.
 //
 // See also simpler variant BronKerbosch1 and more sophisticated variant
 // BronKerbosch3.
-func (g LabeledAdjacencyList) BronKerbosch2(pivot func(P, X *bitset.BitSet) int) chan []int {
-	ch := make(chan []int)
-	go func() {
-		var f func(R, P, X *bitset.BitSet)
-		f = func(R, P, X *bitset.BitSet) {
-			switch {
-			case P.Any():
-				r2 := bitset.New(uint(len(g)))
-				p2 := bitset.New(uint(len(g)))
-				x2 := bitset.New(uint(len(g)))
-				// compute P \ N(u).  next 5 lines are only difference from BK1
-				pnu := P.Clone()
-				for _, to := range g[pivot(P, X)] {
-					pnu.SetTo(uint(to.To), false)
-				}
-				for n, ok := pnu.NextSet(0); ok; n, ok = pnu.NextSet(n + 1) {
-					// remaining code like BK1
-					R.Copy(r2)
-					r2.Set(n)
-					p2.ClearAll()
-					x2.ClearAll()
-					for _, to := range g[n] {
-						if P.Test(uint(to.To)) {
-							p2.Set(uint(to.To))
-						}
-						if X.Test(uint(to.To)) {
-							x2.Set(uint(to.To))
-						}
+func (g LabeledAdjacencyList) BronKerbosch2(pivot func(P, X *bitset.BitSet) int, emit func([]NI) bool) {
+	var f func(R, P, X *bitset.BitSet) bool
+	f = func(R, P, X *bitset.BitSet) bool {
+		switch {
+		case P.Any():
+			r2 := bitset.New(uint(len(g)))
+			p2 := bitset.New(uint(len(g)))
+			x2 := bitset.New(uint(len(g)))
+			// compute P \ N(u).  next 5 lines are only difference from BK1
+			pnu := P.Clone()
+			for _, to := range g[pivot(P, X)] {
+				pnu.SetTo(uint(to.To), false)
+			}
+			for n, ok := pnu.NextSet(0); ok; n, ok = pnu.NextSet(n + 1) {
+				// remaining code like BK1
+				R.Copy(r2)
+				r2.Set(n)
+				p2.ClearAll()
+				x2.ClearAll()
+				for _, to := range g[n] {
+					if P.Test(uint(to.To)) {
+						p2.Set(uint(to.To))
 					}
-					f(r2, p2, x2)
-					P.SetTo(n, false)
-					X.Set(n)
+					if X.Test(uint(to.To)) {
+						x2.Set(uint(to.To))
+					}
 				}
-			case X.None():
-				var n uint
-				n--
-				c := make([]int, R.Count())
-				for i := range c {
-					n, _ = R.NextSet(n + 1)
-					c[i] = int(n)
+				if !f(r2, p2, x2) {
+					return false
 				}
-				ch <- c
+				P.SetTo(n, false)
+				X.Set(n)
+			}
+		case X.None():
+			var n uint
+			n--
+			c := make([]NI, R.Count())
+			for i := range c {
+				n, _ = R.NextSet(n + 1)
+				c[i] = NI(n)
+			}
+			if !emit(c) {
+				return false
 			}
 		}
-		R := bitset.New(uint(len(g)))
-		P := bitset.New(uint(len(g))).Complement()
-		X := bitset.New(uint(len(g)))
-		f(R, P, X)
-		close(ch)
-	}()
-	return ch
+		return true
+	}
+	R := bitset.New(uint(len(g)))
+	P := bitset.New(uint(len(g))).Complement()
+	X := bitset.New(uint(len(g)))
+	f(R, P, X)
 }
 
 // BronKerbosch3 finds maximal cliques in an undirected graph.
@@ -307,85 +309,87 @@ func (g LabeledAdjacencyList) BronKerbosch2(pivot func(P, X *bitset.BitSet) int)
 // P is guaranteed to contain at least one node.  X is not.
 // For example see BKPivotMaxDegree.
 //
-// The method sends all maximal cliques in g on the returned channel, then
-// closes the channel.
+// The method calls the emit argument for each maximal clique in g, as long
+// as emit returns true.  If emit returns false, BronKerbosch1 returns
+// immediately.
 //
 // There are equivalent labeled and unlabeled versions of this method.
 //
 // See also simpler variants BronKerbosch1 and BronKerbosch2.
-func (g LabeledAdjacencyList) BronKerbosch3(pivot func(P, X *bitset.BitSet) int) chan []int {
-	ch := make(chan []int)
-	go func() {
-		var f func(R, P, X *bitset.BitSet)
-		f = func(R, P, X *bitset.BitSet) {
-			switch {
-			case P.Any():
-				r2 := bitset.New(uint(len(g)))
-				p2 := bitset.New(uint(len(g)))
-				x2 := bitset.New(uint(len(g)))
-				// compute P \ N(u).  next 5 lines are only difference from BK1
-				pnu := P.Clone()
-				for _, to := range g[pivot(P, X)] {
-					pnu.SetTo(uint(to.To), false)
-				}
-				for n, ok := pnu.NextSet(0); ok; n, ok = pnu.NextSet(n + 1) {
-					// remaining code like BK1
-					R.Copy(r2)
-					r2.Set(n)
-					p2.ClearAll()
-					x2.ClearAll()
-					for _, to := range g[n] {
-						if P.Test(uint(to.To)) {
-							p2.Set(uint(to.To))
-						}
-						if X.Test(uint(to.To)) {
-							x2.Set(uint(to.To))
-						}
+func (g LabeledAdjacencyList) BronKerbosch3(pivot func(P, X *bitset.BitSet) int, emit func([]NI) bool) {
+	var f func(R, P, X *bitset.BitSet) bool
+	f = func(R, P, X *bitset.BitSet) bool {
+		switch {
+		case P.Any():
+			r2 := bitset.New(uint(len(g)))
+			p2 := bitset.New(uint(len(g)))
+			x2 := bitset.New(uint(len(g)))
+			// compute P \ N(u).  next 5 lines are only difference from BK1
+			pnu := P.Clone()
+			for _, to := range g[pivot(P, X)] {
+				pnu.SetTo(uint(to.To), false)
+			}
+			for n, ok := pnu.NextSet(0); ok; n, ok = pnu.NextSet(n + 1) {
+				// remaining code like BK1
+				R.Copy(r2)
+				r2.Set(n)
+				p2.ClearAll()
+				x2.ClearAll()
+				for _, to := range g[n] {
+					if P.Test(uint(to.To)) {
+						p2.Set(uint(to.To))
 					}
-					f(r2, p2, x2)
-					P.SetTo(n, false)
-					X.Set(n)
+					if X.Test(uint(to.To)) {
+						x2.Set(uint(to.To))
+					}
 				}
-			case X.None():
-				var n uint
-				n--
-				c := make([]int, R.Count())
-				for i := range c {
-					n, _ = R.NextSet(n + 1)
-					c[i] = int(n)
+				if !f(r2, p2, x2) {
+					return false
 				}
-				ch <- c
+				P.SetTo(n, false)
+				X.Set(n)
+			}
+		case X.None():
+			var n uint
+			n--
+			c := make([]NI, R.Count())
+			for i := range c {
+				n, _ = R.NextSet(n + 1)
+				c[i] = NI(n)
+			}
+			if !emit(c) {
+				return false
 			}
 		}
-
-		R := bitset.New(uint(len(g)))
-		P := bitset.New(uint(len(g))).Complement()
-		X := bitset.New(uint(len(g)))
-		// code above same as BK2
-		// code below new to BK3
-		_, ord, _ := g.Degeneracy()
-		p2 := bitset.New(uint(len(g)))
-		x2 := bitset.New(uint(len(g)))
-		for _, n := range ord {
-			R.Set(uint(n))
-			p2.ClearAll()
-			x2.ClearAll()
-			for _, to := range g[n] {
-				if P.Test(uint(to.To)) {
-					p2.Set(uint(to.To))
-				}
-				if X.Test(uint(to.To)) {
-					x2.Set(uint(to.To))
-				}
+		return true
+	}
+	R := bitset.New(uint(len(g)))
+	P := bitset.New(uint(len(g))).Complement()
+	X := bitset.New(uint(len(g)))
+	// code above same as BK2
+	// code below new to BK3
+	_, ord, _ := g.Degeneracy()
+	p2 := bitset.New(uint(len(g)))
+	x2 := bitset.New(uint(len(g)))
+	for _, n := range ord {
+		R.Set(uint(n))
+		p2.ClearAll()
+		x2.ClearAll()
+		for _, to := range g[n] {
+			if P.Test(uint(to.To)) {
+				p2.Set(uint(to.To))
 			}
-			f(R, p2, x2)
-			R.SetTo(uint(n), false)
-			P.SetTo(uint(n), false)
-			X.Set(uint(n))
+			if X.Test(uint(to.To)) {
+				x2.Set(uint(to.To))
+			}
 		}
-		close(ch)
-	}()
-	return ch
+		if !f(R, p2, x2) {
+			return
+		}
+		R.SetTo(uint(n), false)
+		P.SetTo(uint(n), false)
+		X.Set(uint(n))
+	}
 }
 
 // ConnectedComponentBits, for undirected graphs, returns a function that
@@ -982,22 +986,16 @@ func (g LabeledAdjacencyList) MaximalClique(n int) []int {
 // Tarjan identifies strongly connected components in a directed graph using
 // Tarjan's algorithm.
 //
-// Components are sent on the returned channel.  Each component is a list of
-// nodes.  A property of the algorithm is that components are sent in reverse
-// topological order of the condensation.  (See
-// https://en.wikipedia.org/wiki/Strongly_connected_component#Definitions
+// The method calls the emit argument for each component identified.  Each
+// component is a list of nodes.  A property of the algorithm is that
+// components are emitted in reverse topological order of the condensation.
+// (See https://en.wikipedia.org/wiki/Strongly_connected_component#Definitions
 // for description of condensation.)
 //
 // There are equivalent labeled and unlabeled versions of this method.
 //
 // See also TarjanForward and TarjanCondensation.
-func (g LabeledAdjacencyList) Tarjan() chan []NI {
-	ch := make(chan []NI)
-	go g.tarjan(ch)
-	return ch
-}
-
-func (g LabeledAdjacencyList) tarjan(ch chan []NI) {
+func (g LabeledAdjacencyList) Tarjan(emit func([]NI) bool) {
 	// See "Depth-first search and linear graph algorithms", Robert Tarjan,
 	// SIAM J. Comput. Vol. 1, No. 2, June 1972.
 	//
@@ -1008,8 +1006,8 @@ func (g LabeledAdjacencyList) tarjan(ch chan []NI) {
 	lowlink := make([]int, len(g))
 	x := 0
 	var S []NI
-	var sc func(NI)
-	sc = func(n NI) {
+	var sc func(NI) bool
+	sc = func(n NI) bool {
 		index[n] = x
 		indexed.SetBit(&indexed, int(n), 1)
 		lowlink[n] = x
@@ -1018,7 +1016,9 @@ func (g LabeledAdjacencyList) tarjan(ch chan []NI) {
 		stacked.SetBit(&stacked, int(n), 1)
 		for _, nb := range g[n] {
 			if indexed.Bit(int(nb.To)) == 0 {
-				sc(nb.To)
+				if !sc(nb.To) {
+					return false
+				}
 				if lowlink[nb.To] < lowlink[n] {
 					lowlink[n] = lowlink[nb.To]
 				}
@@ -1037,33 +1037,38 @@ func (g LabeledAdjacencyList) tarjan(ch chan []NI) {
 				stacked.SetBit(&stacked, int(w), 0)
 				c = append(c, w)
 				if w == n {
-					ch <- c
+					if !emit(c) {
+						return false
+					}
 					break
 				}
 			}
 		}
+		return true
 	}
 	for n := range g {
-		if indexed.Bit(n) == 0 {
-			sc(NI(n))
+		if indexed.Bit(n) == 0 && !sc(NI(n)) {
+			return
 		}
 	}
-	close(ch)
 }
 
 // TarjanForward returns strongly connected components.
 //
 // It returns components in the reverse order of Tarjan, for situations
 // where a forward topological ordering is easier.
-func (g LabeledAdjacencyList) TarjanForward() (scc [][]NI) {
-	for c := range g.Tarjan() {
-		scc = append(scc, c)
+func (g LabeledAdjacencyList) TarjanForward() [][]NI {
+	var r [][]NI
+	g.Tarjan(func(c []NI) bool {
+		r = append(r, c)
+		return true
+	})
+	scc := make([][]NI, len(r))
+	last := len(r) - 1
+	for i, ci := range r {
+		scc[last-i] = ci
 	}
-	last := len(scc) - 1
-	for i, ci := range scc[:len(scc)/2] {
-		scc[i], scc[last-i] = scc[last-i], ci
-	}
-	return
+	return scc
 }
 
 // TarjanCondensation returns strongly connected components and their

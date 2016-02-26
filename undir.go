@@ -112,15 +112,10 @@ func (g AdjacencyList) UndirectedCopy() AdjacencyList {
 
 // TarjanBiconnectedComponents, for undirected simple graphs.
 //
-// Components are sent as edge lists on the returned channel.
-// The channel is closed after all components are sent.
-func (g AdjacencyList) TarjanBiconnectedComponents() chan []Edge {
-	ch := make(chan []Edge)
-	go g.tarjanBcc(ch)
-	return ch
-}
-
-func (g AdjacencyList) tarjanBcc(ch chan []Edge) {
+// The method calls the emit argument for each component identified, as long
+// as emit returns true.  If emit returns false, TarjanBiconnectedComponents
+// returns immediately.
+func (g AdjacencyList) TarjanBiconnectedComponents(emit func([]Edge) bool) {
 	// Implemented closely to pseudocode in "Depth-first search and linear
 	// graph algorithms", Robert Tarjan, SIAM J. Comput. Vol. 1, No. 2,
 	// June 1972.
@@ -132,15 +127,17 @@ func (g AdjacencyList) tarjanBcc(ch chan []Edge) {
 	lowpt := make([]int, len(g))
 	var stack []Edge
 	var i int
-	var biconnect func(NI, NI)
-	biconnect = func(v, u NI) {
+	var biconnect func(NI, NI) bool
+	biconnect = func(v, u NI) bool {
 		i++
 		number[v] = i
 		lowpt[v] = i
 		for _, w := range g[v] {
 			if number[w] == 0 {
 				stack = append(stack, Edge{v, w})
-				biconnect(w, v)
+				if !biconnect(w, v) {
+					return false
+				}
 				if lowpt[w] < lowpt[v] {
 					lowpt[v] = lowpt[w]
 				}
@@ -155,7 +152,9 @@ func (g AdjacencyList) tarjanBcc(ch chan []Edge) {
 					bcc = append(bcc, stack[top])
 					stack = stack[:top]
 					top--
-					ch <- bcc
+					if !emit(bcc) {
+						return false
+					}
 				}
 			} else if number[w] < number[v] && w != u {
 				stack = append(stack, Edge{v, w})
@@ -164,13 +163,13 @@ func (g AdjacencyList) tarjanBcc(ch chan []Edge) {
 				}
 			}
 		}
+		return true
 	}
 	for w := range g {
-		if number[w] == 0 {
-			biconnect(NI(w), 0)
+		if number[w] == 0 && !biconnect(NI(w), 0) {
+			return
 		}
 	}
-	close(ch)
 }
 
 /* half-baked.  Read the 72 paper.  Maybe revisit at some point.

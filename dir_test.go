@@ -259,9 +259,10 @@ func ExampleAdjacencyList_MaximalNonBranchingPaths() {
 		5: {6},
 		6: {5},
 	}
-	for p := range g.MaximalNonBranchingPaths() {
+	g.MaximalNonBranchingPaths(func(p []graph.NI) bool {
 		fmt.Println(p)
-	}
+		return true
+	})
 	// Output:
 	// [0 1 2]
 	// [2 3]

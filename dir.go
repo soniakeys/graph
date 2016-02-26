@@ -315,17 +315,12 @@ func (g AdjacencyList) HasParallelSort() (has bool, fr, to NI) {
 // path by including another node at either end.
 //
 // In the case of a cyclic non-branching path, the first and last elements
-// of the path will be the same node, indicating a cycle.
+// of the path will be the same node, indicating an isolated cycle.
 //
-// Paths are sent on the returned channel.  The channel is closed after all
-// paths are sent.
-func (g AdjacencyList) MaximalNonBranchingPaths() chan []NI {
-	ch := make(chan []NI)
-	go g.mnbp(ch)
-	return ch
-}
-
-func (g AdjacencyList) mnbp(ch chan []NI) {
+// The method calls the emit argument for each path or isolated cycle in g,
+// as long as emit returns true.  If emit returns false,
+// MaximalNonBranchingPaths returns immediately.
+func (g AdjacencyList) MaximalNonBranchingPaths(emit func([]NI) bool) {
 	ind := g.InDegree()
 	var uv big.Int
 	OneBits(&uv, len(g))
@@ -343,7 +338,9 @@ func (g AdjacencyList) mnbp(ch chan []NI) {
 					w = u
 					wTo = g[w]
 				}
-				ch <- n // path
+				if !emit(n) { // n is a path
+					return
+				}
 			}
 		}
 	}
@@ -358,9 +355,10 @@ func (g AdjacencyList) mnbp(ch chan []NI) {
 				break
 			}
 		}
-		ch <- n // isolated cycle
+		if !emit(n) { // n is an isolated cycle
+			return
+		}
 	}
-	close(ch)
 }
 
 // StronglyConnectedComponents identifies strongly connected components

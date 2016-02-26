@@ -290,17 +290,12 @@ func (g LabeledAdjacencyList) NegativeArc(w WeightFunc) bool {
 
 // TarjanBiconnectedComponents, for undirected simple graphs.
 //
-// Components are sent as edge lists on the returned channel.
-// The channel is closed after all components are sent.
+// The method calls the emit argument for each component identified, as long
+// as emit returns true.  If emit returns false, TarjanBiconnectedComponents
+// returns immediately.
 //
 // See also the eqivalent unlabeled TarjanBiconnectedComponents.
-func (g LabeledAdjacencyList) TarjanBiconnectedComponents() chan []LabeledEdge {
-	ch := make(chan []LabeledEdge)
-	go g.tarjanBcc(ch)
-	return ch
-}
-
-func (g LabeledAdjacencyList) tarjanBcc(ch chan []LabeledEdge) {
+func (g LabeledAdjacencyList) TarjanBiconnectedComponents(emit func([]LabeledEdge) bool) {
 	// Implemented closely to pseudocode in "Depth-first search and linear
 	// graph algorithms", Robert Tarjan, SIAM J. Comput. Vol. 1, No. 2,
 	// June 1972.
@@ -314,15 +309,17 @@ func (g LabeledAdjacencyList) tarjanBcc(ch chan []LabeledEdge) {
 	lowpt := make([]int, len(g))
 	var stack []LabeledEdge
 	var i int
-	var biconnect func(NI, NI)
-	biconnect = func(v, u NI) {
+	var biconnect func(NI, NI) bool
+	biconnect = func(v, u NI) bool {
 		i++
 		number[v] = i
 		lowpt[v] = i
 		for _, w := range g[v] {
 			if number[w.To] == 0 {
 				stack = append(stack, LabeledEdge{Edge{v, w.To}, w.Label})
-				biconnect(w.To, v)
+				if !biconnect(w.To, v) {
+					return false
+				}
 				if lowpt[w.To] < lowpt[v] {
 					lowpt[v] = lowpt[w.To]
 				}
@@ -337,7 +334,9 @@ func (g LabeledAdjacencyList) tarjanBcc(ch chan []LabeledEdge) {
 					bcc = append(bcc, stack[top])
 					stack = stack[:top]
 					top--
-					ch <- bcc
+					if !emit(bcc) {
+						return false
+					}
 				}
 			} else if number[w.To] < number[v] && w.To != u {
 				stack = append(stack, LabeledEdge{Edge{v, w.To}, w.Label})
@@ -346,13 +345,13 @@ func (g LabeledAdjacencyList) tarjanBcc(ch chan []LabeledEdge) {
 				}
 			}
 		}
+		return true
 	}
 	for w := range g {
-		if number[w] == 0 {
-			biconnect(NI(w), 0)
+		if number[w] == 0 && !biconnect(NI(w), 0) {
+			return
 		}
 	}
-	close(ch)
 }
 
 // Transpose, for directed graphs, constructs a new adjacency list that is

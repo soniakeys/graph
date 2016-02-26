@@ -47,7 +47,7 @@ func TwoSat(exp []CNF2) map[string]bool {
 	m := map[string]bool{}
 	// (Tarjan returns components in reverse topological order, which is
 	// the needed processing order here.)
-	for c := range g.Tarjan() {
+	g.Tarjan(func(c []graph.NI) bool {
 		for i := range p {
 			p[i] = 0
 		}
@@ -56,7 +56,8 @@ func TwoSat(exp []CNF2) map[string]bool {
 			vs := VarSense(nn & 1) // recover variable sense from node number
 			p[vn] |= 1 << uint(vs)
 			if p[vn] == 3 { // bare and negated in same scc
-				return nil
+				m = nil // nil return means no solution
+				return false
 			}
 			str := vars[vn]
 			if _, ok := m[str]; !ok {
@@ -65,6 +66,7 @@ func TwoSat(exp []CNF2) map[string]bool {
 				m[str] = vs == Bare
 			}
 		}
-	}
+		return true
+	})
 	return m
 }

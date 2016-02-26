@@ -109,6 +109,126 @@ func ExampleAdjacencyList_BoundsOk() {
 	// false 0 9
 }
 
+func ExampleAdjacencyList_BronKerbosch1() {
+	// 0--4--5-
+	//    |  | \
+	//    3--2--1
+	var g graph.AdjacencyList
+	g.AddEdge(0, 4)
+	g.AddEdge(4, 5)
+	g.AddEdge(4, 3)
+	g.AddEdge(3, 2)
+	g.AddEdge(5, 2)
+	g.AddEdge(5, 1)
+	g.AddEdge(2, 1)
+	g.BronKerbosch1(func(c []graph.NI) bool {
+		fmt.Println(c)
+		return true
+	})
+	// Output:
+	// [0 4]
+	// [1 2 5]
+	// [2 3]
+	// [3 4]
+	// [4 5]
+}
+
+func ExampleAdjacencyList_BKPivotMaxDegree() {
+	// 0--4--5-
+	//    |  | \
+	//    3--2--1
+	var g graph.AdjacencyList
+	g.AddEdge(0, 4)
+	g.AddEdge(4, 5)
+	g.AddEdge(4, 3)
+	g.AddEdge(3, 2)
+	g.AddEdge(5, 2)
+	g.AddEdge(5, 1)
+	g.AddEdge(2, 1)
+	g.BronKerbosch2(g.BKPivotMaxDegree, func(c []graph.NI) bool {
+		fmt.Println(c)
+		return true
+	})
+	// Output:
+	// [0 4]
+	// [2 3]
+	// [1 2 5]
+	// [3 4]
+	// [4 5]
+}
+
+func ExampleAdjacencyList_BKPivotMinP() {
+	// 0--4--5-
+	//    |  | \
+	//    3--2--1
+	var g graph.AdjacencyList
+	g.AddEdge(0, 4)
+	g.AddEdge(4, 5)
+	g.AddEdge(4, 3)
+	g.AddEdge(3, 2)
+	g.AddEdge(5, 2)
+	g.AddEdge(5, 1)
+	g.AddEdge(2, 1)
+	g.BronKerbosch2(g.BKPivotMinP, func(c []graph.NI) bool {
+		fmt.Println(c)
+		return true
+	})
+	// Output:
+	// [0 4]
+	// [1 2 5]
+	// [2 3]
+	// [3 4]
+	// [4 5]
+}
+
+func ExampleAdjacencyList_BronKerbosch2() {
+	// 0--4--5-
+	//    |  | \
+	//    3--2--1
+	var g graph.AdjacencyList
+	g.AddEdge(0, 4)
+	g.AddEdge(4, 5)
+	g.AddEdge(4, 3)
+	g.AddEdge(3, 2)
+	g.AddEdge(5, 2)
+	g.AddEdge(5, 1)
+	g.AddEdge(2, 1)
+	g.BronKerbosch2(g.BKPivotMaxDegree, func(c []graph.NI) bool {
+		fmt.Println(c)
+		return true
+	})
+	// Output:
+	// [0 4]
+	// [2 3]
+	// [1 2 5]
+	// [3 4]
+	// [4 5]
+}
+
+func ExampleAdjacencyList_BronKerbosch3() {
+	// 0--4--5-
+	//    |  | \
+	//    3--2--1
+	var g graph.AdjacencyList
+	g.AddEdge(0, 4)
+	g.AddEdge(4, 5)
+	g.AddEdge(4, 3)
+	g.AddEdge(3, 2)
+	g.AddEdge(5, 2)
+	g.AddEdge(5, 1)
+	g.AddEdge(2, 1)
+	g.BronKerbosch3(g.BKPivotMaxDegree, func(c []graph.NI) bool {
+		fmt.Println(c)
+		return true
+	})
+	// Output:
+	// [0 4]
+	// [3 4]
+	// [4 5]
+	// [2 3]
+	// [1 2 5]
+}
+
 func ExampleAdjacencyList_Cyclic() {
 	//   0
 	//  / \
@@ -428,9 +548,10 @@ func ExampleAdjacencyList_Tarjan() {
 		1: {2},
 		2: {3},
 	}
-	for c := range g.Tarjan() {
+	g.Tarjan(func(c []graph.NI) bool {
 		fmt.Println(c)
-	}
+		return true
+	})
 	// Output:
 	// [1 3 2]
 	// [7 6]
