@@ -3,7 +3,6 @@ package graph_test
 import (
 	"fmt"
 	"math/big"
-	"testing"
 
 	"github.com/soniakeys/graph"
 )
@@ -21,7 +20,7 @@ func ExamplePrim_Span() {
 	//   |      \
 	//  (1)-----(0)
 	//       3
-	g := &graph.LabeledAdjacencyList{}
+	var g graph.UndirectedLAL
 	g.AddEdge(graph.Edge{0, 1}, 3)
 	g.AddEdge(graph.Edge{1, 2}, 4)
 	g.AddEdge(graph.Edge{2, 0}, 5)
@@ -38,7 +37,7 @@ func ExamplePrim_Span() {
 	}
 
 	// construct prim object
-	p := graph.NewPrim(*g, w)
+	p := graph.NewPrim(g, w)
 
 	// construct spanning tree for each component
 	fmt.Println("Span results:")
@@ -48,7 +47,7 @@ func ExamplePrim_Span() {
 		ns, dist := p.Span(r, &leaves)
 		// collect leaf node ints from bitmap
 		var ll []int
-		for n := range *g {
+		for n := range g.LabeledAdjacencyList {
 			if leaves.Bit(n) == 1 {
 				ll = append(ll, n)
 			}
@@ -67,7 +66,7 @@ func ExamplePrim_Span() {
 	// optionally, convert to undirected graph
 	u := p.Forest.UndirectedLabeled(p.Labels)
 	fmt.Println("Equivalent undirected graph:")
-	for fr, to := range u {
+	for fr, to := range u.LabeledAdjacencyList {
 		fmt.Printf("%d:  %#v\n", fr, to)
 	}
 
@@ -105,7 +104,7 @@ func ExampleWeightedEdgeList_Kruskal() {
 	//       (50)   (20)
 	w := func(l graph.LI) float64 { return float64(l) }
 	// undirected graph
-	g := &graph.LabeledAdjacencyList{}
+	var g graph.UndirectedLAL
 	g.AddEdge(graph.Edge{0, 1}, 30)
 	g.AddEdge(graph.Edge{0, 4}, 10)
 	g.AddEdge(graph.Edge{1, 2}, 50)
@@ -120,7 +119,7 @@ func ExampleWeightedEdgeList_Kruskal() {
 	t, dist := l.Kruskal()
 
 	fmt.Println("spanning tree as undirected graph:")
-	for n, to := range t {
+	for n, to := range t.LabeledAdjacencyList {
 		fmt.Println(n, to)
 	}
 	fmt.Println("total distance: ", dist)
@@ -159,7 +158,7 @@ func ExampleWeightedEdgeList_KruskalSorted() {
 	t, dist := l.KruskalSorted()
 
 	fmt.Println("spanning tree as undirected graph:")
-	for n, to := range t {
+	for n, to := range t.LabeledAdjacencyList {
 		fmt.Println(n, to)
 	}
 	fmt.Println("total distance: ", dist)
@@ -173,6 +172,7 @@ func ExampleWeightedEdgeList_KruskalSorted() {
 	// total distance:  110
 }
 
+/* invalid.  needs to work on undirected and r100 is directed
 func TestPrim100(t *testing.T) {
 	reps, orders := r100.g.ConnectedComponentReps()
 	p := graph.NewPrim(r100.l, func(l graph.LI) float64 { return r100.w[l] })
@@ -196,3 +196,4 @@ func BenchmarkPrim100(b *testing.B) {
 		}
 	}
 }
+*/

@@ -98,9 +98,9 @@ func (g AdjacencyList) EulerianCycleD(m int) ([]NI, error) {
 	return e.p, nil
 }
 
-// EulerianCycleUndirD is a bit of an experiment.
+// EulerianCycleD for undirected graphs is a bit of an experiment.
 //
-// It is about the same as EulerianCycleD, but modified for an undirected
+// It is about the same as the directed version, but modified for an undirected
 // multigraph.
 //
 // Parameter m in this case must be the size of the undirected graph -- the
@@ -109,11 +109,11 @@ func (g AdjacencyList) EulerianCycleD(m int) ([]NI, error) {
 // It works, but contains an extra loop that I think spoils the time
 // complexity.  Probably still pretty fast in practice, but a different
 // graph representation might be better.
-func (g AdjacencyList) EulerianCycleUndirD(m int) ([]NI, error) {
-	if len(g) == 0 {
+func (g UndirectedAL) EulerianCycleD(m int) ([]NI, error) {
+	if len(g.AdjacencyList) == 0 {
 		return nil, nil
 	}
-	e := newEulerian(g, m)
+	e := newEulerian(g.AdjacencyList, m)
 	for e.s >= 0 {
 		v := e.top()
 		e.pushUndir() // call modified method

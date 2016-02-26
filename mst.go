@@ -96,7 +96,7 @@ func (ds disjointSet) find(n NI) NI {
 // The edge list of the receiver is sorted as a side effect of this method.
 // See KruskalSorted for a version that relies on the edge list being already
 // sorted.
-func (l WeightedEdgeList) Kruskal() (g LabeledAdjacencyList, dist float64) {
+func (l WeightedEdgeList) Kruskal() (g UndirectedLAL, dist float64) {
 	sort.Sort(l)
 	return l.KruskalSorted()
 }
@@ -116,9 +116,9 @@ func (l WeightedEdgeList) Kruskal() (g LabeledAdjacencyList, dist float64) {
 // The forest is returned as an undirected graph.
 //
 // Also returned is a total distance for the returned forest.
-func (l WeightedEdgeList) KruskalSorted() (g LabeledAdjacencyList, dist float64) {
+func (l WeightedEdgeList) KruskalSorted() (g UndirectedLAL, dist float64) {
 	ds := newDisjointSet(l.Order)
-	g = make(LabeledAdjacencyList, l.Order)
+	g.LabeledAdjacencyList = make(LabeledAdjacencyList, l.Order)
 	for _, e := range l.Edges {
 		if ds.union(e.N1, e.N2) {
 			g.AddEdge(Edge{e.N1, e.N2}, e.LI)
@@ -133,7 +133,7 @@ func (l WeightedEdgeList) KruskalSorted() (g LabeledAdjacencyList, dist float64)
 //
 // Construct with NewPrim.
 type Prim struct {
-	Graph  LabeledAdjacencyList
+	Graph  UndirectedLAL
 	Weight WeightFunc
 	Forest FromList
 	Labels []LI
@@ -143,8 +143,8 @@ type Prim struct {
 
 // NewPrim constructs a new Prim object.  Argument g must be an
 // undirected graph.
-func NewPrim(g LabeledAdjacencyList, w WeightFunc) *Prim {
-	b := make([]prNode, len(g))
+func NewPrim(g UndirectedLAL, w WeightFunc) *Prim {
+	b := make([]prNode, len(g.LabeledAdjacencyList))
 	for n := range b {
 		b[n].nx = NI(n)
 		b[n].fx = -1
@@ -152,8 +152,8 @@ func NewPrim(g LabeledAdjacencyList, w WeightFunc) *Prim {
 	return &Prim{
 		Graph:  g,
 		Weight: w,
-		Forest: NewFromList(len(g)),
-		Labels: make([]LI, len(g)),
+		Forest: NewFromList(len(g.LabeledAdjacencyList)),
+		Labels: make([]LI, len(g.LabeledAdjacencyList)),
 		best:   b,
 	}
 }
@@ -223,7 +223,7 @@ func (p *Prim) Span(start NI, leaves *big.Int) (numSpanned int, dist float64) {
 		leaves.SetBit(leaves, int(start), 1)
 	}
 	for a := start; ; {
-		for _, nb := range p.Graph[a] {
+		for _, nb := range p.Graph.LabeledAdjacencyList[a] {
 			if rp[nb.To].Len > 0 {
 				continue // already in MST, no action
 			}

@@ -266,7 +266,7 @@ func ExampleFromList_Undirected() {
 		3: {From: -1},
 	}}
 	g := f.Undirected()
-	for n, fr := range g {
+	for n, fr := range g.AdjacencyList {
 		fmt.Println(n, fr)
 	}
 	ud, _, _ := g.IsUndirected()
@@ -282,7 +282,7 @@ func ExampleFromList_Undirected() {
 func TestFromList_Undirected(t *testing.T) {
 	f := graph.FromList{Paths: []graph.PathEnd{{From: 0}}}
 	got := f.Undirected()
-	want := graph.AdjacencyList{{0}}
+	want := graph.UndirectedAL{graph.AdjacencyList{{0}}}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatal("want single loop on 0")
 	}
@@ -299,7 +299,7 @@ func ExampleFromList_UndirectedLabeled() {
 		3: {From: -1},
 	}}
 	g := f.UndirectedLabeled(nil)
-	for n, fr := range g {
+	for n, fr := range g.LabeledAdjacencyList {
 		fmt.Printf("%d %#v\n", n, fr)
 	}
 	// Output:
@@ -312,7 +312,7 @@ func ExampleFromList_UndirectedLabeled() {
 func TestFromList_UndirectedLabeled(t *testing.T) {
 	f := graph.FromList{Paths: []graph.PathEnd{{From: 0}}}
 	got := f.UndirectedLabeled(nil)
-	want := graph.LabeledAdjacencyList{{{0, 0}}}
+	want := graph.UndirectedLAL{graph.LabeledAdjacencyList{{{0, 0}}}}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatal("want single loop on 0")
 	}

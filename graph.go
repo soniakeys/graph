@@ -10,6 +10,12 @@ import "math/big"
 //go:generate gofmt -r "n.To -> n" -w cg_adj.go
 //go:generate gofmt -r "Half -> NI" -w cg_adj.go
 
+//go:generate cp cg_undir.go cg_undir_al.go
+//go:generate gofmt -r "UndirectedLAL -> UndirectedAL" -w cg_undir_al.go
+//go:generate gofmt -r "LabeledAdjacencyList -> AdjacencyList" -w cg_undir_al.go
+//go:generate gofmt -r "n.To -> n" -w cg_undir_al.go
+//go:generate gofmt -r "Half -> NI" -w cg_undir_al.go
+
 var one = big.NewInt(1)
 
 // OneBits sets a big.Int to a number that is all 1s in binary.

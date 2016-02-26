@@ -61,13 +61,15 @@ func ExampleAdjacencyList_EulerianCycle() {
 	// [0 1 2 1 2 2 0] <nil>
 }
 
-func ExampleAdjacencyList_EulerianCycleUndirD() {
-	g := graph.AdjacencyList{
-		0: {1, 2},
-		1: {0, 2, 2, 2},
-		2: {0, 1, 1, 1, 2, 2},
-	}
-	fmt.Println(g.EulerianCycleUndirD(6))
+func ExampleAdjacencyList_EulerianCycleD() {
+	var g graph.UndirectedAL
+	g.AddEdge(0, 1)
+	g.AddEdge(0, 2)
+	g.AddEdge(1, 2)
+	g.AddEdge(1, 2)
+	g.AddEdge(1, 2)
+	g.AddEdge(2, 2)
+	fmt.Println(g.EulerianCycleD(6))
 	// Output:
 	// [0 1 2 2 1 2 0] <nil>
 }

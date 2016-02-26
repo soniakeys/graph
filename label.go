@@ -62,7 +62,7 @@ type WeightFunc func(label LI) (weight float64)
 // The pointer receiver allows the method to expand the graph as needed
 // to include the values n1 and n2.  If n1 or n2 happen to be greater than
 // len(*p) the method does not panic, but simply expands the graph.
-func (p *LabeledAdjacencyList) AddEdge(e Edge, l LI) {
+func (p *UndirectedLAL) AddEdge(e Edge, l LI) {
 	// Similar code in AdjacencyList.AddEdge.
 
 	// determine max of the two end points
@@ -71,11 +71,11 @@ func (p *LabeledAdjacencyList) AddEdge(e Edge, l LI) {
 		max = e.N2
 	}
 	// expand graph if needed, to include both
-	g := *p
+	g := p.LabeledAdjacencyList
 	if max >= NI(len(g)) {
-		*p = make(LabeledAdjacencyList, max+1)
-		copy(*p, g)
-		g = *p
+		p.LabeledAdjacencyList = make(LabeledAdjacencyList, max+1)
+		copy(p.LabeledAdjacencyList, g)
+		g = p.LabeledAdjacencyList
 	}
 	// create one half-arc,
 	g[e.N1] = append(g[e.N1], Half{To: e.N2, Label: l})
@@ -371,9 +371,9 @@ func (g LabeledAdjacencyList) Transpose() (t LabeledAdjacencyList, m int) {
 	return
 }
 
-// Undirected returns copy of g augmented as needed to make it undirected,
+// UndirectedCopy returns copy of g augmented as needed to make it undirected,
 // with reciprocal arcs having matching labels.
-func (g LabeledAdjacencyList) UndirectedCopy() LabeledAdjacencyList {
+func (g LabeledAdjacencyList) UndirectedCopy() UndirectedLAL {
 	c, _ := g.Copy()                         // start with a copy
 	rw := make(LabeledAdjacencyList, len(g)) // "reciprocals wanted"
 	for fr, to := range g {
@@ -400,7 +400,7 @@ func (g LabeledAdjacencyList) UndirectedCopy() LabeledAdjacencyList {
 	for fr, to := range rw {
 		c[fr] = append(c[fr], to...)
 	}
-	return c
+	return UndirectedLAL{c}
 }
 
 // Unlabeled constructs the unlabeled graph corresponding to g.

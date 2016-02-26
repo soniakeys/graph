@@ -114,8 +114,8 @@ type kronTest struct {
 	edgeFactor float64
 	starts     []graph.NI // the parameter here is len(starts)
 	// generated:
-	g graph.AdjacencyList // an undirected graph
-	m int                 // number of arcs in g
+	g graph.UndirectedAL
+	m int // number of arcs in g
 	// also generated are values for starts[]
 }
 
@@ -137,7 +137,7 @@ func k(scale uint, ef float64, nStarts int) (kt kronTest) {
 	kt.g.DepthFirst(rep[x], gcc, nil)
 	kt.starts = make([]graph.NI, nStarts)
 	for i := 0; i < nStarts; {
-		if s := rand.Intn(len(kt.g)); gcc.Bit(s) == 1 {
+		if s := rand.Intn(len(kt.g.AdjacencyList)); gcc.Bit(s) == 1 {
 			kt.starts[i] = graph.NI(s)
 			i++
 		}
@@ -273,7 +273,7 @@ func BenchmarkDijkstra100(b *testing.B) {
 
 func BenchmarkBFS_K07(b *testing.B) {
 	tc := k7
-	bf := graph.NewBreadthFirst(tc.g)
+	bf := graph.NewBreadthFirst(tc.g.AdjacencyList)
 	x := 0
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -284,7 +284,7 @@ func BenchmarkBFS_K07(b *testing.B) {
 
 func BenchmarkBFS2_K07(b *testing.B) {
 	tc := k7
-	bf := graph.NewBreadthFirst2(tc.g, tc.g, tc.m)
+	bf := graph.NewBreadthFirst2(tc.g.AdjacencyList, tc.g.AdjacencyList, tc.m)
 	x := 0
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

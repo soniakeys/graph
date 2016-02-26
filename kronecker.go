@@ -29,8 +29,9 @@ func KroneckerDir(scale uint, arcFactor float64) (g AdjacencyList, m int) {
 //
 // Return value m is the number of arcs--not edges--retained in the result
 // graph.
-func KroneckerUndir(scale uint, edgeFactor float64) (g AdjacencyList, m int) {
-	return kronecker(scale, edgeFactor, false)
+func KroneckerUndir(scale uint, edgeFactor float64) (g UndirectedAL, m int) {
+	al, as := kronecker(scale, edgeFactor, false)
+	return UndirectedAL{al}, as
 }
 
 // Styled after the Graph500 example code.  Not well tested currently.

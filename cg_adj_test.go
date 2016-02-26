@@ -51,26 +51,18 @@ func ExampleAdjacencyList_ArcSize_handshakingLemma() {
 	//   1   2
 	//  / \
 	// 3   4
-	g := graph.AdjacencyList{
-		0: {1},
-		1: {0, 3, 4},
-		3: {1},
-		4: {1},
-	}
-	ok, _, _ := g.IsUndirected()
-	fmt.Println("undirected:", ok)
-	ok, _ = g.HasLoop()
-	fmt.Println("has loop:  ", ok)
+	var g graph.UndirectedAL
+	g.AddEdge(0, 1)
+	g.AddEdge(1, 3)
+	g.AddEdge(1, 4)
 	// for undirected g without loops, degree == out-degree == len(to)
 	degSum := 0
-	for _, to := range g {
+	for _, to := range g.AdjacencyList {
 		degSum += len(to)
 	}
 	// for undirected g without loops, ArcSize is 2 * number of edges
 	fmt.Println(degSum, "==", g.ArcSize())
 	// Output:
-	// undirected: true
-	// has loop:   false
 	// 6 == 6
 }
 
@@ -113,7 +105,7 @@ func ExampleAdjacencyList_BronKerbosch1() {
 	// 0--4--5-
 	//    |  | \
 	//    3--2--1
-	var g graph.AdjacencyList
+	var g graph.UndirectedAL
 	g.AddEdge(0, 4)
 	g.AddEdge(4, 5)
 	g.AddEdge(4, 3)
@@ -137,7 +129,7 @@ func ExampleAdjacencyList_BKPivotMaxDegree() {
 	// 0--4--5-
 	//    |  | \
 	//    3--2--1
-	var g graph.AdjacencyList
+	var g graph.UndirectedAL
 	g.AddEdge(0, 4)
 	g.AddEdge(4, 5)
 	g.AddEdge(4, 3)
@@ -161,7 +153,7 @@ func ExampleAdjacencyList_BKPivotMinP() {
 	// 0--4--5-
 	//    |  | \
 	//    3--2--1
-	var g graph.AdjacencyList
+	var g graph.UndirectedAL
 	g.AddEdge(0, 4)
 	g.AddEdge(4, 5)
 	g.AddEdge(4, 3)
@@ -185,7 +177,7 @@ func ExampleAdjacencyList_BronKerbosch2() {
 	// 0--4--5-
 	//    |  | \
 	//    3--2--1
-	var g graph.AdjacencyList
+	var g graph.UndirectedAL
 	g.AddEdge(0, 4)
 	g.AddEdge(4, 5)
 	g.AddEdge(4, 3)
@@ -209,7 +201,7 @@ func ExampleAdjacencyList_BronKerbosch3() {
 	// 0--4--5-
 	//    |  | \
 	//    3--2--1
-	var g graph.AdjacencyList
+	var g graph.UndirectedAL
 	g.AddEdge(0, 4)
 	g.AddEdge(4, 5)
 	g.AddEdge(4, 3)
@@ -452,11 +444,9 @@ func ExampleAdjacencyList_IsConnected() {
 	//   0
 	//  / \
 	// 1   2
-	g := graph.AdjacencyList{
-		0: {1, 2},
-		1: {0},
-		2: {0},
-	}
+	var g graph.UndirectedAL
+	g.AddEdge(0, 1)
+	g.AddEdge(0, 2)
 	u, _, _ := g.IsUndirected()
 	fmt.Println("undirected:", u)
 	fmt.Println("connected: ", g.IsConnected())
@@ -470,11 +460,9 @@ func ExampleAdjacencyList_IsConnected_notConnected() {
 	//   0   1
 	//  / \
 	// 2   3
-	g := graph.AdjacencyList{
-		0: {2, 3},
-		2: {0},
-		3: {0},
-	}
+	var g graph.UndirectedAL
+	g.AddEdge(0, 2)
+	g.AddEdge(0, 3)
 	u, _, _ := g.IsUndirected()
 	fmt.Println("undirected:", u)
 	fmt.Println("connected: ", g.IsConnected())
@@ -595,16 +583,12 @@ func ExampleAdjacencyList_TarjanForward() {
 func ExampleAdjacencyList_UndirectedDegree() {
 	// 0---1--\
 	//      \-/
-	g := graph.AdjacencyList{
-		0: {1},
-		1: {0, 1},
-	}
-	ok, _, _ := g.IsUndirected()
-	fmt.Println(ok)
-	fmt.Println(g.UndirectedDegree(0))
-	fmt.Println(g.UndirectedDegree(1))
+	var g graph.UndirectedAL
+	g.AddEdge(0, 1)
+	g.AddEdge(1, 1)
+	fmt.Println(g.Degree(0))
+	fmt.Println(g.Degree(1))
 	// Output:
-	// true
 	// 1
 	// 3
 }

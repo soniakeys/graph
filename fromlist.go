@@ -233,7 +233,7 @@ func (f *FromList) TransposeLabeled(labels []LI) LabeledAdjacencyList {
 }
 
 // Undirected contructs the undirected graph corresponding to the FromList.
-func (f *FromList) Undirected() AdjacencyList {
+func (f *FromList) Undirected() UndirectedAL {
 	g := make(AdjacencyList, len(f.Paths))
 	for n, p := range f.Paths {
 		if p.From == -1 {
@@ -244,7 +244,7 @@ func (f *FromList) Undirected() AdjacencyList {
 			g[p.From] = append(g[p.From], NI(n))
 		}
 	}
-	return g
+	return UndirectedAL{g}
 }
 
 // UndirectedLabeled contructs the corresponding undirected graph with
@@ -255,7 +255,7 @@ func (f *FromList) Undirected() AdjacencyList {
 //
 // If labels is non-nil, it must be the same length as t.Paths and is used
 // to look up label numbers by the path index.
-func (f *FromList) UndirectedLabeled(labels []LI) LabeledAdjacencyList {
+func (f *FromList) UndirectedLabeled(labels []LI) UndirectedLAL {
 	g := make(LabeledAdjacencyList, len(f.Paths))
 	for n, p := range f.Paths {
 		if p.From == -1 {
@@ -270,5 +270,5 @@ func (f *FromList) UndirectedLabeled(labels []LI) LabeledAdjacencyList {
 			g[p.From] = append(g[p.From], Half{NI(n), l})
 		}
 	}
-	return g
+	return UndirectedLAL{g}
 }

@@ -6,34 +6,47 @@ package graph_test
 import (
 	"fmt"
 	"math/big"
-	"strconv"
 
 	"github.com/soniakeys/graph"
 )
 
-func ExampleAdjacencyList_Bipartite() {
-	g := graph.AdjacencyList{
-		0: {3},
-		1: {3},
-		2: {3, 4},
-		3: {0, 1, 2},
-		4: {2},
-	}
-	b, c1, c2, oc := g.Bipartite(0)
+func ExampleUndirectedAL_Bipartite() {
+	// 0 1 2
+	//  \|/|
+	//   3 4
+	var g graph.UndirectedAL
+	g.AddEdge(0, 3)
+	g.AddEdge(1, 3)
+	g.AddEdge(2, 3)
+	g.AddEdge(2, 4)
+	b, c1, c2, _ := g.Bipartite(0)
 	if b {
-		fmt.Println(
-			strconv.FormatInt(c1.Int64(), 2),
-			strconv.FormatInt(c2.Int64(), 2))
-	}
-	g[3] = append(g[3], 4)
-	g[4] = append(g[4], 3)
-	b, c1, c2, oc = g.Bipartite(0)
-	if !b {
-		fmt.Println(oc)
+		fmt.Println("n:  43210")
+		fmt.Printf("c1: %05b\n", c1)
+		fmt.Printf("c2: %05b\n", c2)
 	}
 	// Output:
-	// 111 11000
-	// [3 4 2]
+	// n:  43210
+	// c1: 00111
+	// c2: 11000
+}
+
+func ExampleUndirectedAL_Bipartite_oddCycle() {
+	// 0 1  2
+	//  \|/ |
+	//   3--4
+	var g graph.UndirectedAL
+	g.AddEdge(0, 3)
+	g.AddEdge(1, 3)
+	g.AddEdge(2, 3)
+	g.AddEdge(2, 4)
+	g.AddEdge(3, 4)
+	b, _, _, oc := g.Bipartite(0)
+	if !b {
+		fmt.Println("odd cycle:", oc)
+	}
+	// Output:
+	// odd cycle: [3 4 2]
 }
 
 func ExampleAdjacencyList_UndirectedCopy_simple() {
@@ -47,7 +60,7 @@ func ExampleAdjacencyList_UndirectedCopy_simple() {
 	}
 	fmt.Println(g.IsUndirected())
 	u := g.UndirectedCopy()
-	for fr, to := range u {
+	for fr, to := range u.AdjacencyList {
 		fmt.Println(fr, to)
 	}
 	ok, _, _ := u.IsUndirected()
@@ -71,7 +84,7 @@ func ExampleAdjacencyList_UndirectedCopy_loopMultigraph() {
 	}
 	fmt.Println(g.IsUndirected())
 	u := g.UndirectedCopy()
-	for fr, to := range u {
+	for fr, to := range u.AdjacencyList {
 		fmt.Println(fr, to)
 	}
 	ok, _, _ := u.IsUndirected()
@@ -109,23 +122,21 @@ func ExampleAdjacencyList_IsUndirected() {
 	// false 2 1
 }
 
-func ExampleAdjacencyList_IsTreeUndirected() {
-	//  1--\
+func ExampleUndirectedAL_IsTree() {
+	//  0--\
 	//  |  |
-	//  \--/   0   5
+	//  \--/   1   3
 	//        /   / \
-	//       2   3---4
-	g := graph.AdjacencyList{
-		1: {1},
-		0: {2},
-		2: {0},
-		5: {3, 4},
-		3: {4, 5},
-		4: {3, 5},
-	}
-	fmt.Println(g.IsTreeUndirected(1))
-	fmt.Println(g.IsTreeUndirected(2))
-	fmt.Println(g.IsTreeUndirected(3))
+	//       2   4---5
+	var g graph.UndirectedAL
+	g.AddEdge(0, 0)
+	g.AddEdge(1, 2)
+	g.AddEdge(3, 4)
+	g.AddEdge(3, 5)
+	g.AddEdge(4, 5)
+	fmt.Println(g.IsTree(0))
+	fmt.Println(g.IsTree(1))
+	fmt.Println(g.IsTree(3))
 	// Output:
 	// false
 	// true
@@ -136,33 +147,30 @@ func ExampleAdjacencyList_ConnectedComponentReps() {
 	//    0   1   2
 	//   / \   \
 	//  3---4   5
-	g := graph.AdjacencyList{
-		0: {3, 4},
-		1: {5},
-		3: {0, 4},
-		4: {0, 3},
-		5: {1},
-	}
+	var g graph.UndirectedAL
+	g.AddEdge(0, 3)
+	g.AddEdge(0, 4)
+	g.AddEdge(3, 4)
+	g.AddEdge(1, 5)
 	fmt.Println(g.ConnectedComponentReps())
 	// Output:
 	// [0 1 2] [3 2 1]
 }
 
 func ExampleAdjacencyList_ConnectedComponentReps_collectingBits() {
-	g := graph.AdjacencyList{
-		0: {3, 4},
-		1: {5},
-		3: {0, 4},
-		4: {0, 3},
-		5: {1},
-	}
+	var g graph.UndirectedAL
+	g.AddEdge(0, 3)
+	g.AddEdge(0, 4)
+	g.AddEdge(3, 4)
+	g.AddEdge(1, 5)
 	rep, order := g.ConnectedComponentReps()
 	fmt.Println("543210  rep  order")
 	fmt.Println("------  ---  -----")
 	for i, r := range rep {
 		var bits big.Int
 		g.DepthFirst(r, &bits, nil)
-		fmt.Printf("%0*b   %d     %d\n", len(g), &bits, r, order[i])
+		fmt.Printf("%0*b   %d     %d\n",
+			len(g.AdjacencyList), &bits, r, order[i])
 	}
 	// Output:
 	// 543210  rep  order
@@ -173,13 +181,11 @@ func ExampleAdjacencyList_ConnectedComponentReps_collectingBits() {
 }
 
 func ExampleAdjacencyList_ConnectedComponentReps_collectingLists() {
-	g := graph.AdjacencyList{
-		0: {3, 4},
-		1: {5},
-		3: {0, 4},
-		4: {0, 3},
-		5: {1},
-	}
+	var g graph.UndirectedAL
+	g.AddEdge(0, 3)
+	g.AddEdge(0, 4)
+	g.AddEdge(3, 4)
+	g.AddEdge(1, 5)
 	rep, _ := g.ConnectedComponentReps()
 	for _, r := range rep {
 		var m []graph.NI
@@ -199,18 +205,16 @@ func ExampleAdjacencyList_ConnectedComponentBits() {
 	//    0   1   2
 	//   / \   \
 	//  3---4   5
-	g := graph.AdjacencyList{
-		0: {3, 4},
-		1: {5},
-		3: {0, 4},
-		4: {0, 3},
-		5: {1},
-	}
+	var g graph.UndirectedAL
+	g.AddEdge(0, 3)
+	g.AddEdge(0, 4)
+	g.AddEdge(3, 4)
+	g.AddEdge(1, 5)
 	f := g.ConnectedComponentBits()
 	fmt.Println("o  543210")
 	fmt.Println("-  ------")
 	for o, b := f(); o > 0; o, b = f() {
-		fmt.Printf("%d  %0*b\n", o, len(g), &b)
+		fmt.Printf("%d  %0*b\n", o, len(g.AdjacencyList), &b)
 	}
 	// Output:
 	// o  543210
@@ -224,13 +228,11 @@ func ExampleAdjacencyList_ConnectedComponentLists() {
 	//    0   1   2
 	//   / \   \
 	//  3---4   5
-	g := graph.AdjacencyList{
-		0: {3, 4},
-		1: {5},
-		3: {0, 4},
-		4: {0, 3},
-		5: {1},
-	}
+	var g graph.UndirectedAL
+	g.AddEdge(0, 3)
+	g.AddEdge(0, 4)
+	g.AddEdge(3, 4)
+	g.AddEdge(1, 5)
 	f := g.ConnectedComponentLists()
 	for l := f(); l != nil; l = f() {
 		fmt.Println(l)
@@ -246,7 +248,7 @@ func ExampleAdjacencyList_TarjanBiconnectedComponents() {
 	// 3---2---1---7---9
 	//  \ / \ / \   \ /
 	//   4   5---6   8
-	g := graph.AdjacencyList{}
+	var g graph.UndirectedAL
 	g.AddEdge(3, 4)
 	g.AddEdge(3, 2)
 	g.AddEdge(2, 4)

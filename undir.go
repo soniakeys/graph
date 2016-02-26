@@ -8,6 +8,14 @@
 
 package graph
 
+type UndirectedAL struct {
+	AdjacencyList
+}
+
+type UndirectedLAL struct {
+	LabeledAdjacencyList
+}
+
 // Edge is an undirected edge between nodes N1 and N2.
 type Edge struct{ N1, N2 NI }
 
@@ -21,7 +29,7 @@ type Edge struct{ N1, N2 NI }
 // The pointer receiver allows the method to expand the graph as needed
 // to include the values n1 and n2.  If n1 or n2 happen to be greater than
 // len(*p) the method does not panic, but simply expands the graph.
-func (p *AdjacencyList) AddEdge(n1, n2 NI) {
+func (p *UndirectedAL) AddEdge(n1, n2 NI) {
 	// Similar code in LabeledAdjacencyList.AddEdge.
 
 	// determine max of the two end points
@@ -30,11 +38,11 @@ func (p *AdjacencyList) AddEdge(n1, n2 NI) {
 		max = n2
 	}
 	// expand graph if needed, to include both
-	g := *p
+	g := p.AdjacencyList
 	if int(max) >= len(g) {
-		*p = make(AdjacencyList, max+1)
-		copy(*p, g)
-		g = *p
+		p.AdjacencyList = make(AdjacencyList, max+1)
+		copy(p.AdjacencyList, g)
+		g = p.AdjacencyList
 	}
 	// create one half-arc,
 	g[n1] = append(g[n1], n2)
@@ -80,7 +88,7 @@ func (g AdjacencyList) IsUndirected() (u bool, from, to NI) {
 }
 
 // Undirected returns copy of g augmented as needed to make it undirected.
-func (g AdjacencyList) UndirectedCopy() AdjacencyList {
+func (g AdjacencyList) UndirectedCopy() UndirectedAL {
 	c, _ := g.Copy()                  // start with a copy
 	rw := make(AdjacencyList, len(g)) // "reciprocals wanted"
 	for fr, to := range g {
@@ -107,7 +115,7 @@ func (g AdjacencyList) UndirectedCopy() AdjacencyList {
 	for fr, to := range rw {
 		c[fr] = append(c[fr], to...)
 	}
-	return c
+	return UndirectedAL{c}
 }
 
 // TarjanBiconnectedComponents, for undirected simple graphs.
@@ -115,7 +123,7 @@ func (g AdjacencyList) UndirectedCopy() AdjacencyList {
 // The method calls the emit argument for each component identified, as long
 // as emit returns true.  If emit returns false, TarjanBiconnectedComponents
 // returns immediately.
-func (g AdjacencyList) TarjanBiconnectedComponents(emit func([]Edge) bool) {
+func (g UndirectedAL) TarjanBiconnectedComponents(emit func([]Edge) bool) {
 	// Implemented closely to pseudocode in "Depth-first search and linear
 	// graph algorithms", Robert Tarjan, SIAM J. Comput. Vol. 1, No. 2,
 	// June 1972.
@@ -123,8 +131,8 @@ func (g AdjacencyList) TarjanBiconnectedComponents(emit func([]Edge) bool) {
 	// Note Tarjan's "adjacency structure" is graph.AdjacencyList,
 	// His "adjacency list" is an element of a graph.AdjacencyList, also
 	// termed a "to-list", "neighbor list", or "child list."
-	number := make([]int, len(g))
-	lowpt := make([]int, len(g))
+	number := make([]int, len(g.AdjacencyList))
+	lowpt := make([]int, len(g.AdjacencyList))
 	var stack []Edge
 	var i int
 	var biconnect func(NI, NI) bool
@@ -132,7 +140,7 @@ func (g AdjacencyList) TarjanBiconnectedComponents(emit func([]Edge) bool) {
 		i++
 		number[v] = i
 		lowpt[v] = i
-		for _, w := range g[v] {
+		for _, w := range g.AdjacencyList[v] {
 			if number[w] == 0 {
 				stack = append(stack, Edge{v, w})
 				if !biconnect(w, v) {
@@ -165,7 +173,7 @@ func (g AdjacencyList) TarjanBiconnectedComponents(emit func([]Edge) bool) {
 		}
 		return true
 	}
-	for w := range g {
+	for w := range g.AdjacencyList {
 		if number[w] == 0 && !biconnect(NI(w), 0) {
 			return
 		}

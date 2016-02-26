@@ -18,7 +18,7 @@ func TestKroneckerUndir(t *testing.T) {
 	g, _ := graph.KroneckerUndir(10, 10)
 	if s, n := g.IsSimple(); !s {
 		t.Fatalf("KroneckerUndir returned non-simple graph.  Node %d to: %v",
-			n, g[n])
+			n, g.AdjacencyList[n])
 	}
 	if u, from, to := g.IsUndirected(); !u {
 		t.Fatalf("KroneckerUndir returned directed graph.  "+
