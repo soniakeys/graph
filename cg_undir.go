@@ -23,7 +23,7 @@ import (
 // is not bipartite, Bipartite returns false and a representative odd cycle.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g UndirectedLAL) Bipartite(n NI) (b bool, c1, c2 *big.Int, oc []NI) {
+func (g UndirectedLabeled) Bipartite(n NI) (b bool, c1, c2 *big.Int, oc []NI) {
 	c1 = &big.Int{}
 	c2 = &big.Int{}
 	b = true
@@ -79,7 +79,7 @@ func (g UndirectedLAL) Bipartite(n NI) (b bool, c1, c2 *big.Int, oc []NI) {
 // There are equivalent labeled and unlabeled versions of this method.
 //
 // See also more sophisticated variants BronKerbosch2 and BronKerbosch3.
-func (g UndirectedLAL) BronKerbosch1(emit func([]NI) bool) {
+func (g UndirectedLabeled) BronKerbosch1(emit func([]NI) bool) {
 	var f func(R, P, X *bitset.BitSet) bool
 	f = func(R, P, X *bitset.BitSet) bool {
 		switch {
@@ -136,7 +136,7 @@ func (g UndirectedLAL) BronKerbosch1(emit func([]NI) bool) {
 // in P.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g UndirectedLAL) BKPivotMaxDegree(P, X *bitset.BitSet) int {
+func (g UndirectedLabeled) BKPivotMaxDegree(P, X *bitset.BitSet) int {
 	// choose pivot u as highest degree node from P or X
 	n, ok := P.NextSet(0)
 	u := n
@@ -169,7 +169,7 @@ func (g UndirectedLAL) BKPivotMaxDegree(P, X *bitset.BitSet) int {
 // The strategy is to simply pick the first node in P.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g UndirectedLAL) BKPivotMinP(P, X *bitset.BitSet) int {
+func (g UndirectedLabeled) BKPivotMinP(P, X *bitset.BitSet) int {
 	n, _ := P.NextSet(0)
 	return int(n)
 }
@@ -196,7 +196,7 @@ func (g UndirectedLAL) BKPivotMinP(P, X *bitset.BitSet) int {
 //
 // See also simpler variant BronKerbosch1 and more sophisticated variant
 // BronKerbosch3.
-func (g UndirectedLAL) BronKerbosch2(pivot func(P, X *bitset.BitSet) int, emit func([]NI) bool) {
+func (g UndirectedLabeled) BronKerbosch2(pivot func(P, X *bitset.BitSet) int, emit func([]NI) bool) {
 	var f func(R, P, X *bitset.BitSet) bool
 	f = func(R, P, X *bitset.BitSet) bool {
 		switch {
@@ -270,7 +270,7 @@ func (g UndirectedLAL) BronKerbosch2(pivot func(P, X *bitset.BitSet) int, emit f
 // There are equivalent labeled and unlabeled versions of this method.
 //
 // See also simpler variants BronKerbosch1 and BronKerbosch2.
-func (g UndirectedLAL) BronKerbosch3(pivot func(P, X *bitset.BitSet) int, emit func([]NI) bool) {
+func (g UndirectedLabeled) BronKerbosch3(pivot func(P, X *bitset.BitSet) int, emit func([]NI) bool) {
 	var f func(R, P, X *bitset.BitSet) bool
 	f = func(R, P, X *bitset.BitSet) bool {
 		switch {
@@ -356,7 +356,7 @@ func (g UndirectedLAL) BronKerbosch3(pivot func(P, X *bitset.BitSet) int, emit f
 // There are equivalent labeled and unlabeled versions of this method.
 //
 // See also ConnectedComponentReps, which has lighter weight return values.
-func (g UndirectedLAL) ConnectedComponentBits() func() (order int, bits big.Int) {
+func (g UndirectedLabeled) ConnectedComponentBits() func() (order int, bits big.Int) {
 	var vg big.Int  // nodes visited in graph
 	var vc *big.Int // nodes visited in current component
 	var nc int
@@ -396,7 +396,7 @@ func (g UndirectedLAL) ConnectedComponentBits() func() (order int, bits big.Int)
 // There are equivalent labeled and unlabeled versions of this method.
 //
 // See also ConnectedComponentReps, which has lighter weight return values.
-func (g UndirectedLAL) ConnectedComponentLists() func() []NI {
+func (g UndirectedLabeled) ConnectedComponentLists() func() []NI {
 	var vg big.Int // nodes visited in graph
 	var m []NI     // members of current component
 	var df func(NI)
@@ -439,7 +439,7 @@ func (g UndirectedLAL) ConnectedComponentLists() func() []NI {
 // See also ConnectedComponentBits and ConnectedComponentLists which can
 // collect component members in a single traversal, and IsConnected which
 // is an even simpler boolean test.
-func (g UndirectedLAL) ConnectedComponentReps() (reps []NI, orders []int) {
+func (g UndirectedLabeled) ConnectedComponentReps() (reps []NI, orders []int) {
 	var c big.Int
 	var o int
 	var df func(NI)
@@ -469,7 +469,7 @@ func (g UndirectedLAL) ConnectedComponentReps() (reps []NI, orders []int) {
 // There are equivalent labeled and unlabeled versions of this method.
 //
 // See also ConnectedComponentReps for a method returning more information.
-func (g UndirectedLAL) IsConnected() bool {
+func (g UndirectedLabeled) IsConnected() bool {
 	if len(g.LabeledAdjacencyList) == 0 {
 		return true
 	}
@@ -496,7 +496,7 @@ func (g UndirectedLAL) IsConnected() bool {
 // that the entire graph is a tree.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g UndirectedLAL) IsTree(root NI) bool {
+func (g UndirectedLabeled) IsTree(root NI) bool {
 	var v big.Int
 	var df func(NI, NI) bool
 	df = func(fr, n NI) bool {
@@ -529,7 +529,7 @@ func (g UndirectedLAL) IsTree(root NI) bool {
 // See handshaking lemma example at AdjacencyList.ArcSize.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g UndirectedLAL) Degree(n NI) int {
+func (g UndirectedLabeled) Degree(n NI) int {
 	to := g.LabeledAdjacencyList[n]
 	d := len(to) // just "out" degree,
 	for _, to := range to {

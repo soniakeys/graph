@@ -94,8 +94,9 @@ func ExampleDirected() {
 	fmt.Println()
 
 	// undirected
-	g = g.UndirectedCopy()
-	s, _ = dot.StringAdjacencyList(g, dot.Directed(false), dot.Indent(""))
+	u := g.UndirectedCopy()
+	s, _ = dot.StringAdjacencyList(u.AdjacencyList,
+		dot.Directed(false), dot.Indent(""))
 	fmt.Println(s)
 
 	// Output:

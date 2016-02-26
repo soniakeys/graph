@@ -10,11 +10,11 @@ import (
 	"github.com/soniakeys/graph"
 )
 
-func ExampleUndirectedAL_Bipartite() {
+func ExampleUndirected_Bipartite() {
 	// 0 1 2
 	//  \|/|
 	//   3 4
-	var g graph.UndirectedAL
+	var g graph.Undirected
 	g.AddEdge(0, 3)
 	g.AddEdge(1, 3)
 	g.AddEdge(2, 3)
@@ -31,11 +31,11 @@ func ExampleUndirectedAL_Bipartite() {
 	// c2: 11000
 }
 
-func ExampleUndirectedAL_Bipartite_oddCycle() {
+func ExampleUndirected_Bipartite_oddCycle() {
 	// 0 1  2
 	//  \|/ |
 	//   3--4
-	var g graph.UndirectedAL
+	var g graph.Undirected
 	g.AddEdge(0, 3)
 	g.AddEdge(1, 3)
 	g.AddEdge(2, 3)
@@ -122,13 +122,13 @@ func ExampleAdjacencyList_IsUndirected() {
 	// false 2 1
 }
 
-func ExampleUndirectedAL_IsTree() {
+func ExampleUndirected_IsTree() {
 	//  0--\
 	//  |  |
 	//  \--/   1   3
 	//        /   / \
 	//       2   4---5
-	var g graph.UndirectedAL
+	var g graph.Undirected
 	g.AddEdge(0, 0)
 	g.AddEdge(1, 2)
 	g.AddEdge(3, 4)
@@ -147,7 +147,7 @@ func ExampleAdjacencyList_ConnectedComponentReps() {
 	//    0   1   2
 	//   / \   \
 	//  3---4   5
-	var g graph.UndirectedAL
+	var g graph.Undirected
 	g.AddEdge(0, 3)
 	g.AddEdge(0, 4)
 	g.AddEdge(3, 4)
@@ -158,7 +158,7 @@ func ExampleAdjacencyList_ConnectedComponentReps() {
 }
 
 func ExampleAdjacencyList_ConnectedComponentReps_collectingBits() {
-	var g graph.UndirectedAL
+	var g graph.Undirected
 	g.AddEdge(0, 3)
 	g.AddEdge(0, 4)
 	g.AddEdge(3, 4)
@@ -181,7 +181,7 @@ func ExampleAdjacencyList_ConnectedComponentReps_collectingBits() {
 }
 
 func ExampleAdjacencyList_ConnectedComponentReps_collectingLists() {
-	var g graph.UndirectedAL
+	var g graph.Undirected
 	g.AddEdge(0, 3)
 	g.AddEdge(0, 4)
 	g.AddEdge(3, 4)
@@ -205,7 +205,7 @@ func ExampleAdjacencyList_ConnectedComponentBits() {
 	//    0   1   2
 	//   / \   \
 	//  3---4   5
-	var g graph.UndirectedAL
+	var g graph.Undirected
 	g.AddEdge(0, 3)
 	g.AddEdge(0, 4)
 	g.AddEdge(3, 4)
@@ -228,7 +228,7 @@ func ExampleAdjacencyList_ConnectedComponentLists() {
 	//    0   1   2
 	//   / \   \
 	//  3---4   5
-	var g graph.UndirectedAL
+	var g graph.Undirected
 	g.AddEdge(0, 3)
 	g.AddEdge(0, 4)
 	g.AddEdge(3, 4)
@@ -248,7 +248,7 @@ func ExampleAdjacencyList_TarjanBiconnectedComponents() {
 	// 3---2---1---7---9
 	//  \ / \ / \   \ /
 	//   4   5---6   8
-	var g graph.UndirectedAL
+	var g graph.Undirected
 	g.AddEdge(3, 4)
 	g.AddEdge(3, 2)
 	g.AddEdge(2, 4)

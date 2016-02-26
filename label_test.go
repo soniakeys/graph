@@ -114,7 +114,7 @@ func ExampleLabeledAdjacencyList_IsUndirected_undirectedMultigraph() {
 	//               0---
 	//  (Label: 'A')  \  \  (Label: 'B')
 	//                 ---1
-	var g graph.UndirectedLAL
+	var g graph.UndirectedLabeled
 	g.AddEdge(graph.Edge{0, 1}, 'A')
 	g.AddEdge(graph.Edge{0, 1}, 'B')
 	ok, _, _ := g.IsUndirected()
@@ -178,7 +178,7 @@ func ExampleLabeledAdjacencyList_TarjanBiconnectedComponents() {
 	// 3---2---1---7---9
 	//  \ / \ / \   \ /
 	//   4   5---6   8
-	var g graph.UndirectedLAL
+	var g graph.UndirectedLabeled
 	g.AddEdge(graph.Edge{3, 4}, 0)
 	g.AddEdge(graph.Edge{3, 2}, 0)
 	g.AddEdge(graph.Edge{2, 4}, 0)

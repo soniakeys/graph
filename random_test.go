@@ -114,7 +114,7 @@ type kronTest struct {
 	edgeFactor float64
 	starts     []graph.NI // the parameter here is len(starts)
 	// generated:
-	g graph.UndirectedAL
+	g graph.Undirected
 	m int // number of arcs in g
 	// also generated are values for starts[]
 }

@@ -8,11 +8,11 @@
 
 package graph
 
-type UndirectedAL struct {
+type Undirected struct {
 	AdjacencyList
 }
 
-type UndirectedLAL struct {
+type UndirectedLabeled struct {
 	LabeledAdjacencyList
 }
 
@@ -29,7 +29,7 @@ type Edge struct{ N1, N2 NI }
 // The pointer receiver allows the method to expand the graph as needed
 // to include the values n1 and n2.  If n1 or n2 happen to be greater than
 // len(*p) the method does not panic, but simply expands the graph.
-func (p *UndirectedAL) AddEdge(n1, n2 NI) {
+func (p *Undirected) AddEdge(n1, n2 NI) {
 	// Similar code in LabeledAdjacencyList.AddEdge.
 
 	// determine max of the two end points
@@ -88,7 +88,7 @@ func (g AdjacencyList) IsUndirected() (u bool, from, to NI) {
 }
 
 // Undirected returns copy of g augmented as needed to make it undirected.
-func (g AdjacencyList) UndirectedCopy() UndirectedAL {
+func (g AdjacencyList) UndirectedCopy() Undirected {
 	c, _ := g.Copy()                  // start with a copy
 	rw := make(AdjacencyList, len(g)) // "reciprocals wanted"
 	for fr, to := range g {
@@ -115,7 +115,7 @@ func (g AdjacencyList) UndirectedCopy() UndirectedAL {
 	for fr, to := range rw {
 		c[fr] = append(c[fr], to...)
 	}
-	return UndirectedAL{c}
+	return Undirected{c}
 }
 
 // TarjanBiconnectedComponents, for undirected simple graphs.
@@ -123,7 +123,7 @@ func (g AdjacencyList) UndirectedCopy() UndirectedAL {
 // The method calls the emit argument for each component identified, as long
 // as emit returns true.  If emit returns false, TarjanBiconnectedComponents
 // returns immediately.
-func (g UndirectedAL) TarjanBiconnectedComponents(emit func([]Edge) bool) {
+func (g Undirected) TarjanBiconnectedComponents(emit func([]Edge) bool) {
 	// Implemented closely to pseudocode in "Depth-first search and linear
 	// graph algorithms", Robert Tarjan, SIAM J. Comput. Vol. 1, No. 2,
 	// June 1972.

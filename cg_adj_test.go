@@ -51,7 +51,7 @@ func ExampleAdjacencyList_ArcSize_handshakingLemma() {
 	//   1   2
 	//  / \
 	// 3   4
-	var g graph.UndirectedAL
+	var g graph.Undirected
 	g.AddEdge(0, 1)
 	g.AddEdge(1, 3)
 	g.AddEdge(1, 4)
@@ -105,7 +105,7 @@ func ExampleAdjacencyList_BronKerbosch1() {
 	// 0--4--5-
 	//    |  | \
 	//    3--2--1
-	var g graph.UndirectedAL
+	var g graph.Undirected
 	g.AddEdge(0, 4)
 	g.AddEdge(4, 5)
 	g.AddEdge(4, 3)
@@ -129,7 +129,7 @@ func ExampleAdjacencyList_BKPivotMaxDegree() {
 	// 0--4--5-
 	//    |  | \
 	//    3--2--1
-	var g graph.UndirectedAL
+	var g graph.Undirected
 	g.AddEdge(0, 4)
 	g.AddEdge(4, 5)
 	g.AddEdge(4, 3)
@@ -153,7 +153,7 @@ func ExampleAdjacencyList_BKPivotMinP() {
 	// 0--4--5-
 	//    |  | \
 	//    3--2--1
-	var g graph.UndirectedAL
+	var g graph.Undirected
 	g.AddEdge(0, 4)
 	g.AddEdge(4, 5)
 	g.AddEdge(4, 3)
@@ -177,7 +177,7 @@ func ExampleAdjacencyList_BronKerbosch2() {
 	// 0--4--5-
 	//    |  | \
 	//    3--2--1
-	var g graph.UndirectedAL
+	var g graph.Undirected
 	g.AddEdge(0, 4)
 	g.AddEdge(4, 5)
 	g.AddEdge(4, 3)
@@ -201,7 +201,7 @@ func ExampleAdjacencyList_BronKerbosch3() {
 	// 0--4--5-
 	//    |  | \
 	//    3--2--1
-	var g graph.UndirectedAL
+	var g graph.Undirected
 	g.AddEdge(0, 4)
 	g.AddEdge(4, 5)
 	g.AddEdge(4, 3)
@@ -444,7 +444,7 @@ func ExampleAdjacencyList_IsConnected() {
 	//   0
 	//  / \
 	// 1   2
-	var g graph.UndirectedAL
+	var g graph.Undirected
 	g.AddEdge(0, 1)
 	g.AddEdge(0, 2)
 	u, _, _ := g.IsUndirected()
@@ -460,7 +460,7 @@ func ExampleAdjacencyList_IsConnected_notConnected() {
 	//   0   1
 	//  / \
 	// 2   3
-	var g graph.UndirectedAL
+	var g graph.Undirected
 	g.AddEdge(0, 2)
 	g.AddEdge(0, 3)
 	u, _, _ := g.IsUndirected()
@@ -583,7 +583,7 @@ func ExampleAdjacencyList_TarjanForward() {
 func ExampleAdjacencyList_UndirectedDegree() {
 	// 0---1--\
 	//      \-/
-	var g graph.UndirectedAL
+	var g graph.Undirected
 	g.AddEdge(0, 1)
 	g.AddEdge(1, 1)
 	fmt.Println(g.Degree(0))

@@ -62,7 +62,7 @@ func ExampleAdjacencyList_EulerianCycle() {
 }
 
 func ExampleAdjacencyList_EulerianCycleD() {
-	var g graph.UndirectedAL
+	var g graph.Undirected
 	g.AddEdge(0, 1)
 	g.AddEdge(0, 2)
 	g.AddEdge(1, 2)

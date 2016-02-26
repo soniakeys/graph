@@ -109,7 +109,7 @@ func (g AdjacencyList) EulerianCycleD(m int) ([]NI, error) {
 // It works, but contains an extra loop that I think spoils the time
 // complexity.  Probably still pretty fast in practice, but a different
 // graph representation might be better.
-func (g UndirectedAL) EulerianCycleD(m int) ([]NI, error) {
+func (g Undirected) EulerianCycleD(m int) ([]NI, error) {
 	if len(g.AdjacencyList) == 0 {
 		return nil, nil
 	}
