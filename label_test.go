@@ -17,12 +17,12 @@ func ExampleLabeledAdjacencyList_DAGMaxLenPath() {
 	//         \    (S)  /  (P)
 	//          \       /
 	//           \-----/ (Q)
-	g := graph.LabeledAdjacencyList{
+	g := graph.DirectedLabeled{graph.LabeledAdjacencyList{
 		3: {{To: 0, Label: 'Q'}, {4, 'W'}},
 		4: {{0, 'M'}},
 		1: {{0, 'S'}},
 		0: {{2, 'P'}},
-	}
+	}}
 	o, _ := g.Topological()
 	fmt.Println("ordering:", o)
 	n, p := g.DAGMaxLenPath(o)
@@ -287,20 +287,20 @@ func ExampleLabeledAdjacencyList_UnlabeledTranspose() {
 	//             2
 	//  (label: 7)/ \(9)
 	//           0   1
-	g := graph.LabeledAdjacencyList{
+	g := graph.DirectedLabeled{graph.LabeledAdjacencyList{
 		2: {{To: 0, Label: 7}, {To: 1, Label: 9}},
-	}
+	}}
 
 	fmt.Println("two steps:")
 	ut, m := g.Unlabeled().Transpose()
-	for fr, to := range ut {
+	for fr, to := range ut.AdjacencyList {
 		fmt.Println(fr, to)
 	}
 	fmt.Println(m, "arcs")
 
 	fmt.Println("direct:")
 	ut, m = g.UnlabeledTranspose()
-	for fr, to := range ut {
+	for fr, to := range ut.AdjacencyList {
 		fmt.Println(fr, to)
 	}
 	fmt.Println(m, "arcs")

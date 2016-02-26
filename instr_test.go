@@ -96,7 +96,8 @@ arc:
 	}
 	// variants
 	tc.g = tc.l.Unlabeled()
-	tc.t, tc.m = tc.g.Transpose()
+	t, m := Directed{tc.g}.Transpose()
+	tc.t, tc.m = t.AdjacencyList, m
 	return tc
 }
 

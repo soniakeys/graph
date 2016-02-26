@@ -174,15 +174,15 @@ func ExampleBreadthFirst2_Path() {
 	//   / \ /   /
 	//  2   4---6--\
 	//           \-/
-	g := graph.AdjacencyList{
+	g := graph.Directed{graph.AdjacencyList{
 		2: {1},
 		1: {4},
 		4: {3, 6},
 		3: {5},
 		6: {5, 6},
-	}
+	}}
 	t, m := g.Transpose()
-	b := graph.NewBreadthFirst2(g, t, m)
+	b := graph.NewBreadthFirst2(g.AdjacencyList, t.AdjacencyList, m)
 	var start, end graph.NI = 1, 3
 	if !b.Path(start, end) {
 		return
@@ -206,15 +206,15 @@ func ExampleBreadthFirst2_AllPaths() {
 	//   / \ /   /
 	//  2   4---6--\
 	//           \-/
-	g := graph.AdjacencyList{
+	g := graph.Directed{graph.AdjacencyList{
 		2: {1},
 		1: {4},
 		4: {3, 6},
 		3: {5},
 		6: {5, 6},
-	}
+	}}
 	t, m := g.Transpose()
-	b := graph.NewBreadthFirst2(g, t, m)
+	b := graph.NewBreadthFirst2(g.AdjacencyList, t.AdjacencyList, m)
 	b.AllPaths(1)
 	fmt.Println("Max path length:", b.Result.MaxLen)
 	p := make([]graph.NI, b.Result.MaxLen)
@@ -244,7 +244,7 @@ func ExampleDAGPath_AllPaths() {
 	//                        \ /
 	//                         6------8
 	//                           (10)
-	g := graph.LabeledAdjacencyList{
+	g := graph.DirectedLabeled{graph.LabeledAdjacencyList{
 		0: {{To: 2, Label: 11}},
 		1: {{3, 11}},
 		3: {{5, 10}},
@@ -253,7 +253,7 @@ func ExampleDAGPath_AllPaths() {
 		6: {{7, 20}, {8, 10}},
 		7: {{9, 10}},
 		9: {},
-	}
+	}}
 	o := []graph.NI{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
 	d := graph.NewDAGPath(g, o,
 		func(l graph.LI) float64 { return float64(l) },
@@ -295,14 +295,14 @@ func ExampleDAGPath_Path_shortest() {
 	//                   \   /
 	//                 (2)\ /(3)
 	//                     5
-	g := graph.LabeledAdjacencyList{
+	g := graph.DirectedLabeled{graph.LabeledAdjacencyList{
 		0: {{To: 5, Label: 2}, {6, 5}},
 		1: {{0, -10}, {4, -3}},
 		3: {{1, 10}},
 		4: {{0, -2}},
 		5: {{6, 3}},
 		6: {{2, 10}},
-	}
+	}}
 	o, _ := g.Topological()
 	fmt.Println("Ordering:", o)
 	d := graph.NewDAGPath(g, o,
@@ -333,14 +333,14 @@ func ExampleDAGPath_Path_longest() {
 	//                   \   /
 	//                 (2)\ /(3)
 	//                     5
-	g := graph.LabeledAdjacencyList{
+	g := graph.DirectedLabeled{graph.LabeledAdjacencyList{
 		0: {{To: 5, Label: 2}, {6, 5}},
 		1: {{0, -10}, {4, -3}},
 		3: {{1, 10}},
 		4: {{0, -2}},
 		5: {{6, 3}},
 		6: {{2, 10}},
-	}
+	}}
 	o, _ := g.Topological()
 	fmt.Println("Ordering:", o)
 	d := graph.NewDAGPath(g, o,
@@ -371,14 +371,14 @@ func ExampleLabeledAdjacencyList_DAGMinDistPath() {
 	//                   \   /
 	//                 (2)\ /(3)
 	//                     5
-	g := graph.LabeledAdjacencyList{
+	g := graph.DirectedLabeled{graph.LabeledAdjacencyList{
 		0: {{To: 5, Label: 2}, {6, 5}},
 		1: {{0, -10}, {4, -3}},
 		3: {{1, 10}},
 		4: {{0, -2}},
 		5: {{6, 3}},
 		6: {{2, 10}},
-	}
+	}}
 	var start, end graph.NI = 3, 2
 	w := func(l graph.LI) float64 { return float64(l) }
 	p, dist, err := g.DAGMinDistPath(start, end, w)
@@ -403,14 +403,14 @@ func ExampleLabeledAdjacencyList_DAGMaxDistPath() {
 	//                   \   /
 	//                 (2)\ /(3)
 	//                     5
-	g := graph.LabeledAdjacencyList{
+	g := graph.DirectedLabeled{graph.LabeledAdjacencyList{
 		0: {{To: 5, Label: 2}, {6, 5}},
 		1: {{0, -10}, {4, -3}},
 		3: {{1, 10}},
 		4: {{0, -2}},
 		5: {{6, 3}},
 		6: {{2, 10}},
-	}
+	}}
 	var start, end graph.NI = 3, 2
 	w := func(l graph.LI) float64 { return float64(l) }
 	p, dist, err := g.DAGMaxDistPath(start, end, w)

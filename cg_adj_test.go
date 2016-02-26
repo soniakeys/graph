@@ -71,17 +71,17 @@ func ExampleAdjacencyList_Balanced() {
 	// |
 	// v
 	// 0----->1
-	g := graph.AdjacencyList{
+	g := graph.Directed{graph.AdjacencyList{
 		2: {0},
 		0: {1},
-	}
+	}}
 	fmt.Println(g.Balanced())
 
 	// 0<--\
 	// |    \
 	// v     \
 	// 1----->2
-	g[1] = []graph.NI{2}
+	g.AdjacencyList[1] = []graph.NI{2}
 	fmt.Println(g.Balanced())
 	// Output:
 	// false
@@ -225,12 +225,12 @@ func ExampleAdjacencyList_Cyclic() {
 	//   0
 	//  / \
 	// 1-->2-->3
-	g := graph.AdjacencyList{
+	g := graph.Directed{graph.AdjacencyList{
 		0: {1, 2},
 		1: {2},
 		2: {3},
 		3: {},
-	}
+	}}
 	cyclic, _, _ := g.Cyclic()
 	fmt.Println(cyclic)
 
@@ -240,7 +240,7 @@ func ExampleAdjacencyList_Cyclic() {
 	// ^   |
 	// |   v
 	// \---3
-	g[3] = []graph.NI{1}
+	g.AdjacencyList[3] = []graph.NI{1}
 	fmt.Println(g.Cyclic())
 
 	// Output:
@@ -281,12 +281,12 @@ func ExampleAdjacencyList_DepthFirst_earlyTermination() {
 	// ^   |
 	// |   v
 	// \---3
-	g := graph.AdjacencyList{
+	g := graph.Directed{graph.AdjacencyList{
 		0: {1, 2},
 		1: {2},
 		2: {3},
 		3: {1},
-	}
+	}}
 	ok := g.DepthFirst(0, nil, func(n graph.NI) bool {
 		fmt.Println("visit", n)
 		return n != 2
@@ -427,11 +427,11 @@ func ExampleAdjacencyList_InDegree() {
 	//  | \
 	//  3  4<-\
 	//     \--/
-	g := graph.AdjacencyList{
+	g := graph.Directed{graph.AdjacencyList{
 		0: {1},
 		1: {3, 4},
 		4: {4},
-	}
+	}}
 	fmt.Println("node:    0 1 2 3 4")
 	fmt.Println("in-deg:", g.InDegree())
 	// Output:
@@ -526,7 +526,7 @@ func ExampleAdjacencyList_Tarjan() {
 	//         |   ^
 	//         |   |
 	//         \-->1
-	g := graph.AdjacencyList{
+	g := graph.Directed{graph.AdjacencyList{
 		0: {0, 5, 7},
 		5: {4, 6},
 		4: {5, 2, 3},
@@ -535,7 +535,7 @@ func ExampleAdjacencyList_Tarjan() {
 		3: {1},
 		1: {2},
 		2: {3},
-	}
+	}}
 	g.Tarjan(func(c []graph.NI) bool {
 		fmt.Println(c)
 		return true
@@ -560,7 +560,7 @@ func ExampleAdjacencyList_TarjanForward() {
 	//         |   ^
 	//         |   |
 	//         \-->1
-	g := graph.AdjacencyList{
+	g := graph.Directed{graph.AdjacencyList{
 		0: {0, 5, 7},
 		5: {4, 6},
 		4: {5, 2, 3},
@@ -569,7 +569,7 @@ func ExampleAdjacencyList_TarjanForward() {
 		3: {1},
 		1: {2},
 		2: {3},
-	}
+	}}
 	for _, c := range g.TarjanForward() {
 		fmt.Println(c)
 	}

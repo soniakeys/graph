@@ -353,15 +353,19 @@ func ExampleAdjacencyList_Degeneracy() {
 	//          \  \-----/ |
 	//           \--------/
 	//
-	g := graph.AdjacencyList{
-		0: {1, 2, 4, 6},
-		1: {0, 2, 4, 6},
-		2: {0, 1, 3, 6},
-		3: {2, 4, 5},
-		4: {0, 1, 3, 6},
-		5: {3},
-		6: {0, 1, 2, 4},
-	}
+	var g graph.Undirected
+	g.AddEdge(0, 1)
+	g.AddEdge(0, 2)
+	g.AddEdge(0, 4)
+	g.AddEdge(0, 6)
+	g.AddEdge(1, 2)
+	g.AddEdge(1, 4)
+	g.AddEdge(1, 6)
+	g.AddEdge(6, 2)
+	g.AddEdge(6, 4)
+	g.AddEdge(3, 2)
+	g.AddEdge(3, 4)
+	g.AddEdge(3, 5)
 	k, ord, cores := g.Degeneracy()
 	fmt.Println("Degeneracy:", k)
 	fmt.Println("Ordering:", ord)

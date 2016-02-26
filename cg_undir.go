@@ -464,6 +464,72 @@ func (g UndirectedLabeled) ConnectedComponentReps() (reps []NI, orders []int) {
 	return
 }
 
+// Degeneracy computes k-degeneracy, vertex ordering and k-cores.
+//
+// See Wikipedia https://en.wikipedia.org/wiki/Degeneracy_(graph_theory)
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g UndirectedLabeled) Degeneracy() (k int, ordering []NI, cores []int) {
+    // WP algorithm
+    ordering = make([]NI, len(g.LabeledAdjacencyList))
+    var L big.Int
+    d := make([]int, len(g.LabeledAdjacencyList))
+    var D [][]NI
+    for v, nb := range g.LabeledAdjacencyList {
+        dv := len(nb)
+        d[v] = dv
+        for len(D) <= dv {
+            D = append(D, nil)
+        }
+        D[dv] = append(D[dv], NI(v))
+    }
+    for ox := range g.LabeledAdjacencyList {
+        // find a non-empty D
+        i := 0
+        for len(D[i]) == 0 {
+            i++
+        }
+        // k is max(i, k)
+        if i > k {
+            for len(cores) <= i {
+                cores = append(cores, 0)
+            }
+            cores[k] = ox
+            k = i
+        }
+        // select from D[i]
+        Di := D[i]
+        last := len(Di) - 1
+        v := Di[last]
+        // Add v to ordering, remove from Di
+        ordering[ox] = v
+        L.SetBit(&L, int(v), 1)
+        D[i] = Di[:last]
+        // move neighbors
+        for _, nb := range g.LabeledAdjacencyList[v] {
+            if L.Bit(int(nb.To)) == 1 {
+                continue
+            }
+            dn := d[nb.To] // old number of neighbors of nb
+            Ddn := D[dn]   // nb is in this list
+            // remove it from the list
+            for wx, w := range Ddn {
+                if w == nb.To {
+                    last := len(Ddn) - 1
+                    Ddn[wx], Ddn[last] = Ddn[last], Ddn[wx]
+                    D[dn] = Ddn[:last]
+                }
+            }
+            dn-- // new number of neighbors
+            d[nb.To] = dn
+            // re--add it to it's new list
+            D[dn] = append(D[dn], nb.To)
+        }
+    }
+    cores[k] = len(ordering)
+    return
+}
+
 // IsConnected tests if an undirected graph is a single connected component.
 //
 // There are equivalent labeled and unlabeled versions of this method.

@@ -30,6 +30,19 @@ import (
 // Note this does not preclude parallel arcs with different labels.
 type LabeledAdjacencyList [][]Half
 
+type DirectedLabeled struct {
+	LabeledAdjacencyList
+}
+
+func (g DirectedLabeled) Unlabeled() Directed {
+	return Directed{g.LabeledAdjacencyList.Unlabeled()}
+}
+
+func (g DirectedLabeled) UnlabeledTranspose() (t Directed, m int) {
+	a, s := g.LabeledAdjacencyList.UnlabeledTranspose()
+	return Directed{a}, s
+}
+
 // LI is a label integer, used for associating labels with arcs.
 type LI int32
 

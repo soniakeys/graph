@@ -16,6 +16,11 @@ type UndirectedLabeled struct {
 	LabeledAdjacencyList
 }
 
+func (g Undirected) Copy() (Undirected, int) {
+	l, s := g.AdjacencyList.Copy()
+	return Undirected{l}, s
+}
+
 // Edge is an undirected edge between nodes N1 and N2.
 type Edge struct{ N1, N2 NI }
 

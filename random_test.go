@@ -15,11 +15,11 @@ import (
 
 // duplicate code in instr_test.go
 type testCase struct {
-	l graph.LabeledAdjacencyList // generated labeled directed graph
+	l graph.DirectedLabeled // generated labeled directed graph
 	w []float64                  // arc weights for l
 	// variants
-	g graph.AdjacencyList // unlabeled
-	t graph.AdjacencyList // transpose
+	g graph.Directed // unlabeled
+	t graph.Directed // transpose
 
 	h graph.Heuristic
 
@@ -60,7 +60,7 @@ func r(nNodes, nArcs int, seed int64) testCase {
 		return math.Hypot(ce.x-cn.x, ce.y-cn.y)
 	}
 	// graph
-	tc.l = make(graph.LabeledAdjacencyList, nNodes)
+	tc.l = graph.DirectedLabeled{make(graph.LabeledAdjacencyList, nNodes)}
 	tc.w = make([]float64, nArcs)
 	// arcs
 	var tooFar, dup int
@@ -82,14 +82,15 @@ arc:
 			tooFar++
 			continue
 		}
-		for _, nb := range tc.l[n1] {
+		for _, nb := range tc.l.LabeledAdjacencyList[n1] {
 			if nb.To == n2 {
 				dup++
 				continue arc
 			}
 		}
 		tc.w[i] = dist
-		tc.l[n1] = append(tc.l[n1], graph.Half{To: n2, Label: graph.LI(i)})
+		tc.l.LabeledAdjacencyList[n1] = append(tc.l.LabeledAdjacencyList[n1],
+			graph.Half{To: n2, Label: graph.LI(i)})
 		i++
 	}
 	// variants
@@ -147,7 +148,7 @@ func k(scale uint, ef float64, nStarts int) (kt kronTest) {
 
 func testSSSP(tc testCase, t *testing.T) {
 	w := func(label graph.LI) float64 { return tc.w[label] }
-	d := graph.NewDijkstra(tc.l, w)
+	d := graph.NewDijkstra(tc.l.LabeledAdjacencyList, w)
 	d.Path(tc.start, tc.end)
 	pathD := d.Tree.PathTo(tc.end, nil)
 	distD := d.Dist[tc.end]
@@ -180,7 +181,7 @@ func testSSSP(tc testCase, t *testing.T) {
 	// test Bellman Ford against Dijkstra all paths
 	d.Reset()
 	d.AllPaths(tc.start)
-	b := graph.NewBellmanFord(tc.l, w)
+	b := graph.NewBellmanFord(tc.l.LabeledAdjacencyList, w)
 	b.Start(tc.start)
 	// result objects should be identical
 	dr := d.Tree
@@ -204,7 +205,7 @@ func testSSSP(tc testCase, t *testing.T) {
 	d.Reset()
 	d.AllPaths(tc.start)
 	ur := d.Tree
-	bfs := graph.NewBreadthFirst(tc.g)
+	bfs := graph.NewBreadthFirst(tc.g.AdjacencyList)
 	np := bfs.AllPaths(tc.start)
 	bfsr := bfs.Result
 	var ml, npf int
@@ -227,7 +228,7 @@ func testSSSP(tc testCase, t *testing.T) {
 		t.Fatal("bfs all paths returned", np, "recount:", npf)
 	}
 	// breadth first 2
-	bfs2 := graph.NewBreadthFirst2(tc.g, tc.t, tc.m)
+	bfs2 := graph.NewBreadthFirst2(tc.g.AdjacencyList, tc.t.AdjacencyList, tc.m)
 	np2 := bfs2.AllPaths(tc.start)
 	bfs2r := bfs2.Result
 	var ml2, npf2 int
@@ -265,7 +266,7 @@ func BenchmarkDijkstra100(b *testing.B) {
 	// 100 nodes, 200 edges
 	tc := r100
 	w := func(label graph.LI) float64 { return tc.w[label] }
-	d := graph.NewDijkstra(tc.l, w)
+	d := graph.NewDijkstra(tc.l.LabeledAdjacencyList, w)
 	for i := 0; i < b.N; i++ {
 		d.AllPaths(tc.start)
 	}

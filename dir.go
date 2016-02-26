@@ -14,20 +14,29 @@ import (
 	"sort"
 )
 
+type Directed struct {
+	AdjacencyList
+}
+
+func (g Directed) Copy() (Directed, int) {
+	l, s := g.AdjacencyList.Copy()
+	return Directed{l}, s
+}
+
 // DAGMaxLenPath finds a maximum length path in a directed acyclic graph.
 //
 // Argument ordering must be a topological ordering of g.
-func (g AdjacencyList) DAGMaxLenPath(ordering []NI) (path []NI) {
+func (g Directed) DAGMaxLenPath(ordering []NI) (path []NI) {
 	// dynamic programming. visit nodes in reverse order. for each, compute
 	// longest path as one plus longest of 'to' nodes.
 	// Visits each arc once.  O(m).
 	//
 	// Similar code in label.go
 	var n NI
-	mlp := make([][]NI, len(g)) // index by node number
+	mlp := make([][]NI, len(g.AdjacencyList)) // index by node number
 	for i := len(ordering) - 1; i >= 0; i-- {
 		fr := ordering[i] // node number
-		to := g[fr]
+		to := g.AdjacencyList[fr]
 		if len(to) == 0 {
 			continue
 		}
@@ -59,7 +68,7 @@ func (g AdjacencyList) DAGMaxLenPath(ordering []NI) (path []NI) {
 //
 // Internally, EulerianCycle copies the entire graph g.
 // See EulerianCycleD for a more space efficient version.
-func (g AdjacencyList) EulerianCycle() ([]NI, error) {
+func (g Directed) EulerianCycle() ([]NI, error) {
 	c, m := g.Copy()
 	return c.EulerianCycleD(m)
 }
@@ -78,11 +87,11 @@ func (g AdjacencyList) EulerianCycle() ([]NI, error) {
 // nodes are the same.
 //
 // * Otherwise, result is nil, error
-func (g AdjacencyList) EulerianCycleD(m int) ([]NI, error) {
-	if len(g) == 0 {
+func (g Directed) EulerianCycleD(m int) ([]NI, error) {
+	if len(g.AdjacencyList) == 0 {
 		return nil, nil
 	}
-	e := newEulerian(g, m)
+	e := newEulerian(g.AdjacencyList, m)
 	for e.s >= 0 {
 		v := e.top() // v is node that starts cycle
 		e.push()
@@ -139,10 +148,10 @@ func (g Undirected) EulerianCycleD(m int) ([]NI, error) {
 //
 // Internally, EulerianPath copies the entire graph g.
 // See EulerianPathD for a more space efficient version.
-func (g AdjacencyList) EulerianPath() ([]NI, error) {
+func (g Directed) EulerianPath() ([]NI, error) {
 	ind := g.InDegree()
 	var start NI
-	for n, to := range g {
+	for n, to := range g.AdjacencyList {
 		if len(to) > ind[n] {
 			start = NI(n)
 			break
@@ -166,11 +175,11 @@ func (g AdjacencyList) EulerianPath() ([]NI, error) {
 // The path result is a list of nodes, where the first node is start.
 //
 // * Otherwise, result is nil, error
-func (g AdjacencyList) EulerianPathD(m int, start NI) ([]NI, error) {
-	if len(g) == 0 {
+func (g Directed) EulerianPathD(m int, start NI) ([]NI, error) {
+	if len(g.AdjacencyList) == 0 {
 		return nil, nil
 	}
-	e := newEulerian(g, m)
+	e := newEulerian(g.AdjacencyList, m)
 	e.p[0] = start
 	// unlike EulerianCycle, the first path doesn't have be a cycle.
 	e.push()
@@ -320,23 +329,23 @@ func (g AdjacencyList) HasParallelSort() (has bool, fr, to NI) {
 // The method calls the emit argument for each path or isolated cycle in g,
 // as long as emit returns true.  If emit returns false,
 // MaximalNonBranchingPaths returns immediately.
-func (g AdjacencyList) MaximalNonBranchingPaths(emit func([]NI) bool) {
+func (g Directed) MaximalNonBranchingPaths(emit func([]NI) bool) {
 	ind := g.InDegree()
 	var uv big.Int
-	OneBits(&uv, len(g))
-	for v, vTo := range g {
+	OneBits(&uv, len(g.AdjacencyList))
+	for v, vTo := range g.AdjacencyList {
 		if !(ind[v] == 1 && len(vTo) == 1) {
 			for _, w := range vTo {
 				n := []NI{NI(v), w}
 				uv.SetBit(&uv, v, 0)
 				uv.SetBit(&uv, int(w), 0)
-				wTo := g[w]
+				wTo := g.AdjacencyList[w]
 				for ind[w] == 1 && len(wTo) == 1 {
 					u := wTo[0]
 					n = append(n, u)
 					uv.SetBit(&uv, int(u), 0)
 					w = u
-					wTo = g[w]
+					wTo = g.AdjacencyList[w]
 				}
 				if !emit(n) { // n is a path
 					return
@@ -348,7 +357,7 @@ func (g AdjacencyList) MaximalNonBranchingPaths(emit func([]NI) bool) {
 		v := NI(b - 1)
 		n := []NI{v}
 		for w := v; ; {
-			w = g[w][0]
+			w = g.AdjacencyList[w][0]
 			uv.SetBit(&uv, int(w), 0)
 			n = append(n, w)
 			if w == v {
@@ -418,13 +427,13 @@ func (g AdjacencyList) StronglyConnectedComponents() []int {
 // For every arc from->to of g, the result will have an arc to->from.
 // Transpose also counts arcs as it traverses and returns m the number of arcs
 // in g (equal to the number of arcs in the result.)
-func (g AdjacencyList) Transpose() (t AdjacencyList, m int) {
-	t = make(AdjacencyList, len(g))
-	for n, nbs := range g {
+func (g Directed) Transpose() (t Directed, m int) {
+	ta := make(AdjacencyList, len(g.AdjacencyList))
+	for n, nbs := range g.AdjacencyList {
 		for _, nb := range nbs {
-			t[nb] = append(t[nb], NI(n))
+			ta[nb] = append(ta[nb], NI(n))
 			m++
 		}
 	}
-	return
+	return Directed{ta}, m
 }

@@ -170,8 +170,8 @@ func NewBreadthFirst2(to, from AdjacencyList, m int) *BreadthFirst2 {
 // Returned is the path as list of nodes.
 // The result is nil if no path was found.
 func (g AdjacencyList) BreadthFirst2Path(start, end NI) []NI {
-	t, m := g.Transpose()
-	b := NewBreadthFirst2(g, t, m)
+	t, m := Directed{g}.Transpose()
+	b := NewBreadthFirst2(g, t.AdjacencyList, m)
 	b.Traverse(start, func(n NI) bool { return n != end })
 	return b.Result.PathTo(end, nil)
 }
@@ -324,14 +324,14 @@ type DAGPath struct {
 // concurrently.  Searches can be run concurrently however, on DAGPath
 // objects obtained with separate calls to NewDAGPath, even with the same
 // graph argument to NewDAGPath.
-func NewDAGPath(g LabeledAdjacencyList, ordering []NI, w WeightFunc, longest bool) *DAGPath {
+func NewDAGPath(g DirectedLabeled, ordering []NI, w WeightFunc, longest bool) *DAGPath {
 	return &DAGPath{
-		Graph:    g,
+		Graph:    g.LabeledAdjacencyList,
 		Ordering: ordering,
 		Weight:   w,
 		Longest:  longest,
-		Tree:     NewFromList(len(g)),
-		Dist:     make([]float64, len(g)),
+		Tree:     NewFromList(len(g.LabeledAdjacencyList)),
+		Dist:     make([]float64, len(g.LabeledAdjacencyList)),
 	}
 }
 
@@ -342,7 +342,7 @@ func NewDAGPath(g LabeledAdjacencyList, ordering []NI, w WeightFunc, longest boo
 // Returned is the path and distance as returned by FromList.PathTo.
 //
 // This is a convenience method.  See the DAGPath type for more options.
-func (g LabeledAdjacencyList) DAGMinDistPath(start, end NI, w WeightFunc) ([]NI, float64, error) {
+func (g DirectedLabeled) DAGMinDistPath(start, end NI, w WeightFunc) ([]NI, float64, error) {
 	return g.dagPath(start, end, w, false)
 }
 
@@ -353,11 +353,11 @@ func (g LabeledAdjacencyList) DAGMinDistPath(start, end NI, w WeightFunc) ([]NI,
 // Returned is the path and distance as returned by FromList.PathTo.
 //
 // This is a convenience method.  See the DAGPath type for more options.
-func (g LabeledAdjacencyList) DAGMaxDistPath(start, end NI, w WeightFunc) ([]NI, float64, error) {
+func (g DirectedLabeled) DAGMaxDistPath(start, end NI, w WeightFunc) ([]NI, float64, error) {
 	return g.dagPath(start, end, w, true)
 }
 
-func (g LabeledAdjacencyList) dagPath(start, end NI, w WeightFunc, longest bool) ([]NI, float64, error) {
+func (g DirectedLabeled) dagPath(start, end NI, w WeightFunc, longest bool) ([]NI, float64, error) {
 	o, _ := g.Topological()
 	if o == nil {
 		return nil, 0, fmt.Errorf("not a DAG")
