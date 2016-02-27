@@ -33,6 +33,11 @@ func (g AdjacencyList) ArcSize() int {
 // BoundsOk returns true when no arcs point outside the bounds of g.
 // Otherwise it returns false and an example arc that points outside of g.
 //
+// Most methods of this package assume the BoundsOk condition and may
+// panic when they encounter an arc pointing outside of the graph.  This
+// function can be used to validate a graph when the BoundsOk condition
+// is unknown.
+//
 // There are equivalent labeled and unlabeled versions of this method.
 func (g AdjacencyList) BoundsOk() (ok bool, fr NI, to NI) {
 	for fr, to := range g {

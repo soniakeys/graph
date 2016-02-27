@@ -8,17 +8,16 @@
 
 package graph
 
+// Undirected represents an undirected graph.
+//
+// In an undirected graph, for each arc between distinct nodes there is also
+// a reciprocal arc, an arc in the opposite direction.  Loops do not have
+// reciprocals.
+//
+// Undirected methods generally rely on the graph being undirected,
+// specifically that every arc between distinct nodes has a reciprocal.
 type Undirected struct {
-	AdjacencyList
-}
-
-type UndirectedLabeled struct {
-	LabeledAdjacencyList
-}
-
-func (g Undirected) Copy() (Undirected, int) {
-	l, s := g.AdjacencyList.Copy()
-	return Undirected{l}, s
+	AdjacencyList // embedded to include AdjacencyList methods
 }
 
 // Edge is an undirected edge between nodes N1 and N2.
@@ -123,11 +122,15 @@ func (g AdjacencyList) UndirectedCopy() Undirected {
 	return Undirected{c}
 }
 
-// TarjanBiconnectedComponents, for undirected simple graphs.
+// TarjanBiconnectedComponents decomposes a graph into maximal biconnected
+// components, components for which if any node were removed the component
+// would remain connected.
 //
-// The method calls the emit argument for each component identified, as long
-// as emit returns true.  If emit returns false, TarjanBiconnectedComponents
-// returns immediately.
+// The reciever g must be a simple graph.  The method calls the emit argument
+// for each component identified, as long as emit returns true.  If emit
+// returns false, TarjanBiconnectedComponents returns immediately.
+//
+// See also the eqivalent labeled TarjanBiconnectedComponents.
 func (g Undirected) TarjanBiconnectedComponents(emit func([]Edge) bool) {
 	// Implemented closely to pseudocode in "Depth-first search and linear
 	// graph algorithms", Robert Tarjan, SIAM J. Comput. Vol. 1, No. 2,

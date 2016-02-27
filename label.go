@@ -30,17 +30,25 @@ import (
 // Note this does not preclude parallel arcs with different labels.
 type LabeledAdjacencyList [][]Half
 
+// DirectedLabeled represents a directed labeled graph.
+//
+// This is the labeled version of Directed.  See types LabeledAdjacencyList
+// and Directed.
 type DirectedLabeled struct {
-	LabeledAdjacencyList
+	LabeledAdjacencyList // embedded to include LabeledAdjacencyList methods
 }
 
+// UndirectedLabeled represents an undirected labeled graph.
+//
+// This is the labeled version of Undirected.  See types LabeledAdjacencyList
+// and Undirected.
+type UndirectedLabeled struct {
+	LabeledAdjacencyList // embedded to include LabeledAdjacencyList methods
+}
+
+// Unlabeled constructs the unlabeled directed graph corresponding to g.
 func (g DirectedLabeled) Unlabeled() Directed {
 	return Directed{g.LabeledAdjacencyList.Unlabeled()}
-}
-
-func (g DirectedLabeled) UnlabeledTranspose() (t Directed, m int) {
-	a, s := g.LabeledAdjacencyList.UnlabeledTranspose()
-	return Directed{a}, s
 }
 
 // LI is a label integer, used for associating labels with arcs.
@@ -301,14 +309,16 @@ func (g LabeledAdjacencyList) NegativeArc(w WeightFunc) bool {
 	return false
 }
 
-// TarjanBiconnectedComponents, for undirected simple graphs.
+// TarjanBiconnectedComponents decomposes a graph into maximal biconnected
+// components, components for which if any node were removed the component
+// would remain connected.
 //
-// The method calls the emit argument for each component identified, as long
-// as emit returns true.  If emit returns false, TarjanBiconnectedComponents
-// returns immediately.
+// The reciever g must be a simple graph.  The method calls the emit argument
+// for each component identified, as long as emit returns true.  If emit
+// returns false, TarjanBiconnectedComponents returns immediately.
 //
 // See also the eqivalent unlabeled TarjanBiconnectedComponents.
-func (g LabeledAdjacencyList) TarjanBiconnectedComponents(emit func([]LabeledEdge) bool) {
+func (g UndirectedLabeled) TarjanBiconnectedComponents(emit func([]LabeledEdge) bool) {
 	// Implemented closely to pseudocode in "Depth-first search and linear
 	// graph algorithms", Robert Tarjan, SIAM J. Comput. Vol. 1, No. 2,
 	// June 1972.
@@ -318,8 +328,8 @@ func (g LabeledAdjacencyList) TarjanBiconnectedComponents(emit func([]LabeledEdg
 	// termed a "to-list", "neighbor list", or "child list."
 	//
 	// Nearly identical code in undir.go.
-	number := make([]int, len(g))
-	lowpt := make([]int, len(g))
+	number := make([]int, len(g.LabeledAdjacencyList))
+	lowpt := make([]int, len(g.LabeledAdjacencyList))
 	var stack []LabeledEdge
 	var i int
 	var biconnect func(NI, NI) bool
@@ -327,7 +337,7 @@ func (g LabeledAdjacencyList) TarjanBiconnectedComponents(emit func([]LabeledEdg
 		i++
 		number[v] = i
 		lowpt[v] = i
-		for _, w := range g[v] {
+		for _, w := range g.LabeledAdjacencyList[v] {
 			if number[w.To] == 0 {
 				stack = append(stack, LabeledEdge{Edge{v, w.To}, w.Label})
 				if !biconnect(w.To, v) {
@@ -360,28 +370,27 @@ func (g LabeledAdjacencyList) TarjanBiconnectedComponents(emit func([]LabeledEdg
 		}
 		return true
 	}
-	for w := range g {
+	for w := range g.LabeledAdjacencyList {
 		if number[w] == 0 && !biconnect(NI(w), 0) {
 			return
 		}
 	}
 }
 
-// Transpose, for directed graphs, constructs a new adjacency list that is
-// the transpose of g.
+// Transpose constructs a new adjacency list that is the transpose of g.
 //
 // For every arc from->to of g, the result will have an arc to->from.
-// Transpose also counts arcs as it traverses and returns m the number of arcs
-// in g (equal to the number of arcs in the result.)
-func (g LabeledAdjacencyList) Transpose() (t LabeledAdjacencyList, m int) {
-	t = make(LabeledAdjacencyList, len(g))
-	for n, nbs := range g {
+// Transpose also counts arcs as it traverses and returns ma the number of
+// arcs in g (equal to the number of arcs in the result.)
+func (g DirectedLabeled) Transpose() (t DirectedLabeled, ma int) {
+	ta := make(LabeledAdjacencyList, len(g.LabeledAdjacencyList))
+	for n, nbs := range g.LabeledAdjacencyList {
 		for _, nb := range nbs {
-			t[nb.To] = append(t[nb.To], Half{To: NI(n), Label: nb.Label})
-			m++
+			ta[nb.To] = append(ta[nb.To], Half{To: NI(n), Label: nb.Label})
+			ma++
 		}
 	}
-	return
+	return DirectedLabeled{ta}, ma
 }
 
 // UndirectedCopy returns copy of g augmented as needed to make it undirected,
@@ -429,24 +438,24 @@ func (g LabeledAdjacencyList) Unlabeled() AdjacencyList {
 	return a
 }
 
-// UnlabeledTranspose, for directed graphs, constructs a new adjacency list
-// that is the unlabeled transpose of g.
+// UnlabeledTranspose constructs a new adjacency list that is the unlabeled
+// transpose of g.
 //
 // For every arc from->to of g, the result will have an arc to->from.
-// Transpose also counts arcs as it traverses and returns m the number of arcs
-// in g (equal to the number of arcs in the result.)
+// Transpose also counts arcs as it traverses and returns ma, the number of
+// arcs in g (equal to the number of arcs in the result.)
 //
 // It is equivalent to g.Unlabeled().Transpose() but constructs the result
 // directly.
-func (g LabeledAdjacencyList) UnlabeledTranspose() (t AdjacencyList, m int) {
-	t = make(AdjacencyList, len(g))
-	for n, nbs := range g {
+func (g DirectedLabeled) UnlabeledTranspose() (t Directed, ma int) {
+	ta := make(AdjacencyList, len(g.LabeledAdjacencyList))
+	for n, nbs := range g.LabeledAdjacencyList {
 		for _, nb := range nbs {
-			t[nb.To] = append(t[nb.To], NI(n))
-			m++
+			ta[nb.To] = append(ta[nb.To], NI(n))
+			ma++
 		}
 	}
-	return
+	return Directed{ta}, ma
 }
 
 // LabeledEdge is an undirected edge with an associated label.

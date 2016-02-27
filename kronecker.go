@@ -14,9 +14,10 @@ import (
 // ArcFactor * 2^scale arcs are generated, although loops and duplicate arcs
 // are rejected.
 //
-// Return value m is the number of arcs retained in the result graph.
-func KroneckerDir(scale uint, arcFactor float64) (g AdjacencyList, m int) {
-	return kronecker(scale, arcFactor, true)
+// Return value ma is the number of arcs retained in the result graph.
+func KroneckerDir(scale uint, arcFactor float64) (g Directed, ma int) {
+	a, m := kronecker(scale, arcFactor, true)
+	return Directed{a}, m
 }
 
 // KroneckerUndir generates a Kronecker-like random undirected graph.

@@ -320,9 +320,20 @@ func ExampleUndirected_Degeneracy() {
 	// 3-core: [4 6 2 1 0]
 }
 
-// move vvvvvv
+func ExampleUndirected_Degree() {
+	// 0---1--\
+	//      \-/
+	var g graph.Undirected
+	g.AddEdge(0, 1)
+	g.AddEdge(1, 1)
+	fmt.Println(g.Degree(0))
+	fmt.Println(g.Degree(1))
+	// Output:
+	// 1
+	// 3
+}
 
-func ExampleAdjacencyList_IsConnected() {
+func ExampleUndirected_IsConnected() {
 	// undirected graph:
 	//   0
 	//  / \
@@ -338,7 +349,7 @@ func ExampleAdjacencyList_IsConnected() {
 	// connected:  true
 }
 
-func ExampleAdjacencyList_IsConnected_notConnected() {
+func ExampleUndirected_IsConnected_notConnected() {
 	// undirected graph:
 	//   0   1
 	//  / \
@@ -352,17 +363,4 @@ func ExampleAdjacencyList_IsConnected_notConnected() {
 	// Output:
 	// undirected: true
 	// connected:  false
-}
-
-func ExampleAdjacencyList_UndirectedDegree() {
-	// 0---1--\
-	//      \-/
-	var g graph.Undirected
-	g.AddEdge(0, 1)
-	g.AddEdge(1, 1)
-	fmt.Println(g.Degree(0))
-	fmt.Println(g.Degree(1))
-	// Output:
-	// 1
-	// 3
 }

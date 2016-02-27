@@ -14,7 +14,8 @@ import (
 // DO NOT EDIT cg_undir_al.go.
 
 // Bipartite determines if a connected component of an undirected graph
-// is bipartite.
+// is bipartite, a component where nodes can be partitioned into two sets
+// such that every edge in the component goes from one set to the other.
 //
 // Argument n can be any representative node of the component.
 //
@@ -346,8 +347,8 @@ func (g Undirected) BronKerbosch3(pivot func(P, X *bitset.BitSet) int, emit func
 	}
 }
 
-// ConnectedComponentBits, for undirected graphs, returns a function that
-// iterates over connected components of g, returning a member bitmap for each.
+// ConnectedComponentBits returns a function that iterates over connected
+// components of g, returning a member bitmap for each.
 //
 // Each call of the returned function returns the order (number of nodes)
 // and bits of a connected component.  The returned function returns zeros
@@ -386,12 +387,12 @@ func (g Undirected) ConnectedComponentBits() func() (order int, bits big.Int) {
 	}
 }
 
-// ConnectedComponentLists, for undirected graphs, returns a function that
-// iterates over connected components of g, returning the member list of each.
+// ConnectedComponentLists returns a function that iterates over connected
+// components of g, returning the member list of each.
 //
-// Each call of the returned function returns a node list of a
-// connected component.  The returned function returns nil after returning
-// all connected components.
+// Each call of the returned function returns a node list of a connected
+// component.  The returned function returns nil after returning all connected
+// components.
 //
 // There are equivalent labeled and unlabeled versions of this method.
 //
@@ -423,8 +424,8 @@ func (g Undirected) ConnectedComponentLists() func() []NI {
 	}
 }
 
-// ConnectedComponentReps, for undirected graphs, returns a representative
-// node from each connected component of g.
+// ConnectedComponentReps returns a representative node from each connected
+// component of g.
 //
 // Returned is a slice with a single representative node from each connected
 // component and also a parallel slice with the order, or number of nodes,
@@ -462,6 +463,15 @@ func (g Undirected) ConnectedComponentReps() (reps []NI, orders []int) {
 		}
 	}
 	return
+}
+
+// Copy makes a deep copy of g.
+// Copy also computes the arc size ma, the number of arcs.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g Undirected) Copy() (c Undirected, ma int) {
+	l, s := g.AdjacencyList.Copy()
+	return Undirected{l}, s
 }
 
 // Degeneracy computes k-degeneracy, vertex ordering and k-cores.
@@ -530,6 +540,26 @@ func (g Undirected) Degeneracy() (k int, ordering []NI, cores []int) {
 	return
 }
 
+// Degree for undirected graphs, returns the degree of a node.
+//
+// The degree of a node in an undirected graph is the number of incident
+// edges, where loops count twice.
+//
+// If g is known to be loop-free, the result is simply equivalent to len(g[n]).
+// See handshaking lemma example at AdjacencyList.ArcSize.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g Undirected) Degree(n NI) int {
+	to := g.AdjacencyList[n]
+	d := len(to) // just "out" degree,
+	for _, to := range to {
+		if to == n {
+			d++ // except loops count twice
+		}
+	}
+	return d
+}
+
 // IsConnected tests if an undirected graph is a single connected component.
 //
 // There are equivalent labeled and unlabeled versions of this method.
@@ -584,24 +614,4 @@ func (g Undirected) IsTree(root NI) bool {
 		}
 	}
 	return true
-}
-
-// UndirectedDegree for undirected graphs, returns the degree of a node.
-//
-// The degree of a node in an undirected graph is the number of incident
-// edges, where loops count twice.
-//
-// If g is known to be loop-free, the result is simply equivalent to len(g[n]).
-// See handshaking lemma example at AdjacencyList.ArcSize.
-//
-// There are equivalent labeled and unlabeled versions of this method.
-func (g Undirected) Degree(n NI) int {
-	to := g.AdjacencyList[n]
-	d := len(to) // just "out" degree,
-	for _, to := range to {
-		if to == n {
-			d++ // except loops count twice
-		}
-	}
-	return d
 }

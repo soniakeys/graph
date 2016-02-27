@@ -7,36 +7,55 @@
 // Bron Kerbosch clique finding; connected components; and others.
 //
 // This is a graph library of integer indexes.  To use it with application
-// data, associate data with integer indexes, perform searches or other
+// data, you associate data with integer indexes, perform searches or other
 // operations with the library, and then use the integer index results to refer
-// back to the application data.
+// back to your application data.
 //
 // Thus it does not store application data, pointers to application data,
-// or require application data to implement an interface.  The idea is to
-// keep the library methods fast and lean.
+// or require you to implement an interface on your application data.
+// The idea is to keep the library methods fast and lean.
 //
 // Representation overview
 //
-// The package implements a number of graph representations through types
-// AdjacencyList, LabeledAdjacencyList, FromList, and WeightedEdgeList.
-//
-// AdjacencyList is the common "list of lists" representation.  It is a list
+// The package defines a type for a node index (NI) which is just an integer
+// type.  It defines types for a number of number graph representations using
+// NI.  The fundamental graph type is AdjacencyList, which is the
+// common "list of lists" graph representation.  It is a list as a slice
 // with one element for each node of the graph.  Each element is a list
-// itself, a list of neighbor nodes.
+// itself, a list of neighbor nodes, implemented as an NI slice.  Methods
+// on an AdjacencyList generally work on any representable graph, including
+// directed or undirected graphs, simple graphs or multigraphs.
 //
-// LabeledAdjacencyList is similar, but each node-to-neighbor "arc" has an
-// associated label.
+// The type Undirected embeds an AdjacencyList adding methods specific to
+// undirected graphs.  Similarly the type Directed adds methods meaningful
+// for directed graphs.
+//
+// Similar to NI, the type LI is a "label index" which labels a
+// node-to-neighbor "arc" or edge.  Just as an NI can index arbitrary node
+// data, an LI can index arbitrary arc or edge data.  A number of algorithms
+// use a "weight" associated with an arc.  This package does not represent
+// weighted arcs explicitly, but instead uses the LI as a more general
+// mechanism allowing not only weights but arbitrary data to be associated
+// with arcs.  While AdjacencyList represents an arc with simply an NI,
+// the type LabeledAdjacencyList uses a type that pairs an NI with an LI.
+// This type is named Half, for half-arc.  (A full arc would represent
+// both ends.)  Types DirectedLabeled and UndirectedLabeled embed a
+// LabeledAdjacencyList.
+//
+// In contrast to Half, the type Edge represents both ends of an edge (but
+// no label.)  The type LabeledEdge adds the label.  The type WeightedEdgeList
+// bundles a list of LabeledEdges with a WeightFunc.  WeightedEdgeList is
+// currently only used by Kruskal methods.
 //
 // FromList is a compact rooted tree (or forest) respresentation.  Like
 // AdjacencyList and LabeledAdjacencyList, it is a list with one element for
 // each node of the graph.  Each element contains only a single neighbor
 // however, its parent in the tree, the "from" node.
 //
-// WeightedEdgeList is currently used by Kruskal methods.
-//
 // Code generation
 //
-// A number of methods on AdjacencyList are applicable to LabeledAdjacencyList
+// A number of methods on AdjacencyList, Directed, and Undirected are
+// applicable to LabeledAdjacencyList, DirectedLabeled, and UndirectedLabeled
 // simply by ignoring the label.  In these cases code generation provides
 // methods on both types from a single source implementation. These methods
 // are documented with the sentence "There are equivalent labeled and unlabeled

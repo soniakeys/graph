@@ -103,7 +103,7 @@ func ExampleUndirected_IsTree() {
 	// false
 }
 
-func ExampleAdjacencyList_TarjanBiconnectedComponents() {
+func ExampleUndirected_TarjanBiconnectedComponents() {
 	// undirected edges:
 	// 3---2---1---7---9
 	//  \ / \ / \   \ /

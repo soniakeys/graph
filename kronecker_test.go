@@ -10,7 +10,7 @@ func TestKroneckerDir(t *testing.T) {
 	g, _ := graph.KroneckerDir(10, 10)
 	if s, n := g.IsSimple(); !s {
 		t.Fatalf("KroneckerDir returned non-simple graph.  Node %d to: %v",
-			n, g[n])
+			n, g.AdjacencyList[n])
 	}
 }
 

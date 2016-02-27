@@ -360,7 +360,7 @@ func ExampleDAGPath_Path_longest() {
 	// Distance: 20
 }
 
-func ExampleLabeledAdjacencyList_DAGMinDistPath() {
+func ExampleDirectedLabeled_DAGMinDistPath() {
 	// arcs are directed right:
 	//             4
 	//        (-3)/ \(-2)
@@ -392,7 +392,7 @@ func ExampleLabeledAdjacencyList_DAGMinDistPath() {
 	// Distance: 15
 }
 
-func ExampleLabeledAdjacencyList_DAGMaxDistPath() {
+func ExampleDirectedLabeled_DAGMaxDistPath() {
 	// arcs are directed right:
 	//             4
 	//        (-3)/ \(-2)

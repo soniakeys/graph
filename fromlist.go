@@ -11,7 +11,9 @@ import "math/big"
 // with a half arc identifying an arc "from" another node.
 //
 // Other terms for this data structure include "parent list",
-// "predecessor list", "in-tree", "inverse arborescence", and "spaghetti stack."//
+// "predecessor list", "in-tree", "inverse arborescence", and
+// "spaghetti stack."
+//
 // The Paths member represents the tree structure.  Leaves and MaxLen are
 // not always needed.  Where Leaves is used it serves as a bitmap where
 // Leave.Bit() == 1 for each leaf of the tree.  Where MaxLen is used it is

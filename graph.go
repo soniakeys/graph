@@ -39,9 +39,9 @@ func OneBits(b *big.Int, n int) *big.Int {
 
 // NI is a "node int"
 //
-// It is a node number.  It is used extensively as a slice index.
-// Node numbers also account for a significant fraction of the memory
-// required to represent a graph.
+// It is a node number or node ID.  NIs are used extensively as slice indexes.
+// NIs typically account for a significant fraction of the memory footprint of
+// a graph.
 type NI int32
 
 // NodeList satisfies sort.Interface.
@@ -54,8 +54,8 @@ func (l NodeList) Swap(i, j int)      { l[i], l[j] = l[j], l[i] }
 // An AdjacencyList represents a graph as a list of neighbors for each node.
 // The "node ID" of a node is simply it's slice index in the AdjacencyList.
 //
-// Adjacency lists are inherently directed. To represent an undirected graph,
-// create reciprocal neighbors.
+// Adjacency lists are inherently directed but can be used to represent
+// directed or undirected graphs.  See types Directed and Undirected.
 type AdjacencyList [][]NI
 
 // HasParallelSort identifies if a graph contains parallel arcs, multiple arcs

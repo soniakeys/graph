@@ -23,10 +23,23 @@ func (g Directed) Balanced() bool {
 	return true
 }
 
-// Cyclic, for directed graphs, determines if g contains cycles.
+// Copy makes a deep copy of g.
+// Copy also computes the arc size ma, the number of arcs.
 //
-// Cyclic returns true if g contains at least one cycle.
+// There are equivalent labeled and unlabeled versions of this method.
+func (g Directed) Copy() (c Directed, ma int) {
+	l, s := g.AdjacencyList.Copy()
+	return Directed{l}, s
+}
+
+// Cyclic determines if g contains a cycle, a non-empty path from a node
+// back to itself.
+//
+// Cyclic returns true if g contains at least one cycle.  It also returns
+// an example of an arc involved in a cycle.
 // Cyclic returns false if g is acyclic.
+//
+// Also see Topological, which detects cycles.
 //
 // There are equivalent labeled and unlabeled versions of this method.
 func (g Directed) Cyclic() (cyclic bool, fr NI, to NI) {
@@ -273,7 +286,7 @@ func (g Directed) TarjanCondensation() (scc [][]NI, cd AdjacencyList) {
 	return
 }
 
-// Topological, for directed acyclic graphs, computes a topological sort of g.
+// Topological computes a topological ordering of a directed acyclic graph.
 //
 // For an acyclic graph, return value ordering is a permutation of node numbers
 // in topologically sorted order and cycle will be nil.  If the graph is found
@@ -332,7 +345,7 @@ func (g Directed) Topological() (ordering, cycle []NI) {
 	return ordering, nil
 }
 
-// TopologicalKahn, for directed acyclic graphs, computes a topological sort of g.
+// TopologicalKahn computes a topological ordering of a directed acyclic graph.
 //
 // For an acyclic graph, return value ordering is a permutation of node numbers
 // in topologically sorted order and cycle will be nil.  If the graph is found

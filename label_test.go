@@ -153,7 +153,7 @@ func ExampleLabeledAdjacencyList_NegativeArc() {
 	// true
 }
 
-func ExampleLabeledAdjacencyList_TarjanBiconnectedComponents() {
+func ExampleUndirectedLabeled_TarjanBiconnectedComponents() {
 	// undirected edges:
 	// 3---2---1---7---9
 	//  \ / \ / \   \ /
@@ -197,16 +197,16 @@ func ExampleLabeledAdjacencyList_TarjanBiconnectedComponents() {
 	// {1 7}
 }
 
-func ExampleLabeledAdjacencyList_Transpose() {
+func ExampleDirectedLabeled_Transpose() {
 	// arcs directed down:
 	//             2
 	//  (label: 7)/ \(9)
 	//           0   1
-	g := graph.LabeledAdjacencyList{
+	g := graph.DirectedLabeled{graph.LabeledAdjacencyList{
 		2: {{To: 0, Label: 7}, {To: 1, Label: 9}},
-	}
+	}}
 	tr, m := g.Transpose()
-	for fr, to := range tr {
+	for fr, to := range tr.LabeledAdjacencyList {
 		fmt.Printf("%d %#v\n", fr, to)
 	}
 	fmt.Println(m, "arcs")
@@ -262,7 +262,7 @@ func ExampleLabeledAdjacencyList_Unlabeled() {
 	// 2, []graph.NI{0, 1}
 }
 
-func ExampleLabeledAdjacencyList_UnlabeledTranspose() {
+func ExampleDirectedLabeled_UnlabeledTranspose() {
 	// arcs directed down:
 	//             2
 	//  (label: 7)/ \(9)

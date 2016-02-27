@@ -13,13 +13,12 @@ import (
 	"math/big"
 )
 
+// Directed represents a directed graph.
+//
+// Directed methods generally rely on the graph being directed, specifically
+// that arcs do not have reciprocals.
 type Directed struct {
-	AdjacencyList
-}
-
-func (g Directed) Copy() (Directed, int) {
-	l, s := g.AdjacencyList.Copy()
-	return Directed{l}, s
+	AdjacencyList // embedded to include AdjacencyList methods
 }
 
 // DAGMaxLenPath finds a maximum length path in a directed acyclic graph.
@@ -77,7 +76,7 @@ func (g Directed) EulerianCycle() ([]NI, error) {
 // EulerianCycleD is destructive on its receiver g.  See EulerianCycle for
 // a non-destructive version.
 //
-// Argument m must be the correct size, or number of arcs in g.
+// Argument ma must be the correct arc size, or number of arcs in g.
 //
 // * If g has no nodes, result is nil, nil.
 //
@@ -86,11 +85,11 @@ func (g Directed) EulerianCycle() ([]NI, error) {
 // nodes are the same.
 //
 // * Otherwise, result is nil, error
-func (g Directed) EulerianCycleD(m int) ([]NI, error) {
+func (g Directed) EulerianCycleD(ma int) ([]NI, error) {
 	if len(g.AdjacencyList) == 0 {
 		return nil, nil
 	}
-	e := newEulerian(g.AdjacencyList, m)
+	e := newEulerian(g.AdjacencyList, ma)
 	for e.s >= 0 {
 		v := e.top() // v is node that starts cycle
 		e.push()
@@ -112,7 +111,7 @@ func (g Directed) EulerianCycleD(m int) ([]NI, error) {
 // multigraph.
 //
 // Parameter m in this case must be the size of the undirected graph -- the
-// number of edges -- which is the number of arcs / 2.
+// number of edges.
 //
 // It works, but contains an extra loop that I think spoils the time
 // complexity.  Probably still pretty fast in practice, but a different
@@ -165,8 +164,8 @@ func (g Directed) EulerianPath() ([]NI, error) {
 // EulerianPathD is destructive on its receiver g.  See EulerianPath for
 // a non-destructive version.
 //
-// Argument m must be the correct size, or number of arcs in g.  Argument
-// start must be a valid start node for the path.
+// Argument ma must be the correct arc size, or number of arcs in g.
+// Argument start must be a valid start node for the path.
 //
 // * If g has no nodes, result is nil, nil.
 //
@@ -174,11 +173,11 @@ func (g Directed) EulerianPath() ([]NI, error) {
 // The path result is a list of nodes, where the first node is start.
 //
 // * Otherwise, result is nil, error
-func (g Directed) EulerianPathD(m int, start NI) ([]NI, error) {
+func (g Directed) EulerianPathD(ma int, start NI) ([]NI, error) {
 	if len(g.AdjacencyList) == 0 {
 		return nil, nil
 	}
-	e := newEulerian(g.AdjacencyList, m)
+	e := newEulerian(g.AdjacencyList, ma)
 	e.p[0] = start
 	// unlike EulerianCycle, the first path doesn't have be a cycle.
 	e.push()
@@ -387,8 +386,7 @@ func (g AdjacencyList) StronglyConnectedComponents() []int {
 }
 */
 
-// Transpose, for directed graphs, constructs a new adjacency list that is
-// the transpose of g.
+// Transpose constructs a new adjacency list with all arcs reversed.
 //
 // For every arc from->to of g, the result will have an arc to->from.
 // Transpose also counts arcs as it traverses and returns m the number of arcs
