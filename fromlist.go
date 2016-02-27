@@ -197,7 +197,7 @@ func (f *FromList) Root(n NI) NI {
 
 // Transpose contructs the directed graph with arcs in the opposite direction
 // of the FromList.  That is, from root toward leaves.
-func (f *FromList) Transpose() AdjacencyList {
+func (f *FromList) Transpose() Directed {
 	g := make(AdjacencyList, len(f.Paths))
 	for n, p := range f.Paths {
 		if p.From == -1 {
@@ -205,7 +205,7 @@ func (f *FromList) Transpose() AdjacencyList {
 		}
 		g[p.From] = append(g[p.From], NI(n))
 	}
-	return g
+	return Directed{g}
 }
 
 // TransposeLabeled contructs the labeled directed graph with arcs in the
@@ -217,7 +217,7 @@ func (f *FromList) Transpose() AdjacencyList {
 //
 // If labels is non-nil, it must be the same length as t.Paths and is used
 // to look up label numbers by the path index.
-func (f *FromList) TransposeLabeled(labels []LI) LabeledAdjacencyList {
+func (f *FromList) TransposeLabeled(labels []LI) DirectedLabeled {
 	g := make(LabeledAdjacencyList, len(f.Paths))
 	for n, p := range f.Paths {
 		if p.From == -1 {
@@ -229,7 +229,7 @@ func (f *FromList) TransposeLabeled(labels []LI) LabeledAdjacencyList {
 		}
 		g[p.From] = append(g[p.From], Half{NI(n), l})
 	}
-	return g
+	return DirectedLabeled{g}
 }
 
 // Undirected contructs the undirected graph corresponding to the FromList.

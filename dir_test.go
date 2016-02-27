@@ -10,7 +10,7 @@ import (
 	"github.com/soniakeys/graph"
 )
 
-func ExampleAdjacencyList_DAGMaxLenPath() {
+func ExampleDirected_DAGMaxLenPath() {
 	// arcs directed right:
 	//      /---\
 	//  3--4  1--0--2
@@ -29,28 +29,7 @@ func ExampleAdjacencyList_DAGMaxLenPath() {
 	// [3 4 0 2]
 }
 
-func ExampleAdjacencyList_IsTree() {
-	// Example graph
-	// Arcs point down unless otherwise indicated
-	//           1
-	//          / \
-	//         0   5
-	//        /   / \
-	//       2   3-->4
-	g := graph.Directed{graph.AdjacencyList{
-		1: {0, 5},
-		0: {2},
-		5: {3, 4},
-		3: {4},
-	}}
-	fmt.Println(g.IsTree(0))
-	fmt.Println(g.IsTree(1))
-	// Output:
-	// true
-	// false
-}
-
-func ExampleAdjacencyList_EulerianCycle() {
+func ExampleDirected_EulerianCycle() {
 	g := graph.Directed{graph.AdjacencyList{
 		0: {1},
 		1: {2, 2},
@@ -61,7 +40,7 @@ func ExampleAdjacencyList_EulerianCycle() {
 	// [0 1 2 1 2 2 0] <nil>
 }
 
-func ExampleAdjacencyList_EulerianCycleD() {
+func ExampleDirected_EulerianCycleD() {
 	var g graph.Undirected
 	g.AddEdge(0, 1)
 	g.AddEdge(0, 2)
@@ -118,7 +97,7 @@ func TestEulerianCycle(t *testing.T) {
 	}
 }
 
-func ExampleAdjacencyList_EulerianPath() {
+func ExampleDirected_EulerianPath() {
 	g := graph.Directed{graph.AdjacencyList{
 		3: {1},
 		1: {2, 2},
@@ -175,80 +154,7 @@ func TestEulerianPath(t *testing.T) {
 	}
 }
 
-func ExampleAdjacencyList_FromList() {
-	//    4   3
-	//   / \
-	//  2   1
-	//       \
-	//        0
-	g := graph.Directed{graph.AdjacencyList{
-		4: {2, 1},
-		1: {0},
-	}}
-	f, _ := g.FromList()
-	fmt.Println("Paths:")
-	fmt.Println("N  From  Len")
-	for n, e := range f.Paths {
-		fmt.Printf("%d %4d %5d\n", n, e.From, e.Len)
-	}
-	fmt.Println("Leaves:")
-	fmt.Println("43210")
-	fmt.Println("-----")
-	fmt.Printf("%05b\n", &f.Leaves)
-	fmt.Println("MaxLen:", f.MaxLen)
-	// Output:
-	// Paths:
-	// N  From  Len
-	// 0    1     3
-	// 1    4     2
-	// 2    4     2
-	// 3   -1     1
-	// 4   -1     1
-	// Leaves:
-	// 43210
-	// -----
-	// 01101
-	// MaxLen: 3
-}
-
-func ExampleAdjacencyList_FromList_nonTree() {
-	//    0
-	//   / \
-	//  1   2
-	//   \ /
-	//    3
-	g := graph.Directed{graph.AdjacencyList{
-		0: {1, 2},
-		1: {3},
-		2: {3},
-		3: {},
-	}}
-	fmt.Println(g.FromList())
-	// Output:
-	// <nil> 3
-}
-
-func ExampleAdjacencyList_HasParallelSort_parallelArcs() {
-	g := graph.AdjacencyList{
-		1: {0, 0},
-	}
-	// result true 1 0 means parallel arcs from node 1 to node 0
-	fmt.Println(g.HasParallelSort())
-	// Output:
-	// true 1 0
-}
-
-func ExampleAdjacencyList_HasParallelSort_noParallelArcs() {
-	g := graph.AdjacencyList{
-		1: {0},
-	}
-	// result false -1 -1 means no parallel arc
-	fmt.Println(g.HasParallelSort())
-	// Output:
-	// false -1 -1
-}
-
-func ExampleAdjacencyList_MaximalNonBranchingPaths() {
+func ExampleDirected_MaximalNonBranchingPaths() {
 	// 0-->1-->2-->3
 	//          \
 	//   -->6    ->4
@@ -272,84 +178,7 @@ func ExampleAdjacencyList_MaximalNonBranchingPaths() {
 	// [6 5 6]
 }
 
-func ExampleAdjacencyList_TarjanCondensation() {
-	// input:          condensation:
-	// /---0---\        /---0
-	// |   |\--/        |   |
-	// |   v            |   v
-	// |   5<=>4---\    |   1--\
-	// |   |   |   |    |   |  |
-	// v   v   |   |    |   v  |
-	// 7<=>6   |   |    \-->2  |
-	//     |   v   v        |  v
-	//     \-->3<--2        \->3
-	//         |   ^
-	//         |   |
-	//         \-->1
-	g := graph.Directed{graph.AdjacencyList{
-		0: {0, 5, 7},
-		5: {4, 6},
-		4: {5, 2, 3},
-		7: {6},
-		6: {7, 3},
-		3: {1},
-		1: {2},
-		2: {3},
-	}}
-	scc, cd := g.TarjanCondensation()
-	fmt.Println(len(scc), "components:")
-	for cn, c := range scc {
-		fmt.Println(cn, c)
-	}
-	fmt.Println("condensation:")
-	for cn, to := range cd {
-		fmt.Println(cn, to)
-	}
-	// Output:
-	// 4 components:
-	// 0 [0]
-	// 1 [4 5]
-	// 2 [7 6]
-	// 3 [1 3 2]
-	// condensation:
-	// 0 [1 2]
-	// 1 [3 2]
-	// 2 [3]
-	// 3 []
-}
-
-func ExampleAdjacencyList_Topological() {
-	g := graph.Directed{graph.AdjacencyList{
-		1: {2},
-		3: {1, 2},
-		4: {3, 2},
-	}}
-	fmt.Println(g.Topological())
-	g.AdjacencyList[2] = []graph.NI{3}
-	fmt.Println(g.Topological())
-	// Output:
-	// [4 3 1 2 0] []
-	// [] [1 2 3]
-}
-
-func ExampleAdjacencyList_TopologicalKahn() {
-	g := graph.Directed{graph.AdjacencyList{
-		1: {2},
-		3: {1, 2},
-		4: {3, 2},
-	}}
-	tr, _ := g.Transpose()
-	fmt.Println(g.TopologicalKahn(tr))
-
-	g.AdjacencyList[2] = []graph.NI{3}
-	tr, _ = g.Transpose()
-	fmt.Println(g.TopologicalKahn(tr))
-	// Output:
-	// [4 3 1 2 0] []
-	// [] [1 2 3]
-}
-
-func ExampleAdjacencyList_Transpose() {
+func ExampleDirected_Transpose() {
 	g := graph.Directed{graph.AdjacencyList{
 		2: {0, 1},
 	}}

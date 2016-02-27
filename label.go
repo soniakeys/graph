@@ -106,16 +106,16 @@ func (p *UndirectedLabeled) AddEdge(e Edge, l LI) {
 //
 // Returned is a node beginning a maximum length path, and a path of arcs
 // starting from that node.
-func (g LabeledAdjacencyList) DAGMaxLenPath(ordering []NI) (n NI, path []Half) {
+func (g DirectedLabeled) DAGMaxLenPath(ordering []NI) (n NI, path []Half) {
 	// dynamic programming. visit nodes in reverse order. for each, compute
 	// longest path as one plus longest of 'to' nodes.
 	// Visits each arc once.  Time complexity O(m).
 	//
 	// Similar code in dir.go.
-	mlp := make([][]Half, len(g)) // index by node number
+	mlp := make([][]Half, len(g.LabeledAdjacencyList)) // index by node number
 	for i := len(ordering) - 1; i >= 0; i-- {
 		fr := ordering[i] // node number
-		to := g[fr]
+		to := g.LabeledAdjacencyList[fr]
 		if len(to) == 0 {
 			continue
 		}

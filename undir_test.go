@@ -5,49 +5,9 @@ package graph_test
 
 import (
 	"fmt"
-	"math/big"
 
 	"github.com/soniakeys/graph"
 )
-
-func ExampleUndirected_Bipartite() {
-	// 0 1 2
-	//  \|/|
-	//   3 4
-	var g graph.Undirected
-	g.AddEdge(0, 3)
-	g.AddEdge(1, 3)
-	g.AddEdge(2, 3)
-	g.AddEdge(2, 4)
-	b, c1, c2, _ := g.Bipartite(0)
-	if b {
-		fmt.Println("n:  43210")
-		fmt.Printf("c1: %05b\n", c1)
-		fmt.Printf("c2: %05b\n", c2)
-	}
-	// Output:
-	// n:  43210
-	// c1: 00111
-	// c2: 11000
-}
-
-func ExampleUndirected_Bipartite_oddCycle() {
-	// 0 1  2
-	//  \|/ |
-	//   3--4
-	var g graph.Undirected
-	g.AddEdge(0, 3)
-	g.AddEdge(1, 3)
-	g.AddEdge(2, 3)
-	g.AddEdge(2, 4)
-	g.AddEdge(3, 4)
-	b, _, _, oc := g.Bipartite(0)
-	if !b {
-		fmt.Println("odd cycle:", oc)
-	}
-	// Output:
-	// odd cycle: [3 4 2]
-}
 
 func ExampleAdjacencyList_UndirectedCopy_simple() {
 	//    0
@@ -143,106 +103,6 @@ func ExampleUndirected_IsTree() {
 	// false
 }
 
-func ExampleAdjacencyList_ConnectedComponentReps() {
-	//    0   1   2
-	//   / \   \
-	//  3---4   5
-	var g graph.Undirected
-	g.AddEdge(0, 3)
-	g.AddEdge(0, 4)
-	g.AddEdge(3, 4)
-	g.AddEdge(1, 5)
-	fmt.Println(g.ConnectedComponentReps())
-	// Output:
-	// [0 1 2] [3 2 1]
-}
-
-func ExampleAdjacencyList_ConnectedComponentReps_collectingBits() {
-	var g graph.Undirected
-	g.AddEdge(0, 3)
-	g.AddEdge(0, 4)
-	g.AddEdge(3, 4)
-	g.AddEdge(1, 5)
-	rep, order := g.ConnectedComponentReps()
-	fmt.Println("543210  rep  order")
-	fmt.Println("------  ---  -----")
-	for i, r := range rep {
-		var bits big.Int
-		g.DepthFirst(r, &bits, nil)
-		fmt.Printf("%0*b   %d     %d\n",
-			len(g.AdjacencyList), &bits, r, order[i])
-	}
-	// Output:
-	// 543210  rep  order
-	// ------  ---  -----
-	// 011001   0     3
-	// 100010   1     2
-	// 000100   2     1
-}
-
-func ExampleAdjacencyList_ConnectedComponentReps_collectingLists() {
-	var g graph.Undirected
-	g.AddEdge(0, 3)
-	g.AddEdge(0, 4)
-	g.AddEdge(3, 4)
-	g.AddEdge(1, 5)
-	rep, _ := g.ConnectedComponentReps()
-	for _, r := range rep {
-		var m []graph.NI
-		g.DepthFirst(r, nil, func(n graph.NI) bool {
-			m = append(m, n)
-			return true
-		})
-		fmt.Println(m)
-	}
-	// Output:
-	// [0 3 4]
-	// [1 5]
-	// [2]
-}
-
-func ExampleAdjacencyList_ConnectedComponentBits() {
-	//    0   1   2
-	//   / \   \
-	//  3---4   5
-	var g graph.Undirected
-	g.AddEdge(0, 3)
-	g.AddEdge(0, 4)
-	g.AddEdge(3, 4)
-	g.AddEdge(1, 5)
-	f := g.ConnectedComponentBits()
-	fmt.Println("o  543210")
-	fmt.Println("-  ------")
-	for o, b := f(); o > 0; o, b = f() {
-		fmt.Printf("%d  %0*b\n", o, len(g.AdjacencyList), &b)
-	}
-	// Output:
-	// o  543210
-	// -  ------
-	// 3  011001
-	// 2  100010
-	// 1  000100
-}
-
-func ExampleAdjacencyList_ConnectedComponentLists() {
-	//    0   1   2
-	//   / \   \
-	//  3---4   5
-	var g graph.Undirected
-	g.AddEdge(0, 3)
-	g.AddEdge(0, 4)
-	g.AddEdge(3, 4)
-	g.AddEdge(1, 5)
-	f := g.ConnectedComponentLists()
-	for l := f(); l != nil; l = f() {
-		fmt.Println(l)
-	}
-	// Output:
-	// [0 3 4]
-	// [1 5]
-	// [2]
-}
-
 func ExampleAdjacencyList_TarjanBiconnectedComponents() {
 	// undirected edges:
 	// 3---2---1---7---9
@@ -332,52 +192,3 @@ func ExampleBiconnectedComponents_Find() {
 	// Leaves: [4 11 9]
 }
 */
-
-func ExampleAdjacencyList_Degeneracy() {
-	//
-	//   /---2
-	//  0--./|\
-	//  |\ /\| \
-	//  | .  6  3--5
-	//  |/ \/| /
-	//  1--'\|/
-	//   \---4
-	//
-	// Same graph redrawn to show ordering:
-	//
-	//          /-----\
-	//         /  /--\ \
-	//      /-+--+-\  \|
-	//  5--3--4--6--2--1--0
-	//         \  \  \---/|\
-	//          \  \-----/ |
-	//           \--------/
-	//
-	var g graph.Undirected
-	g.AddEdge(0, 1)
-	g.AddEdge(0, 2)
-	g.AddEdge(0, 4)
-	g.AddEdge(0, 6)
-	g.AddEdge(1, 2)
-	g.AddEdge(1, 4)
-	g.AddEdge(1, 6)
-	g.AddEdge(6, 2)
-	g.AddEdge(6, 4)
-	g.AddEdge(3, 2)
-	g.AddEdge(3, 4)
-	g.AddEdge(3, 5)
-	k, ord, cores := g.Degeneracy()
-	fmt.Println("Degeneracy:", k)
-	fmt.Println("Ordering:", ord)
-	fmt.Println("0-core:", ord[:cores[0]])
-	for k := 1; k < len(cores); k++ {
-		fmt.Printf("%d-core: %d\n", k, ord[cores[k-1]:cores[k]])
-	}
-	// Output:
-	// Degeneracy: 3
-	// Ordering: [5 3 4 6 2 1 0]
-	// 0-core: []
-	// 1-core: [5]
-	// 2-core: [3]
-	// 3-core: [4 6 2 1 0]
-}

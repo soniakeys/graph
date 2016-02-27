@@ -1,0 +1,301 @@
+// Copyright 2016 Sonia Keys
+// License MIT: http://opensource.org/licenses/MIT
+
+package graph_test
+
+import (
+	"fmt"
+	//	"math/big"
+	//	"math/rand"
+	//	"testing"
+
+	"github.com/soniakeys/graph"
+)
+
+func ExampleDirected_Balanced() {
+	// 2
+	// |
+	// v
+	// 0----->1
+	g := graph.Directed{graph.AdjacencyList{
+		2: {0},
+		0: {1},
+	}}
+	fmt.Println(g.Balanced())
+
+	// 0<--\
+	// |    \
+	// v     \
+	// 1----->2
+	g.AdjacencyList[1] = []graph.NI{2}
+	fmt.Println(g.Balanced())
+	// Output:
+	// false
+	// true
+}
+
+func ExampleDirected_Cyclic() {
+	//   0
+	//  / \
+	// 1-->2-->3
+	g := graph.Directed{graph.AdjacencyList{
+		0: {1, 2},
+		1: {2},
+		2: {3},
+		3: {},
+	}}
+	cyclic, _, _ := g.Cyclic()
+	fmt.Println(cyclic)
+
+	//   0
+	//  / \
+	// 1-->2
+	// ^   |
+	// |   v
+	// \---3
+	g.AdjacencyList[3] = []graph.NI{1}
+	fmt.Println(g.Cyclic())
+
+	// Output:
+	// false
+	// true 3 1
+}
+
+func ExampleDirected_FromList() {
+	//    4   3
+	//   / \
+	//  2   1
+	//       \
+	//        0
+	g := graph.Directed{graph.AdjacencyList{
+		4: {2, 1},
+		1: {0},
+	}}
+	f, _ := g.FromList()
+	fmt.Println("Paths:")
+	fmt.Println("N  From  Len")
+	for n, e := range f.Paths {
+		fmt.Printf("%d %4d %5d\n", n, e.From, e.Len)
+	}
+	fmt.Println("Leaves:")
+	fmt.Println("43210")
+	fmt.Println("-----")
+	fmt.Printf("%05b\n", &f.Leaves)
+	fmt.Println("MaxLen:", f.MaxLen)
+	// Output:
+	// Paths:
+	// N  From  Len
+	// 0    1     3
+	// 1    4     2
+	// 2    4     2
+	// 3   -1     1
+	// 4   -1     1
+	// Leaves:
+	// 43210
+	// -----
+	// 01101
+	// MaxLen: 3
+}
+
+func ExampleDirected_FromList_nonTree() {
+	//    0
+	//   / \
+	//  1   2
+	//   \ /
+	//    3
+	g := graph.Directed{graph.AdjacencyList{
+		0: {1, 2},
+		1: {3},
+		2: {3},
+		3: {},
+	}}
+	fmt.Println(g.FromList())
+	// Output:
+	// <nil> 3
+}
+
+func ExampleDirected_InDegree() {
+	// arcs directed down:
+	//  0     2
+	//  |
+	//  1
+	//  |\
+	//  | \
+	//  3  4<-\
+	//     \--/
+	g := graph.Directed{graph.AdjacencyList{
+		0: {1},
+		1: {3, 4},
+		4: {4},
+	}}
+	fmt.Println("node:    0 1 2 3 4")
+	fmt.Println("in-deg:", g.InDegree())
+	// Output:
+	// node:    0 1 2 3 4
+	// in-deg: [0 1 0 1 2]
+}
+
+func ExampleDirected_IsTree() {
+	// Example graph
+	// Arcs point down unless otherwise indicated
+	//           1
+	//          / \
+	//         0   5
+	//        /   / \
+	//       2   3-->4
+	g := graph.Directed{graph.AdjacencyList{
+		1: {0, 5},
+		0: {2},
+		5: {3, 4},
+		3: {4},
+	}}
+	fmt.Println(g.IsTree(0))
+	fmt.Println(g.IsTree(1))
+	// Output:
+	// true
+	// false
+}
+
+func ExampleDirected_Tarjan() {
+	// /---0---\
+	// |   |\--/
+	// |   v
+	// |   5<=>4---\
+	// |   |   |   |
+	// v   v   |   |
+	// 7<=>6   |   |
+	//     |   v   v
+	//     \-->3<--2
+	//         |   ^
+	//         |   |
+	//         \-->1
+	g := graph.Directed{graph.AdjacencyList{
+		0: {0, 5, 7},
+		5: {4, 6},
+		4: {5, 2, 3},
+		7: {6},
+		6: {7, 3},
+		3: {1},
+		1: {2},
+		2: {3},
+	}}
+	g.Tarjan(func(c []graph.NI) bool {
+		fmt.Println(c)
+		return true
+	})
+	// Output:
+	// [1 3 2]
+	// [7 6]
+	// [4 5]
+	// [0]
+}
+
+func ExampleDirected_TarjanForward() {
+	// /---0---\
+	// |   |\--/
+	// |   v
+	// |   5<=>4---\
+	// |   |   |   |
+	// v   v   |   |
+	// 7<=>6   |   |
+	//     |   v   v
+	//     \-->3<--2
+	//         |   ^
+	//         |   |
+	//         \-->1
+	g := graph.Directed{graph.AdjacencyList{
+		0: {0, 5, 7},
+		5: {4, 6},
+		4: {5, 2, 3},
+		7: {6},
+		6: {7, 3},
+		3: {1},
+		1: {2},
+		2: {3},
+	}}
+	for _, c := range g.TarjanForward() {
+		fmt.Println(c)
+	}
+	// Output:
+	// [0]
+	// [4 5]
+	// [7 6]
+	// [1 3 2]
+}
+
+func ExampleDirected_TarjanCondensation() {
+	// input:          condensation:
+	// /---0---\      <->  /---0
+	// |   |\--/           |   |
+	// |   v               |   v
+	// |   5<=>4---\  <->  |   1--\
+	// |   |   |   |       |   |  |
+	// v   v   |   |       |   v  |
+	// 7<=>6   |   |  <->  \-->2  |
+	//     |   v   v           |  v
+	//     \-->3<--2  <->      \->3
+	//         |   ^
+	//         |   |
+	//         \-->1
+	g := graph.Directed{graph.AdjacencyList{
+		0: {0, 5, 7},
+		5: {4, 6},
+		4: {5, 2, 3},
+		7: {6},
+		6: {7, 3},
+		3: {1},
+		1: {2},
+		2: {3},
+	}}
+	scc, cd := g.TarjanCondensation()
+	fmt.Println(len(scc), "components:")
+	for cn, c := range scc {
+		fmt.Println(cn, c)
+	}
+	fmt.Println("condensation:")
+	for cn, to := range cd {
+		fmt.Println(cn, to)
+	}
+	// Output:
+	// 4 components:
+	// 0 [0]
+	// 1 [4 5]
+	// 2 [7 6]
+	// 3 [1 3 2]
+	// condensation:
+	// 0 [1 2]
+	// 1 [3 2]
+	// 2 [3]
+	// 3 []
+}
+
+func ExampleDirected_Topological() {
+	g := graph.Directed{graph.AdjacencyList{
+		1: {2},
+		3: {1, 2},
+		4: {3, 2},
+	}}
+	fmt.Println(g.Topological())
+	g.AdjacencyList[2] = []graph.NI{3}
+	fmt.Println(g.Topological())
+	// Output:
+	// [4 3 1 2 0] []
+	// [] [1 2 3]
+}
+
+func ExampleDirected_TopologicalKahn() {
+	g := graph.Directed{graph.AdjacencyList{
+		1: {2},
+		3: {1, 2},
+		4: {3, 2},
+	}}
+	tr, _ := g.Transpose()
+	fmt.Println(g.TopologicalKahn(tr))
+
+	g.AdjacencyList[2] = []graph.NI{3}
+	tr, _ = g.Transpose()
+	fmt.Println(g.TopologicalKahn(tr))
+	// Output:
+	// [4 3 1 2 0] []
+	// [] [1 2 3]
+}

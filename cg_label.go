@@ -45,15 +45,15 @@ func (g LabeledAdjacencyList) BoundsOk() (ok bool, fr NI, to Half) {
 	return true, -1, to
 }
 
-// Copy makes a copy of g, copying the underlying slices.
-// Copy also computes the arc size m, the number of arcs.
+// Copy makes a deep copy of g.
+// Copy also computes the arc size ma, the number of arcs.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g LabeledAdjacencyList) Copy() (c LabeledAdjacencyList, m int) {
+func (g LabeledAdjacencyList) Copy() (c LabeledAdjacencyList, ma int) {
 	c = make(LabeledAdjacencyList, len(g))
 	for n, to := range g {
 		c[n] = append([]Half{}, to...)
-		m += len(to)
+		ma += len(to)
 	}
 	return
 }

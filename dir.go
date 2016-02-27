@@ -11,7 +11,6 @@ package graph
 import (
 	"errors"
 	"math/big"
-	"sort"
 )
 
 type Directed struct {
@@ -278,39 +277,6 @@ func newEulerian(g AdjacencyList, m int) *eulerian {
 	}
 	OneBits(&e.uv, len(g))
 	return e
-}
-
-// HasParallelSort identifies if a graph contains parallel arcs, multiple arcs
-// that lead from a node to the same node.
-//
-// If the graph has parallel arcs, the results fr and to represent an example
-// where there are parallel arcs from node fr to node to.
-//
-// If there are no parallel arcs, the method returns false -1 -1.
-//
-// Multiple loops on a node count as parallel arcs.
-//
-// "Sort" in the method name indicates that sorting is used to detect parallel
-// arcs.  Compared to method HasParallelMap, this may give better performance
-// for small or sparse graphs but will have asymtotically worse performance for
-// large dense graphs.
-func (g AdjacencyList) HasParallelSort() (has bool, fr, to NI) {
-	var t NodeList
-	for n, to := range g {
-		if len(to) == 0 {
-			continue
-		}
-		t = append(t[:0], to...)
-		sort.Sort(t)
-		t0 := t[0]
-		for _, to := range t[1:] {
-			if to == t0 {
-				return true, NI(n), t0
-			}
-			t0 = to
-		}
-	}
-	return false, -1, -1
 }
 
 // MaximalNonBranchingPaths finds all paths in a directed graph that are

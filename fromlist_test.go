@@ -192,7 +192,7 @@ func ExampleFromList_Transpose() {
 		3: {From: -1},
 	}}
 	g := t.Transpose()
-	for n, fr := range g {
+	for n, fr := range g.AdjacencyList {
 		fmt.Println(n, fr)
 	}
 	// Output:
@@ -214,7 +214,8 @@ func ExampleFromList_TransposeLabeled() {
 		2: {From: 0},
 		3: {From: 2},
 	}}
-	for fr, to := range f.TransposeLabeled(nil) {
+	g := f.TransposeLabeled(nil)
+	for fr, to := range g.LabeledAdjacencyList {
 		fmt.Println(fr, to)
 	}
 	// Output:
@@ -241,7 +242,8 @@ func ExampleFromList_TransposeLabeled_indexed() {
 		2: 'B',
 		3: 'C',
 	}
-	for fr, to := range f.TransposeLabeled(labels) {
+	g := f.TransposeLabeled(labels)
+	for fr, to := range g.LabeledAdjacencyList {
 		fmt.Print(fr)
 		for _, to := range to {
 			fmt.Printf(" {%d %c}", to.To, to.Label)

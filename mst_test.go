@@ -7,6 +7,84 @@ import (
 	"github.com/soniakeys/graph"
 )
 
+func ExampleWeightedEdgeList_Kruskal() {
+	//       (10)
+	//     0------4----\
+	//     |     /|     \(70)
+	// (30)| (40) |(60)  \
+	//     |/     |      |
+	//     1------2------3
+	//       (50)   (20)
+	w := func(l graph.LI) float64 { return float64(l) }
+	// undirected graph
+	var g graph.UndirectedLabeled
+	g.AddEdge(graph.Edge{0, 1}, 30)
+	g.AddEdge(graph.Edge{0, 4}, 10)
+	g.AddEdge(graph.Edge{1, 2}, 50)
+	g.AddEdge(graph.Edge{1, 4}, 40)
+	g.AddEdge(graph.Edge{2, 3}, 20)
+	g.AddEdge(graph.Edge{2, 4}, 60)
+	g.AddEdge(graph.Edge{3, 4}, 70)
+	// convert to edge list for Kruskal, but no need to sort it.
+	// Kruskal will sort it.
+	l := g.WeightedEdgeList(w)
+
+	t, dist := l.Kruskal()
+
+	fmt.Println("spanning tree as undirected graph:")
+	for n, to := range t.LabeledAdjacencyList {
+		fmt.Println(n, to)
+	}
+	fmt.Println("total distance: ", dist)
+	// Output:
+	// spanning tree as undirected graph:
+	// 0 [{4 10} {1 30}]
+	// 1 [{0 30} {2 50}]
+	// 2 [{3 20} {1 50}]
+	// 3 [{2 20}]
+	// 4 [{0 10}]
+	// total distance:  110
+}
+
+func ExampleWeightedEdgeList_KruskalSorted() {
+	//       (10)
+	//     0------4----\
+	//     |     /|     \(70)
+	// (30)| (40) |(60)  \
+	//     |/     |      |
+	//     1------2------3
+	//       (50)   (20)
+	w := func(l graph.LI) float64 { return float64(l) }
+	// Bypass construction of an undirected graph if you can, by directly
+	// constructing an edge list.  No need for reciprocal edges.  Also if
+	// you can, construct it already sorted by weight.
+	l := graph.WeightedEdgeList{5, w, []graph.LabeledEdge{
+		{graph.Edge{0, 4}, 10},
+		{graph.Edge{2, 3}, 20},
+		{graph.Edge{0, 1}, 30},
+		{graph.Edge{1, 4}, 40},
+		{graph.Edge{1, 2}, 50},
+		{graph.Edge{2, 4}, 60},
+		{graph.Edge{3, 4}, 70},
+	}}
+
+	t, dist := l.KruskalSorted()
+
+	fmt.Println("spanning tree as undirected graph:")
+	for n, to := range t.LabeledAdjacencyList {
+		fmt.Println(n, to)
+	}
+	fmt.Println("total distance: ", dist)
+	// Output:
+	// spanning tree as undirected graph:
+	// 0 [{4 10} {1 30}]
+	// 1 [{0 30} {2 50}]
+	// 2 [{3 20} {1 50}]
+	// 3 [{2 20}]
+	// 4 [{0 10}]
+	// total distance:  110
+}
+
 func ExamplePrim_Span() {
 	// graph:
 	//
@@ -92,84 +170,6 @@ func ExamplePrim_Span() {
 	// 2:  []graph.Half{graph.Half{To:1, Label:4}}
 	// 3:  []graph.Half{graph.Half{To:4, Label:2}}
 	// 4:  []graph.Half{graph.Half{To:3, Label:2}}
-}
-
-func ExampleWeightedEdgeList_Kruskal() {
-	//       (10)
-	//     0------4----\
-	//     |     /|     \(70)
-	// (30)| (40) |(60)  \
-	//     |/     |      |
-	//     1------2------3
-	//       (50)   (20)
-	w := func(l graph.LI) float64 { return float64(l) }
-	// undirected graph
-	var g graph.UndirectedLabeled
-	g.AddEdge(graph.Edge{0, 1}, 30)
-	g.AddEdge(graph.Edge{0, 4}, 10)
-	g.AddEdge(graph.Edge{1, 2}, 50)
-	g.AddEdge(graph.Edge{1, 4}, 40)
-	g.AddEdge(graph.Edge{2, 3}, 20)
-	g.AddEdge(graph.Edge{2, 4}, 60)
-	g.AddEdge(graph.Edge{3, 4}, 70)
-	// convert to edge list for Kruskal, but no need to sort it.
-	// Kruskal will sort it.
-	l := g.WeightedEdgeList(w)
-
-	t, dist := l.Kruskal()
-
-	fmt.Println("spanning tree as undirected graph:")
-	for n, to := range t.LabeledAdjacencyList {
-		fmt.Println(n, to)
-	}
-	fmt.Println("total distance: ", dist)
-	// Output:
-	// spanning tree as undirected graph:
-	// 0 [{4 10} {1 30}]
-	// 1 [{0 30} {2 50}]
-	// 2 [{3 20} {1 50}]
-	// 3 [{2 20}]
-	// 4 [{0 10}]
-	// total distance:  110
-}
-
-func ExampleWeightedEdgeList_KruskalSorted() {
-	//       (10)
-	//     0------4----\
-	//     |     /|     \(70)
-	// (30)| (40) |(60)  \
-	//     |/     |      |
-	//     1------2------3
-	//       (50)   (20)
-	w := func(l graph.LI) float64 { return float64(l) }
-	// Bypass construction of an undirected graph if you can, by directly
-	// constructing an edge list.  No need for reciprocal edges.  Also if
-	// you can, construct it already sorted by weight.
-	l := graph.WeightedEdgeList{5, w, []graph.LabeledEdge{
-		{graph.Edge{0, 4}, 10},
-		{graph.Edge{2, 3}, 20},
-		{graph.Edge{0, 1}, 30},
-		{graph.Edge{1, 4}, 40},
-		{graph.Edge{1, 2}, 50},
-		{graph.Edge{2, 4}, 60},
-		{graph.Edge{3, 4}, 70},
-	}}
-
-	t, dist := l.KruskalSorted()
-
-	fmt.Println("spanning tree as undirected graph:")
-	for n, to := range t.LabeledAdjacencyList {
-		fmt.Println(n, to)
-	}
-	fmt.Println("total distance: ", dist)
-	// Output:
-	// spanning tree as undirected graph:
-	// 0 [{4 10} {1 30}]
-	// 1 [{0 30} {2 50}]
-	// 2 [{3 20} {1 50}]
-	// 3 [{2 20}]
-	// 4 [{0 10}]
-	// total distance:  110
 }
 
 /* invalid.  needs to work on undirected and r100 is directed
