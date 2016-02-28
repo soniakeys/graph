@@ -84,7 +84,7 @@ conversion from the LI integer to float64:
 w := func(label graph.LI) float64 { return float64(label) }
 ```
 
-# Method call
+### Method call
 With a graph and a weight function, we're ready to call `DijkstraPath`.
 We chose to find a shortest path starting at node 1 and ending at 5, and get
 back two interesting results, the path [1 6 5] and the distance 20.
