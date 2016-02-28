@@ -445,12 +445,12 @@ func ExampleLabeledAdjacencyList_DijkstraPath() {
 		6: {{To: 5, Label: 9}},
 	}
 	w := func(label graph.LI) float64 { return float64(label) }
-	p, l := g.DijkstraPath(1, 5, w)
+	p, d := g.DijkstraPath(1, 5, w)
 	fmt.Println("Shortest path:", p)
-	fmt.Println("Path length:", l)
+	fmt.Println("Path distance:", d)
 	// Output:
 	// Shortest path: [1 6 5]
-	// Path length: 20
+	// Path distance: 20
 }
 
 func ExampleDijkstra_Path() {
@@ -560,12 +560,12 @@ func ExampleLabeledAdjacencyList_AStarAPath() {
 	w := func(label graph.LI) float64 { return float64(label) }
 	h4 := []float64{19, 20, 10, 6, 0, 9}
 	h := func(from graph.NI) float64 { return h4[from] }
-	p, l := g.AStarAPath(0, 4, h, w)
+	p, d := g.AStarAPath(0, 4, h, w)
 	fmt.Println("Shortest path:", p)
-	fmt.Println("Path length:", l)
+	fmt.Println("Path distance:", d)
 	// Output:
 	// Shortest path: [0 2 3 4]
-	// Path length: 26
+	// Path distance: 26
 }
 
 func ExampleLabeledAdjacencyList_AStarMPath() {
@@ -591,12 +591,12 @@ func ExampleLabeledAdjacencyList_AStarMPath() {
 	w := func(label graph.LI) float64 { return float64(label) }
 	h4 := []float64{19, 20, 10, 6, 0, 9}
 	h := func(from graph.NI) float64 { return h4[from] }
-	p, l := g.AStarMPath(0, 4, h, w)
+	p, d := g.AStarMPath(0, 4, h, w)
 	fmt.Println("Shortest path:", p)
-	fmt.Println("Path length:", l)
+	fmt.Println("Path distance:", d)
 	// Output:
 	// Shortest path: [0 2 3 4]
-	// Path length: 26
+	// Path distance: 26
 }
 
 func ExampleHeuristic_Admissable() {
