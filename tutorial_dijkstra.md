@@ -56,7 +56,7 @@ implements an [adjacency list](https://en.wikipedia.org/wiki/Adjacency_list)
 representation.
 
 Is the `:` syntax strange to you?  Review the Go language spec on
-[composite literals](http://localhost:8081/ref/spec#Composite_literals)
+[composite literals](https://golang.org/ref/spec#Composite_literals)
 and look for "KeyedElement."  These are mostly used in map literals
 but can be very convenient for slice literals as well.  Here the "KeyedElement"
 is our "from node."  The line `3: {{To: 4, Label: 11}, {To: 6, Label: 2}},`
