@@ -186,6 +186,30 @@ func (f *FromList) RecalcLen() {
 	}
 }
 
+// ReRoot reorients the tree containing n to make n the root node.
+//
+// It keeps the tree connected by "reversing" the path from n to the old root.
+//
+// After ReRoot, the Leaves and Len members are invalid.
+// Call RecalcLeaves or RecalcLen as needed.
+func (f *FromList) ReRoot(n NI) {
+	p := f.Paths
+	fr := p[n].From
+	if fr < 0 {
+		return
+	}
+	p[n].From = -1
+	for {
+		ff := p[fr].From
+		p[fr].From = n
+		if ff < 0 {
+			return
+		}
+		n = fr
+		fr = ff
+	}
+}
+
 // Root finds the root of a node in a FromList.
 func (f *FromList) Root(n NI) NI {
 	for p := f.Paths; ; {

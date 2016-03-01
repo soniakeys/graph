@@ -162,6 +162,35 @@ func ExampleFromList_RecalcLen() {
 	// MaxLen: 3
 }
 
+func ExampleFromList_ReRoot() {
+	//   0
+	//  / \
+	// 1   2
+	//    / \
+	//   3   4
+	//  /
+	// 5
+	t := &graph.FromList{Paths: []graph.PathEnd{
+		0: {From: -1},
+		1: {From: 0},
+		2: {From: 0},
+		3: {From: 2},
+		4: {From: 2},
+		5: {From: 3},
+	}}
+	t.ReRoot(3)
+	for n, e := range t.Paths {
+		fmt.Println(n, e)
+	}
+	// Output:
+	// 0 {2 0}
+	// 1 {0 0}
+	// 2 {3 0}
+	// 3 {-1 0}
+	// 4 {2 0}
+	// 5 {3 0}
+}
+
 func ExampleFromList_Root() {
 	//       4
 	//      /
