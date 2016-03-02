@@ -16,7 +16,7 @@ import (
 // duplicate code in instr_test.go
 type testCase struct {
 	l graph.DirectedLabeled // generated labeled directed graph
-	w []float64                  // arc weights for l
+	w []float64             // arc weights for l
 	// variants
 	g graph.Directed // unlabeled
 	t graph.Directed // transpose

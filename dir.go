@@ -389,15 +389,15 @@ func (g AdjacencyList) StronglyConnectedComponents() []int {
 // Transpose constructs a new adjacency list with all arcs reversed.
 //
 // For every arc from->to of g, the result will have an arc to->from.
-// Transpose also counts arcs as it traverses and returns m the number of arcs
+// Transpose also counts arcs as it traverses and returns ma the number of arcs
 // in g (equal to the number of arcs in the result.)
-func (g Directed) Transpose() (t Directed, m int) {
+func (g Directed) Transpose() (t Directed, ma int) {
 	ta := make(AdjacencyList, len(g.AdjacencyList))
 	for n, nbs := range g.AdjacencyList {
 		for _, nb := range nbs {
 			ta[nb] = append(ta[nb], NI(n))
-			m++
+			ma++
 		}
 	}
-	return Directed{ta}, m
+	return Directed{ta}, ma
 }

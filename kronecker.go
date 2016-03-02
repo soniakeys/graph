@@ -28,9 +28,9 @@ func KroneckerDir(scale uint, arcFactor float64) (g Directed, ma int) {
 // EdgeFactor * 2^scale edges are generated, although loops and duplicate edges
 // are rejected.
 //
-// Return value m is the number of arcs--not edges--retained in the result
+// Return value ma is the number of arcs--not edges--retained in the result
 // graph.
-func KroneckerUndir(scale uint, edgeFactor float64) (g Undirected, m int) {
+func KroneckerUndir(scale uint, edgeFactor float64) (g Undirected, ma int) {
 	al, as := kronecker(scale, edgeFactor, false)
 	return Undirected{al}, as
 }
@@ -38,7 +38,7 @@ func KroneckerUndir(scale uint, edgeFactor float64) (g Undirected, m int) {
 // Styled after the Graph500 example code.  Not well tested currently.
 // Graph500 example generates undirected only.  No idea if the directed variant
 // here is meaningful or not.
-func kronecker(scale uint, edgeFactor float64, dir bool) (g AdjacencyList, m int) {
+func kronecker(scale uint, edgeFactor float64, dir bool) (g AdjacencyList, ma int) {
 	rand.Seed(time.Now().Unix())
 	N := 1 << scale                      // node extent
 	M := int(edgeFactor*float64(N) + .5) // number of arcs/edges to generate
@@ -95,10 +95,10 @@ ij:
 			}
 		}
 		g[ri] = append(g[ri], rj)
-		m++
+		ma++
 		if !dir {
 			g[rj] = append(g[rj], ri)
-			m++
+			ma++
 		}
 	}
 	return

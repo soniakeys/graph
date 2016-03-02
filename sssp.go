@@ -148,15 +148,15 @@ func (b *BreadthFirst) Traverse(start NI, v Visitor) int {
 // Code is experimental and currently is no faster than basic BreadthFirst.
 type BreadthFirst2 struct {
 	To, From AdjacencyList
-	M        int
+	MArc     int
 	Result   FromList
 }
 
-func NewBreadthFirst2(to, from AdjacencyList, m int) *BreadthFirst2 {
+func NewBreadthFirst2(to, from AdjacencyList, ma int) *BreadthFirst2 {
 	return &BreadthFirst2{
 		To:     to,
 		From:   from,
-		M:      m,
+		MArc:   ma,
 		Result: NewFromList(len(to)),
 	}
 }
@@ -170,8 +170,8 @@ func NewBreadthFirst2(to, from AdjacencyList, m int) *BreadthFirst2 {
 // Returned is the path as list of nodes.
 // The result is nil if no path was found.
 func (g AdjacencyList) BreadthFirst2Path(start, end NI) []NI {
-	t, m := Directed{g}.Transpose()
-	b := NewBreadthFirst2(g, t.AdjacencyList, m)
+	t, ma := Directed{g}.Transpose()
+	b := NewBreadthFirst2(g, t.AdjacencyList, ma)
 	b.Traverse(start, func(n NI) bool { return n != end })
 	return b.Result.PathTo(end, nil)
 }
@@ -197,10 +197,10 @@ func (b *BreadthFirst2) Traverse(start NI, v Visitor) int {
 	nReached := 1 // accumulated for a return value
 	// the frontier consists of nodes all at the same level
 	frontier := []NI{start}
-	mf := len(b.To[start])      // number of arcs leading out from frontier
-	ctb := b.M / 10             // threshold change from top-down to bottom-up
-	k14 := 14 * b.M / len(b.To) // 14 * mean degree
-	cbt := len(b.To) / k14      // threshold change from bottom-up to top-down
+	mf := len(b.To[start])         // number of arcs leading out from frontier
+	ctb := b.MArc / 10             // threshold change from top-down to bottom-up
+	k14 := 14 * b.MArc / len(b.To) // 14 * mean degree
+	cbt := len(b.To) / k14         // threshold change from bottom-up to top-down
 	//	var fBits, nextb big.Int
 	fBits := make([]bool, len(b.To))
 	nextb := make([]bool, len(b.To))
