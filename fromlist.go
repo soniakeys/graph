@@ -222,7 +222,10 @@ func (f *FromList) Root(n NI) NI {
 }
 
 // Transpose constructs the directed graph corresponding to FromList f
-// but with arcs in the opposite direction.  That is, from root toward leaves.
+// but with arcs in the opposite direction.  That is, from roots toward leaves.
+//
+// See FromList.TransposeRoots for a version that also accumulates and returns
+// information about the roots.
 func (f *FromList) Transpose() Directed {
 	g := make(AdjacencyList, len(f.Paths))
 	for n, p := range f.Paths {
@@ -234,11 +237,77 @@ func (f *FromList) Transpose() Directed {
 	return Directed{g}
 }
 
+// TransposeLabeled constructs the directed labeled graph corresponding
+// to FromList f but with arcs in the opposite direction.  That is, from
+// roots toward leaves.
+//
+// The argument labels can be nil.  In this case labels are generated matching
+// the path indexes.  This corresponds to the "to", or child node.
+//
+// If labels is non-nil, it must be the same length as f.Paths and is used
+// to look up label numbers by the path index.
+//
+// See FromList.TransposeLabeledRoots for a version that also accumulates
+// and returns information about the roots.
+func (f *FromList) TransposeLabeled(labels []LI) DirectedLabeled {
+	g := make(LabeledAdjacencyList, len(f.Paths))
+	for n, p := range f.Paths {
+		if p.From == -1 {
+			continue
+		}
+		l := LI(n)
+		if labels != nil {
+			l = labels[n]
+		}
+		g[p.From] = append(g[p.From], Half{NI(n), l})
+	}
+	return DirectedLabeled{g}
+}
+
+// TransposeLabeledRoots constructs the labeled directed graph corresponding
+// to FromList f but with arcs in the opposite direction.  That is, from
+// roots toward leaves.
+//
+// TransposeLabeledRoots also returns a count of roots of the resulting forest
+// and a bitmap of the roots.
+//
+// The argument labels can be nil.  In this case labels are generated matching
+// the path indexes.  This corresponds to the "to", or child node.
+//
+// If labels is non-nil, it must be the same length as t.Paths and is used
+// to look up label numbers by the path index.
+//
+// See FromList.TransposeLabeled for a simpler verstion that returns the
+// forest only.
+func (f *FromList) TransposeLabeledRoots(labels []LI) (forest DirectedLabeled, nRoots int, roots big.Int) {
+	p := f.Paths
+	nRoots = len(p)
+	OneBits(&roots, len(p))
+	g := make(LabeledAdjacencyList, len(p))
+	for n, p := range f.Paths {
+		if p.From == -1 {
+			continue
+		}
+		l := LI(n)
+		if labels != nil {
+			l = labels[n]
+		}
+		g[p.From] = append(g[p.From], Half{NI(n), l})
+		if roots.Bit(n) == 1 {
+			roots.SetBit(&roots, n, 0)
+			nRoots--
+		}
+	}
+	return DirectedLabeled{g}, nRoots, roots
+}
+
 // TransposeRoots constructs the directed graph corresponding to FromList f
-// but with arcs in the opposite direction.  That is, from root toward leaves.
+// but with arcs in the opposite direction.  That is, from roots toward leaves.
 //
 // TransposeRoots also returns a count of roots of the resulting forest and
 // a bitmap of the roots.
+//
+// See FromList.Transpose for a simpler verstion that returns the forest only.
 func (f *FromList) TransposeRoots() (forest Directed, nRoots int, roots big.Int) {
 	p := f.Paths
 	nRoots = len(p)
@@ -255,30 +324,6 @@ func (f *FromList) TransposeRoots() (forest Directed, nRoots int, roots big.Int)
 		}
 	}
 	return Directed{g}, nRoots, roots
-}
-
-// TransposeLabeled contructs the labeled directed graph with arcs in the
-// opposite direction of the FromList.  That is, from the root toward the
-// leaves.
-//
-// The argument labels can be nil.  In this case labels are generated matching
-// the path indexes.  This corresponds to the to, or child node.
-//
-// If labels is non-nil, it must be the same length as t.Paths and is used
-// to look up label numbers by the path index.
-func (f *FromList) TransposeLabeled(labels []LI) DirectedLabeled {
-	g := make(LabeledAdjacencyList, len(f.Paths))
-	for n, p := range f.Paths {
-		if p.From == -1 {
-			continue
-		}
-		l := LI(n)
-		if labels != nil {
-			l = labels[n]
-		}
-		g[p.From] = append(g[p.From], Half{NI(n), l})
-	}
-	return DirectedLabeled{g}
 }
 
 // Undirected contructs the undirected graph corresponding to the FromList.
