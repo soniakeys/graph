@@ -78,23 +78,23 @@ func ExampleDirected() {
 	// | /|
 	// |/ |
 	// 3  4
-	g := graph.AdjacencyList{
+	g := graph.Directed{graph.AdjacencyList{
 		0: {3},
 		2: {3, 4},
 		4: {},
-	}
+	}}
 	// default is directed
-	s, _ := dot.StringAdjacencyList(g, dot.Indent(""))
+	s, _ := dot.StringAdjacencyList(g.AdjacencyList, dot.Indent(""))
 	fmt.Println(s)
 	fmt.Println()
 
 	// Directed(false) generates error witout reciprocal arcs
-	_, err := dot.StringAdjacencyList(g, dot.Directed(false))
+	_, err := dot.StringAdjacencyList(g.AdjacencyList, dot.Directed(false))
 	fmt.Println("Error:", err)
 	fmt.Println()
 
 	// undirected
-	u := g.UndirectedCopy()
+	u := g.Undirected()
 	s, _ = dot.StringAdjacencyList(u.AdjacencyList,
 		dot.Directed(false), dot.Indent(""))
 	fmt.Println(s)
