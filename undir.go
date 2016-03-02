@@ -92,10 +92,10 @@ func (g AdjacencyList) IsUndirected() (u bool, from, to NI) {
 }
 
 // Undirected returns copy of g augmented as needed to make it undirected.
-func (g AdjacencyList) UndirectedCopy() Undirected {
-	c, _ := g.Copy()                  // start with a copy
-	rw := make(AdjacencyList, len(g)) // "reciprocals wanted"
-	for fr, to := range g {
+func (g Directed) Undirected() Undirected {
+	c, _ := g.AdjacencyList.Copy()                  // start with a copy
+	rw := make(AdjacencyList, len(g.AdjacencyList)) // "reciprocals wanted"
+	for fr, to := range g.AdjacencyList {
 	arc: // for each arc in g
 		for _, to := range to {
 			if to == NI(fr) {

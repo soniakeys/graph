@@ -393,12 +393,13 @@ func (g DirectedLabeled) Transpose() (t DirectedLabeled, ma int) {
 	return DirectedLabeled{ta}, ma
 }
 
-// UndirectedCopy returns copy of g augmented as needed to make it undirected,
+// Undirected returns copy of g augmented as needed to make it undirected,
 // with reciprocal arcs having matching labels.
-func (g LabeledAdjacencyList) UndirectedCopy() UndirectedLabeled {
-	c, _ := g.Copy()                         // start with a copy
-	rw := make(LabeledAdjacencyList, len(g)) // "reciprocals wanted"
-	for fr, to := range g {
+func (g DirectedLabeled) Undirected() UndirectedLabeled {
+	c, _ := g.LabeledAdjacencyList.Copy() // start with a copy
+	// "reciprocals wanted"
+	rw := make(LabeledAdjacencyList, len(g.LabeledAdjacencyList))
+	for fr, to := range g.LabeledAdjacencyList {
 	arc: // for each arc in g
 		for _, to := range to {
 			if to.To == NI(fr) {

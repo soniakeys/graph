@@ -217,15 +217,15 @@ func ExampleDirectedLabeled_Transpose() {
 	// 2 arcs
 }
 
-func ExampleLabeledAdjacencyList_UndirectedCopy() {
+func ExampleDirectedLabeled_Undirected() {
 	// arcs directed down:
 	//             2
 	//  (label: 7)/ \(9)
 	//           0   1
-	g := graph.LabeledAdjacencyList{
+	g := graph.DirectedLabeled{graph.LabeledAdjacencyList{
 		2: {{To: 0, Label: 7}, {To: 1, Label: 9}},
-	}
-	for fr, to := range g.UndirectedCopy().LabeledAdjacencyList {
+	}}
+	for fr, to := range g.Undirected().LabeledAdjacencyList {
 		fmt.Printf("%d %#v\n", fr, to)
 	}
 	// Output:

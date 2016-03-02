@@ -17,18 +17,18 @@ func ExampleAdjacencyList_ArcSize() {
 	//   2
 	//  / \
 	// 0   1
-	g := graph.AdjacencyList{
+	g := graph.Directed{graph.AdjacencyList{ // simple graph
 		2: {0, 1},
-	}
-	fmt.Println(g.ArcSize()) // simple graph
+	}}
+	fmt.Println(g.ArcSize())
 
 	// with reciprocals now.
-	u := g.UndirectedCopy()
+	u := g.Undirected()
 	// common term "size" for undirected graph is number of undirected edges.
 	// size, m = ArcSize() / 2 here, but only because there are no loops.
 	fmt.Println(u.ArcSize())
 
-	g[1] = []graph.NI{1} // add a loop
+	g.AdjacencyList[1] = []graph.NI{1} // add a loop
 	//   2
 	//  / \
 	// 0   1---\
@@ -36,7 +36,7 @@ func ExampleAdjacencyList_ArcSize() {
 	fmt.Println(g.ArcSize())
 
 	// loops have no reciprocals.  ArcSize() / 2 no longer meaningful.
-	fmt.Println(g.UndirectedCopy().ArcSize())
+	fmt.Println(g.Undirected().ArcSize())
 	// Output:
 	// 2
 	// 4
