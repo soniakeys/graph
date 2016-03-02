@@ -62,6 +62,35 @@ func ExampleLabeledAdjacencyList_FloydWarshall() {
 	// [ 2  5  1  0]
 }
 
+func ExampleDirectedLabeled_FromListLabels() {
+	//      0
+	// 'A' / \ 'B'
+	//    1   2
+	//         \ 'C'
+	//          3
+	g := graph.DirectedLabeled{graph.LabeledAdjacencyList{
+		0: {{1, 'A'}, {2, 'B'}},
+		2: {{3, 'C'}},
+		3: {},
+	}}
+	f, l, _ := g.FromListLabels()
+	fmt.Println("n  from  label")
+	for n, e := range f.Paths {
+		fmt.Printf("%d   %2d", n, e.From)
+		if e.From < 0 {
+			fmt.Println()
+		} else {
+			fmt.Printf("     %c\n", l[n])
+		}
+	}
+	// Output:
+	// n  from  label
+	// 0   -1
+	// 1    0     A
+	// 2    0     B
+	// 3    2     C
+}
+
 func ExampleLabeledAdjacencyList_HasArcLabel() {
 	g := graph.LabeledAdjacencyList{
 		2: {{0, 10}, {2, 20}, {0, 30}},
