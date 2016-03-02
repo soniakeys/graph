@@ -210,6 +210,7 @@ func ExampleFromList_Root() {
 	// Output:
 	// 4
 }
+
 func ExampleFromList_Transpose() {
 	//    0   3
 	//   / \
@@ -221,14 +222,45 @@ func ExampleFromList_Transpose() {
 		3: {From: -1},
 	}}
 	g := t.Transpose()
+	fmt.Println("fr to")
 	for n, fr := range g.AdjacencyList {
-		fmt.Println(n, fr)
+		fmt.Println(n, "", fr)
 	}
 	// Output:
-	// 0 [1 2]
-	// 1 []
-	// 2 []
-	// 3 []
+	// fr to
+	// 0  [1 2]
+	// 1  []
+	// 2  []
+	// 3  []
+}
+
+func ExampleFromList_TransposeRoots() {
+	//    0   3
+	//   / \
+	//  1   2
+	t := graph.FromList{Paths: []graph.PathEnd{
+		0: {From: -1},
+		1: {From: 0},
+		2: {From: 0},
+		3: {From: -1},
+	}}
+	g, nr, roots := t.TransposeRoots()
+	fmt.Println("fr to")
+	for n, fr := range g.AdjacencyList {
+		fmt.Println(n, "", fr)
+	}
+	fmt.Println(nr, "roots:")
+	fmt.Println("3210")
+	fmt.Printf("%04b\n", &roots)
+	// Output:
+	// fr to
+	// 0  [1 2]
+	// 1  []
+	// 2  []
+	// 3  []
+	// 2 roots:
+	// 3210
+	// 1001
 }
 
 func ExampleFromList_TransposeLabeled() {

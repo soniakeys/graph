@@ -221,8 +221,8 @@ func (f *FromList) Root(n NI) NI {
 	}
 }
 
-// Transpose contructs the directed graph with arcs in the opposite direction
-// of the FromList.  That is, from root toward leaves.
+// Transpose constructs the directed graph corresponding to FromList f
+// but with arcs in the opposite direction.  That is, from root toward leaves.
 func (f *FromList) Transpose() Directed {
 	g := make(AdjacencyList, len(f.Paths))
 	for n, p := range f.Paths {
@@ -232,6 +232,29 @@ func (f *FromList) Transpose() Directed {
 		g[p.From] = append(g[p.From], NI(n))
 	}
 	return Directed{g}
+}
+
+// TransposeRoots constructs the directed graph corresponding to FromList f
+// but with arcs in the opposite direction.  That is, from root toward leaves.
+//
+// TransposeRoots also returns a count of roots of the resulting forest and
+// a bitmap of the roots.
+func (f *FromList) TransposeRoots() (forest Directed, nRoots int, roots big.Int) {
+	p := f.Paths
+	nRoots = len(p)
+	OneBits(&roots, len(p))
+	g := make(AdjacencyList, len(p))
+	for n, e := range p {
+		if e.From == -1 {
+			continue
+		}
+		g[e.From] = append(g[e.From], NI(n))
+		if roots.Bit(n) == 1 {
+			roots.SetBit(&roots, n, 0)
+			nRoots--
+		}
+	}
+	return Directed{g}, nRoots, roots
 }
 
 // TransposeLabeled contructs the labeled directed graph with arcs in the
