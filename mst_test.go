@@ -142,7 +142,7 @@ func ExamplePrim_Span() {
 	}
 
 	// optionally, convert to undirected graph
-	u := p.Forest.UndirectedLabeled(p.Labels)
+	u := p.Forest.TransposeLabeled(p.Labels).Undirected()
 	fmt.Println("Equivalent undirected graph:")
 	for fr, to := range u.LabeledAdjacencyList {
 		fmt.Printf("%d:  %#v\n", fr, to)
@@ -166,7 +166,7 @@ func ExamplePrim_Span() {
 	// 4        3             2            2     1
 	// Equivalent undirected graph:
 	// 0:  []graph.Half{graph.Half{To:1, Label:3}}
-	// 1:  []graph.Half{graph.Half{To:0, Label:3}, graph.Half{To:2, Label:4}}
+	// 1:  []graph.Half{graph.Half{To:2, Label:4}, graph.Half{To:0, Label:3}}
 	// 2:  []graph.Half{graph.Half{To:1, Label:4}}
 	// 3:  []graph.Half{graph.Half{To:4, Label:2}}
 	// 4:  []graph.Half{graph.Half{To:3, Label:2}}

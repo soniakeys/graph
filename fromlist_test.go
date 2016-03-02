@@ -5,8 +5,6 @@ package graph_test
 
 import (
 	"fmt"
-	"reflect"
-	"testing"
 
 	"github.com/soniakeys/graph"
 )
@@ -316,67 +314,4 @@ func ExampleFromList_TransposeLabeled_indexed() {
 	// 1
 	// 2 {3 C}
 	// 3
-}
-
-func ExampleFromList_Undirected() {
-	//    0   3
-	//   / \
-	//  1   2
-	f := graph.FromList{Paths: []graph.PathEnd{
-		0: {From: -1},
-		1: {From: 0},
-		2: {From: 0},
-		3: {From: -1},
-	}}
-	g := f.Undirected()
-	for n, fr := range g.AdjacencyList {
-		fmt.Println(n, fr)
-	}
-	ud, _, _ := g.IsUndirected()
-	fmt.Println(ud)
-	// Output:
-	// 0 [1 2]
-	// 1 [0]
-	// 2 [0]
-	// 3 []
-	// true
-}
-
-func TestFromList_Undirected(t *testing.T) {
-	f := graph.FromList{Paths: []graph.PathEnd{{From: 0}}}
-	got := f.Undirected()
-	want := graph.Undirected{graph.AdjacencyList{{0}}}
-	if !reflect.DeepEqual(got, want) {
-		t.Fatal("want single loop on 0")
-	}
-}
-
-func ExampleFromList_UndirectedLabeled() {
-	//    0   3
-	//   / \
-	//  1   2
-	f := graph.FromList{Paths: []graph.PathEnd{
-		0: {From: -1},
-		1: {From: 0},
-		2: {From: 0},
-		3: {From: -1},
-	}}
-	g := f.UndirectedLabeled(nil)
-	for n, fr := range g.LabeledAdjacencyList {
-		fmt.Printf("%d %#v\n", n, fr)
-	}
-	// Output:
-	// 0 []graph.Half{graph.Half{To:1, Label:1}, graph.Half{To:2, Label:2}}
-	// 1 []graph.Half{graph.Half{To:0, Label:1}}
-	// 2 []graph.Half{graph.Half{To:0, Label:2}}
-	// 3 []graph.Half(nil)
-}
-
-func TestFromList_UndirectedLabeled(t *testing.T) {
-	f := graph.FromList{Paths: []graph.PathEnd{{From: 0}}}
-	got := f.UndirectedLabeled(nil)
-	want := graph.UndirectedLabeled{graph.LabeledAdjacencyList{{{0, 0}}}}
-	if !reflect.DeepEqual(got, want) {
-		t.Fatal("want single loop on 0")
-	}
 }
