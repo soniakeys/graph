@@ -364,3 +364,23 @@ func ExampleUndirected_IsConnected_notConnected() {
 	// undirected: true
 	// connected:  false
 }
+func ExampleUndirected_IsTree() {
+	//  0--\
+	//  |  |
+	//  \--/   1   3
+	//        /   / \
+	//       2   4---5
+	var g graph.Undirected
+	g.AddEdge(0, 0)
+	g.AddEdge(1, 2)
+	g.AddEdge(3, 4)
+	g.AddEdge(3, 5)
+	g.AddEdge(4, 5)
+	fmt.Println(g.IsTree(0))
+	fmt.Println(g.IsTree(1))
+	fmt.Println(g.IsTree(3))
+	// Output:
+	// false false
+	// true false
+	// false false
+}

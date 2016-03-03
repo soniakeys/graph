@@ -587,19 +587,20 @@ func (g Undirected) IsConnected() bool {
 
 // IsTree identifies trees in undirected graphs.
 //
-// IsTree returns true if the connected component
-// containing argument root is a tree.  It does not validate
-// that the entire graph is a tree.
+// Return value isTree is true if the connected component reachable from root
+// is a tree.  Further, return value allTree is true if the entire graph g is
+// connected.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g Undirected) IsTree(root NI) bool {
+func (g Undirected) IsTree(root NI) (isTree, allTree bool) {
 	var v big.Int
+	OneBits(&v, len(g.AdjacencyList))
 	var df func(NI, NI) bool
 	df = func(fr, n NI) bool {
-		if v.Bit(int(n)) == 1 {
+		if v.Bit(int(n)) == 0 {
 			return false
 		}
-		v.SetBit(&v, int(n), 1)
+		v.SetBit(&v, int(n), 0)
 		for _, to := range g.AdjacencyList[n] {
 			if to != fr && !df(n, to) {
 				return false
@@ -607,11 +608,11 @@ func (g Undirected) IsTree(root NI) bool {
 		}
 		return true
 	}
-	v.SetBit(&v, int(root), 1)
+	v.SetBit(&v, int(root), 0)
 	for _, to := range g.AdjacencyList[root] {
 		if !df(root, to) {
-			return false
+			return false, false
 		}
 	}
-	return true
+	return true, v.BitLen() == 0
 }

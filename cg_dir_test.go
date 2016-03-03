@@ -140,8 +140,8 @@ func ExampleDirected_IsTree() {
 	fmt.Println(g.IsTree(0))
 	fmt.Println(g.IsTree(1))
 	// Output:
-	// true
-	// false
+	// true false
+	// false false
 }
 
 func ExampleDirected_Tarjan() {

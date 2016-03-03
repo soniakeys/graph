@@ -123,18 +123,20 @@ func (g Directed) InDegree() []int {
 
 // IsTree identifies trees in directed graphs.
 //
-// IsTree returns true if the subgraph reachable from
-// root is a tree.  It does not validate that the entire graph is a tree.
+// Return value isTree is true if the subgraph reachable from root is a tree.
+// Further, return value allTree is true if the entire graph g is reachable
+// from root.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g Directed) IsTree(root NI) bool {
+func (g Directed) IsTree(root NI) (isTree, allTree bool) {
 	var v big.Int
+	OneBits(&v, len(g.AdjacencyList))
 	var df func(NI) bool
 	df = func(n NI) bool {
-		if v.Bit(int(n)) == 1 {
+		if v.Bit(int(n)) == 0 {
 			return false
 		}
-		v.SetBit(&v, int(n), 1)
+		v.SetBit(&v, int(n), 0)
 		for _, to := range g.AdjacencyList[n] {
 			if !df(to) {
 				return false
@@ -142,7 +144,8 @@ func (g Directed) IsTree(root NI) bool {
 		}
 		return true
 	}
-	return df(root)
+	isTree = df(root)
+	return isTree, isTree && v.BitLen() == 0
 }
 
 // Tarjan identifies strongly connected components in a directed graph using
