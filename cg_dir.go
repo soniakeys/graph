@@ -78,58 +78,34 @@ func (g DirectedLabeled) Cyclic() (cyclic bool, fr NI, to Half) {
 	return
 }
 
-// FromList transposes a graph into a FromList, encoding a tree or forest.
+// FromList transposes a labeled graph into a FromList.
 //
-// Returns FromList, -1 as long as g represents a tree.
+// Receiver g should be connected as a tree or forest.  Specifically no node
+// can have multiple incoming arcs.  If any node n in g has multiple incoming
+// arcs, the method returns (nil, n) where n is a node with multiple
+// incoming arcs.
 //
-// If any node n in g is the to-node of more than one node, then g does not
-// represent a tree and the method returns (nil, n).
+// Otherwise (normally) the method populates the From members in a
+// FromList.Path and returns the FromList and -1.
+//
+// Other members of the FromList are left as zero values.
+// Use FromList.RecalcLen and FromList.RecalcLeaves as needed.
 //
 // There are equivalent labeled and unlabeled versions of this method.
 func (g DirectedLabeled) FromList() (*FromList, NI) {
-	// init paths
 	paths := make([]PathEnd, len(g.LabeledAdjacencyList))
 	for i := range paths {
 		paths[i].From = -1
 	}
-	// init leaves
-	var leaves big.Int
-	OneBits(&leaves, len(g.LabeledAdjacencyList))
-	// iterate over arcs, setting from pointers and and marking non-leaves.
 	for fr, to := range g.LabeledAdjacencyList {
 		for _, to := range to {
 			if paths[to.To].From >= 0 {
 				return nil, to.To
 			}
 			paths[to.To].From = NI(fr)
-			leaves.SetBit(&leaves, fr, 0)
 		}
 	}
-	// f to set path lengths
-	var leng func(NI) int
-	leng = func(n NI) int {
-		if l := paths[n].Len; l > 0 {
-			return l
-		}
-		fr := paths[n].From
-		if fr < 0 {
-			paths[n].Len = 1
-			return 1
-		}
-		l := 1 + leng(fr)
-		paths[n].Len = l
-		return l
-	}
-	// for each leaf, trace path to set path length, accumulate max
-	maxLen := 0
-	for i := range paths {
-		if leaves.Bit(i) == 1 {
-			if l := leng(NI(i)); l > maxLen {
-				maxLen = l
-			}
-		}
-	}
-	return &FromList{paths, leaves, maxLen}, -1
+	return &FromList{Paths: paths}, -1
 }
 
 // InDegree computes the in-degree of each node in g

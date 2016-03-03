@@ -5,7 +5,6 @@ package graph
 
 import (
 	"math"
-	"math/big"
 	"sort"
 )
 
@@ -211,58 +210,33 @@ func solveFW(d [][]float64) {
 // FromListLabels transposes a labeled graph into a FromList and associated
 // list of labels.
 //
-// Returns FromList, labels, -1 as long as g represents a tree.
+// Receiver g should be connected as a tree or forest.  Specifically no node
+// can have multiple incoming arcs.  If any node n in g has multiple incoming
+// arcs, the method returns (nil, nil, n) where n is a node with multiple
+// incoming arcs.
 //
-// If any node n in g has multiple incoming arcs, then g does not
-// represent a tree and the method returns (nil, nil, n) where n is the node
-// with multiple incoming nodes.
+// Otherwise (normally) the method populates the From members in a
+// FromList.Path, populates a slice of labels, and returns the FromList,
+// labels, and -1.
+//
+// Other members of the FromList are left as zero values.
+// Use FromList.RecalcLen and FromList.RecalcLeaves as needed.
 func (g DirectedLabeled) FromListLabels() (*FromList, []LI, NI) {
-	// init labels return value
-	lx := make([]LI, len(g.LabeledAdjacencyList))
-	// init paths
+	labels := make([]LI, len(g.LabeledAdjacencyList))
 	paths := make([]PathEnd, len(g.LabeledAdjacencyList))
 	for i := range paths {
 		paths[i].From = -1
 	}
-	// init leaves
-	var leaves big.Int
-	OneBits(&leaves, len(g.LabeledAdjacencyList))
-	// iterate over arcs, setting from pointers and and marking non-leaves.
 	for fr, to := range g.LabeledAdjacencyList {
 		for _, to := range to {
 			if paths[to.To].From >= 0 {
 				return nil, nil, to.To
 			}
 			paths[to.To].From = NI(fr)
-			leaves.SetBit(&leaves, fr, 0)
-			lx[to.To] = to.Label
+			labels[to.To] = to.Label
 		}
 	}
-	// f to set path lengths
-	var leng func(NI) int
-	leng = func(n NI) int {
-		if l := paths[n].Len; l > 0 {
-			return l
-		}
-		fr := paths[n].From
-		if fr < 0 {
-			paths[n].Len = 1
-			return 1
-		}
-		l := 1 + leng(fr)
-		paths[n].Len = l
-		return l
-	}
-	// for each leaf, trace path to set path length, accumulate max
-	maxLen := 0
-	for i := range paths {
-		if leaves.Bit(i) == 1 {
-			if l := leng(NI(i)); l > maxLen {
-				maxLen = l
-			}
-		}
-	}
-	return &FromList{paths, leaves, maxLen}, lx, -1
+	return &FromList{Paths: paths}, labels, -1
 }
 
 // HasArcLabel returns true if g has any arc from node fr to node to

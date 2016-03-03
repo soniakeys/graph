@@ -72,29 +72,17 @@ func ExampleDirected_FromList() {
 		1: {0},
 	}}
 	f, _ := g.FromList()
-	fmt.Println("Paths:")
-	fmt.Println("N  From  Len")
+	fmt.Println("N  From")
 	for n, e := range f.Paths {
-		fmt.Printf("%d %4d %5d\n", n, e.From, e.Len)
+		fmt.Printf("%d %4d\n", n, e.From)
 	}
-	fmt.Println("Leaves:")
-	fmt.Println("43210")
-	fmt.Println("-----")
-	fmt.Printf("%05b\n", &f.Leaves)
-	fmt.Println("MaxLen:", f.MaxLen)
 	// Output:
-	// Paths:
-	// N  From  Len
-	// 0    1     3
-	// 1    4     2
-	// 2    4     2
-	// 3   -1     1
-	// 4   -1     1
-	// Leaves:
-	// 43210
-	// -----
-	// 01101
-	// MaxLen: 3
+	// N  From
+	// 0    1
+	// 1    4
+	// 2    4
+	// 3   -1
+	// 4   -1
 }
 
 func ExampleDirected_FromList_nonTree() {

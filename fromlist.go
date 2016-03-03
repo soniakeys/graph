@@ -224,6 +224,9 @@ func (f *FromList) Root(n NI) NI {
 // Transpose constructs the directed graph corresponding to FromList f
 // but with arcs in the opposite direction.  That is, from roots toward leaves.
 //
+// The method relies only on the From member of f.Paths.  Other members of
+// the FromList are not used.
+//
 // See FromList.TransposeRoots for a version that also accumulates and returns
 // information about the roots.
 func (f *FromList) Transpose() Directed {
@@ -246,6 +249,9 @@ func (f *FromList) Transpose() Directed {
 //
 // If labels is non-nil, it must be the same length as f.Paths and is used
 // to look up label numbers by the path index.
+//
+// The method relies only on the From member of f.Paths.  Other members of
+// the FromList are not used.
 //
 // See FromList.TransposeLabeledRoots for a version that also accumulates
 // and returns information about the roots.
@@ -277,6 +283,9 @@ func (f *FromList) TransposeLabeled(labels []LI) DirectedLabeled {
 // If labels is non-nil, it must be the same length as t.Paths and is used
 // to look up label numbers by the path index.
 //
+// The method relies only on the From member of f.Paths.  Other members of
+// the FromList are not used.
+//
 // See FromList.TransposeLabeled for a simpler verstion that returns the
 // forest only.
 func (f *FromList) TransposeLabeledRoots(labels []LI) (forest DirectedLabeled, nRoots int, roots big.Int) {
@@ -306,6 +315,9 @@ func (f *FromList) TransposeLabeledRoots(labels []LI) (forest DirectedLabeled, n
 //
 // TransposeRoots also returns a count of roots of the resulting forest and
 // a bitmap of the roots.
+//
+// The method relies only on the From member of f.Paths.  Other members of
+// the FromList are not used.
 //
 // See FromList.Transpose for a simpler verstion that returns the forest only.
 func (f *FromList) TransposeRoots() (forest Directed, nRoots int, roots big.Int) {
