@@ -8,22 +8,22 @@ import (
 	"sort"
 )
 
-//go:generate cp cg_label.go cg_adj.go
-//go:generate gofmt -r "LabeledAdjacencyList -> AdjacencyList" -w cg_adj.go
-//go:generate gofmt -r "n.To -> n" -w cg_adj.go
-//go:generate gofmt -r "Half -> NI" -w cg_adj.go
+//go:generate cp adj_cg.go adj_RO.go
+//go:generate gofmt -r "LabeledAdjacencyList -> AdjacencyList" -w adj_RO.go
+//go:generate gofmt -r "n.To -> n" -w adj_RO.go
+//go:generate gofmt -r "Half -> NI" -w adj_RO.go
 
-//go:generate cp cg_undir.go cg_undir_al.go
-//go:generate gofmt -r "UndirectedLabeled -> Undirected" -w cg_undir_al.go
-//go:generate gofmt -r "LabeledAdjacencyList -> AdjacencyList" -w cg_undir_al.go
-//go:generate gofmt -r "n.To -> n" -w cg_undir_al.go
-//go:generate gofmt -r "Half -> NI" -w cg_undir_al.go
+//go:generate cp dir_cg.go dir_RO.go
+//go:generate gofmt -r "DirectedLabeled -> Directed" -w dir_RO.go
+//go:generate gofmt -r "LabeledAdjacencyList -> AdjacencyList" -w dir_RO.go
+//go:generate gofmt -r "n.To -> n" -w dir_RO.go
+//go:generate gofmt -r "Half -> NI" -w dir_RO.go
 
-//go:generate cp cg_dir.go cg_dir_al.go
-//go:generate gofmt -r "DirectedLabeled -> Directed" -w cg_dir_al.go
-//go:generate gofmt -r "LabeledAdjacencyList -> AdjacencyList" -w cg_dir_al.go
-//go:generate gofmt -r "n.To -> n" -w cg_dir_al.go
-//go:generate gofmt -r "Half -> NI" -w cg_dir_al.go
+//go:generate cp undir_cg.go undir_RO.go
+//go:generate gofmt -r "UndirectedLabeled -> Undirected" -w undir_RO.go
+//go:generate gofmt -r "LabeledAdjacencyList -> AdjacencyList" -w undir_RO.go
+//go:generate gofmt -r "n.To -> n" -w undir_RO.go
+//go:generate gofmt -r "Half -> NI" -w undir_RO.go
 
 var one = big.NewInt(1)
 

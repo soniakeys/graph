@@ -9,9 +9,11 @@ import (
 	"github.com/willf/bitset"
 )
 
-// cg_undir_al.go is code generated from cg_undir.go by directive in graph.go.
-// Editing cg_undir.go is okay.
-// DO NOT EDIT cg_undir_al.go.
+// undir_RO.go is code generated from undir_cg.go by directives in graph.go.
+// Editing undir_cg.go is okay.  It is the code generation source.
+// DO NOT EDIT undir_RO.go.
+// The RO means read only and it is upper case RO to slow you down a bit
+// in case you start to edit the file.
 
 // Bipartite determines if a connected component of an undirected graph
 // is bipartite, a component where nodes can be partitioned into two sets
@@ -24,7 +26,7 @@ import (
 // is not bipartite, Bipartite returns false and a representative odd cycle.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g UndirectedLabeled) Bipartite(n NI) (b bool, c1, c2 *big.Int, oc []NI) {
+func (g Undirected) Bipartite(n NI) (b bool, c1, c2 *big.Int, oc []NI) {
 	c1 = &big.Int{}
 	c2 = &big.Int{}
 	b = true
@@ -32,17 +34,17 @@ func (g UndirectedLabeled) Bipartite(n NI) (b bool, c1, c2 *big.Int, oc []NI) {
 	var df func(n NI, c1, c2 *big.Int)
 	df = func(n NI, c1, c2 *big.Int) {
 		c1.SetBit(c1, int(n), 1)
-		for _, nb := range g.LabeledAdjacencyList[n] {
-			if c1.Bit(int(nb.To)) == 1 {
+		for _, nb := range g.AdjacencyList[n] {
+			if c1.Bit(int(nb)) == 1 {
 				b = false
-				oc = []NI{nb.To, n}
+				oc = []NI{nb, n}
 				open = true
 				return
 			}
-			if c2.Bit(int(nb.To)) == 1 {
+			if c2.Bit(int(nb)) == 1 {
 				continue
 			}
-			df(nb.To, c2, c1)
+			df(nb, c2, c1)
 			if b {
 				continue
 			}
@@ -80,25 +82,25 @@ func (g UndirectedLabeled) Bipartite(n NI) (b bool, c1, c2 *big.Int, oc []NI) {
 // There are equivalent labeled and unlabeled versions of this method.
 //
 // See also more sophisticated variants BronKerbosch2 and BronKerbosch3.
-func (g UndirectedLabeled) BronKerbosch1(emit func([]NI) bool) {
+func (g Undirected) BronKerbosch1(emit func([]NI) bool) {
 	var f func(R, P, X *bitset.BitSet) bool
 	f = func(R, P, X *bitset.BitSet) bool {
 		switch {
 		case P.Any():
-			r2 := bitset.New(uint(len(g.LabeledAdjacencyList)))
-			p2 := bitset.New(uint(len(g.LabeledAdjacencyList)))
-			x2 := bitset.New(uint(len(g.LabeledAdjacencyList)))
+			r2 := bitset.New(uint(len(g.AdjacencyList)))
+			p2 := bitset.New(uint(len(g.AdjacencyList)))
+			x2 := bitset.New(uint(len(g.AdjacencyList)))
 			for n, ok := P.NextSet(0); ok; n, ok = P.NextSet(n + 1) {
 				R.Copy(r2)
 				r2.Set(n)
 				p2.ClearAll()
 				x2.ClearAll()
-				for _, to := range g.LabeledAdjacencyList[n] {
-					if P.Test(uint(to.To)) {
-						p2.Set(uint(to.To))
+				for _, to := range g.AdjacencyList[n] {
+					if P.Test(uint(to)) {
+						p2.Set(uint(to))
 					}
-					if X.Test(uint(to.To)) {
-						x2.Set(uint(to.To))
+					if X.Test(uint(to)) {
+						x2.Set(uint(to))
 					}
 				}
 				if !f(r2, p2, x2) {
@@ -121,9 +123,9 @@ func (g UndirectedLabeled) BronKerbosch1(emit func([]NI) bool) {
 		}
 		return true
 	}
-	R := bitset.New(uint(len(g.LabeledAdjacencyList)))
-	P := bitset.New(uint(len(g.LabeledAdjacencyList))).Complement()
-	X := bitset.New(uint(len(g.LabeledAdjacencyList)))
+	R := bitset.New(uint(len(g.AdjacencyList)))
+	P := bitset.New(uint(len(g.AdjacencyList))).Complement()
+	X := bitset.New(uint(len(g.AdjacencyList)))
 	f(R, P, X)
 }
 
@@ -137,24 +139,24 @@ func (g UndirectedLabeled) BronKerbosch1(emit func([]NI) bool) {
 // in P.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g UndirectedLabeled) BKPivotMaxDegree(P, X *bitset.BitSet) int {
+func (g Undirected) BKPivotMaxDegree(P, X *bitset.BitSet) int {
 	// choose pivot u as highest degree node from P or X
 	n, ok := P.NextSet(0)
 	u := n
-	maxDeg := len(g.LabeledAdjacencyList[u])
+	maxDeg := len(g.AdjacencyList[u])
 	for { // scan P
 		n, ok = P.NextSet(n + 1)
 		if !ok {
 			break
 		}
-		if d := len(g.LabeledAdjacencyList[n]); d > maxDeg {
+		if d := len(g.AdjacencyList[n]); d > maxDeg {
 			u = n
 			maxDeg = d
 		}
 	}
 	// scan X
 	for n, ok = X.NextSet(0); ok; n, ok = X.NextSet(n + 1) {
-		if d := len(g.LabeledAdjacencyList[n]); d > maxDeg {
+		if d := len(g.AdjacencyList[n]); d > maxDeg {
 			u = n
 			maxDeg = d
 		}
@@ -170,7 +172,7 @@ func (g UndirectedLabeled) BKPivotMaxDegree(P, X *bitset.BitSet) int {
 // The strategy is to simply pick the first node in P.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g UndirectedLabeled) BKPivotMinP(P, X *bitset.BitSet) int {
+func (g Undirected) BKPivotMinP(P, X *bitset.BitSet) int {
 	n, _ := P.NextSet(0)
 	return int(n)
 }
@@ -197,18 +199,18 @@ func (g UndirectedLabeled) BKPivotMinP(P, X *bitset.BitSet) int {
 //
 // See also simpler variant BronKerbosch1 and more sophisticated variant
 // BronKerbosch3.
-func (g UndirectedLabeled) BronKerbosch2(pivot func(P, X *bitset.BitSet) int, emit func([]NI) bool) {
+func (g Undirected) BronKerbosch2(pivot func(P, X *bitset.BitSet) int, emit func([]NI) bool) {
 	var f func(R, P, X *bitset.BitSet) bool
 	f = func(R, P, X *bitset.BitSet) bool {
 		switch {
 		case P.Any():
-			r2 := bitset.New(uint(len(g.LabeledAdjacencyList)))
-			p2 := bitset.New(uint(len(g.LabeledAdjacencyList)))
-			x2 := bitset.New(uint(len(g.LabeledAdjacencyList)))
+			r2 := bitset.New(uint(len(g.AdjacencyList)))
+			p2 := bitset.New(uint(len(g.AdjacencyList)))
+			x2 := bitset.New(uint(len(g.AdjacencyList)))
 			// compute P \ N(u).  next 5 lines are only difference from BK1
 			pnu := P.Clone()
-			for _, to := range g.LabeledAdjacencyList[pivot(P, X)] {
-				pnu.SetTo(uint(to.To), false)
+			for _, to := range g.AdjacencyList[pivot(P, X)] {
+				pnu.SetTo(uint(to), false)
 			}
 			for n, ok := pnu.NextSet(0); ok; n, ok = pnu.NextSet(n + 1) {
 				// remaining code like BK1
@@ -216,12 +218,12 @@ func (g UndirectedLabeled) BronKerbosch2(pivot func(P, X *bitset.BitSet) int, em
 				r2.Set(n)
 				p2.ClearAll()
 				x2.ClearAll()
-				for _, to := range g.LabeledAdjacencyList[n] {
-					if P.Test(uint(to.To)) {
-						p2.Set(uint(to.To))
+				for _, to := range g.AdjacencyList[n] {
+					if P.Test(uint(to)) {
+						p2.Set(uint(to))
 					}
-					if X.Test(uint(to.To)) {
-						x2.Set(uint(to.To))
+					if X.Test(uint(to)) {
+						x2.Set(uint(to))
 					}
 				}
 				if !f(r2, p2, x2) {
@@ -244,9 +246,9 @@ func (g UndirectedLabeled) BronKerbosch2(pivot func(P, X *bitset.BitSet) int, em
 		}
 		return true
 	}
-	R := bitset.New(uint(len(g.LabeledAdjacencyList)))
-	P := bitset.New(uint(len(g.LabeledAdjacencyList))).Complement()
-	X := bitset.New(uint(len(g.LabeledAdjacencyList)))
+	R := bitset.New(uint(len(g.AdjacencyList)))
+	P := bitset.New(uint(len(g.AdjacencyList))).Complement()
+	X := bitset.New(uint(len(g.AdjacencyList)))
 	f(R, P, X)
 }
 
@@ -271,18 +273,18 @@ func (g UndirectedLabeled) BronKerbosch2(pivot func(P, X *bitset.BitSet) int, em
 // There are equivalent labeled and unlabeled versions of this method.
 //
 // See also simpler variants BronKerbosch1 and BronKerbosch2.
-func (g UndirectedLabeled) BronKerbosch3(pivot func(P, X *bitset.BitSet) int, emit func([]NI) bool) {
+func (g Undirected) BronKerbosch3(pivot func(P, X *bitset.BitSet) int, emit func([]NI) bool) {
 	var f func(R, P, X *bitset.BitSet) bool
 	f = func(R, P, X *bitset.BitSet) bool {
 		switch {
 		case P.Any():
-			r2 := bitset.New(uint(len(g.LabeledAdjacencyList)))
-			p2 := bitset.New(uint(len(g.LabeledAdjacencyList)))
-			x2 := bitset.New(uint(len(g.LabeledAdjacencyList)))
+			r2 := bitset.New(uint(len(g.AdjacencyList)))
+			p2 := bitset.New(uint(len(g.AdjacencyList)))
+			x2 := bitset.New(uint(len(g.AdjacencyList)))
 			// compute P \ N(u).  next 5 lines are only difference from BK1
 			pnu := P.Clone()
-			for _, to := range g.LabeledAdjacencyList[pivot(P, X)] {
-				pnu.SetTo(uint(to.To), false)
+			for _, to := range g.AdjacencyList[pivot(P, X)] {
+				pnu.SetTo(uint(to), false)
 			}
 			for n, ok := pnu.NextSet(0); ok; n, ok = pnu.NextSet(n + 1) {
 				// remaining code like BK1
@@ -290,12 +292,12 @@ func (g UndirectedLabeled) BronKerbosch3(pivot func(P, X *bitset.BitSet) int, em
 				r2.Set(n)
 				p2.ClearAll()
 				x2.ClearAll()
-				for _, to := range g.LabeledAdjacencyList[n] {
-					if P.Test(uint(to.To)) {
-						p2.Set(uint(to.To))
+				for _, to := range g.AdjacencyList[n] {
+					if P.Test(uint(to)) {
+						p2.Set(uint(to))
 					}
-					if X.Test(uint(to.To)) {
-						x2.Set(uint(to.To))
+					if X.Test(uint(to)) {
+						x2.Set(uint(to))
 					}
 				}
 				if !f(r2, p2, x2) {
@@ -318,24 +320,24 @@ func (g UndirectedLabeled) BronKerbosch3(pivot func(P, X *bitset.BitSet) int, em
 		}
 		return true
 	}
-	R := bitset.New(uint(len(g.LabeledAdjacencyList)))
-	P := bitset.New(uint(len(g.LabeledAdjacencyList))).Complement()
-	X := bitset.New(uint(len(g.LabeledAdjacencyList)))
+	R := bitset.New(uint(len(g.AdjacencyList)))
+	P := bitset.New(uint(len(g.AdjacencyList))).Complement()
+	X := bitset.New(uint(len(g.AdjacencyList)))
 	// code above same as BK2
 	// code below new to BK3
 	_, ord, _ := g.Degeneracy()
-	p2 := bitset.New(uint(len(g.LabeledAdjacencyList)))
-	x2 := bitset.New(uint(len(g.LabeledAdjacencyList)))
+	p2 := bitset.New(uint(len(g.AdjacencyList)))
+	x2 := bitset.New(uint(len(g.AdjacencyList)))
 	for _, n := range ord {
 		R.Set(uint(n))
 		p2.ClearAll()
 		x2.ClearAll()
-		for _, to := range g.LabeledAdjacencyList[n] {
-			if P.Test(uint(to.To)) {
-				p2.Set(uint(to.To))
+		for _, to := range g.AdjacencyList[n] {
+			if P.Test(uint(to)) {
+				p2.Set(uint(to))
 			}
-			if X.Test(uint(to.To)) {
-				x2.Set(uint(to.To))
+			if X.Test(uint(to)) {
+				x2.Set(uint(to))
 			}
 		}
 		if !f(R, p2, x2) {
@@ -357,7 +359,7 @@ func (g UndirectedLabeled) BronKerbosch3(pivot func(P, X *bitset.BitSet) int, em
 // There are equivalent labeled and unlabeled versions of this method.
 //
 // See also ConnectedComponentReps, which has lighter weight return values.
-func (g UndirectedLabeled) ConnectedComponentBits() func() (order int, bits big.Int) {
+func (g Undirected) ConnectedComponentBits() func() (order int, bits big.Int) {
 	var vg big.Int  // nodes visited in graph
 	var vc *big.Int // nodes visited in current component
 	var nc int
@@ -366,16 +368,16 @@ func (g UndirectedLabeled) ConnectedComponentBits() func() (order int, bits big.
 		vg.SetBit(&vg, int(n), 1)
 		vc.SetBit(vc, int(n), 1)
 		nc++
-		for _, nb := range g.LabeledAdjacencyList[n] {
-			if vg.Bit(int(nb.To)) == 0 {
-				df(nb.To)
+		for _, nb := range g.AdjacencyList[n] {
+			if vg.Bit(int(nb)) == 0 {
+				df(nb)
 			}
 		}
 		return
 	}
 	var n NI
 	return func() (o int, bits big.Int) {
-		for ; n < NI(len(g.LabeledAdjacencyList)); n++ {
+		for ; n < NI(len(g.AdjacencyList)); n++ {
 			if vg.Bit(int(n)) == 0 {
 				vc = &bits
 				nc = 0
@@ -397,23 +399,23 @@ func (g UndirectedLabeled) ConnectedComponentBits() func() (order int, bits big.
 // There are equivalent labeled and unlabeled versions of this method.
 //
 // See also ConnectedComponentReps, which has lighter weight return values.
-func (g UndirectedLabeled) ConnectedComponentLists() func() []NI {
+func (g Undirected) ConnectedComponentLists() func() []NI {
 	var vg big.Int // nodes visited in graph
 	var m []NI     // members of current component
 	var df func(NI)
 	df = func(n NI) {
 		vg.SetBit(&vg, int(n), 1)
 		m = append(m, n)
-		for _, nb := range g.LabeledAdjacencyList[n] {
-			if vg.Bit(int(nb.To)) == 0 {
-				df(nb.To)
+		for _, nb := range g.AdjacencyList[n] {
+			if vg.Bit(int(nb)) == 0 {
+				df(nb)
 			}
 		}
 		return
 	}
 	var n NI
 	return func() []NI {
-		for ; n < NI(len(g.LabeledAdjacencyList)); n++ {
+		for ; n < NI(len(g.AdjacencyList)); n++ {
 			if vg.Bit(int(n)) == 0 {
 				m = nil
 				df(n)
@@ -440,21 +442,21 @@ func (g UndirectedLabeled) ConnectedComponentLists() func() []NI {
 // See also ConnectedComponentBits and ConnectedComponentLists which can
 // collect component members in a single traversal, and IsConnected which
 // is an even simpler boolean test.
-func (g UndirectedLabeled) ConnectedComponentReps() (reps []NI, orders []int) {
+func (g Undirected) ConnectedComponentReps() (reps []NI, orders []int) {
 	var c big.Int
 	var o int
 	var df func(NI)
 	df = func(n NI) {
 		c.SetBit(&c, int(n), 1)
 		o++
-		for _, nb := range g.LabeledAdjacencyList[n] {
-			if c.Bit(int(nb.To)) == 0 {
-				df(nb.To)
+		for _, nb := range g.AdjacencyList[n] {
+			if c.Bit(int(nb)) == 0 {
+				df(nb)
 			}
 		}
 		return
 	}
-	for n := range g.LabeledAdjacencyList {
+	for n := range g.AdjacencyList {
 		if c.Bit(n) == 0 {
 			reps = append(reps, NI(n))
 			o = 0
@@ -469,9 +471,9 @@ func (g UndirectedLabeled) ConnectedComponentReps() (reps []NI, orders []int) {
 // Copy also computes the arc size ma, the number of arcs.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g UndirectedLabeled) Copy() (c UndirectedLabeled, ma int) {
-	l, s := g.LabeledAdjacencyList.Copy()
-	return UndirectedLabeled{l}, s
+func (g Undirected) Copy() (c Undirected, ma int) {
+	l, s := g.AdjacencyList.Copy()
+	return Undirected{l}, s
 }
 
 // Degeneracy computes k-degeneracy, vertex ordering and k-cores.
@@ -479,13 +481,13 @@ func (g UndirectedLabeled) Copy() (c UndirectedLabeled, ma int) {
 // See Wikipedia https://en.wikipedia.org/wiki/Degeneracy_(graph_theory)
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g UndirectedLabeled) Degeneracy() (k int, ordering []NI, cores []int) {
+func (g Undirected) Degeneracy() (k int, ordering []NI, cores []int) {
 	// WP algorithm
-	ordering = make([]NI, len(g.LabeledAdjacencyList))
+	ordering = make([]NI, len(g.AdjacencyList))
 	var L big.Int
-	d := make([]int, len(g.LabeledAdjacencyList))
+	d := make([]int, len(g.AdjacencyList))
 	var D [][]NI
-	for v, nb := range g.LabeledAdjacencyList {
+	for v, nb := range g.AdjacencyList {
 		dv := len(nb)
 		d[v] = dv
 		for len(D) <= dv {
@@ -493,7 +495,7 @@ func (g UndirectedLabeled) Degeneracy() (k int, ordering []NI, cores []int) {
 		}
 		D[dv] = append(D[dv], NI(v))
 	}
-	for ox := range g.LabeledAdjacencyList {
+	for ox := range g.AdjacencyList {
 		// find a non-empty D
 		i := 0
 		for len(D[i]) == 0 {
@@ -516,24 +518,24 @@ func (g UndirectedLabeled) Degeneracy() (k int, ordering []NI, cores []int) {
 		L.SetBit(&L, int(v), 1)
 		D[i] = Di[:last]
 		// move neighbors
-		for _, nb := range g.LabeledAdjacencyList[v] {
-			if L.Bit(int(nb.To)) == 1 {
+		for _, nb := range g.AdjacencyList[v] {
+			if L.Bit(int(nb)) == 1 {
 				continue
 			}
-			dn := d[nb.To] // old number of neighbors of nb
-			Ddn := D[dn]   // nb is in this list
+			dn := d[nb]  // old number of neighbors of nb
+			Ddn := D[dn] // nb is in this list
 			// remove it from the list
 			for wx, w := range Ddn {
-				if w == nb.To {
+				if w == nb {
 					last := len(Ddn) - 1
 					Ddn[wx], Ddn[last] = Ddn[last], Ddn[wx]
 					D[dn] = Ddn[:last]
 				}
 			}
 			dn-- // new number of neighbors
-			d[nb.To] = dn
+			d[nb] = dn
 			// re--add it to it's new list
-			D[dn] = append(D[dn], nb.To)
+			D[dn] = append(D[dn], nb)
 		}
 	}
 	cores[k] = len(ordering)
@@ -549,11 +551,11 @@ func (g UndirectedLabeled) Degeneracy() (k int, ordering []NI, cores []int) {
 // See handshaking lemma example at AdjacencyList.ArcSize.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g UndirectedLabeled) Degree(n NI) int {
-	to := g.LabeledAdjacencyList[n]
+func (g Undirected) Degree(n NI) int {
+	to := g.AdjacencyList[n]
 	d := len(to) // just "out" degree,
 	for _, to := range to {
-		if to.To == n {
+		if to == n {
 			d++ // except loops count twice
 		}
 	}
@@ -565,17 +567,17 @@ func (g UndirectedLabeled) Degree(n NI) int {
 // There are equivalent labeled and unlabeled versions of this method.
 //
 // See also ConnectedComponentReps for a method returning more information.
-func (g UndirectedLabeled) IsConnected() bool {
-	if len(g.LabeledAdjacencyList) == 0 {
+func (g Undirected) IsConnected() bool {
+	if len(g.AdjacencyList) == 0 {
 		return true
 	}
 	var b big.Int
-	OneBits(&b, len(g.LabeledAdjacencyList))
+	OneBits(&b, len(g.AdjacencyList))
 	var df func(int)
 	df = func(n int) {
 		b.SetBit(&b, n, 0)
-		for _, to := range g.LabeledAdjacencyList[n] {
-			to := int(to.To)
+		for _, to := range g.AdjacencyList[n] {
+			to := int(to)
 			if b.Bit(to) == 1 {
 				df(to)
 			}
@@ -592,25 +594,25 @@ func (g UndirectedLabeled) IsConnected() bool {
 // connected.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g UndirectedLabeled) IsTree(root NI) (isTree, allTree bool) {
+func (g Undirected) IsTree(root NI) (isTree, allTree bool) {
 	var v big.Int
-	OneBits(&v, len(g.LabeledAdjacencyList))
+	OneBits(&v, len(g.AdjacencyList))
 	var df func(NI, NI) bool
 	df = func(fr, n NI) bool {
 		if v.Bit(int(n)) == 0 {
 			return false
 		}
 		v.SetBit(&v, int(n), 0)
-		for _, to := range g.LabeledAdjacencyList[n] {
-			if to.To != fr && !df(n, to.To) {
+		for _, to := range g.AdjacencyList[n] {
+			if to != fr && !df(n, to) {
 				return false
 			}
 		}
 		return true
 	}
 	v.SetBit(&v, int(root), 0)
-	for _, to := range g.LabeledAdjacencyList[root] {
-		if !df(root, to.To) {
+	for _, to := range g.AdjacencyList[root] {
+		if !df(root, to) {
 			return false, false
 		}
 	}
