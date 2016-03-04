@@ -6,6 +6,7 @@ package graph_test
 import (
 	"fmt"
 	"math/rand"
+	"sort"
 
 	"github.com/soniakeys/graph"
 )
@@ -490,6 +491,65 @@ func ExampleDijkstra_Path() {
 	// Output:
 	// Backtrack to start: 5 6 1
 	// Path distance: 20
+}
+
+func ExampleNewDijkstra_concurrent() {
+	// arcs are directed right:
+	//          (wt: 11)
+	//       --------------6----
+	//      /             /     \
+	//     /             /(2)    \(9)
+	//    /     (9)     /         \
+	//   1-------------3----       5
+	//    \           /     \     /
+	//     \     (10)/   (11)\   /(7)
+	//   (7)\       /         \ /
+	//       ------2-----------4
+	//                 (15)
+	g := graph.LabeledAdjacencyList{
+		1: {{To: 2, Label: 7}, {To: 3, Label: 9}, {To: 6, Label: 11}},
+		2: {{To: 3, Label: 10}, {To: 4, Label: 15}},
+		3: {{To: 4, Label: 11}, {To: 6, Label: 2}},
+		4: {{To: 5, Label: 7}},
+		6: {{To: 5, Label: 9}},
+	}
+	w := func(label graph.LI) float64 { return float64(label) }
+
+	// result channel
+	type result struct {
+		d   *graph.Dijkstra
+		end graph.NI
+		ok  bool
+	}
+	ch := make(chan result)
+
+	// Start two concurrent goroutines.  Each goroutine gets it's own
+	// Dijkstra struct, but they search the same graph.
+	f := func(d *graph.Dijkstra, start, end graph.NI) {
+		ch <- result{d, end, d.Path(start, end)}
+	}
+	go f(graph.NewDijkstra(g, w), 1, 5)
+	go f(graph.NewDijkstra(g, w), 2, 5)
+
+	var out []string // to sort formatted output
+
+	// format results from the two goroutines
+	for i := 0; i < 2; i++ {
+		if r := <-ch; r.ok {
+			out = append(out, fmt.Sprintln("Path", r.d.Tree.PathTo(r.end, nil),
+				"distance", r.d.Dist[r.end]))
+		}
+	}
+
+	// sort for determinism to pass go test
+	sort.Strings(out)
+	for _, l := range out {
+		fmt.Print(l)
+	}
+
+	// Output:
+	// Path [1 6 5] distance 20
+	// Path [2 3 6 5] distance 21
 }
 
 func ExampleDijkstra_AllPaths() {
