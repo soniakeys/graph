@@ -65,7 +65,7 @@ func (f *FromList) reset() {
 //
 // BoundsOk returns true when all from values are less than len(t).
 // Otherwise it returns false and a node with a from value >= len(t).
-func (f *FromList) BoundsOk() (ok bool, n NI) {
+func (f FromList) BoundsOk() (ok bool, n NI) {
 	for n, e := range f.Paths {
 		if int(e.From) >= len(f.Paths) {
 			return false, NI(n)
@@ -77,7 +77,7 @@ func (f *FromList) BoundsOk() (ok bool, n NI) {
 // CommonAncestor returns the common ancestor of a and b.
 //
 // It returns -1 if a or b are invalid node numbers.
-func (f *FromList) CommonAncestor(a, b NI) NI {
+func (f FromList) CommonAncestor(a, b NI) NI {
 	p := f.Paths
 	if a < 0 || b < 0 || a >= NI(len(p)) || b >= NI(len(p)) {
 		return -1
@@ -108,7 +108,7 @@ func (f *FromList) CommonAncestor(a, b NI) NI {
 // it will be used, otherwise a new slice is created for the result.
 //
 // See also function PathTo.
-func (f *FromList) PathTo(end NI, p []NI) []NI {
+func (f FromList) PathTo(end NI, p []NI) []NI {
 	return PathTo(f.Paths, end, p)
 }
 
@@ -211,7 +211,7 @@ func (f *FromList) ReRoot(n NI) {
 }
 
 // Root finds the root of a node in a FromList.
-func (f *FromList) Root(n NI) NI {
+func (f FromList) Root(n NI) NI {
 	for p := f.Paths; ; {
 		fr := p[n].From
 		if fr < 0 {
@@ -229,7 +229,7 @@ func (f *FromList) Root(n NI) NI {
 //
 // See FromList.TransposeRoots for a version that also accumulates and returns
 // information about the roots.
-func (f *FromList) Transpose() Directed {
+func (f FromList) Transpose() Directed {
 	g := make(AdjacencyList, len(f.Paths))
 	for n, p := range f.Paths {
 		if p.From == -1 {
@@ -255,7 +255,7 @@ func (f *FromList) Transpose() Directed {
 //
 // See FromList.TransposeLabeledRoots for a version that also accumulates
 // and returns information about the roots.
-func (f *FromList) TransposeLabeled(labels []LI) DirectedLabeled {
+func (f FromList) TransposeLabeled(labels []LI) DirectedLabeled {
 	g := make(LabeledAdjacencyList, len(f.Paths))
 	for n, p := range f.Paths {
 		if p.From == -1 {
@@ -288,7 +288,7 @@ func (f *FromList) TransposeLabeled(labels []LI) DirectedLabeled {
 //
 // See FromList.TransposeLabeled for a simpler verstion that returns the
 // forest only.
-func (f *FromList) TransposeLabeledRoots(labels []LI) (forest DirectedLabeled, nRoots int, roots big.Int) {
+func (f FromList) TransposeLabeledRoots(labels []LI) (forest DirectedLabeled, nRoots int, roots big.Int) {
 	p := f.Paths
 	nRoots = len(p)
 	OneBits(&roots, len(p))
@@ -320,7 +320,7 @@ func (f *FromList) TransposeLabeledRoots(labels []LI) (forest DirectedLabeled, n
 // the FromList are not used.
 //
 // See FromList.Transpose for a simpler verstion that returns the forest only.
-func (f *FromList) TransposeRoots() (forest Directed, nRoots int, roots big.Int) {
+func (f FromList) TransposeRoots() (forest Directed, nRoots int, roots big.Int) {
 	p := f.Paths
 	nRoots = len(p)
 	OneBits(&roots, len(p))
