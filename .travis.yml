@@ -1,5 +1,6 @@
 sudo: false
 language: go
+go: 1.6
 script:
  - go test ./...
  - go test -run NewDijkstra -race -v
