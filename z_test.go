@@ -20,8 +20,8 @@ var (
 
 func TestRBig(t *testing.T) {
 	for _, tc := range []testCase{r1k, r10k, r100k /*, r1m*/} {
-		if s, cx := tc.g.Simple(); !s {
-			t.Fatal(len(tc.g), "not simple at node", cx)
+		if s, cx := tc.g.IsSimple(); !s {
+			t.Fatal(len(tc.g.AdjacencyList), "not simple at node", cx)
 		}
 	}
 }
@@ -37,7 +37,7 @@ func BenchmarkDijkstra1e3(b *testing.B) {
 	// 1000 nodes, 3000 edges
 	tc := r1k
 	w := func(label graph.LI) float64 { return tc.w[label] }
-	d := graph.NewDijkstra(tc.l, w)
+	d := graph.NewDijkstra(tc.l.LabeledAdjacencyList, w)
 	for i := 0; i < b.N; i++ {
 		d.AllPaths(tc.start)
 	}
@@ -47,7 +47,7 @@ func BenchmarkDijkstra1e4(b *testing.B) {
 	// 10k nodes, 50k edges
 	tc := r10k
 	w := func(label graph.LI) float64 { return tc.w[label] }
-	d := graph.NewDijkstra(tc.l, w)
+	d := graph.NewDijkstra(tc.l.LabeledAdjacencyList, w)
 	for i := 0; i < b.N; i++ {
 		d.AllPaths(tc.start)
 	}
@@ -57,7 +57,7 @@ func BenchmarkDijkstra1e5(b *testing.B) {
 	// 100k nodes, 1m edges
 	tc := r100k
 	w := func(label graph.LI) float64 { return tc.w[label] }
-	d := graph.NewDijkstra(tc.l, w)
+	d := graph.NewDijkstra(tc.l.LabeledAdjacencyList, w)
 	for i := 0; i < b.N; i++ {
 		d.AllPaths(tc.start)
 	}
@@ -73,7 +73,7 @@ var (
 
 func BenchmarkBFS_K10(b *testing.B) {
 	kt := k10
-	bf := graph.NewBreadthFirst(kt.g)
+	bf := graph.NewBreadthFirst(kt.g.AdjacencyList)
 	x := 0
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -84,7 +84,7 @@ func BenchmarkBFS_K10(b *testing.B) {
 
 func BenchmarkBFS_K13(b *testing.B) {
 	kt := k13
-	bf := graph.NewBreadthFirst(kt.g)
+	bf := graph.NewBreadthFirst(kt.g.AdjacencyList)
 	x := 0
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -95,7 +95,7 @@ func BenchmarkBFS_K13(b *testing.B) {
 
 func BenchmarkBFS_K16(b *testing.B) {
 	kt := k16
-	bf := graph.NewBreadthFirst(kt.g)
+	bf := graph.NewBreadthFirst(kt.g.AdjacencyList)
 	x := 0
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -119,7 +119,7 @@ func BenchmarkBFS_K20(b *testing.B) {
 
 func BenchmarkBFS2_K10(b *testing.B) {
 	tc := k10
-	bf := graph.NewBreadthFirst2(tc.g, tc.g, tc.m)
+	bf := graph.NewBreadthFirst2(tc.g.AdjacencyList, tc.g.AdjacencyList, tc.m)
 	x := 0
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -130,7 +130,7 @@ func BenchmarkBFS2_K10(b *testing.B) {
 
 func BenchmarkBFS2_K13(b *testing.B) {
 	tc := k13
-	bf := graph.NewBreadthFirst2(tc.g, tc.g, tc.m)
+	bf := graph.NewBreadthFirst2(tc.g.AdjacencyList, tc.g.AdjacencyList, tc.m)
 	x := 0
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -141,7 +141,7 @@ func BenchmarkBFS2_K13(b *testing.B) {
 
 func BenchmarkBFS2_K16(b *testing.B) {
 	tc := k16
-	bf := graph.NewBreadthFirst2(tc.g, tc.g, tc.m)
+	bf := graph.NewBreadthFirst2(tc.g.AdjacencyList, tc.g.AdjacencyList, tc.m)
 	x := 0
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -153,7 +153,7 @@ func BenchmarkBFS2_K16(b *testing.B) {
 /*
 func BenchmarkBFS2_K20(b *testing.B) {
     tc := k20
-    bf := graph.NewBreadthFirst2(tc.g, tc.g, tc.m)
+    bf := graph.NewBreadthFirst2(tc.g.AdjacencyList, tc.g.AdjacencyList, tc.m)
     x := 0
     b.ResetTimer()
     for i := 0; i < b.N; i++ {
