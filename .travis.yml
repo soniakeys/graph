@@ -3,3 +3,4 @@ language: go
 script:
  - go test ./...
  - go test -run NewDijkstra -race -v
+ - go tool vet -example .
