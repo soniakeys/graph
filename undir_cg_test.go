@@ -384,3 +384,17 @@ func ExampleUndirected_IsTree() {
 	// true false
 	// false false
 }
+
+func ExampleUndirected_Size() {
+	//   0--\
+	//  / \-/
+	// 1
+	var g graph.Undirected
+	g.AddEdge(0, 0)
+	g.AddEdge(0, 1)
+	fmt.Println("Size:", g.Size())
+	fmt.Printf("(Arc size = %d)\n", g.ArcSize())
+	// Output:
+	// Size: 2
+	// (Arc size = 3)
+}

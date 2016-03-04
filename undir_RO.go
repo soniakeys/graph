@@ -618,3 +618,19 @@ func (g Undirected) IsTree(root NI) (isTree, allTree bool) {
 	}
 	return true, v.BitLen() == 0
 }
+
+// Size returns the number of edges in g.
+//
+// See also ArcSize and HasLoop.
+func (g Undirected) Size() int {
+	m2 := 0
+	for fr, to := range g.AdjacencyList {
+		m2 += len(to)
+		for _, to := range to {
+			if to == NI(fr) {
+				m2++
+			}
+		}
+	}
+	return m2 / 2
+}
