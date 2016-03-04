@@ -121,7 +121,7 @@
 //  AStar          Non-negative arc weights, heuristic guided, single path.
 //  BellmanFord    Negative arc weights allowed, no negative cycles, all paths.
 //  DAGPath        O(n) algorithm for DAGs, arc weights of any sign.
-//  FloydWarshall  all pairs end points, no negative cycles.
+//  FloydWarshall  all pairs distances, no negative cycles.
 //
 // These searches are done in a similar way that involves creating a
 // search object, running a search method on the object, and decoding a result
