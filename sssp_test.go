@@ -263,11 +263,11 @@ func ExampleDAGPath_AllPaths() {
 	fmt.Println("node  path dist  path len  leaf")
 	for n, pd := range d.Dist {
 		fmt.Printf("%d  %9.0f  %9d %7d\n",
-			n, pd, d.Tree.Paths[n].Len, d.Tree.Leaves.Bit(n))
+			n, pd, d.Forest.Paths[n].Len, d.Forest.Leaves.Bit(n))
 	}
 	fmt.Println()
 	fmt.Println("Nodes reached:       ", reached)
-	fmt.Println("Max path len:        ", d.Tree.MaxLen)
+	fmt.Println("Max path len:        ", d.Forest.MaxLen)
 	// Output:
 	// node  path dist  path len  leaf
 	// 0          0          0       0
@@ -313,8 +313,8 @@ func ExampleDAGPath_Path_shortest() {
 	if !d.Path(start, end) {
 		fmt.Println("not found")
 	}
-	fmt.Println("Path length:", d.Tree.Paths[end].Len)
-	fmt.Println("Path:", d.Tree.PathTo(end, nil))
+	fmt.Println("Path length:", d.Forest.Paths[end].Len)
+	fmt.Println("Path:", d.Forest.PathTo(end, nil))
 	fmt.Println("Distance:", d.Dist[end])
 	// Output:
 	// Ordering: [3 1 4 0 5 6 2]
@@ -351,8 +351,8 @@ func ExampleDAGPath_Path_longest() {
 	if !d.Path(start, end) {
 		fmt.Println("not found")
 	}
-	fmt.Println("Path length:", d.Tree.Paths[end].Len)
-	fmt.Println("Path:", d.Tree.PathTo(end, nil))
+	fmt.Println("Path length:", d.Forest.Paths[end].Len)
+	fmt.Println("Path:", d.Forest.PathTo(end, nil))
 	fmt.Println("Distance:", d.Dist[end])
 	// Output:
 	// Ordering: [3 1 4 0 5 6 2]
@@ -481,7 +481,7 @@ func ExampleDijkstra_Path() {
 		return
 	}
 	fmt.Print("Backtrack to start: ", end)
-	rp := d.Tree.Paths
+	rp := d.Forest.Paths
 	for n := end; n != start; {
 		n = rp[n].From
 		fmt.Print(" ", n)
@@ -536,7 +536,7 @@ func ExampleNewDijkstra_concurrent() {
 	// format results from the two goroutines
 	for i := 0; i < 2; i++ {
 		if r := <-ch; r.ok {
-			out = append(out, fmt.Sprintln("Path", r.d.Tree.PathTo(r.end, nil),
+			out = append(out, fmt.Sprintln("Path", r.d.Forest.PathTo(r.end, nil),
 				"distance", r.d.Dist[r.end]))
 		}
 	}
@@ -578,10 +578,10 @@ func ExampleDijkstra_AllPaths() {
 	// column len is from Result, and will be equal to len(path).
 	// column dist is from Result, and will be equal to sum.
 	fmt.Println("node:  path                  len  dist")
-	p := make([]graph.NI, d.Tree.MaxLen)
+	p := make([]graph.NI, d.Forest.MaxLen)
 	for nd := range g {
-		r := &d.Tree.Paths[nd]
-		path := d.Tree.PathTo(graph.NI(nd), p)
+		r := &d.Forest.Paths[nd]
+		path := d.Forest.PathTo(graph.NI(nd), p)
 		if r.Len > 0 {
 			fmt.Printf("%d:     %-23s %d    %2.0f\n",
 				nd, fmt.Sprint(path), r.Len, d.Dist[nd])
@@ -752,10 +752,10 @@ func ExampleBellmanFord() {
 	}
 	fmt.Println("end   path  path")
 	fmt.Println("node  len   dist   path")
-	p := make([]graph.NI, b.Tree.MaxLen)
-	for n, e := range b.Tree.Paths {
+	p := make([]graph.NI, b.Forest.MaxLen)
+	for n, e := range b.Forest.Paths {
 		fmt.Printf("%d       %d   %4.0f   %d\n",
-			n, e.Len, b.Dist[n], b.Tree.PathTo(graph.NI(n), p))
+			n, e.Len, b.Dist[n], b.Forest.PathTo(graph.NI(n), p))
 	}
 	// Output:
 	// negative cycle: true

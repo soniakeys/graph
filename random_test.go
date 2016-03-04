@@ -150,11 +150,11 @@ func testSSSP(tc testCase, t *testing.T) {
 	w := func(label graph.LI) float64 { return tc.w[label] }
 	d := graph.NewDijkstra(tc.l.LabeledAdjacencyList, w)
 	d.Path(tc.start, tc.end)
-	pathD := d.Tree.PathTo(tc.end, nil)
+	pathD := d.Forest.PathTo(tc.end, nil)
 	distD := d.Dist[tc.end]
 	// test that repeating same search on same d gives same result
 	d.Path(tc.start, tc.end)
-	path2 := d.Tree.PathTo(tc.end, nil)
+	path2 := d.Forest.PathTo(tc.end, nil)
 	dist2 := d.Dist[tc.end]
 	if len(pathD) != len(path2) || distD != dist2 {
 		t.Fatal(len(tc.w), "D, D2 len or dist mismatch")
@@ -184,8 +184,8 @@ func testSSSP(tc testCase, t *testing.T) {
 	b := graph.NewBellmanFord(tc.l.LabeledAdjacencyList, w)
 	b.Start(tc.start)
 	// result objects should be identical
-	dr := d.Tree
-	br := b.Tree
+	dr := d.Forest
+	br := b.Forest
 	if len(dr.Paths) != len(br.Paths) {
 		t.Fatal("len(dr.Paths), len(br.Paths)",
 			len(dr.Paths), len(br.Paths))
@@ -204,7 +204,7 @@ func testSSSP(tc testCase, t *testing.T) {
 	d.Weight = func(graph.LI) float64 { return 1 }
 	d.Reset()
 	d.AllPaths(tc.start)
-	ur := d.Tree
+	ur := d.Forest
 	bfs := graph.NewBreadthFirst(tc.g.AdjacencyList)
 	np := bfs.AllPaths(tc.start)
 	bfsr := bfs.Result

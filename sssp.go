@@ -19,7 +19,7 @@ import (
 type AStar struct {
 	Graph  LabeledAdjacencyList // input graph
 	Weight WeightFunc           // input weight function
-	Tree   FromList             // result paths
+	Forest FromList             // result paths
 	Dist   []float64            // distances for result paths
 	// heap values
 	r []rNode
@@ -50,7 +50,7 @@ func NewAStar(g LabeledAdjacencyList, w WeightFunc) *AStar {
 	return &AStar{
 		Graph:  g,
 		Weight: w,
-		Tree:   NewFromList(len(g)),
+		Forest: NewFromList(len(g)),
 		Dist:   make([]float64, len(g)),
 		r:      r,
 	}
@@ -63,7 +63,7 @@ func NewAStar(g LabeledAdjacencyList, w WeightFunc) *AStar {
 func (a *AStar) Reset() {
 	a.ndVis = 0
 	a.arcVis = 0
-	a.Tree.reset()
+	a.Forest.reset()
 	for i := range a.r {
 		a.r[i].state = unreached
 	}
@@ -72,18 +72,6 @@ func (a *AStar) Reset() {
 	}
 }
 
-// AllPaths finds shortest paths from start to all nodes reachable
-// from start.
-//
-// AllPaths returns number of paths found, equivalent to the number of nodes
-// reached, including the path ending at start.  Path results are left in
-// d.Result.
-// AllPaths finds shortest paths from start to all nodes reachable
-// from start.
-//
-// AllPaths returns number of paths found, equivalent to the number of nodes
-// reached, including the path ending at start.  Path results are left in
-// d.Result.
 // rNode holds data for a "reached" node
 type rNode struct {
 	nx    NI
@@ -139,7 +127,7 @@ func (h Heuristic) Admissable(g LabeledAdjacencyList, w WeightFunc, end NI) (boo
 	d.AllPaths(end)
 	// compare h to found shortest paths
 	for n := range inv {
-		if d.Tree.Paths[n].Len == 0 {
+		if d.Forest.Paths[n].Len == 0 {
 			continue // no path, any heuristic estimate is fine.
 		}
 		if !(h(NI(n)) <= d.Dist[n]) {
@@ -198,7 +186,7 @@ func (h Heuristic) Monotonic(g LabeledAdjacencyList, w WeightFunc) (bool, string
 // precompute values.
 //
 // If AStarA finds a path it returns true.  The path can be decoded from
-// a.Result.
+// a.Forest.
 func (a *AStar) AStarA(start, end NI, h Heuristic) bool {
 	// NOTE: AStarM is largely duplicate code.
 
@@ -206,7 +194,7 @@ func (a *AStar) AStarA(start, end NI, h Heuristic) bool {
 	cr := &a.r[start]
 	cr.state = reached
 	cr.f = h(start) // total path estimate is estimate from start
-	rp := a.Tree.Paths
+	rp := a.Forest.Paths
 	rp[start] = PathEnd{Len: 1, From: -1} // path length at start is 1 node
 	// oh is a heap of nodes "open" for exploration.  nodes go on the heap
 	// when they get an initial or new "g" path distance, and therefore a
@@ -267,7 +255,7 @@ func (a *AStar) AStarA(start, end NI, h Heuristic) bool {
 func (g LabeledAdjacencyList) AStarAPath(start, end NI, h Heuristic, w WeightFunc) ([]NI, float64) {
 	a := NewAStar(g, w)
 	a.AStarA(start, end, h)
-	return a.Tree.PathTo(end, nil), a.Dist[end]
+	return a.Forest.PathTo(end, nil), a.Dist[end]
 }
 
 // AStarM is AStarA optimized for monotonic heuristic estimates.
@@ -290,7 +278,7 @@ func (a *AStar) AStarM(start, end NI, h Heuristic) bool {
 	cr.state = open
 
 	cr.f = h(start)
-	rp := a.Tree.Paths
+	rp := a.Forest.Paths
 	rp[start] = PathEnd{Len: 1, From: -1}
 	oh := openHeap{cr}
 	for len(oh) > 0 {
@@ -358,7 +346,7 @@ func (a *AStar) AStarM(start, end NI, h Heuristic) bool {
 func (g LabeledAdjacencyList) AStarMPath(start, end NI, h Heuristic, w WeightFunc) ([]NI, float64) {
 	a := NewAStar(g, w)
 	a.AStarM(start, end, h)
-	return a.Tree.PathTo(end, nil), a.Dist[end]
+	return a.Forest.PathTo(end, nil), a.Dist[end]
 }
 
 // implement container/heap
@@ -390,7 +378,7 @@ func (p *openHeap) Pop() interface{} {
 type BellmanFord struct {
 	Graph  LabeledAdjacencyList
 	Weight WeightFunc
-	Tree   FromList
+	Forest FromList
 	Dist   []float64
 }
 
@@ -416,7 +404,7 @@ func NewBellmanFord(g LabeledAdjacencyList, w WeightFunc) *BellmanFord {
 	return &BellmanFord{
 		Graph:  g,
 		Weight: w,
-		Tree:   NewFromList(len(g)),
+		Forest: NewFromList(len(g)),
 		Dist:   make([]float64, len(g)),
 	}
 }
@@ -426,7 +414,7 @@ func NewBellmanFord(g LabeledAdjacencyList, w WeightFunc) *BellmanFord {
 // It leaves the graph and weight function initialized and otherwise prepares
 // the receiver for another search.
 func (b *BellmanFord) Reset() {
-	b.Tree.reset()
+	b.Forest.reset()
 	for i := range b.Dist {
 		b.Dist[i] = 0
 	}
@@ -437,10 +425,10 @@ func (b *BellmanFord) Reset() {
 //
 // The algorithm allows negative edge weights but not negative cycles.
 // Start returns true if the algorithm completes successfully.  In this case
-// FromList b.Tree will encode the shortest paths found.
+// FromList b.Forest will encode the shortest paths found.
 //
 // Start returns false in the case that it encounters a negative cycle
-// reachable from start.  In this case values in b.Result are meaningless.
+// reachable from start.  In this case values in b.Forest are meaningless.
 //
 // Negative cycles are only detected when reachable from start.  A negative
 // cycle not reachable from start will not prevent the algorithm from finding
@@ -450,7 +438,7 @@ func (b *BellmanFord) Start(start NI) (ok bool) {
 	for i := range b.Dist {
 		b.Dist[i] = inf
 	}
-	rp := b.Tree.Paths
+	rp := b.Forest.Paths
 	rp[start] = PathEnd{Len: 1, From: -1}
 	b.Dist[start] = 0
 	for _ = range b.Graph[1:] {
@@ -815,8 +803,8 @@ type DAGPath struct {
 	Ordering []NI                 // topological ordering
 	Weight   WeightFunc           // input weight function
 	Longest  bool                 // find longest path rather than shortest
-	Tree     FromList             // result paths
-	Dist     []float64            // in Tree, distances for result paths
+	Forest   FromList             // result paths
+	Dist     []float64            // in Forest, distances for result paths
 }
 
 // NewDAGPath creates a DAGPath object that allows path searches of either
@@ -840,7 +828,7 @@ func NewDAGPath(g DirectedLabeled, ordering []NI, w WeightFunc, longest bool) *D
 		Ordering: ordering,
 		Weight:   w,
 		Longest:  longest,
-		Tree:     NewFromList(len(g.LabeledAdjacencyList)),
+		Forest:   NewFromList(len(g.LabeledAdjacencyList)),
 		Dist:     make([]float64, len(g.LabeledAdjacencyList)),
 	}
 }
@@ -850,7 +838,7 @@ func NewDAGPath(g DirectedLabeled, ordering []NI, w WeightFunc, longest bool) *D
 // It leaves members Graph, Ordering, Weight, and Longest initialized and
 // otherwise prepares the receiver for another search.
 func (d *DAGPath) Reset() {
-	d.Tree.reset()
+	d.Forest.reset()
 	for i := range d.Dist {
 		d.Dist[i] = 0
 	}
@@ -885,10 +873,10 @@ func (g DirectedLabeled) dagPath(start, end NI, w WeightFunc, longest bool) ([]N
 	}
 	d := NewDAGPath(g, o, w, longest)
 	d.Path(start, end)
-	if d.Tree.Paths[end].Len == 0 {
+	if d.Forest.Paths[end].Len == 0 {
 		return nil, 0, fmt.Errorf("no path from %d to %d", start, end)
 	}
-	return d.Tree.PathTo(end, nil), d.Dist[end], nil
+	return d.Forest.PathTo(end, nil), d.Dist[end], nil
 }
 
 // Path finds a single path.
@@ -898,7 +886,7 @@ func (g DirectedLabeled) dagPath(start, end NI, w WeightFunc, longest bool) ([]N
 // found; it does not explore the remainder of the graph.
 func (d *DAGPath) Path(start, end NI) bool {
 	d.search(start, end)
-	return d.Tree.Paths[end].Len > 0
+	return d.Forest.Paths[end].Len > 0
 }
 
 // AllPaths finds paths from argument start to all nodes reachable from start.
@@ -922,10 +910,10 @@ func (d *DAGPath) search(start, end NI) (reached int) {
 		iBetter = func(cand, ext int) bool { return cand < ext }
 	}
 	g := d.Graph
-	p := d.Tree.Paths
+	p := d.Forest.Paths
 	p[start] = PathEnd{From: -1, Len: 1}
-	d.Tree.MaxLen = 1
-	leaves := &d.Tree.Leaves
+	d.Forest.MaxLen = 1
+	leaves := &d.Forest.Leaves
 	leaves.SetBit(leaves, int(start), 1)
 	reached = 1
 	for n := start; n != end; n = d.Ordering[o] {
@@ -945,8 +933,8 @@ func (d *DAGPath) search(start, end NI) (reached int) {
 				}
 				d.Dist[to.To] = candDist
 				p[to.To] = PathEnd{From: n, Len: candLen}
-				if candLen > d.Tree.MaxLen {
-					d.Tree.MaxLen = candLen
+				if candLen > d.Forest.MaxLen {
+					d.Forest.MaxLen = candLen
 				}
 			}
 			leaves.SetBit(leaves, int(n), 0)
@@ -969,8 +957,8 @@ func (d *DAGPath) search(start, end NI) (reached int) {
 type Dijkstra struct {
 	Graph  LabeledAdjacencyList // input graph
 	Weight WeightFunc           // input weight function
-	Tree   FromList             // result paths
-	Dist   []float64            // in Tree, distances for result paths
+	Forest FromList             // result paths
+	Dist   []float64            // in Forest, distances for result paths
 	// heap values
 	r []tentResult
 	// test instrumentation
@@ -1001,7 +989,7 @@ func NewDijkstra(g LabeledAdjacencyList, w WeightFunc) *Dijkstra {
 	return &Dijkstra{
 		Graph:  g,
 		Weight: w,
-		Tree:   NewFromList(len(g)),
+		Forest: NewFromList(len(g)),
 		Dist:   make([]float64, len(g)),
 		r:      r,
 	}
@@ -1014,7 +1002,7 @@ func NewDijkstra(g LabeledAdjacencyList, w WeightFunc) *Dijkstra {
 func (d *Dijkstra) Reset() {
 	d.ndVis = 0
 	d.arcVis = 0
-	d.Tree.reset()
+	d.Forest.reset()
 	for i := range d.r {
 		d.r[i].done = false
 	}
@@ -1038,17 +1026,17 @@ type tent []*tentResult
 func (g LabeledAdjacencyList) DijkstraPath(start, end NI, w WeightFunc) ([]NI, float64) {
 	d := NewDijkstra(g, w)
 	d.Path(start, end)
-	return d.Tree.PathTo(end, nil), d.Dist[end]
+	return d.Forest.PathTo(end, nil), d.Dist[end]
 }
 
 // Path finds a single shortest path.
 //
 // Path returns true if a path exists, false if not. The path can be recovered
-// from b.Result.  Path returns as soon as the shortest path to end is found;
+// from b.Forest.  Path returns as soon as the shortest path to end is found;
 // it does not explore the remainder of the graph.
 func (d *Dijkstra) Path(start, end NI) bool {
 	d.search(start, end)
-	return d.Tree.Paths[end].Len > 0
+	return d.Forest.Paths[end].Len > 0
 }
 
 // AllPaths finds shortest paths from start to all nodes reachable
@@ -1056,7 +1044,7 @@ func (d *Dijkstra) Path(start, end NI) bool {
 //
 // AllPaths returns number of paths found, equivalent to the number of nodes
 // reached, including the path ending at start.  Path results are left in
-// d.Result.
+// d.Forest.
 func (d *Dijkstra) AllPaths(start NI) (nFound int) {
 	return d.search(start, -1)
 }
@@ -1064,7 +1052,7 @@ func (d *Dijkstra) AllPaths(start NI) (nFound int) {
 // returns number of nodes reached (= number of shortest paths found)
 func (d *Dijkstra) search(start, end NI) (reached int) {
 	current := start
-	rp := d.Tree.Paths
+	rp := d.Forest.Paths
 	rp[current] = PathEnd{Len: 1, From: -1} // path length at start is 1 node
 	cr := &d.r[current]
 	cr.dist = 0    // distance at start is 0.
