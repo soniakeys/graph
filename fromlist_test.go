@@ -51,6 +51,40 @@ func ExampleFromList_CommonAncestor() {
 	// 1
 }
 
+func ExampleFromList_Cyclic_acyclic() {
+	//   0
+	//  / \
+	// 1   2
+	//    /
+	//   3
+	f := graph.FromList{Paths: []graph.PathEnd{
+		0: {From: -1},
+		1: {From: 0},
+		2: {From: 0},
+		3: {From: 2},
+	}}
+	fmt.Println(f.Cyclic())
+	// Output:
+	// false -1
+}
+
+func ExampleFromList_Cyclic_cyclic() {
+	//   0
+	//  /
+	// 1   2
+	//    /| (other arcs directed up)
+	//   3<-
+	f := graph.FromList{Paths: []graph.PathEnd{
+		0: {From: -1},
+		1: {From: 0},
+		2: {From: 3},
+		3: {From: 2},
+	}}
+	fmt.Println(f.Cyclic())
+	// Output:
+	// true 2
+}
+
 func ExamplePathTo() {
 	//       4  3
 	//      /

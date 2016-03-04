@@ -29,6 +29,11 @@ import "math/big"
 //
 // A single FromList can also represent a forest.  In this case paths from
 // all leaves do not return to a single root node, but multiple root nodes.
+//
+// While a FromList generally encodes a tree or forest, it is technically
+// possible to encode a cyclic graph.  A number of FromList methods require
+// the receiver to be acyclic.  The Cyclic method can be used to validate
+// that a FromList is acyclic in a case where the validity is unknown.
 type FromList struct {
 	Paths  []PathEnd // tree representation
 	Leaves big.Int   // leaves of tree
@@ -93,6 +98,34 @@ func (f FromList) CommonAncestor(a, b NI) NI {
 		b = p[b].From
 	}
 	return a
+}
+
+// Cyclic determines if f contains a cycle, a non-empty path from a node
+// back to itself.
+//
+// Cyclic returns true if g contains at least one cycle.  It also returns
+// an example of a node involved in a cycle.
+//
+// Cyclic returns (false, -1) in the normal case where f is acyclic.
+// Note that the bool is not an "ok" return.  A cyclic FromList is usally
+// not okay.
+func (f FromList) Cyclic() (cyclic bool, n NI) {
+	var vis big.Int
+	p := f.Paths
+	for i := range p {
+		var path big.Int
+		for n := NI(i); vis.Bit(int(n)) == 0; {
+			vis.SetBit(&vis, int(n), 1)
+			path.SetBit(&path, int(n), 1)
+			if n = p[n].From; n < 0 {
+				break
+			}
+			if path.Bit(int(n)) == 1 {
+				return true, n
+			}
+		}
+	}
+	return false, -1
 }
 
 // PathTo decodes a FromList, recovering a single path.
