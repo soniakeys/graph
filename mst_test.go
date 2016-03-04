@@ -3,6 +3,7 @@ package graph_test
 import (
 	"fmt"
 	"math/big"
+	"testing"
 
 	"github.com/soniakeys/graph"
 )
@@ -172,10 +173,11 @@ func ExamplePrim_Span() {
 	// 4:  []graph.Half{graph.Half{To:3, Label:2}}
 }
 
-/* invalid.  needs to work on undirected and r100 is directed
+var u100 = r100.l.Undirected()
+
 func TestPrim100(t *testing.T) {
-	reps, orders := r100.g.ConnectedComponentReps()
-	p := graph.NewPrim(r100.l, func(l graph.LI) float64 { return r100.w[l] })
+	reps, orders := u100.ConnectedComponentReps()
+	p := graph.NewPrim(u100, func(l graph.LI) float64 { return r100.w[l] })
 
 	// construct spanning tree for each component
 	for i, r := range reps {
@@ -187,8 +189,8 @@ func TestPrim100(t *testing.T) {
 }
 
 func BenchmarkPrim100(b *testing.B) {
-	reps, _ := r100.g.ConnectedComponentReps()
-	p := graph.NewPrim(r100.l, func(l graph.LI) float64 { return r100.w[l] })
+	reps, _ := u100.ConnectedComponentReps()
+	p := graph.NewPrim(u100, func(l graph.LI) float64 { return r100.w[l] })
 	for i := 0; i < b.N; i++ {
 		p.Reset()
 		for _, r := range reps {
@@ -196,4 +198,3 @@ func BenchmarkPrim100(b *testing.B) {
 		}
 	}
 }
-*/
