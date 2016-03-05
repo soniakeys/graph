@@ -11,6 +11,182 @@ import (
 	"github.com/soniakeys/graph"
 )
 
+func ExampleLabeledAdjacencyList_AStarAPath() {
+	// arcs are directed right:
+	//       -----------------------
+	//      /      (wt: 14)         \
+	//     /                         \
+	//    /     (9)           (2)     \
+	//   0-------------2---------------5
+	//    \           / \             /
+	//     \     (10)/   \(11)    (9)/
+	//   (7)\       /     \         /
+	//       ------1-------3-------4
+	//               (15)     (6)
+	g := graph.LabeledAdjacencyList{
+		0: {{To: 1, Label: 7}, {To: 2, Label: 9}, {To: 5, Label: 14}},
+		1: {{To: 2, Label: 10}, {To: 3, Label: 15}},
+		2: {{To: 3, Label: 11}, {To: 5, Label: 2}},
+		3: {{To: 4, Label: 6}},
+		4: {{To: 5, Label: 9}},
+		5: {},
+	}
+	w := func(label graph.LI) float64 { return float64(label) }
+	h4 := []float64{19, 20, 10, 6, 0, 9}
+	h := func(from graph.NI) float64 { return h4[from] }
+	p, d := g.AStarAPath(0, 4, h, w)
+	fmt.Println("Shortest path:", p)
+	fmt.Println("Path distance:", d)
+	// Output:
+	// Shortest path: [0 2 3 4]
+	// Path distance: 26
+}
+
+func ExampleLabeledAdjacencyList_AStarMPath() {
+	// arcs are directed right:
+	//       -----------------------
+	//      /      (wt: 14)         \
+	//     /                         \
+	//    /     (9)           (2)     \
+	//   0-------------2---------------5
+	//    \           / \             /
+	//     \     (10)/   \(11)    (9)/
+	//   (7)\       /     \         /
+	//       ------1-------3-------4
+	//               (15)     (6)
+	g := graph.LabeledAdjacencyList{
+		0: {{To: 1, Label: 7}, {To: 2, Label: 9}, {To: 5, Label: 14}},
+		1: {{To: 2, Label: 10}, {To: 3, Label: 15}},
+		2: {{To: 3, Label: 11}, {To: 5, Label: 2}},
+		3: {{To: 4, Label: 6}},
+		4: {{To: 5, Label: 9}},
+		5: {},
+	}
+	w := func(label graph.LI) float64 { return float64(label) }
+	h4 := []float64{19, 20, 10, 6, 0, 9}
+	h := func(from graph.NI) float64 { return h4[from] }
+	p, d := g.AStarMPath(0, 4, h, w)
+	fmt.Println("Shortest path:", p)
+	fmt.Println("Path distance:", d)
+	// Output:
+	// Shortest path: [0 2 3 4]
+	// Path distance: 26
+}
+
+func ExampleHeuristic_Admissable() {
+	// arcs are directed right:
+	//       -----------------------
+	//      /      (wt: 14)         \
+	//     /                         \
+	//    /     (9)           (2)     \
+	//   0-------------2---------------5
+	//    \           / \             /
+	//     \     (10)/   \(11)    (9)/
+	//   (7)\       /     \         /
+	//       ------1-------3-------4
+	//               (15)     (6)
+	g := graph.LabeledAdjacencyList{
+		0: {{To: 1, Label: 7}, {To: 2, Label: 9}, {To: 5, Label: 14}},
+		1: {{To: 2, Label: 10}, {To: 3, Label: 15}},
+		2: {{To: 3, Label: 11}, {To: 5, Label: 2}},
+		3: {{To: 4, Label: 6}},
+		4: {{To: 5, Label: 9}},
+		5: {},
+	}
+	w := func(label graph.LI) float64 { return float64(label) }
+	h4 := []float64{19, 20, 10, 6, 0, 9}
+	var h graph.Heuristic = func(from graph.NI) float64 { return h4[from] }
+	fmt.Println(h.Admissable(g, w, 4))
+	// Output:
+	// true
+}
+
+func ExampleHeuristic_Monotonic() {
+	// arcs are directed right:
+	//       -----------------------
+	//      /      (wt: 14)         \
+	//     /                         \
+	//    /     (9)           (2)     \
+	//   0-------------2---------------5
+	//    \           / \             /
+	//     \     (10)/   \(11)    (9)/
+	//   (7)\       /     \         /
+	//       ------1-------3-------4
+	//               (15)     (6)
+	g := graph.LabeledAdjacencyList{
+		0: {{To: 1, Label: 7}, {To: 2, Label: 9}, {To: 5, Label: 14}},
+		1: {{To: 2, Label: 10}, {To: 3, Label: 15}},
+		2: {{To: 3, Label: 11}, {To: 5, Label: 2}},
+		3: {{To: 4, Label: 6}},
+		4: {{To: 5, Label: 9}},
+		5: {},
+	}
+	w := func(label graph.LI) float64 { return float64(label) }
+	h4 := []float64{19, 20, 10, 6, 0, 9}
+	var h graph.Heuristic = func(from graph.NI) float64 { return h4[from] }
+	fmt.Println(h.Monotonic(g, w))
+	// Output:
+	// true
+}
+
+func ExampleBellmanFord() {
+	//              /--------3        4<-------9
+	//              |        ^        |   (6)  ^
+	//              |(1)     |        |        |
+	//              |        |(-2)    |(3)     |
+	//    (wt: 10)  v   (2)  |        v        |
+	//  1---------->2------->6<-------5--------/
+	//  |           ^        ^   (-1)    (-10)
+	//  |(8)        |        |
+	//  |           |(-4)    |(-1)
+	//  v     (1)   |        |
+	//  8---------->7--------/
+	g := graph.LabeledAdjacencyList{
+		1: {{2, 10}, {8, 8}},
+		2: {{6, 2}},
+		3: {{2, 1}},
+		4: {{5, 3}},
+		5: {{6, -1}, {9, -10}},
+		6: {{3, -2}},
+		7: {{6, -1}, {2, -4}},
+		8: {{7, 1}},
+		9: {{4, 6}},
+	}
+	w := func(label graph.LI) float64 { return float64(label) }
+	b := graph.NewBellmanFord(g, w)
+	// graph contains negative cycle somewhere
+	fmt.Println("negative cycle:", b.NegativeCycle())
+
+	// but negative cycle not reached starting at node 1
+	start := graph.NI(1)
+	fmt.Println("start:", start)
+	if !b.Start(start) {
+		fmt.Println("negative cycle")
+		return
+	}
+	fmt.Println("end   path  path")
+	fmt.Println("node  len   dist   path")
+	p := make([]graph.NI, b.Forest.MaxLen)
+	for n, e := range b.Forest.Paths {
+		fmt.Printf("%d       %d   %4.0f   %d\n",
+			n, e.Len, b.Dist[n], b.Forest.PathTo(graph.NI(n), p))
+	}
+	// Output:
+	// negative cycle: true
+	// start: 1
+	// end   path  path
+	// node  len   dist   path
+	// 0       0   +Inf   []
+	// 1       1      0   [1]
+	// 2       4      5   [1 8 7 2]
+	// 3       6      5   [1 8 7 2 6 3]
+	// 4       0   +Inf   []
+	// 5       0   +Inf   []
+	// 6       5      7   [1 8 7 2 6]
+	// 7       3      9   [1 8 7]
+	// 8       2      8   [1 8]
+	// 9       0   +Inf   []
+}
 func ExampleAdjacencyList_BreadthFirstPath() {
 	// arcs are directed right:
 	//    1   3---5
@@ -477,20 +653,49 @@ func ExampleDijkstra_Path() {
 	w := func(label graph.LI) float64 { return float64(label) }
 	d := graph.NewDijkstra(g, w)
 	var start, end graph.NI = 1, 5
-	if !d.Path(start, end) {
-		return
+	if d.Path(start, end) {
+		fmt.Println("Path", d.Forest.PathTo(end, nil), "distance", d.Dist[end])
 	}
-	fmt.Print("Backtrack to start: ", end)
-	rp := d.Forest.Paths
-	for n := end; n != start; {
-		n = rp[n].From
-		fmt.Print(" ", n)
-	}
-	fmt.Println()
-	fmt.Println("Path distance:", d.Dist[end])
 	// Output:
-	// Backtrack to start: 5 6 1
-	// Path distance: 20
+	// Path [1 6 5] distance 20
+}
+
+func ExampleNewDijkstra_consecutive() {
+	// arcs are directed right:
+	//          (wt: 11)
+	//       --------------6----
+	//      /             /     \
+	//     /             /(2)    \(9)
+	//    /     (9)     /         \
+	//   1-------------3----       5
+	//    \           /     \     /
+	//     \     (10)/   (11)\   /(7)
+	//   (7)\       /         \ /
+	//       ------2-----------4
+	//                 (15)
+	g := graph.LabeledAdjacencyList{
+		1: {{To: 2, Label: 7}, {To: 3, Label: 9}, {To: 6, Label: 11}},
+		2: {{To: 3, Label: 10}, {To: 4, Label: 15}},
+		3: {{To: 4, Label: 11}, {To: 6, Label: 2}},
+		4: {{To: 5, Label: 7}},
+		6: {{To: 5, Label: 9}},
+	}
+	w := func(label graph.LI) float64 { return float64(label) }
+	d := graph.NewDijkstra(g, w)
+	out := func(d *graph.Dijkstra, end graph.NI) {
+		fmt.Println(
+			"Path", d.Forest.PathTo(end, nil), "distance", d.Dist[end])
+	}
+	if d.Path(1, 5) {
+		out(d, 5)
+	}
+	d.Reset()
+	if d.Path(2, 5) {
+		out(d, 5)
+	}
+	// Output:
+	// Path [1 6 5] distance 20
+	// Path [2 3 6 5] distance 21
 }
 
 func ExampleNewDijkstra_concurrent() {
@@ -536,7 +741,8 @@ func ExampleNewDijkstra_concurrent() {
 	// format results from the two goroutines
 	for i := 0; i < 2; i++ {
 		if r := <-ch; r.ok {
-			out = append(out, fmt.Sprintln("Path", r.d.Forest.PathTo(r.end, nil),
+			out = append(out, fmt.Sprintln(
+				"Path", r.d.Forest.PathTo(r.end, nil),
 				"distance", r.d.Dist[r.end]))
 		}
 	}
@@ -595,181 +801,4 @@ func ExampleDijkstra_AllPaths() {
 	// 3:     [2 3]                   2    11
 	// 4:     [2 3 4]                 3    17
 	// 5:     [2 5]                   2     2
-}
-
-func ExampleLabeledAdjacencyList_AStarAPath() {
-	// arcs are directed right:
-	//       -----------------------
-	//      /      (wt: 14)         \
-	//     /                         \
-	//    /     (9)           (2)     \
-	//   0-------------2---------------5
-	//    \           / \             /
-	//     \     (10)/   \(11)    (9)/
-	//   (7)\       /     \         /
-	//       ------1-------3-------4
-	//               (15)     (6)
-	g := graph.LabeledAdjacencyList{
-		0: {{To: 1, Label: 7}, {To: 2, Label: 9}, {To: 5, Label: 14}},
-		1: {{To: 2, Label: 10}, {To: 3, Label: 15}},
-		2: {{To: 3, Label: 11}, {To: 5, Label: 2}},
-		3: {{To: 4, Label: 6}},
-		4: {{To: 5, Label: 9}},
-		5: {},
-	}
-	w := func(label graph.LI) float64 { return float64(label) }
-	h4 := []float64{19, 20, 10, 6, 0, 9}
-	h := func(from graph.NI) float64 { return h4[from] }
-	p, d := g.AStarAPath(0, 4, h, w)
-	fmt.Println("Shortest path:", p)
-	fmt.Println("Path distance:", d)
-	// Output:
-	// Shortest path: [0 2 3 4]
-	// Path distance: 26
-}
-
-func ExampleLabeledAdjacencyList_AStarMPath() {
-	// arcs are directed right:
-	//       -----------------------
-	//      /      (wt: 14)         \
-	//     /                         \
-	//    /     (9)           (2)     \
-	//   0-------------2---------------5
-	//    \           / \             /
-	//     \     (10)/   \(11)    (9)/
-	//   (7)\       /     \         /
-	//       ------1-------3-------4
-	//               (15)     (6)
-	g := graph.LabeledAdjacencyList{
-		0: {{To: 1, Label: 7}, {To: 2, Label: 9}, {To: 5, Label: 14}},
-		1: {{To: 2, Label: 10}, {To: 3, Label: 15}},
-		2: {{To: 3, Label: 11}, {To: 5, Label: 2}},
-		3: {{To: 4, Label: 6}},
-		4: {{To: 5, Label: 9}},
-		5: {},
-	}
-	w := func(label graph.LI) float64 { return float64(label) }
-	h4 := []float64{19, 20, 10, 6, 0, 9}
-	h := func(from graph.NI) float64 { return h4[from] }
-	p, d := g.AStarMPath(0, 4, h, w)
-	fmt.Println("Shortest path:", p)
-	fmt.Println("Path distance:", d)
-	// Output:
-	// Shortest path: [0 2 3 4]
-	// Path distance: 26
-}
-
-func ExampleHeuristic_Admissable() {
-	// arcs are directed right:
-	//       -----------------------
-	//      /      (wt: 14)         \
-	//     /                         \
-	//    /     (9)           (2)     \
-	//   0-------------2---------------5
-	//    \           / \             /
-	//     \     (10)/   \(11)    (9)/
-	//   (7)\       /     \         /
-	//       ------1-------3-------4
-	//               (15)     (6)
-	g := graph.LabeledAdjacencyList{
-		0: {{To: 1, Label: 7}, {To: 2, Label: 9}, {To: 5, Label: 14}},
-		1: {{To: 2, Label: 10}, {To: 3, Label: 15}},
-		2: {{To: 3, Label: 11}, {To: 5, Label: 2}},
-		3: {{To: 4, Label: 6}},
-		4: {{To: 5, Label: 9}},
-		5: {},
-	}
-	w := func(label graph.LI) float64 { return float64(label) }
-	h4 := []float64{19, 20, 10, 6, 0, 9}
-	var h graph.Heuristic = func(from graph.NI) float64 { return h4[from] }
-	fmt.Println(h.Admissable(g, w, 4))
-	// Output:
-	// true
-}
-
-func ExampleHeuristic_Monotonic() {
-	// arcs are directed right:
-	//       -----------------------
-	//      /      (wt: 14)         \
-	//     /                         \
-	//    /     (9)           (2)     \
-	//   0-------------2---------------5
-	//    \           / \             /
-	//     \     (10)/   \(11)    (9)/
-	//   (7)\       /     \         /
-	//       ------1-------3-------4
-	//               (15)     (6)
-	g := graph.LabeledAdjacencyList{
-		0: {{To: 1, Label: 7}, {To: 2, Label: 9}, {To: 5, Label: 14}},
-		1: {{To: 2, Label: 10}, {To: 3, Label: 15}},
-		2: {{To: 3, Label: 11}, {To: 5, Label: 2}},
-		3: {{To: 4, Label: 6}},
-		4: {{To: 5, Label: 9}},
-		5: {},
-	}
-	w := func(label graph.LI) float64 { return float64(label) }
-	h4 := []float64{19, 20, 10, 6, 0, 9}
-	var h graph.Heuristic = func(from graph.NI) float64 { return h4[from] }
-	fmt.Println(h.Monotonic(g, w))
-	// Output:
-	// true
-}
-
-func ExampleBellmanFord() {
-	//              /--------3        4<-------9
-	//              |        ^        |   (6)  ^
-	//              |(1)     |        |        |
-	//              |        |(-2)    |(3)     |
-	//    (wt: 10)  v   (2)  |        v        |
-	//  1---------->2------->6<-------5--------/
-	//  |           ^        ^   (-1)    (-10)
-	//  |(8)        |        |
-	//  |           |(-4)    |(-1)
-	//  v     (1)   |        |
-	//  8---------->7--------/
-	g := graph.LabeledAdjacencyList{
-		1: {{2, 10}, {8, 8}},
-		2: {{6, 2}},
-		3: {{2, 1}},
-		4: {{5, 3}},
-		5: {{6, -1}, {9, -10}},
-		6: {{3, -2}},
-		7: {{6, -1}, {2, -4}},
-		8: {{7, 1}},
-		9: {{4, 6}},
-	}
-	w := func(label graph.LI) float64 { return float64(label) }
-	b := graph.NewBellmanFord(g, w)
-	// graph contains negative cycle somewhere
-	fmt.Println("negative cycle:", b.NegativeCycle())
-
-	// but negative cycle not reached starting at node 1
-	start := graph.NI(1)
-	fmt.Println("start:", start)
-	if !b.Start(start) {
-		fmt.Println("negative cycle")
-		return
-	}
-	fmt.Println("end   path  path")
-	fmt.Println("node  len   dist   path")
-	p := make([]graph.NI, b.Forest.MaxLen)
-	for n, e := range b.Forest.Paths {
-		fmt.Printf("%d       %d   %4.0f   %d\n",
-			n, e.Len, b.Dist[n], b.Forest.PathTo(graph.NI(n), p))
-	}
-	// Output:
-	// negative cycle: true
-	// start: 1
-	// end   path  path
-	// node  len   dist   path
-	// 0       0   +Inf   []
-	// 1       1      0   [1]
-	// 2       4      5   [1 8 7 2]
-	// 3       6      5   [1 8 7 2 6 3]
-	// 4       0   +Inf   []
-	// 5       0   +Inf   []
-	// 6       5      7   [1 8 7 2 6]
-	// 7       3      9   [1 8 7]
-	// 8       2      8   [1 8]
-	// 9       0   +Inf   []
 }
