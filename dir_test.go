@@ -40,16 +40,20 @@ func ExampleDirected_EulerianCycle() {
 	// [0 1 2 1 2 2 0] <nil>
 }
 
-func ExampleDirected_EulerianCycleD() {
+func ExampleUndirected_EulerianCycleD() {
 	var g graph.Undirected
+	// add 6 edges
 	g.AddEdge(0, 1)
 	g.AddEdge(0, 2)
 	g.AddEdge(1, 2)
 	g.AddEdge(1, 2)
 	g.AddEdge(1, 2)
-	g.AddEdge(2, 2)
-	fmt.Println(g.EulerianCycleD(6))
+	g.AddEdge(2, 2) // loop
+	m := g.Size()
+	fmt.Println("m =", m)
+	fmt.Println(g.EulerianCycleD(m))
 	// Output:
+	// m = 6
 	// [0 1 2 2 1 2 0] <nil>
 }
 

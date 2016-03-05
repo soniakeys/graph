@@ -111,7 +111,7 @@ func (g Directed) EulerianCycleD(ma int) ([]NI, error) {
 // multigraph.
 //
 // Parameter m in this case must be the size of the undirected graph -- the
-// number of edges.
+// number of edges.  Use Undirected.Size if the size is unknown.
 //
 // It works, but contains an extra loop that I think spoils the time
 // complexity.  Probably still pretty fast in practice, but a different
