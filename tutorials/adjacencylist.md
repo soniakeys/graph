@@ -11,7 +11,7 @@ The example program contains comments with the graph crudely rendered with
 ASCII symbols but here is a more attractive version rendered with the
 Graphviz dot program.
 
-![Adjacency list](https://rawgit.com/soniakeys/graph/master/tutorials/al.svg)
+![Adjacency list](https://cdn.rawgit.com/soniakeys/graph/svg-v0/tutorials/img/al.svg)
 
 Relevant type definitions are
 ```
