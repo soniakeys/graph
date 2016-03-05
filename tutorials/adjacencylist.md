@@ -1,0 +1,178 @@
+# AdjacencyList
+
+This tutorial introduces the AdjacencyList type and related types.  It covers
+memory representation, how adjacency lists implement directed and undirected
+graphs, and how labeled graphs implement weighted graph algorithms.
+
+## Memory representation
+
+Here is the graph used in the godoc example AdjacencyList.BreadthFirstPath.
+The example program contains comments with the graph crudely rendered with
+ASCII symbols but here is a more attractive version rendered with the
+Graphviz dot program.
+
+![Directed graph](al.svg)
+
+Relevant type definitions are
+```
+type NI int32
+type AdjacencyList [][]NI
+```
+And the graph is defined with this literal,
+```
+graph.AdjacencyList{
+    2: {1},
+    1: {4},
+    4: {3, 6},
+    3: {5},
+    6: {5, 6},
+}
+```
+As mentioned in the [Dijkstra tutorial](dijkstra.md), you can think of NI
+standing for "node int" or "node index".  The use of a named type helps with
+code readability.  An AdjacencyList is just a slice of slices.  A simplified
+memory digram is
+
+![Memory diagram](almem.svg)
+
+The top level slice has 7 elements, shown vertically here and numbered with
+their slice indexes 0-6.  Elements 1-6 are non-empty slices themselves, shown
+horizontally.  These slices contain node indexes, NIs.
+
+A slice interally contains a pointer to its "backing" array.
+Elements in the top level slice thus contain pointers *to* arrays of NIs.
+Each pointer thus represents a set of graph arcs from one node (implicit in
+the index) *to* others (with NIs stored explicity).
+
+Because Go slices are zero based an AdjacencyList represents a graph of zero
+based node numbers.  Actually there's a node 0 in this graph too.  A more
+accurate diagram would be
+
+![Graph with 0 node](al0.svg)
+
+In some cases a 0 node or other nodes can be ignored.  Some godoc examples do
+this, especially when 1 based example data is borrowed from some other source.
+
+## Undirected graphs
+
+Undirected graphs can be represented with adjacency lists with "reciprocal"
+arcs, paired arcs in opposite directions.  As a diagram,
+
+![Reciprocal pair](alpair.svg)
+
+As a Go literal,
+
+```
+graph.AdjacencyList{
+    0: {1},
+    1: {0},
+}
+```
+A number of graph algorithms work specifically on undirected graphs.
+A distinct type for these is defined as
+```
+type Undirected struct {
+    AdjacencyList
+}
+```
+A distinct type allows methods that are specific to undirected graphs.
+The technique of [embedding](https://golang.org/ref/spec#Struct_types)
+allows the Directed type to include all methods of AdjacencyList.
+
+An Undirected value can be constructed directly from an AdjacencyList,
+for example
+```
+graph.Undirected{graph.AdjacencyList{
+    0: {1},
+    1: {0},
+}}
+```
+But note that this does not automatically construct reciprocal arcs for
+a directed graph, nor does it validate that the underlying AdjacencyList
+contains reciprocal arcs.  There are methods for performing these tasks
+as needed.
+
+## Directed graphs
+
+Directed graphs are defined similarly,
+
+```
+type Directed struct {
+    AdjacencyList
+}
+```
+Methods on the Directed type are generally algorithms that require directed
+graphs, specifically that reciprocal arcs are not present.
+
+The types AdjacencyList, Directed, and Undirected can be easily transformed
+by construction or member selection in cases where the data is known to be
+compatible with the type.  To convert a directed graph to an undirected graph,
+the method `Directed.Undirected` will create reciprocal arcs.
+
+## Labeled graphs
+
+The zero based integer values of node indexes are convenient for associating
+arbitrary information with nodes.  Simply create any sort of zero based table
+of information, indexed as needed to recover node indexes for data values.
+This graph library does not compel you to use Go maps or any specific
+representation for this.
+
+To associate data with arcs or edges however, another mechanism is needed.
+Each arc in an AdjacencyList is represented by a slice element that contains
+an NI.  To associate data with one of these NIs, the element type is expanded
+from just NI to
+```
+type LI int32
+type Half struct {
+    To    NI // node ID, usable as a slice index
+    Label LI // half-arc ID for application data, often a weight
+}
+```
+It is called Half because it represents a "half arc", a full arc being
+something that explicity stores both end points of the arc.
+
+LI stands for label integer and can be used for associating arbitrary
+information with an arc.  Note that unlike an NI, an LI does not correspond
+to any index in the graph representation.  It does not need to be zero based
+like an NI.  LIs do not need to be contiguous.  They can be negative.  They
+also do not need to represent unique arc IDs.  They can have arbitrary
+application dependent meaning.
+
+The type LabeledAdjacencyList is defined
+```
+type LabeledAdjacencyList [][]Half
+```
+The data in the Dijkstra godoc example for example is
+```
+graph.LabeledAdjacencyList{
+    1: {{To: 2, Label: 7}, {To: 3, Label: 9}, {To: 6, Label: 11}},
+    2: {{To: 3, Label: 10}, {To: 4, Label: 15}},
+    3: {{To: 4, Label: 11}, {To: 6, Label: 2}},
+    4: {{To: 5, Label: 7}},
+    6: {{To: 5, Label: 9}},
+}
+```
+Or, as a Graphviz formatted diagram,
+
+![Dijkstra data](ald.svg)
+
+Now, there is a separate type, `DirectedLabeled`, for specifically directed
+labeled graphs, but this is just a LabeledAdjacencyList.  Dijkstra's algorithm
+works with adjacency lists representing either directed or undirected graphs,
+so methods simply take the LabeledAdjacencyList type.
+
+Also note that Dijkstra's algorithm requires arcs to be "weighted."  The weight
+is application data that we must associate with arc labels.  For this, Dijkstra
+methods take a weight function, defined
+```
+type WeightFunc func(label LI) (weight float64)
+```
+to translate labels to application-meaningful weights.  The example takes a
+short cut at this point by using integer weights that can be stored directly
+as label values.  The weight function becomes
+```
+func(label graph.LI) float64 { return float64(label) }
+```
+This direct encoding of application data is completely appropriate where
+application data consist of only a single integer, or where weights can be
+restricted to integers.
