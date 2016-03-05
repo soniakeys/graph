@@ -33,7 +33,7 @@ standing for "node int" or "node index".  The use of a named type helps with
 code readability.  An AdjacencyList is just a slice of slices.  A simplified
 memory digram is
 
-![Memory diagram](almem.svg)
+![Memory diagram](https://cdn.rawgit.com/soniakeys/graph/svg-v0/tutorials/img/almem.svg)
 
 The top level slice has 7 elements, shown vertically here and numbered with
 their slice indexes 0-6.  Elements 1-6 are non-empty slices themselves, shown
@@ -48,7 +48,7 @@ Because Go slices are zero based an AdjacencyList represents a graph of zero
 based node numbers.  Actually there's a node 0 in this graph too.  A more
 accurate diagram would be
 
-![Graph with 0 node](al0.svg)
+![Graph with 0 node](https://cdn.rawgit.com/soniakeys/graph/svg-v0/tutorials/img/al0.svg)
 
 In some cases a 0 node or other nodes can be ignored.  Some godoc examples do
 this, especially when 1 based example data is borrowed from some other source.
@@ -58,7 +58,7 @@ this, especially when 1 based example data is borrowed from some other source.
 Undirected graphs can be represented with adjacency lists with "reciprocal"
 arcs, paired arcs in opposite directions.  As a diagram,
 
-![Reciprocal pair](alpair.svg)
+![Reciprocal pair](https://cdn.rawgit.com/soniakeys/graph/svg-v0/tutorials/img/alpair.svg)
 
 As a Go literal,
 
@@ -154,7 +154,7 @@ graph.LabeledAdjacencyList{
 ```
 Or, as a Graphviz formatted diagram,
 
-![Dijkstra data](ald.svg)
+![Dijkstra data](https://cdn.rawgit.com/soniakeys/graph/svg-v0/tutorials/img/ald.svg)
 
 Now, there is a separate type, `DirectedLabeled`, for specifically directed
 labeled graphs, but this is just a LabeledAdjacencyList.  Dijkstra's algorithm
