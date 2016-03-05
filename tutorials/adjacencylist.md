@@ -11,7 +11,7 @@ The example program contains comments with the graph crudely rendered with
 ASCII symbols but here is a more attractive version rendered with the
 Graphviz dot program.
 
-![Directed graph](al.svg)
+[[https://github.com/soniakeys/graph/blob/master/tutorials/al.svg]]
 
 Relevant type definitions are
 ```
