@@ -1,25 +1,25 @@
 # AdjacencyList
 
 This tutorial introduces the AdjacencyList type and related types.  It covers
-memory representation, how adjacency lists implement directed and undirected
-graphs, and how labeled graphs implement weighted graph algorithms.
+memory representation, how adjacency lists represent directed and undirected
+graphs, and how labeled graphs support weighted graph algorithms.
 
 ## Memory representation
 
-Here is the graph used in the godoc example AdjacencyList.BreadthFirstPath.
+Here is the graph used in the godoc example for AdjacencyList.BreadthFirstPath.
 The example program contains comments with the graph crudely rendered with
 ASCII symbols but here is a more attractive version rendered with the
-Graphviz dot program.
+[Graphviz](http://www.graphviz.org/) dot program.
 
 ![Adjacency list](https://cdn.rawgit.com/soniakeys/graph/svg-v0/tutorials/img/al.svg)
 
 Relevant type definitions are
-```
+```go
 type NI int32
 type AdjacencyList [][]NI
 ```
 And the graph is defined with this literal,
-```
+```go
 graph.AdjacencyList{
     2: {1},
     1: {4},
@@ -62,7 +62,7 @@ arcs, paired arcs in opposite directions.  As a diagram,
 
 As a Go literal,
 
-```
+```go
 graph.AdjacencyList{
     0: {1},
     1: {0},
@@ -70,18 +70,18 @@ graph.AdjacencyList{
 ```
 A number of graph algorithms work specifically on undirected graphs.
 A distinct type for these is defined as
-```
+```go
 type Undirected struct {
     AdjacencyList
 }
 ```
-A distinct type allows methods that are specific to undirected graphs.
+A distinct type provides a place for methods that are specific to undirected graphs.
 The technique of [embedding](https://golang.org/ref/spec#Struct_types)
-allows the Directed type to include all methods of AdjacencyList.
+allows the Directed type to also include all methods of AdjacencyList.
 
 An Undirected value can be constructed directly from an AdjacencyList,
 for example
-```
+```go
 graph.Undirected{graph.AdjacencyList{
     0: {1},
     1: {0},
@@ -96,17 +96,19 @@ as needed.
 
 Directed graphs are defined similarly,
 
-```
+```go
 type Directed struct {
     AdjacencyList
 }
 ```
 Methods on the Directed type are generally algorithms that require directed
-graphs, specifically that reciprocal arcs are not present.
+graphs, specifically graphs where reciprocal arcs are not present.
 
 The types AdjacencyList, Directed, and Undirected can be easily transformed
 by construction or member selection in cases where the data is known to be
-compatible with the type.  To convert a directed graph to an undirected graph,
+compatible with the type.
+
+To convert a directed graph to an undirected graph,
 the method `Directed.Undirected` will create reciprocal arcs.
 
 ## Labeled graphs
@@ -120,8 +122,8 @@ representation for this.
 To associate data with arcs or edges however, another mechanism is needed.
 Each arc in an AdjacencyList is represented by a slice element that contains
 an NI.  To associate data with one of these NIs, the element type is expanded
-from just NI to
-```
+from just NI to `Half` with the type definitions,
+```go
 type LI int32
 type Half struct {
     To    NI // node ID, usable as a slice index
@@ -129,21 +131,21 @@ type Half struct {
 }
 ```
 It is called Half because it represents a "half arc", a full arc being
-something that explicity stores both end points of the arc.
+something that would explicity store both end points of the arc.
 
 LI stands for label integer and can be used for associating arbitrary
 information with an arc.  Note that unlike an NI, an LI does not correspond
 to any index in the graph representation.  It does not need to be zero based
-like an NI.  LIs do not need to be contiguous.  They can be negative.  They
+like an NI.  LIs can be negative and they do not need to be contiguous.  They
 also do not need to represent unique arc IDs.  They can have arbitrary
 application dependent meaning.
 
 The type LabeledAdjacencyList is defined
-```
+```go
 type LabeledAdjacencyList [][]Half
 ```
 The data in the Dijkstra godoc example for example is
-```
+```go
 graph.LabeledAdjacencyList{
     1: {{To: 2, Label: 7}, {To: 3, Label: 9}, {To: 6, Label: 11}},
     2: {{To: 3, Label: 10}, {To: 4, Label: 15}},
@@ -156,21 +158,21 @@ Or, as a Graphviz formatted diagram,
 
 ![Dijkstra data](https://cdn.rawgit.com/soniakeys/graph/svg-v0/tutorials/img/ald.svg)
 
-Now, there is a separate type, `DirectedLabeled`, for specifically directed
-labeled graphs, but this is just a LabeledAdjacencyList.  Dijkstra's algorithm
+There is a separate type, `DirectedLabeled`, for specifically directed
+labeled graphs, but the example here uses just a LabeledAdjacencyList.  Dijkstra's algorithm
 works with adjacency lists representing either directed or undirected graphs,
 so methods simply take the LabeledAdjacencyList type.
 
 Also note that Dijkstra's algorithm requires arcs to be "weighted."  The weight
 is application data that we must associate with arc labels.  For this, Dijkstra
 methods take a weight function, defined
-```
+```go
 type WeightFunc func(label LI) (weight float64)
 ```
-to translate labels to application-meaningful weights.  The example takes a
+to translate labels to application-meaningful weights.  The Dijkstra example takes a
 short cut at this point by using integer weights that can be stored directly
 as label values.  The weight function becomes
-```
+```go
 func(label graph.LI) float64 { return float64(label) }
 ```
 This direct encoding of application data is completely appropriate where
