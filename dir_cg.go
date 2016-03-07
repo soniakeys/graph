@@ -93,6 +93,13 @@ func (g DirectedLabeled) Cyclic() (cyclic bool, fr NI, to Half) {
 // Other members of the FromList are left as zero values.
 // Use FromList.RecalcLen and FromList.RecalcLeaves as needed.
 //
+// Unusual cases are parallel arcs and loops.  A parallel arc represents
+// a case of multiple arcs going to some node and so will lead to a (nil, n)
+// return, even though a graph might be considered a multigraph tree.
+// A single loop on a node that would otherwise be a root node, though,
+// is not a case of multiple incoming arcs and so does not force a (nil, n)
+// result.
+//
 // There are equivalent labeled and unlabeled versions of this method.
 func (g DirectedLabeled) FromList() (*FromList, NI) {
 	paths := make([]PathEnd, len(g.LabeledAdjacencyList))

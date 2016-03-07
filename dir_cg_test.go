@@ -71,12 +71,14 @@ func ExampleDirected_FromList() {
 		4: {2, 1},
 		1: {0},
 	}}
-	f, _ := g.FromList()
+	f, n := g.FromList()
+	fmt.Println("n:", n)
 	fmt.Println("N  From")
 	for n, e := range f.Paths {
 		fmt.Printf("%d %4d\n", n, e.From)
 	}
 	// Output:
+	// n: -1
 	// N  From
 	// 0    1
 	// 1    4
@@ -100,6 +102,43 @@ func ExampleDirected_FromList_nonTree() {
 	fmt.Println(g.FromList())
 	// Output:
 	// <nil> 3
+}
+
+func ExampleDirected_FromList_multigraphTree() {
+	//    0
+	//   / \\
+	//  1   2
+	g := graph.Directed{graph.AdjacencyList{
+		0: {1, 2, 2},
+		2: {},
+	}}
+	fmt.Println(g.FromList())
+	// Output:
+	// <nil> 2
+}
+
+func ExampleDirected_FromList_rootLoops() {
+	//     /-\
+	//    0--/  3--\
+	//   / \     \-/
+	//  1   2
+	g := graph.Directed{graph.AdjacencyList{
+		0: {0, 1, 2},
+		3: {3},
+	}}
+	f, n := g.FromList()
+	fmt.Println("n:", n)
+	fmt.Println("N  From")
+	for n, e := range f.Paths {
+		fmt.Printf("%d %4d\n", n, e.From)
+	}
+	// Output:
+	// n: -1
+	// N  From
+	// 0    0
+	// 1    0
+	// 2    0
+	// 3    3
 }
 
 func ExampleDirected_InDegree() {
