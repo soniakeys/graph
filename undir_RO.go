@@ -562,6 +562,59 @@ func (g Undirected) Degree(n NI) int {
 	return d
 }
 
+// FromList constructs a FromList representing the tree reachable from
+// the given root.
+//
+// The connected component containing root should represent a simple graph,
+// connected as a tree.
+//
+// For nodes connected as a tree, the Path member of the returned FromList
+// will be populated with both From and Len values.  The MaxLen member will be
+// set but Leaves will be left a zero value.  Return value cycle will be -1.
+//
+// If the connected component containing root is not connected as a tree,
+// a cycle will be detected.  The returned FromList will be a zero value and
+// return value cycle will be a node involved in the cycle.
+//
+// Loops and parallel edges will be detected as cycles, however only in the
+// connected component containing root.  If g is not fully connected, nodes
+// not reachable from root will have PathEnd values of {From: -1, Len: 0}.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g Undirected) FromList(root NI) (f FromList, cycle NI) {
+	p := make([]PathEnd, len(g.AdjacencyList))
+	for i := range p {
+		p[i].From = -1
+	}
+	ml := 0
+	var df func(NI, NI) bool
+	df = func(fr, n NI) bool {
+		l := p[n].Len + 1
+		for _, to := range g.AdjacencyList[n] {
+			if to == fr {
+				continue
+			}
+			if p[to].Len > 0 {
+				cycle = to
+				return false
+			}
+			p[to] = PathEnd{From: n, Len: l}
+			if l > ml {
+				ml = l
+			}
+			if !df(n, to) {
+				return false
+			}
+		}
+		return true
+	}
+	p[root].Len = 1
+	if !df(-1, root) {
+		return
+	}
+	return FromList{Paths: p, MaxLen: ml}, -1
+}
+
 // IsConnected tests if an undirected graph is a single connected component.
 //
 // There are equivalent labeled and unlabeled versions of this method.

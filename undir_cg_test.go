@@ -6,8 +6,6 @@ package graph_test
 import (
 	"fmt"
 	"math/big"
-	//	"math/rand"
-	//	"testing"
 
 	"github.com/soniakeys/graph"
 )
@@ -331,6 +329,105 @@ func ExampleUndirected_Degree() {
 	// Output:
 	// 1
 	// 3
+}
+
+func ExampleUndirected_FromList() {
+	//    4   3
+	//   / \
+	//  2   1
+	//       \
+	//        0
+	var g graph.Undirected
+	g.AddEdge(2, 4)
+	g.AddEdge(4, 1)
+	g.AddEdge(1, 0)
+	f, cycle := g.FromList(4)
+	if cycle >= 0 {
+		return
+	}
+	fmt.Println("n  from  path len")
+	for n, e := range f.Paths {
+		fmt.Printf("%d  %3d  %3d\n", n, e.From, e.Len)
+	}
+	fmt.Println("MaxLen:  ", f.MaxLen)
+	// Output:
+	// n  from  path len
+	// 0    1    3
+	// 1    4    2
+	// 2    4    2
+	// 3   -1    0
+	// 4   -1    1
+	// MaxLen:   3
+}
+
+func ExampleUndirected_FromList_cycle() {
+	//    0
+	//   / \
+	//  1   2
+	//     / \
+	//    3---4
+	var g graph.Undirected
+	g.AddEdge(0, 1)
+	g.AddEdge(0, 2)
+	g.AddEdge(2, 3)
+	g.AddEdge(2, 4)
+	g.AddEdge(3, 4)
+	_, cycle := g.FromList(0)
+	fmt.Println("cycle:", cycle)
+	// Output:
+	// cycle: 2
+}
+
+func ExampleUndirected_FromList_loop() {
+	//    0
+	//   / \ /-\
+	//  1   2--/
+	var g graph.Undirected
+	g.AddEdge(0, 1)
+	g.AddEdge(0, 2)
+	g.AddEdge(2, 2)
+	_, cycle := g.FromList(0)
+	fmt.Println("cycle:", cycle)
+	// Output:
+	// cycle: 2
+}
+
+func ExampleUndirected_FromList_loopDisconnected() {
+	//    0
+	//   /   /-\
+	//  1   2--/
+	var g graph.Undirected
+	g.AddEdge(0, 1)
+	g.AddEdge(2, 2)
+	f, cycle := g.FromList(0)
+	fmt.Println("cycle:", cycle)
+	// Output:
+	// cycle: -1
+	fmt.Println("n  from  path len")
+	for n, e := range f.Paths {
+		fmt.Printf("%d  %3d  %3d\n", n, e.From, e.Len)
+	}
+	// Output:
+	// cycle: -1
+	// n  from  path len
+	// 0   -1    1
+	// 1    0    2
+	// 2   -1    0
+}
+
+func ExampleUndirected_FromList_multigraph() {
+	//    0
+	//   / \
+	//  1   2==3
+	var g graph.Undirected
+	g.AddEdge(0, 1)
+	g.AddEdge(0, 2)
+	g.AddEdge(2, 3)
+	g.AddEdge(2, 3)
+	_, cycle := g.FromList(0)
+	fmt.Println("cycle:", cycle)
+	// Output:
+	// cycle: 3
 }
 
 func ExampleUndirected_IsConnected() {
