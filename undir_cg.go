@@ -3,11 +3,7 @@
 
 package graph
 
-import (
-	"math/big"
-
-	"github.com/willf/bitset"
-)
+import "math/big"
 
 // undir_RO.go is code generated from undir_cg.go by directives in graph.go.
 // Editing undir_cg.go is okay.  It is the code generation source.
@@ -83,38 +79,35 @@ func (g UndirectedLabeled) Bipartite(n NI) (b bool, c1, c2 *big.Int, oc []NI) {
 //
 // See also more sophisticated variants BronKerbosch2 and BronKerbosch3.
 func (g UndirectedLabeled) BronKerbosch1(emit func([]NI) bool) {
-	var f func(R, P, X *bitset.BitSet) bool
-	f = func(R, P, X *bitset.BitSet) bool {
+	var f func(R, P, X *big.Int) bool
+	f = func(R, P, X *big.Int) bool {
 		switch {
-		case P.Any():
-			r2 := bitset.New(uint(len(g.LabeledAdjacencyList)))
-			p2 := bitset.New(uint(len(g.LabeledAdjacencyList)))
-			x2 := bitset.New(uint(len(g.LabeledAdjacencyList)))
-			for n, ok := P.NextSet(0); ok; n, ok = P.NextSet(n + 1) {
-				R.Copy(r2)
-				r2.Set(n)
-				p2.ClearAll()
-				x2.ClearAll()
+		case len(P.Bits()) > 0:
+			var r2, p2, x2 big.Int
+			for n := NextOne(P, 0); n >= 0; n = NextOne(P, n+1) {
+				r2.Set(R)
+				r2.SetBit(&r2, n, 1)
+				p2.SetInt64(0)
+				x2.SetInt64(0)
 				for _, to := range g.LabeledAdjacencyList[n] {
-					if P.Test(uint(to.To)) {
-						p2.Set(uint(to.To))
+					if P.Bit(int(to.To)) == 1 {
+						p2.SetBit(&p2, int(to.To), 1)
 					}
-					if X.Test(uint(to.To)) {
-						x2.Set(uint(to.To))
+					if X.Bit(int(to.To)) == 1 {
+						x2.SetBit(&x2, int(to.To), 1)
 					}
 				}
-				if !f(r2, p2, x2) {
+				if !f(&r2, &p2, &x2) {
 					return false
 				}
-				P.SetTo(n, false)
-				X.Set(n)
+				P.SetBit(P, n, 0)
+				X.SetBit(X, n, 1)
 			}
-		case X.None():
-			var n uint
-			n--
-			c := make([]NI, R.Count())
+		case len(X.Bits()) == 0:
+			c := make([]NI, PopCount(R))
+			n := -1
 			for i := range c {
-				n, _ = R.NextSet(n + 1)
+				n = NextOne(R, n+1)
 				c[i] = NI(n)
 			}
 			if !emit(c) {
@@ -123,10 +116,9 @@ func (g UndirectedLabeled) BronKerbosch1(emit func([]NI) bool) {
 		}
 		return true
 	}
-	R := bitset.New(uint(len(g.LabeledAdjacencyList)))
-	P := bitset.New(uint(len(g.LabeledAdjacencyList))).Complement()
-	X := bitset.New(uint(len(g.LabeledAdjacencyList)))
-	f(R, P, X)
+	var R, P, X big.Int
+	OneBits(&P, len(g.LabeledAdjacencyList))
+	f(&R, &P, &X)
 }
 
 // BKPivotMaxDegree is a strategy for BronKerbosch methods.
@@ -139,14 +131,14 @@ func (g UndirectedLabeled) BronKerbosch1(emit func([]NI) bool) {
 // in P.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g UndirectedLabeled) BKPivotMaxDegree(P, X *bitset.BitSet) int {
+func (g UndirectedLabeled) BKPivotMaxDegree(P, X *big.Int) int {
 	// choose pivot u as highest degree node from P or X
-	n, ok := P.NextSet(0)
+	n := NextOne(P, 0)
 	u := n
 	maxDeg := len(g.LabeledAdjacencyList[u])
 	for { // scan P
-		n, ok = P.NextSet(n + 1)
-		if !ok {
+		n = NextOne(P, n+1)
+		if n < 0 {
 			break
 		}
 		if d := len(g.LabeledAdjacencyList[n]); d > maxDeg {
@@ -155,7 +147,7 @@ func (g UndirectedLabeled) BKPivotMaxDegree(P, X *bitset.BitSet) int {
 		}
 	}
 	// scan X
-	for n, ok = X.NextSet(0); ok; n, ok = X.NextSet(n + 1) {
+	for n = NextOne(X, 0); n >= 0; n = NextOne(X, n+1) {
 		if d := len(g.LabeledAdjacencyList[n]); d > maxDeg {
 			u = n
 			maxDeg = d
@@ -172,9 +164,8 @@ func (g UndirectedLabeled) BKPivotMaxDegree(P, X *bitset.BitSet) int {
 // The strategy is to simply pick the first node in P.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g UndirectedLabeled) BKPivotMinP(P, X *bitset.BitSet) int {
-	n, _ := P.NextSet(0)
-	return int(n)
+func (g UndirectedLabeled) BKPivotMinP(P, X *big.Int) int {
+	return NextOne(P, 0)
 }
 
 // BronKerbosch2 finds maximal cliques in an undirected graph.
@@ -199,45 +190,42 @@ func (g UndirectedLabeled) BKPivotMinP(P, X *bitset.BitSet) int {
 //
 // See also simpler variant BronKerbosch1 and more sophisticated variant
 // BronKerbosch3.
-func (g UndirectedLabeled) BronKerbosch2(pivot func(P, X *bitset.BitSet) int, emit func([]NI) bool) {
-	var f func(R, P, X *bitset.BitSet) bool
-	f = func(R, P, X *bitset.BitSet) bool {
+func (g UndirectedLabeled) BronKerbosch2(pivot func(P, X *big.Int) int, emit func([]NI) bool) {
+	var f func(R, P, X *big.Int) bool
+	f = func(R, P, X *big.Int) bool {
 		switch {
-		case P.Any():
-			r2 := bitset.New(uint(len(g.LabeledAdjacencyList)))
-			p2 := bitset.New(uint(len(g.LabeledAdjacencyList)))
-			x2 := bitset.New(uint(len(g.LabeledAdjacencyList)))
+		case len(P.Bits()) > 0:
+			var r2, p2, x2, pnu big.Int
 			// compute P \ N(u).  next 5 lines are only difference from BK1
-			pnu := P.Clone()
+			pnu.Set(P)
 			for _, to := range g.LabeledAdjacencyList[pivot(P, X)] {
-				pnu.SetTo(uint(to.To), false)
+				pnu.SetBit(&pnu, int(to.To), 0)
 			}
-			for n, ok := pnu.NextSet(0); ok; n, ok = pnu.NextSet(n + 1) {
+			for n := NextOne(&pnu, 0); n >= 0; n = NextOne(&pnu, n+1) {
 				// remaining code like BK1
-				R.Copy(r2)
-				r2.Set(n)
-				p2.ClearAll()
-				x2.ClearAll()
+				r2.Set(R)
+				r2.SetBit(R, n, 1)
+				p2.SetInt64(0)
+				x2.SetInt64(0)
 				for _, to := range g.LabeledAdjacencyList[n] {
-					if P.Test(uint(to.To)) {
-						p2.Set(uint(to.To))
+					if P.Bit(int(to.To)) == 1 {
+						p2.SetBit(&p2, int(to.To), 1)
 					}
-					if X.Test(uint(to.To)) {
-						x2.Set(uint(to.To))
+					if X.Bit(int(to.To)) == 1 {
+						x2.SetBit(&x2, int(to.To), 1)
 					}
 				}
-				if !f(r2, p2, x2) {
+				if !f(&r2, &p2, &x2) {
 					return false
 				}
-				P.SetTo(n, false)
-				X.Set(n)
+				P.SetBit(P, n, 0)
+				X.SetBit(X, n, 1)
 			}
-		case X.None():
-			var n uint
-			n--
-			c := make([]NI, R.Count())
+		case len(X.Bits()) == 0:
+			n := -1
+			c := make([]NI, PopCount(R))
 			for i := range c {
-				n, _ = R.NextSet(n + 1)
+				n = NextOne(R, n+1)
 				c[i] = NI(n)
 			}
 			if !emit(c) {
@@ -246,10 +234,9 @@ func (g UndirectedLabeled) BronKerbosch2(pivot func(P, X *bitset.BitSet) int, em
 		}
 		return true
 	}
-	R := bitset.New(uint(len(g.LabeledAdjacencyList)))
-	P := bitset.New(uint(len(g.LabeledAdjacencyList))).Complement()
-	X := bitset.New(uint(len(g.LabeledAdjacencyList)))
-	f(R, P, X)
+	var R, P, X big.Int
+	OneBits(&P, len(g.LabeledAdjacencyList))
+	f(&R, &P, &X)
 }
 
 // BronKerbosch3 finds maximal cliques in an undirected graph.
@@ -273,45 +260,42 @@ func (g UndirectedLabeled) BronKerbosch2(pivot func(P, X *bitset.BitSet) int, em
 // There are equivalent labeled and unlabeled versions of this method.
 //
 // See also simpler variants BronKerbosch1 and BronKerbosch2.
-func (g UndirectedLabeled) BronKerbosch3(pivot func(P, X *bitset.BitSet) int, emit func([]NI) bool) {
-	var f func(R, P, X *bitset.BitSet) bool
-	f = func(R, P, X *bitset.BitSet) bool {
+func (g UndirectedLabeled) BronKerbosch3(pivot func(P, X *big.Int) int, emit func([]NI) bool) {
+	var f func(R, P, X *big.Int) bool
+	f = func(R, P, X *big.Int) bool {
 		switch {
-		case P.Any():
-			r2 := bitset.New(uint(len(g.LabeledAdjacencyList)))
-			p2 := bitset.New(uint(len(g.LabeledAdjacencyList)))
-			x2 := bitset.New(uint(len(g.LabeledAdjacencyList)))
+		case len(P.Bits()) > 0:
+			var r2, p2, x2, pnu big.Int
 			// compute P \ N(u).  next 5 lines are only difference from BK1
-			pnu := P.Clone()
+			pnu.Set(P)
 			for _, to := range g.LabeledAdjacencyList[pivot(P, X)] {
-				pnu.SetTo(uint(to.To), false)
+				pnu.SetBit(&pnu, int(to.To), 0)
 			}
-			for n, ok := pnu.NextSet(0); ok; n, ok = pnu.NextSet(n + 1) {
+			for n := NextOne(&pnu, 0); n >= 0; n = NextOne(&pnu, n+1) {
 				// remaining code like BK1
-				R.Copy(r2)
-				r2.Set(n)
-				p2.ClearAll()
-				x2.ClearAll()
+				r2.Set(R)
+				r2.SetBit(&r2, n, 1)
+				p2.SetInt64(0)
+				x2.SetInt64(0)
 				for _, to := range g.LabeledAdjacencyList[n] {
-					if P.Test(uint(to.To)) {
-						p2.Set(uint(to.To))
+					if P.Bit(int(to.To)) == 1 {
+						p2.SetBit(&p2, int(to.To), 1)
 					}
-					if X.Test(uint(to.To)) {
-						x2.Set(uint(to.To))
+					if X.Bit(int(to.To)) == 1 {
+						x2.SetBit(&x2, int(to.To), 1)
 					}
 				}
-				if !f(r2, p2, x2) {
+				if !f(&r2, &p2, &x2) {
 					return false
 				}
-				P.SetTo(n, false)
-				X.Set(n)
+				P.SetBit(P, n, 0)
+				X.SetBit(X, n, 1)
 			}
-		case X.None():
-			var n uint
-			n--
-			c := make([]NI, R.Count())
+		case len(X.Bits()) == 0:
+			n := -1
+			c := make([]NI, PopCount(R))
 			for i := range c {
-				n, _ = R.NextSet(n + 1)
+				n = NextOne(R, n+1)
 				c[i] = NI(n)
 			}
 			if !emit(c) {
@@ -320,32 +304,30 @@ func (g UndirectedLabeled) BronKerbosch3(pivot func(P, X *bitset.BitSet) int, em
 		}
 		return true
 	}
-	R := bitset.New(uint(len(g.LabeledAdjacencyList)))
-	P := bitset.New(uint(len(g.LabeledAdjacencyList))).Complement()
-	X := bitset.New(uint(len(g.LabeledAdjacencyList)))
+	var R, P, X big.Int
+	OneBits(&P, len(g.LabeledAdjacencyList))
 	// code above same as BK2
 	// code below new to BK3
 	_, ord, _ := g.Degeneracy()
-	p2 := bitset.New(uint(len(g.LabeledAdjacencyList)))
-	x2 := bitset.New(uint(len(g.LabeledAdjacencyList)))
+	var p2, x2 big.Int
 	for _, n := range ord {
-		R.Set(uint(n))
-		p2.ClearAll()
-		x2.ClearAll()
+		R.SetBit(&R, int(n), 1)
+		p2.SetInt64(0)
+		x2.SetInt64(0)
 		for _, to := range g.LabeledAdjacencyList[n] {
-			if P.Test(uint(to.To)) {
-				p2.Set(uint(to.To))
+			if P.Bit(int(to.To)) == 1 {
+				p2.SetBit(&p2, int(to.To), 1)
 			}
-			if X.Test(uint(to.To)) {
-				x2.Set(uint(to.To))
+			if X.Bit(int(to.To)) == 1 {
+				x2.SetBit(&x2, int(to.To), 1)
 			}
 		}
-		if !f(R, p2, x2) {
+		if !f(&R, &p2, &x2) {
 			return
 		}
-		R.SetTo(uint(n), false)
-		P.SetTo(uint(n), false)
-		X.Set(uint(n))
+		R.SetBit(&R, int(n), 0)
+		P.SetBit(&P, int(n), 0)
+		X.SetBit(&X, int(n), 1)
 	}
 }
 
