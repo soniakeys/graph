@@ -2,6 +2,7 @@ package dot_test
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/soniakeys/graph"
 	"github.com/soniakeys/graph/dot"
@@ -128,5 +129,24 @@ func ExampleStringWeightedEdgeList() {
 	// 0 -- 1 [label = "0.33"]
 	// 0 -- 2 [label = "1.6"]
 	// 1 -- 2 [label = "1.7"]
+	// }
+}
+
+func ExampleWriteAdjacencyList() {
+	// arcs directed down:
+	// 0  4
+	// | /|
+	// |/ |
+	// 2  3
+	g := graph.AdjacencyList{
+		0: {2},
+		4: {2, 3},
+	}
+	// (default indent is 2)
+	dot.WriteAdjacencyList(g, os.Stdout, dot.Indent(""))
+	// Output:
+	// digraph {
+	// 0 -> 2
+	// 4 -> {2 3}
 	// }
 }
