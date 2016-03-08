@@ -49,6 +49,69 @@ func StringAdjacencyList(g graph.AdjacencyList, options ...func(*Config)) (strin
 	return b.String(), nil
 }
 
+// StringDirected generates a dot format string for a graph of type Directed.
+//
+// See WriteAdjacencyList for options.
+func StringDirected(g graph.Directed, options ...func(*Config)) (string, error) {
+	return StringAdjacencyList(g.AdjacencyList, options...)
+}
+
+// StringDirectedLabeled generates a dot format string for a graph of type
+// DirectedLabeled.
+//
+// See WriteAdjacencyListLabeled for options.
+func StringDirectedLabeled(g graph.DirectedLabeled, options ...func(*Config)) (string, error) {
+	return StringLabeledAdjacencyList(g.LabeledAdjacencyList, options...)
+}
+
+// StringFromList (that's "String" "FromList", not "String" from "List")
+// generates a dot format string for a graph.FromList.
+//
+// See WriteFromList for options.
+func StringFromList(g graph.FromList, options ...func(*Config)) (string, error) {
+	var b bytes.Buffer
+	if err := WriteFromList(g, &b, options...); err != nil {
+		return "", err
+	}
+	return b.String(), nil
+}
+
+// StringLabeledAdjacencyList generates a dot format string for a
+// LabeledAdjacencyList.
+//
+// See WriteLabeledAdjacencyList for options.
+func StringLabeledAdjacencyList(g graph.LabeledAdjacencyList, options ...func(*Config)) (string, error) {
+	var b bytes.Buffer
+	if err := WriteLabeledAdjacencyList(g, &b, options...); err != nil {
+		return "", err
+	}
+	return b.String(), nil
+}
+
+// StringUndirected generates a dot format string for a graph of type
+// Undirected.
+//
+// See WriteAdjacencyList for options.
+func StringUndirected(g graph.Undirected, options ...func(*Config)) (string, error) {
+	var b bytes.Buffer
+	if err := WriteUndirected(g, &b, options...); err != nil {
+		return "", err
+	}
+	return b.String(), nil
+}
+
+// StringWeightedEdgeList generates a dot format string for a
+// graph.WeightedEdgeList.
+//
+// See WriteWeightedEdgeList for options.
+func StringWeightedEdgeList(g graph.WeightedEdgeList, options ...func(*Config)) (string, error) {
+	var b bytes.Buffer
+	if err := WriteWeightedEdgeList(g, &b, options...); err != nil {
+		return "", err
+	}
+	return b.String(), nil
+}
+
 // WriteAdjacencyList writes dot format text for an AdjacencyList to an
 // io.Writer.
 //
@@ -62,15 +125,19 @@ func WriteAdjacencyList(g graph.AdjacencyList, w io.Writer, options ...func(*Con
 	for _, o := range options {
 		o(&cf)
 	}
+	return writeAL(g, w, &cf)
+}
+
+func writeAL(g graph.AdjacencyList, w io.Writer, cf *Config) error {
 	b := bufio.NewWriter(w)
-	if err := writeHead(&cf, b); err != nil {
+	if err := writeHead(cf, b); err != nil {
 		return err
 	}
 	wf := writeALUndirected
 	if cf.Directed {
 		wf = writeALDirected
 	}
-	if err := wf(g, &cf, b); err != nil {
+	if err := wf(g, cf, b); err != nil {
 		return err
 	}
 	return writeTail(b)
@@ -209,18 +276,6 @@ func writeALUndirected(g graph.AdjacencyList, cf *Config, b *bufio.Writer) error
 	return nil
 }
 
-// StringLabeledAdjacencyList generates a dot format string for a
-// LabeledAdjacencyList.
-//
-// See WriteLabeledAdjacencyList for options.
-func StringLabeledAdjacencyList(g graph.LabeledAdjacencyList, options ...func(*Config)) (string, error) {
-	var b bytes.Buffer
-	if err := WriteLabeledAdjacencyList(g, &b, options...); err != nil {
-		return "", err
-	}
-	return b.String(), nil
-}
-
 // WriteLabeledAdjacencyList writes dot format text for a LabeledAdjacencyList
 // to an io.Writer.
 //
@@ -235,15 +290,19 @@ func WriteLabeledAdjacencyList(g graph.LabeledAdjacencyList, w io.Writer, option
 	for _, o := range options {
 		o(&cf)
 	}
+	return writeLAL(g, w, &cf)
+}
+
+func writeLAL(g graph.LabeledAdjacencyList, w io.Writer, cf *Config) error {
 	b := bufio.NewWriter(w)
-	if err := writeHead(&cf, b); err != nil {
+	if err := writeHead(cf, b); err != nil {
 		return err
 	}
 	wf := writeLALUndirected
 	if cf.Directed {
 		wf = writeLALDirected
 	}
-	if err := wf(g, &cf, b); err != nil {
+	if err := wf(g, cf, b); err != nil {
 		return err
 	}
 	return writeTail(b)
@@ -308,16 +367,20 @@ func writeLALUndirected(g graph.LabeledAdjacencyList, cf *Config, b *bufio.Write
 	return nil
 }
 
-// StringFromList (that's "String" "FromList", not "String" from "List")
-// generates a dot format string for a graph.FromList.
+// WriteDirected writes dot format text for a Directed graph to an
+// io.Writer.
 //
-// See WriteFromList for options.
-func StringFromList(g graph.FromList, options ...func(*Config)) (string, error) {
-	var b bytes.Buffer
-	if err := WriteFromList(g, &b, options...); err != nil {
-		return "", err
-	}
-	return b.String(), nil
+// See WriteAdjacencyList for options.
+func WriteDirected(g graph.Directed, w io.Writer, options ...func(*Config)) error {
+	return WriteAdjacencyList(g.AdjacencyList, w, options...)
+}
+
+// WriteDirectedLabeled writes dot format text for a DirectedLabeled graph to
+// an io.Writer.
+//
+// See WriteLabeledAdjacencyList for options.
+func WriteDirectedLabeled(g graph.DirectedLabeled, w io.Writer, options ...func(*Config)) error {
+	return WriteLabeledAdjacencyList(g.LabeledAdjacencyList, w, options...)
 }
 
 // WriteFromList writes dot format text for a graph.FromList
@@ -368,16 +431,30 @@ func WriteFromList(g graph.FromList, w io.Writer, options ...func(*Config)) erro
 	return writeTail(b)
 }
 
-// StringWeightedEdgeList generates a dot format string for a
-// graph.WeightedEdgeList.
+// WriteUnirected writes dot format text for an Undirected graph to an
+// io.Writer.
 //
-// See WriteWeightedEdgeList for options.
-func StringWeightedEdgeList(g graph.WeightedEdgeList, options ...func(*Config)) (string, error) {
-	var b bytes.Buffer
-	if err := WriteWeightedEdgeList(g, &b, options...); err != nil {
-		return "", err
+// See WriteAdjacencyList for options.
+func WriteUndirected(g graph.Undirected, w io.Writer, options ...func(*Config)) error {
+	cf := Defaults
+	cf.Directed = false
+	for _, o := range options {
+		o(&cf)
 	}
-	return b.String(), nil
+	return writeAL(g.AdjacencyList, w, &cf)
+}
+
+// WriteUnirectedLabeled writes dot format text for an UndirectedLabeled graph
+// to an io.Writer.
+//
+// See WriteLabeledAdjacencyList for options.
+func WriteUndirectedLabeled(g graph.UndirectedLabeled, w io.Writer, options ...func(*Config)) error {
+	cf := Defaults
+	cf.Directed = false
+	for _, o := range options {
+		o(&cf)
+	}
+	return writeLAL(g.LabeledAdjacencyList, w, &cf)
 }
 
 // WriteWeightedEdgeList writes dot format text for a graph.WeightedEdgeList

@@ -28,18 +28,36 @@ func ExampleStringAdjacencyList() {
 	// }
 }
 
-func ExampleStringAdjacencyList_parallelArcs() {
+func ExampleWriteAdjacencyList() {
+	// arcs directed down:
+	// 0  4
+	// | /|
+	// |/ |
+	// 2  3
+	g := graph.AdjacencyList{
+		0: {2},
+		4: {2, 3},
+	}
+	// (default indent is 2)
+	dot.WriteAdjacencyList(g, os.Stdout, dot.Indent(""))
+	// Output:
+	// digraph {
+	// 0 -> 2
+	// 4 -> {2 3}
+	// }
+}
+
+func ExampleWriteAdjacencyList_parallelArcs() {
 	// arcs directed down:
 	// 0  4
 	// | /|\
-	// |/ |/
-	// 2  3
+	// |/ \|
+	// 2   3
 	g := graph.AdjacencyList{
 		0: {2},
 		4: {2, 3, 3},
 	}
-	s, _ := dot.StringAdjacencyList(g, dot.Indent(""))
-	fmt.Println(s)
+	dot.WriteAdjacencyList(g, os.Stdout, dot.Indent(""))
 	// Output:
 	// digraph {
 	// 0 -> 2
@@ -48,19 +66,37 @@ func ExampleStringAdjacencyList_parallelArcs() {
 	// }
 }
 
-func ExampleStringLabeledAdjacencyList() {
+func ExampleWriteDirected() {
+	// arcs directed down:
+	// 0  4
+	// | /|
+	// |/ |
+	// 2  3
+	g := graph.Directed{graph.AdjacencyList{
+		0: {2},
+		4: {2, 3},
+	}}
+	// (default indent is 2)
+	dot.WriteDirected(g, os.Stdout, dot.Indent(""))
+	// Output:
+	// digraph {
+	// 0 -> 2
+	// 4 -> {2 3}
+	// }
+}
+
+func ExampleWriteDirectedLabeled() {
 	// arcs directed down:
 	//     0      4
 	// (30)|     /|
 	//     | (20) |
 	//     |/     |(10)
 	//     2      3
-	g := graph.LabeledAdjacencyList{
+	g := graph.DirectedLabeled{graph.LabeledAdjacencyList{
 		0: {{2, 30}},
 		4: {{2, 20}, {3, 10}},
-	}
-	s, _ := dot.StringLabeledAdjacencyList(g, dot.Indent(""))
-	fmt.Println(s)
+	}}
+	dot.WriteDirectedLabeled(g, os.Stdout, dot.Indent(""))
 	// Output:
 	// digraph {
 	// 0 -> 2 [label = 30]
@@ -69,7 +105,7 @@ func ExampleStringLabeledAdjacencyList() {
 	// }
 }
 
-func ExampleStringFromList() {
+func ExampleWriteFromList() {
 	//     0
 	//    / \
 	//   /   2
@@ -83,8 +119,7 @@ func ExampleStringFromList() {
 	}}
 	f.Leaves.SetBit(&f.Leaves, 1, 1)
 	f.Leaves.SetBit(&f.Leaves, 3, 1)
-	s, _ := dot.StringFromList(f, dot.Indent(""))
-	fmt.Println(s)
+	dot.WriteFromList(f, os.Stdout, dot.Indent(""))
 	// Output:
 	// digraph {
 	// rankdir = BT
@@ -95,7 +130,61 @@ func ExampleStringFromList() {
 	// }
 }
 
-func ExampleStringWeightedEdgeList() {
+func ExampleWriteLabeledAdjacencyList() {
+	// arcs directed down:
+	//     0      4
+	// (30)|     /|
+	//     | (20) |
+	//     |/     |(10)
+	//     2      3
+	g := graph.LabeledAdjacencyList{
+		0: {{2, 30}},
+		4: {{2, 20}, {3, 10}},
+	}
+	dot.WriteLabeledAdjacencyList(g, os.Stdout, dot.Indent(""))
+	// Output:
+	// digraph {
+	// 0 -> 2 [label = 30]
+	// 4 -> 2 [label = 20]
+	// 4 -> 3 [label = 10]
+	// }
+}
+
+func ExampleWriteUndirected() {
+	//   0
+	//  / \
+	// 1---2
+	var g graph.Undirected
+	g.AddEdge(0, 1)
+	g.AddEdge(0, 2)
+	g.AddEdge(1, 2)
+	dot.WriteUndirected(g, os.Stdout, dot.Indent(""))
+	// Output:
+	// graph {
+	// 0 -- {1 2}
+	// 1 -- 2
+	// }
+}
+
+func ExampleWriteUndirectedLabeled() {
+	//       0
+	// (12) / \ (17)
+	//     1---2
+	//      (64)
+	var g graph.UndirectedLabeled
+	g.AddEdge(graph.Edge{0, 1}, 12)
+	g.AddEdge(graph.Edge{0, 2}, 17)
+	g.AddEdge(graph.Edge{1, 2}, 64)
+	dot.WriteUndirectedLabeled(g, os.Stdout, dot.Indent(""))
+	// Output:
+	// graph {
+	// 0 -- 1 [label = 12]
+	// 0 -- 2 [label = 17]
+	// 1 -- 2 [label = 64]
+	// }
+}
+
+func ExampleWriteWeightedEdgeList() {
 	//              (label 0, wt 1.6)
 	//          0----------------------2
 	// (label 1 |                     /
@@ -122,31 +211,11 @@ func ExampleStringWeightedEdgeList() {
 			{graph.Edge{2, 1}, 2},
 		},
 	}
-	s, _ := dot.StringWeightedEdgeList(g, dot.Indent(""))
-	fmt.Println(s)
+	dot.WriteWeightedEdgeList(g, os.Stdout, dot.Indent(""))
 	// Output:
 	// graph {
 	// 0 -- 1 [label = "0.33"]
 	// 0 -- 2 [label = "1.6"]
 	// 1 -- 2 [label = "1.7"]
-	// }
-}
-
-func ExampleWriteAdjacencyList() {
-	// arcs directed down:
-	// 0  4
-	// | /|
-	// |/ |
-	// 2  3
-	g := graph.AdjacencyList{
-		0: {2},
-		4: {2, 3},
-	}
-	// (default indent is 2)
-	dot.WriteAdjacencyList(g, os.Stdout, dot.Indent(""))
-	// Output:
-	// digraph {
-	// 0 -> 2
-	// 4 -> {2 3}
 	// }
 }
