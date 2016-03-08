@@ -210,11 +210,9 @@ func (f *FromList) RecalcLen() {
 	}
 	f.MaxLen = 0
 	lv := &f.Leaves
-	for n := range f.Paths {
-		if lv.Bit(n) == 1 {
-			if l := setLen(NI(n)); l > f.MaxLen {
-				f.MaxLen = l
-			}
+	for n := NextOne(lv, 0); n >= 0; n = NextOne(lv, n+1) {
+		if l := setLen(NI(n)); l > f.MaxLen {
+			f.MaxLen = l
 		}
 	}
 }

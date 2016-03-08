@@ -619,7 +619,7 @@ func (g UndirectedLabeled) IsConnected() bool {
 		}
 	}
 	df(0)
-	return b.BitLen() == 0
+	return len(b.Bits()) == 0
 }
 
 // IsTree identifies trees in undirected graphs.
@@ -651,7 +651,7 @@ func (g UndirectedLabeled) IsTree(root NI) (isTree, allTree bool) {
 			return false, false
 		}
 	}
-	return true, v.BitLen() == 0
+	return true, len(v.Bits()) == 0
 }
 
 // Size returns the number of edges in g.

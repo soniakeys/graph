@@ -120,18 +120,17 @@ func ExampleFromList_PathTo() {
 		},
 		MaxLen: 3,
 	}
-	t.Leaves.SetBit(&t.Leaves, 0, 1)
-	t.Leaves.SetBit(&t.Leaves, 2, 1)
-	t.Leaves.SetBit(&t.Leaves, 3, 1)
+	lv := &t.Leaves
+	lv.SetBit(&t.Leaves, 0, 1)
+	lv.SetBit(&t.Leaves, 2, 1)
+	lv.SetBit(&t.Leaves, 3, 1)
 	// end at non-leaf, let PathEnd allocate result
 	fmt.Println(t.PathTo(1, nil))
 	fmt.Println()
 	// preallocate buffer, enumerate paths to all leaves
 	p := make([]graph.NI, t.MaxLen)
-	for n := range t.Paths {
-		if t.Leaves.Bit(n) == 1 {
-			fmt.Println(t.PathTo(graph.NI(n), p))
-		}
+	for n := graph.NextOne(lv, 0); n >= 0; n = graph.NextOne(lv, n+1) {
+		fmt.Println(t.PathTo(graph.NI(n), p))
 	}
 	// Output:
 	// [4 1]
