@@ -2,6 +2,7 @@ package dot_test
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/soniakeys/graph"
 	"github.com/soniakeys/graph/dot"
@@ -44,6 +45,28 @@ func ExampleStringAdjacencyList_parallelArcs() {
 	// 0 -> 2
 	// 4 -> {2 3}
 	// 4 -> {3}
+	// }
+}
+
+func ExampleGraphAttr() {
+	// arcs directed right:
+	// 0---2
+	//  \ / \
+	//   1---3
+	g := graph.AdjacencyList{
+		0: {1, 2},
+		1: {2, 3},
+		2: {3},
+		3: {},
+	}
+	dot.WriteAdjacencyList(g, os.Stdout,
+		dot.GraphAttr("rankdir", "LR"), dot.Indent(""))
+	// Output:
+	// digraph {
+	// rankdir = LR
+	// 0 -> {1 2}
+	// 1 -> {2 3}
+	// 2 -> 3
 	// }
 }
 

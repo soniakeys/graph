@@ -39,6 +39,12 @@ import (
 	"github.com/soniakeys/graph"
 )
 
+// AttrVal represents the dot format concept of an attribute-value pair.
+type AttrVal struct {
+	Attr string
+	Val  string
+}
+
 // Config holds options that control the dot output.
 //
 // See Overview/Scheme for an overview of how this works.  Generally you will
@@ -48,6 +54,7 @@ import (
 type Config struct {
 	Directed     bool
 	EdgeLabel    func(graph.LI) string
+	GraphAttr    []AttrVal
 	Indent       string
 	NodeLabel    func(graph.NI) string
 	UndirectArcs bool
@@ -84,6 +91,23 @@ func Directed(d bool) func(*Config) {
 // The default function is simply strconv.Itoa of the graph package arc label.
 func EdgeLabel(f func(graph.LI) string) func(*Config) {
 	return func(c *Config) { c.EdgeLabel = f }
+}
+
+// GraphAttr adds a dot format graph attribute.
+//
+// Graph attributes are held in a slice, and so are ordered.  This function
+// updates the value of the last matching attribute if it exists, or adds a
+// new attribute to the end of the list.
+func GraphAttr(attr, val string) func(*Config) {
+	return func(c *Config) {
+		for i := len(c.GraphAttr) - 1; i >= 0; i-- {
+			if c.GraphAttr[i].Attr == attr {
+				c.GraphAttr[i].Val = val
+				return
+			}
+		}
+		c.GraphAttr = append(c.GraphAttr, AttrVal{attr, val})
+	}
 }
 
 // Indent specifies an indent string for the body of the dot format.
@@ -130,6 +154,7 @@ func StringAdjacencyList(g graph.AdjacencyList, options ...func(*Config)) (strin
 //
 // Supported options:
 //   Directed
+//   GraphAttr
 //   Indent
 //   NodeLabel
 func WriteAdjacencyList(g graph.AdjacencyList, w io.Writer, options ...func(*Config)) error {
@@ -158,6 +183,12 @@ func writeHead(cf *Config, b *bufio.Writer) error {
 	}
 	if _, err := fmt.Fprintf(b, "%s {\n", t); err != nil {
 		return err
+	}
+	for _, av := range cf.GraphAttr {
+		_, err := fmt.Fprintf(b, "%s%s = %s\n", cf.Indent, av.Attr, av.Val)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -295,6 +326,7 @@ func StringLabeledAdjacencyList(g graph.LabeledAdjacencyList, options ...func(*C
 //
 // Supported options:
 //   Directed
+//   GraphAttr
 //   Indent
 //   NodeLabel
 //   EdgeLabel
@@ -393,18 +425,16 @@ func StringFromList(g graph.FromList, options ...func(*Config)) (string, error) 
 //
 // Supported options:
 //   Indent
+//   GraphAttr
 //   NodeLabel
 func WriteFromList(g graph.FromList, w io.Writer, options ...func(*Config)) error {
 	cf := Defaults
+	GraphAttr("rankdir", "BT")(&cf)
 	for _, o := range options {
 		o(&cf)
 	}
 	b := bufio.NewWriter(w)
 	if err := writeHead(&cf, b); err != nil {
-		return err
-	}
-	_, err := b.WriteString(cf.Indent + "rankdir = BT\n")
-	if err != nil {
 		return err
 	}
 	for n, e := range g.Paths {
@@ -467,6 +497,7 @@ func StringWeightedEdgeList(g graph.WeightedEdgeList, options ...func(*Config)) 
 // Supported options:
 //   Directed
 //   EdgeLabel
+//   GraphAttr
 //   Indent
 //   NodeLabel
 //   UndirectArcs
