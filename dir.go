@@ -99,7 +99,7 @@ func (g Directed) EulerianCycleD(ma int) ([]NI, error) {
 		}
 		e.keep()
 	}
-	if e.uv.BitLen() > 0 {
+	if len(e.uv.Bits()) > 0 {
 		return nil, errors.New("not strongly connected")
 	}
 	return e.p, nil
@@ -129,7 +129,7 @@ func (g Undirected) EulerianCycleD(m int) ([]NI, error) {
 		}
 		e.keep()
 	}
-	if e.uv.BitLen() > 0 {
+	if len(e.uv.Bits()) > 0 {
 		return nil, errors.New("not strongly connected")
 	}
 	return e.p, nil
@@ -192,7 +192,7 @@ func (g Directed) EulerianPathD(ma int, start NI) ([]NI, error) {
 		}
 		e.keep()
 	}
-	if e.uv.BitLen() > 0 {
+	if len(e.uv.Bits()) > 0 {
 		return nil, errors.New("no Eulerian path")
 	}
 	return e.p, nil
@@ -318,8 +318,8 @@ func (g Directed) MaximalNonBranchingPaths(emit func([]NI) bool) {
 			}
 		}
 	}
-	for b := uv.BitLen(); b > 0; b = uv.BitLen() {
-		v := NI(b - 1)
+	for b := NextOne(&uv, 0); b >= 0; b = NextOne(&uv, b+1) {
+		v := NI(b)
 		n := []NI{v}
 		for w := v; ; {
 			w = g.AdjacencyList[w][0]

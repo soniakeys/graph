@@ -126,10 +126,10 @@ func ExamplePrim_Span() {
 		ns, dist := p.Span(r, &leaves)
 		// collect leaf node ints from bitmap
 		var ll []int
-		for n := range g.LabeledAdjacencyList {
-			if leaves.Bit(n) == 1 {
-				ll = append(ll, n)
-			}
+		n := graph.NextOne(&leaves, 0)
+		for n >= 0 {
+			ll = append(ll, n)
+			n = graph.NextOne(&leaves, n+1)
 		}
 		fmt.Printf("%d %17d %20.0f  %d\n", r, ns, dist, ll)
 	}

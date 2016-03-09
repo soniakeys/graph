@@ -154,7 +154,7 @@ func (g DirectedLabeled) IsTree(root NI) (isTree, allTree bool) {
 		return true
 	}
 	isTree = df(root)
-	return isTree, isTree && v.BitLen() == 0
+	return isTree, isTree && len(v.Bits()) == 0
 }
 
 // Tarjan identifies strongly connected components in a directed graph using
