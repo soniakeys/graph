@@ -8,6 +8,75 @@ import (
 	"github.com/soniakeys/graph/dot"
 )
 
+func ExampleDirected() {
+	// arcs directed down:
+	// 0  2
+	// | /|
+	// |/ |
+	// 3  4
+	g := graph.AdjacencyList{
+		0: {3},
+		2: {3, 4},
+		4: {},
+	}
+	// default for AdjacencyList is directed
+	dot.WriteAdjacencyList(g, os.Stdout, dot.Indent(""))
+	fmt.Fprintln(os.Stdout)
+	fmt.Fprintln(os.Stdout)
+
+	// Directed(false) generates error witout reciprocal arcs
+	err := dot.WriteAdjacencyList(g, os.Stdout, dot.Directed(false))
+	fmt.Fprintln(os.Stdout, "Error:", err)
+	fmt.Fprintln(os.Stdout)
+
+	// undirected
+	u := graph.Directed{g}.Undirected()
+	dot.WriteAdjacencyList(u.AdjacencyList, os.Stdout,
+		dot.Directed(false), dot.Indent(""))
+
+	// Output:
+	// digraph {
+	// 0 -> 3
+	// 2 -> {3 4}
+	// }
+	//
+	// Error: directed graph
+	//
+	// graph {
+	// 0 -- 3
+	// 2 -- {3 4}
+	// }
+}
+
+func ExampleEdgeLabel() {
+	// arcs directed down:
+	//      0       4
+	// (.33)|      /|
+	//      | (1.7) |
+	//      |/      |(2e117)
+	//      2       3
+	weights := map[int]float64{
+		30: .33,
+		20: 1.7,
+		10: 2e117,
+	}
+	lf := func(l graph.LI) string {
+		return fmt.Sprintf(`"%g"`, weights[int(l)])
+	}
+	g := graph.LabeledAdjacencyList{
+		0: {{2, 30}},
+		4: {{2, 20}, {3, 10}},
+	}
+	dot.WriteLabeledAdjacencyList(g, os.Stdout,
+		dot.EdgeLabel(lf), dot.Indent(""))
+	// Output:
+	// digraph {
+	// 0 -> 2 [label = "0.33"]
+	// 4 -> 2 [label = "1.7"]
+	// 4 -> 3 [label = "2e+117"]
+	// }
+}
+
 func ExampleGraphAttr() {
 	// arcs directed right:
 	// 0---2
@@ -46,8 +115,7 @@ func ExampleIndent() {
 	// looks like the default two space indent.
 	// (But then if you render it with graphviz, graphviz picks up the nbsp
 	// as a node statement...)
-	s, _ := dot.StringAdjacencyList(g, dot.Indent("\u00a0 "))
-	fmt.Println(s)
+	dot.WriteAdjacencyList(g, os.Stdout, dot.Indent("\u00a0 "))
 	// Output:
 	// digraph {
 	//   0 -> 2
@@ -55,44 +123,17 @@ func ExampleIndent() {
 	// }
 }
 
-func ExampleDirected() {
-	// arcs directed down:
-	// 0  2
-	// | /|
-	// |/ |
-	// 3  4
-	g := graph.Directed{graph.AdjacencyList{
-		0: {3},
-		2: {3, 4},
-		4: {},
-	}}
-	// default is directed
-	s, _ := dot.StringAdjacencyList(g.AdjacencyList, dot.Indent(""))
-	fmt.Println(s)
-	fmt.Println()
-
-	// Directed(false) generates error witout reciprocal arcs
-	_, err := dot.StringAdjacencyList(g.AdjacencyList, dot.Directed(false))
-	fmt.Println("Error:", err)
-	fmt.Println()
-
-	// undirected
-	u := g.Undirected()
-	s, _ = dot.StringAdjacencyList(u.AdjacencyList,
-		dot.Directed(false), dot.Indent(""))
-	fmt.Println(s)
-
+func ExampleIsolated() {
+	// 0  1-->2
+	g := graph.AdjacencyList{
+		1: {2},
+		2: {},
+	}
+	dot.WriteAdjacencyList(g, os.Stdout, dot.Isolated(true), dot.Indent(""))
 	// Output:
 	// digraph {
-	// 0 -> 3
-	// 2 -> {3 4}
-	// }
-	//
-	// Error: directed graph
-	//
-	// graph {
-	// 0 -- 3
-	// 2 -- {3 4}
+	// 0
+	// 1 -> 2
 	// }
 }
 
@@ -113,8 +154,7 @@ func ExampleNodeLabel() {
 		0: {2},
 		4: {2, 3},
 	}
-	s, _ := dot.StringAdjacencyList(g, dot.Indent(""), dot.NodeLabel(lf))
-	fmt.Println(s)
+	dot.WriteAdjacencyList(g, os.Stdout, dot.Indent(""), dot.NodeLabel(lf))
 	// Output:
 	// digraph {
 	// A -> B
@@ -155,42 +195,12 @@ func ExampleNodeLabel_construction() {
 
 	// generate dot
 	lf := func(n graph.NI) string { return labels[n] }
-	s, _ := dot.StringAdjacencyList(g, dot.Indent(""), dot.NodeLabel(lf))
-	fmt.Println(s)
+	dot.WriteAdjacencyList(g, os.Stdout, dot.Indent(""), dot.NodeLabel(lf))
 
 	// Output:
 	// digraph {
 	// A -> B
 	// D -> {B C}
-	// }
-}
-
-func ExampleEdgeLabel() {
-	// arcs directed down:
-	//      0       4
-	// (.33)|      /|
-	//      | (1.7) |
-	//      |/      |(2e117)
-	//      2       3
-	weights := map[int]float64{
-		30: .33,
-		20: 1.7,
-		10: 2e117,
-	}
-	lf := func(l graph.LI) string {
-		return fmt.Sprintf(`"%g"`, weights[int(l)])
-	}
-	g := graph.LabeledAdjacencyList{
-		0: {{2, 30}},
-		4: {{2, 20}, {3, 10}},
-	}
-	s, _ := dot.StringLabeledAdjacencyList(g, dot.EdgeLabel(lf), dot.Indent(""))
-	fmt.Println(s)
-	// Output:
-	// digraph {
-	// 0 -> 2 [label = "0.33"]
-	// 4 -> 2 [label = "1.7"]
-	// 4 -> 3 [label = "2e+117"]
 	// }
 }
 
@@ -216,10 +226,8 @@ func ExampleUndirectArcs() {
 			{graph.Edge{1, 2}, 2},
 		},
 	}
-	s, _ := dot.StringWeightedEdgeList(g,
-		dot.UndirectArcs(true),
-		dot.Indent(""))
-	fmt.Println(s)
+	dot.WriteWeightedEdgeList(g, os.Stdout,
+		dot.UndirectArcs(true), dot.Indent(""))
 	// Output:
 	// graph {
 	// 0 -- 1 [label = "0.33"]

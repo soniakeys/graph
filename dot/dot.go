@@ -119,6 +119,7 @@ func StringWeightedEdgeList(g graph.WeightedEdgeList, options ...func(*Config)) 
 //   Directed
 //   GraphAttr
 //   Indent
+//   Isolated
 //   NodeLabel
 func WriteAdjacencyList(g graph.AdjacencyList, w io.Writer, options ...func(*Config)) error {
 	cf := Defaults
@@ -168,20 +169,66 @@ func writeTail(b *bufio.Writer) error {
 }
 
 func writeALDirected(g graph.AdjacencyList, cf *Config, b *bufio.Writer) error {
+
+	var iso big.Int
+	if cf.Isolated {
+		graph.OneBits(&iso, len(g))
+	}
 	for fr, to := range g {
-		if err := writeALEdgeStmt(fr, to, "->", cf, b); err != nil {
+		if err := writeALEdgeStmt(fr, to, "->", cf, &iso, b); err != nil {
 			return err
 		}
 	}
-	return nil
+	return writeIso(&iso, cf, b)
 }
 
-func writeALEdgeStmt(fr int, to []graph.NI, op string, cf *Config, b *bufio.Writer) error {
-	// fast paths
-	if len(to) == 0 {
+func writeIso(iso *big.Int, cf *Config, b *bufio.Writer) (err error) {
+	if !cf.Isolated {
+		return
+	}
+	l := iso.BitLen()
+	if l == 0 {
+		return
+	}
+	var n, first int
+	for i := 0; i < l; i++ {
+		if iso.Bit(i) == 0 {
+			continue
+		}
+		switch n {
+		case 0:
+			n++
+			first = i
+			continue
+		case 1:
+			if _, err = fmt.Fprintf(b, "%s{%d", cf.Indent, first); err != nil {
+				return err
+			}
+			n++
+		}
+		if _, err = fmt.Fprint(b, " ", i); err != nil {
+			return err
+		}
+	}
+	if n == 1 {
+		_, err = fmt.Fprintf(b, "%s%d\n", cf.Indent, first)
+	} else {
+		_, err = fmt.Fprintln(b, "}")
+	}
+	return err
+}
+
+func writeALEdgeStmt(fr int, to []graph.NI, op string, cf *Config, iso *big.Int, b *bufio.Writer) error {
+	if len(to) == 0 { // fast path
 		return nil
 	}
-	if len(to) == 1 {
+	if cf.Isolated {
+		iso.SetBit(iso, fr, 0)
+		for _, to := range to {
+			iso.SetBit(iso, int(to), 0)
+		}
+	}
+	if len(to) == 1 { // fast path
 		_, err := fmt.Fprintf(b, "%s%s %s %s\n",
 			cf.Indent, cf.NodeLabel(graph.NI(fr)), op, cf.NodeLabel(to[0]))
 		return err
@@ -239,6 +286,10 @@ func writeALEdgeStmt(fr int, to []graph.NI, op string, cf *Config, b *bufio.Writ
 }
 
 func writeALUndirected(g graph.AdjacencyList, cf *Config, b *bufio.Writer) error {
+	var iso big.Int
+	if cf.Isolated {
+		graph.OneBits(&iso, len(g))
+	}
 	// Similar code in undir.go at IsUndirected
 	unpaired := make(graph.AdjacencyList, len(g))
 	for fr, to := range g {
@@ -264,7 +315,7 @@ func writeALUndirected(g graph.AdjacencyList, cf *Config, b *bufio.Writer) error
 			uto = append(uto, to)
 			unpaired[fr] = append(unpaired[fr], to)
 		}
-		if err := writeALEdgeStmt(fr, uto, "--", cf, b); err != nil {
+		if err := writeALEdgeStmt(fr, uto, "--", cf, &iso, b); err != nil {
 			return err
 		}
 	}
@@ -273,7 +324,7 @@ func writeALUndirected(g graph.AdjacencyList, cf *Config, b *bufio.Writer) error
 			return fmt.Errorf("directed graph")
 		}
 	}
-	return nil
+	return writeIso(&iso, cf, b)
 }
 
 // WriteLabeledAdjacencyList writes dot format text for a LabeledAdjacencyList
@@ -283,6 +334,7 @@ func writeALUndirected(g graph.AdjacencyList, cf *Config, b *bufio.Writer) error
 //   Directed
 //   GraphAttr
 //   Indent
+//   Isolated
 //   NodeLabel
 //   EdgeLabel
 func WriteLabeledAdjacencyList(g graph.LabeledAdjacencyList, w io.Writer, options ...func(*Config)) error {
@@ -318,6 +370,10 @@ func writeLALDirected(g graph.LabeledAdjacencyList, cf *Config, b *bufio.Writer)
 }
 
 func writeLALEdgeStmt(fr int, to []graph.Half, op string, cf *Config, b *bufio.Writer) error {
+	if cf.Isolated && len(to) == 0 {
+		_, err := fmt.Fprintln(b, cf.Indent+cf.NodeLabel(graph.NI(fr)))
+		return err
+	}
 	for _, to := range to {
 		_, err := fmt.Fprintf(b, "%s%s %s %s [label = %s]\n",
 			cf.Indent, cf.NodeLabel(graph.NI(fr)), op, cf.NodeLabel(to.To),
@@ -403,6 +459,12 @@ func WriteFromList(g graph.FromList, w io.Writer, options ...func(*Config)) erro
 	for n, e := range g.Paths {
 		fr := e.From
 		if fr < 0 {
+			if cf.Isolated {
+				_, err := fmt.Fprintln(b, cf.Indent+cf.NodeLabel(graph.NI(fr)))
+				if err != nil {
+					return err
+				}
+			}
 			continue
 		}
 		_, err := fmt.Fprintf(b, "%s%s -> %s\n",

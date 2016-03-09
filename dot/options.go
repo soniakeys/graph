@@ -23,6 +23,7 @@ type Config struct {
 	EdgeLabel    func(graph.LI) string
 	GraphAttr    []AttrVal
 	Indent       string
+	Isolated     bool
 	NodeLabel    func(graph.NI) string
 	UndirectArcs bool
 }
@@ -82,6 +83,16 @@ func GraphAttr(attr, val string) func(*Config) {
 // The default is two spaces.
 func Indent(i string) func(*Config) {
 	return func(c *Config) { c.Indent = i }
+}
+
+// Isolated specifies whether to include isolated nodes.
+//
+// An isolated node has no arcs in or out.  By default, isolated = false,
+// isolated nodes are not included in the dot output.
+//
+// Isolated(true) will include isolated nodes.
+func Isolated(i bool) func(*Config) {
+	return func(c *Config) { c.Isolated = i }
 }
 
 // NodeLabel specifies a function to generate node label strings for the
