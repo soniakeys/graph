@@ -34,7 +34,7 @@ func al() error {
 		return err
 	}
 	c.Start()
-	dot.WriteAdjacencyList(g, w, dot.GraphAttr("rankdir", "LR"))
+	dot.Write(g, w, dot.GraphAttr("rankdir", "LR"))
 	w.Close()
 	return c.Wait()
 }
@@ -55,8 +55,7 @@ func al0() error {
 	}
 	c.Start()
 	// otherwise, only difference from al() is dot.Isolated
-	dot.WriteAdjacencyList(g, w,
-		dot.GraphAttr("rankdir", "LR"), dot.Isolated(true))
+	dot.Write(g, w, dot.GraphAttr("rankdir", "LR"), dot.Isolated(true))
 	w.Close()
 	return c.Wait()
 }
@@ -72,7 +71,7 @@ func alpair() error {
 		return err
 	}
 	c.Start()
-	dot.WriteAdjacencyList(g, w, dot.GraphAttr("rankdir", "LR"))
+	dot.Write(g, w, dot.GraphAttr("rankdir", "LR"))
 	w.Close()
 	return c.Wait()
 }
@@ -91,7 +90,7 @@ func ald() error {
 		return err
 	}
 	c.Start()
-	dot.WriteLabeledAdjacencyList(g, w, dot.GraphAttr("rankdir", "LR"))
+	dot.Write(g, w, dot.GraphAttr("rankdir", "LR"))
 	w.Close()
 	return c.Wait()
 }

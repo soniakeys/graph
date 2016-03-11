@@ -13,8 +13,8 @@
 // file format specific code.  Dot functions are functions then, not methods
 // of graph representations.
 //
-// For each graph representation there is a Write function that takes a graph,
-// an io.Writer, and optional arguments.  For convenience, there is also a
+// The function Write() takes any type of graph, an io.Writer, and optional
+// arguments that control the output.  For convenience, there is also a
 // String function that does not require an io.Writer and simply returns the
 // dot format as a string.
 //
@@ -38,91 +38,109 @@ import (
 	"github.com/soniakeys/graph"
 )
 
-// StringAdjacencyList generates a dot format string for an AdjacencyList.
+// String generates a dot format string for a graph.
 //
-// See WriteAdjacencyList for options.
-func StringAdjacencyList(g graph.AdjacencyList, options ...func(*Config)) (string, error) {
-	var b bytes.Buffer
-	if err := WriteAdjacencyList(g, &b, options...); err != nil {
-		return "", err
-	}
-	return b.String(), nil
-}
-
-// StringDirected generates a dot format string for a graph of type Directed.
+// g may be any of:
 //
-// See WriteAdjacencyList for options.
-func StringDirected(g graph.Directed, options ...func(*Config)) (string, error) {
-	return StringAdjacencyList(g.AdjacencyList, options...)
-}
-
-// StringDirectedLabeled generates a dot format string for a graph of type
-// DirectedLabeled.
-//
-// See WriteAdjacencyListLabeled for options.
-func StringDirectedLabeled(g graph.DirectedLabeled, options ...func(*Config)) (string, error) {
-	return StringLabeledAdjacencyList(g.LabeledAdjacencyList, options...)
-}
-
-// StringFromList (that's "String" "FromList", not "String" from "List")
-// generates a dot format string for a graph.FromList.
-//
-// See WriteFromList for options.
-func StringFromList(g graph.FromList, options ...func(*Config)) (string, error) {
-	var b bytes.Buffer
-	if err := WriteFromList(g, &b, options...); err != nil {
-		return "", err
-	}
-	return b.String(), nil
-}
-
-// StringLabeledAdjacencyList generates a dot format string for a
-// LabeledAdjacencyList.
-//
-// See WriteLabeledAdjacencyList for options.
-func StringLabeledAdjacencyList(g graph.LabeledAdjacencyList, options ...func(*Config)) (string, error) {
-	var b bytes.Buffer
-	if err := WriteLabeledAdjacencyList(g, &b, options...); err != nil {
-		return "", err
-	}
-	return b.String(), nil
-}
-
-// StringUndirected generates a dot format string for a graph of type
-// Undirected.
-//
-// See WriteAdjacencyList for options.
-func StringUndirected(g graph.Undirected, options ...func(*Config)) (string, error) {
-	var b bytes.Buffer
-	if err := WriteUndirected(g, &b, options...); err != nil {
-		return "", err
-	}
-	return b.String(), nil
-}
-
-// StringWeightedEdgeList generates a dot format string for a
-// graph.WeightedEdgeList.
-//
-// See WriteWeightedEdgeList for options.
-func StringWeightedEdgeList(g graph.WeightedEdgeList, options ...func(*Config)) (string, error) {
-	var b bytes.Buffer
-	if err := WriteWeightedEdgeList(g, &b, options...); err != nil {
-		return "", err
-	}
-	return b.String(), nil
-}
-
-// WriteAdjacencyList writes dot format text for an AdjacencyList to an
-// io.Writer.
-//
-// Supported options:
+//   AdjacencyList
+//   LabeledAdjacencyList
 //   Directed
-//   GraphAttr
-//   Indent
-//   Isolated
-//   NodeLabel
-func WriteAdjacencyList(g graph.AdjacencyList, w io.Writer, options ...func(*Config)) error {
+//   DirectedLabeled
+//   Undirected
+//   UndirectedLabeled
+//   FromList
+//   WeightedEdgeList
+//
+// or a pointer to any of these types.
+//
+// See also Write().
+func String(g interface{}, options ...func(*Config)) (string, error) {
+	var b bytes.Buffer
+	if err := Write(g, &b, options...); err != nil {
+		return "", err
+	}
+	return b.String(), nil
+}
+
+// Write writes dot format text for a graph to an io.Writer.
+//
+// g may be any of:
+//
+//   AdjacencyList
+//   LabeledAdjacencyList
+//   Directed
+//   DirectedLabeled
+//   Undirected
+//   UndirectedLabeled
+//   FromList
+//   WeightedEdgeList
+//
+// or a pointer to any of these types.
+//
+// When g is an undirected graph type, Config.Directed is initialized to
+// false.
+//
+// The WeightedEdgeList, as used by the Kruskal methods, is a bit strange
+// in that Kruskal interprets it as an undirected graph, but does not require
+// that reciprocal edges be present.  Depending on how you construct a
+// WeightedEdgeList, you may or may not have reciprocal edges.  If you do
+// have reciprocal edges, the Directed(false) option is appropriate for
+// collapsing reciprocals as usual and writing an undirected dot file.
+// If, for Kruskal, for example, you constructed a WeightedEdgeList without
+// reciprocals, then the UndirectArcs(true) is appropriate for writing an
+// undirected dot file.  Specifying neither option and using the default of
+// Directed(true) will produce a directed dot file.
+//
+// See also String().
+func Write(g interface{}, w io.Writer, options ...func(*Config)) error {
+	switch t := g.(type) {
+	case graph.AdjacencyList:
+		return writeAdjacencyList(t, w, options)
+	case *graph.AdjacencyList:
+		return writeAdjacencyList(*t, w, options)
+	case graph.Directed:
+		return writeAdjacencyList(t.AdjacencyList, w, options)
+	case *graph.Directed:
+		return writeAdjacencyList(t.AdjacencyList, w, options)
+	case graph.Undirected:
+		return writeUndirected(t.AdjacencyList, w, options)
+	case *graph.Undirected:
+		return writeUndirected(t.AdjacencyList, w, options)
+	case graph.LabeledAdjacencyList:
+		return writeLabeledAdjacencyList(t, w, options)
+	case *graph.LabeledAdjacencyList:
+		return writeLabeledAdjacencyList(*t, w, options)
+	case graph.DirectedLabeled:
+		return writeLabeledAdjacencyList(t.LabeledAdjacencyList, w, options)
+	case *graph.DirectedLabeled:
+		return writeLabeledAdjacencyList(t.LabeledAdjacencyList, w, options)
+	case graph.UndirectedLabeled:
+		return writeUndirectedLabeled(t.LabeledAdjacencyList, w, options)
+	case *graph.UndirectedLabeled:
+		return writeUndirectedLabeled(t.LabeledAdjacencyList, w, options)
+	case graph.FromList:
+		return writeFromList(t, w, options)
+	case *graph.FromList:
+		return writeFromList(*t, w, options)
+	case graph.WeightedEdgeList:
+		return writeWeightedEdgeList(t, w, options)
+	case *graph.WeightedEdgeList:
+		return writeWeightedEdgeList(*t, w, options)
+	}
+	return fmt.Errorf("dot: unknown graph type")
+}
+
+func writeAdjacencyList(g graph.AdjacencyList, w io.Writer, options []func(*Config)) error {
 	cf := Defaults
+	for _, o := range options {
+		o(&cf)
+	}
+	return writeAL(g, w, &cf)
+}
+
+func writeUndirected(g graph.AdjacencyList, w io.Writer, options []func(*Config)) error {
+	cf := Defaults
+	cf.Directed = false
 	for _, o := range options {
 		o(&cf)
 	}
@@ -287,18 +305,17 @@ func writeALUndirected(g graph.AdjacencyList, cf *Config, iso big.Int, b *bufio.
 	return nil
 }
 
-// WriteLabeledAdjacencyList writes dot format text for a LabeledAdjacencyList
-// to an io.Writer.
-//
-// Supported options:
-//   Directed
-//   GraphAttr
-//   Indent
-//   Isolated
-//   NodeLabel
-//   EdgeLabel
-func WriteLabeledAdjacencyList(g graph.LabeledAdjacencyList, w io.Writer, options ...func(*Config)) error {
+func writeLabeledAdjacencyList(g graph.LabeledAdjacencyList, w io.Writer, options []func(*Config)) error {
 	cf := Defaults
+	for _, o := range options {
+		o(&cf)
+	}
+	return writeLAL(g, w, &cf)
+}
+
+func writeUndirectedLabeled(g graph.LabeledAdjacencyList, w io.Writer, options []func(*Config)) error {
+	cf := Defaults
+	cf.Directed = false
 	for _, o := range options {
 		o(&cf)
 	}
@@ -393,31 +410,7 @@ func writeLALUndirected(g graph.LabeledAdjacencyList, cf *Config, iso big.Int, b
 	return nil
 }
 
-// WriteDirected writes dot format text for a Directed graph to an
-// io.Writer.
-//
-// See WriteAdjacencyList for options.
-func WriteDirected(g graph.Directed, w io.Writer, options ...func(*Config)) error {
-	return WriteAdjacencyList(g.AdjacencyList, w, options...)
-}
-
-// WriteDirectedLabeled writes dot format text for a DirectedLabeled graph to
-// an io.Writer.
-//
-// See WriteLabeledAdjacencyList for options.
-func WriteDirectedLabeled(g graph.DirectedLabeled, w io.Writer, options ...func(*Config)) error {
-	return WriteLabeledAdjacencyList(g.LabeledAdjacencyList, w, options...)
-}
-
-// WriteFromList writes dot format text for a graph.FromList
-// to an io.Writer.
-//
-// Supported options:
-//   Indent
-//   Isolated
-//   GraphAttr
-//   NodeLabel
-func WriteFromList(f graph.FromList, w io.Writer, options ...func(*Config)) error {
+func writeFromList(f graph.FromList, w io.Writer, options []func(*Config)) error {
 	cf := Defaults
 	GraphAttr("rankdir", "BT")(&cf)
 	for _, o := range options {
@@ -483,54 +476,7 @@ tail:
 	return writeTail(b)
 }
 
-// WriteUnirected writes dot format text for an Undirected graph to an
-// io.Writer.
-//
-// See WriteAdjacencyList for options.
-func WriteUndirected(g graph.Undirected, w io.Writer, options ...func(*Config)) error {
-	cf := Defaults
-	cf.Directed = false
-	for _, o := range options {
-		o(&cf)
-	}
-	return writeAL(g.AdjacencyList, w, &cf)
-}
-
-// WriteUnirectedLabeled writes dot format text for an UndirectedLabeled graph
-// to an io.Writer.
-//
-// See WriteLabeledAdjacencyList for options.
-func WriteUndirectedLabeled(g graph.UndirectedLabeled, w io.Writer, options ...func(*Config)) error {
-	cf := Defaults
-	cf.Directed = false
-	for _, o := range options {
-		o(&cf)
-	}
-	return writeLAL(g.LabeledAdjacencyList, w, &cf)
-}
-
-// WriteWeightedEdgeList writes dot format text for a graph.WeightedEdgeList
-// to an io.Writer.
-//
-// The WeightedEdgeList, as used by the Kruskal methods, is a bit strange
-// in that Kruskal interprets it as an undirected graph, but does not require
-// that reciprocal edges be present.  Depending on how you construct a
-// WeightedEdgeList, you may or may not have reciprocal edges.  If you do
-// have reciprocal edges, the Directed(false) option is appropriate for
-// collapsing reciprocals as usual and writing an undirected dot file.
-// If, for Kruskal, for example, you constructed a WeightedEdgeList without
-// reciprocals, then the UndirectArcs(true) is appropriate for writing an
-// undirected dot file.  Specifying neither option and using the default of
-// Directed(true) will produce a directed dot file.
-//
-// Supported options:
-//   Directed
-//   EdgeLabel
-//   GraphAttr
-//   Indent
-//   NodeLabel
-//   UndirectArcs
-func WriteWeightedEdgeList(g graph.WeightedEdgeList, w io.Writer, options ...func(*Config)) error {
+func writeWeightedEdgeList(g graph.WeightedEdgeList, w io.Writer, options []func(*Config)) error {
 	cf := Defaults
 	cf.Directed = false
 	cf.EdgeLabel = func(l graph.LI) string {

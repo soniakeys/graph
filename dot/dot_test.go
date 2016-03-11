@@ -8,7 +8,7 @@ import (
 	"github.com/soniakeys/graph/dot"
 )
 
-func ExampleStringAdjacencyList() {
+func ExampleString() {
 	// arcs directed down:
 	// 0  4
 	// | /|
@@ -19,7 +19,7 @@ func ExampleStringAdjacencyList() {
 		4: {2, 3},
 	}
 	// (default indent is 2)
-	s, _ := dot.StringAdjacencyList(g, dot.Indent(""))
+	s, _ := dot.String(g, dot.Indent(""))
 	fmt.Println(s)
 	// Output:
 	// digraph {
@@ -28,7 +28,7 @@ func ExampleStringAdjacencyList() {
 	// }
 }
 
-func ExampleWriteAdjacencyList() {
+func ExampleWrite_adjacencyList() {
 	// arcs directed down:
 	// 0  4
 	// | /|
@@ -39,7 +39,7 @@ func ExampleWriteAdjacencyList() {
 		4: {2, 3},
 	}
 	// (default indent is 2)
-	dot.WriteAdjacencyList(g, os.Stdout, dot.Indent(""))
+	dot.Write(g, os.Stdout, dot.Indent(""))
 	// Output:
 	// digraph {
 	// 0 -> 2
@@ -47,7 +47,7 @@ func ExampleWriteAdjacencyList() {
 	// }
 }
 
-func ExampleWriteAdjacencyList_parallelArcs() {
+func ExampleWrite_adjacencyListParallelArcs() {
 	// arcs directed down:
 	// 0  4
 	// | /|\
@@ -57,7 +57,7 @@ func ExampleWriteAdjacencyList_parallelArcs() {
 		0: {2},
 		4: {2, 3, 3},
 	}
-	dot.WriteAdjacencyList(g, os.Stdout, dot.Indent(""))
+	dot.Write(g, os.Stdout, dot.Indent(""))
 	// Output:
 	// digraph {
 	// 0 -> 2
@@ -66,7 +66,7 @@ func ExampleWriteAdjacencyList_parallelArcs() {
 	// }
 }
 
-func ExampleWriteDirected() {
+func ExampleWrite_directed() {
 	// arcs directed down:
 	// 0  4
 	// | /|
@@ -77,7 +77,7 @@ func ExampleWriteDirected() {
 		4: {2, 3},
 	}}
 	// (default indent is 2)
-	dot.WriteDirected(g, os.Stdout, dot.Indent(""))
+	dot.Write(g, os.Stdout, dot.Indent(""))
 	// Output:
 	// digraph {
 	// 0 -> 2
@@ -85,7 +85,7 @@ func ExampleWriteDirected() {
 	// }
 }
 
-func ExampleWriteDirectedLabeled() {
+func ExampleWrite_directedLabeled() {
 	// arcs directed down:
 	//     0      4
 	// (30)|     /|
@@ -96,7 +96,7 @@ func ExampleWriteDirectedLabeled() {
 		0: {{2, 30}},
 		4: {{2, 20}, {3, 10}},
 	}}
-	dot.WriteDirectedLabeled(g, os.Stdout, dot.Indent(""))
+	dot.Write(g, os.Stdout, dot.Indent(""))
 	// Output:
 	// digraph {
 	// 0 -> 2 [label = 30]
@@ -105,7 +105,7 @@ func ExampleWriteDirectedLabeled() {
 	// }
 }
 
-func ExampleWriteFromList() {
+func ExampleWrite_fromList() {
 	//     0
 	//    / \
 	//   /   2
@@ -119,7 +119,7 @@ func ExampleWriteFromList() {
 	}}
 	f.Leaves.SetBit(&f.Leaves, 1, 1)
 	f.Leaves.SetBit(&f.Leaves, 3, 1)
-	dot.WriteFromList(f, os.Stdout, dot.Indent(""))
+	dot.Write(f, os.Stdout, dot.Indent(""))
 	// Output:
 	// digraph {
 	// rankdir = BT
@@ -130,7 +130,7 @@ func ExampleWriteFromList() {
 	// }
 }
 
-func ExampleWriteLabeledAdjacencyList() {
+func ExampleWrite_labeledAdjacencyList() {
 	// arcs directed down:
 	//     0      4
 	// (30)|     /|
@@ -141,7 +141,7 @@ func ExampleWriteLabeledAdjacencyList() {
 		0: {{2, 30}},
 		4: {{2, 20}, {3, 10}},
 	}
-	dot.WriteLabeledAdjacencyList(g, os.Stdout, dot.Indent(""))
+	dot.Write(g, os.Stdout, dot.Indent(""))
 	// Output:
 	// digraph {
 	// 0 -> 2 [label = 30]
@@ -150,7 +150,7 @@ func ExampleWriteLabeledAdjacencyList() {
 	// }
 }
 
-func ExampleWriteUndirected() {
+func ExampleWrite_undirected() {
 	//   0
 	//  / \
 	// 1---2
@@ -158,7 +158,7 @@ func ExampleWriteUndirected() {
 	g.AddEdge(0, 1)
 	g.AddEdge(0, 2)
 	g.AddEdge(1, 2)
-	dot.WriteUndirected(g, os.Stdout, dot.Indent(""))
+	dot.Write(g, os.Stdout, dot.Indent(""))
 	// Output:
 	// graph {
 	// 0 -- {1 2}
@@ -166,7 +166,7 @@ func ExampleWriteUndirected() {
 	// }
 }
 
-func ExampleWriteUndirectedLabeled() {
+func ExampleWrite_undirectedLabeled() {
 	//       0
 	// (12) / \ (17)
 	//     1---2
@@ -175,7 +175,7 @@ func ExampleWriteUndirectedLabeled() {
 	g.AddEdge(graph.Edge{0, 1}, 12)
 	g.AddEdge(graph.Edge{0, 2}, 17)
 	g.AddEdge(graph.Edge{1, 2}, 64)
-	dot.WriteUndirectedLabeled(g, os.Stdout, dot.Indent(""))
+	dot.Write(g, os.Stdout, dot.Indent(""))
 	// Output:
 	// graph {
 	// 0 -- 1 [label = 12]
@@ -184,7 +184,7 @@ func ExampleWriteUndirectedLabeled() {
 	// }
 }
 
-func ExampleWriteWeightedEdgeList() {
+func ExampleWrite_weightedEdgeList() {
 	//              (label 0, wt 1.6)
 	//          0----------------------2
 	// (label 1 |                     /
@@ -211,7 +211,7 @@ func ExampleWriteWeightedEdgeList() {
 			{graph.Edge{2, 1}, 2},
 		},
 	}
-	dot.WriteWeightedEdgeList(g, os.Stdout, dot.Indent(""))
+	dot.Write(g, os.Stdout, dot.Indent(""))
 	// Output:
 	// graph {
 	// 0 -- 1 [label = "0.33"]

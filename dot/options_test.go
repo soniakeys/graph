@@ -20,19 +20,18 @@ func ExampleDirected() {
 		4: {},
 	}
 	// default for AdjacencyList is directed
-	dot.WriteAdjacencyList(g, os.Stdout, dot.Indent(""))
+	dot.Write(g, os.Stdout, dot.Indent(""))
 	fmt.Fprintln(os.Stdout)
 	fmt.Fprintln(os.Stdout)
 
 	// Directed(false) generates error witout reciprocal arcs
-	err := dot.WriteAdjacencyList(g, os.Stdout, dot.Directed(false))
+	err := dot.Write(g, os.Stdout, dot.Directed(false))
 	fmt.Fprintln(os.Stdout, "Error:", err)
 	fmt.Fprintln(os.Stdout)
 
 	// undirected
 	u := graph.Directed{g}.Undirected()
-	dot.WriteAdjacencyList(u.AdjacencyList, os.Stdout,
-		dot.Directed(false), dot.Indent(""))
+	dot.Write(u.AdjacencyList, os.Stdout, dot.Directed(false), dot.Indent(""))
 
 	// Output:
 	// digraph {
@@ -67,8 +66,7 @@ func ExampleEdgeLabel() {
 		0: {{2, 30}},
 		4: {{2, 20}, {3, 10}},
 	}
-	dot.WriteLabeledAdjacencyList(g, os.Stdout,
-		dot.EdgeLabel(lf), dot.Indent(""))
+	dot.Write(g, os.Stdout, dot.EdgeLabel(lf), dot.Indent(""))
 	// Output:
 	// digraph {
 	// 0 -> 2 [label = "0.33"]
@@ -88,8 +86,7 @@ func ExampleGraphAttr() {
 		2: {3},
 		3: {},
 	}
-	dot.WriteAdjacencyList(g, os.Stdout,
-		dot.GraphAttr("rankdir", "LR"), dot.Indent(""))
+	dot.Write(g, os.Stdout, dot.GraphAttr("rankdir", "LR"), dot.Indent(""))
 	// Output:
 	// digraph {
 	// rankdir = LR
@@ -115,7 +112,7 @@ func ExampleIndent() {
 	// looks like the default two space indent.
 	// (But then if you render it with graphviz, graphviz picks up the nbsp
 	// as a node statement...)
-	dot.WriteAdjacencyList(g, os.Stdout, dot.Indent("\u00a0 "))
+	dot.Write(g, os.Stdout, dot.Indent("\u00a0 "))
 	// Output:
 	// digraph {
 	//   0 -> 2
@@ -129,7 +126,7 @@ func ExampleIsolated() {
 		1: {2},
 		2: {},
 	}
-	dot.WriteAdjacencyList(g, os.Stdout, dot.Isolated(true), dot.Indent(""))
+	dot.Write(g, os.Stdout, dot.Isolated(true), dot.Indent(""))
 	// Output:
 	// digraph {
 	// 0
@@ -154,7 +151,7 @@ func ExampleNodeLabel() {
 		0: {2},
 		4: {2, 3},
 	}
-	dot.WriteAdjacencyList(g, os.Stdout, dot.Indent(""), dot.NodeLabel(lf))
+	dot.Write(g, os.Stdout, dot.Indent(""), dot.NodeLabel(lf))
 	// Output:
 	// digraph {
 	// A -> B
@@ -195,7 +192,7 @@ func ExampleNodeLabel_construction() {
 
 	// generate dot
 	lf := func(n graph.NI) string { return labels[n] }
-	dot.WriteAdjacencyList(g, os.Stdout, dot.Indent(""), dot.NodeLabel(lf))
+	dot.Write(g, os.Stdout, dot.Indent(""), dot.NodeLabel(lf))
 
 	// Output:
 	// digraph {
@@ -226,8 +223,7 @@ func ExampleUndirectArcs() {
 			{graph.Edge{1, 2}, 2},
 		},
 	}
-	dot.WriteWeightedEdgeList(g, os.Stdout,
-		dot.UndirectArcs(true), dot.Indent(""))
+	dot.Write(g, os.Stdout, dot.UndirectArcs(true), dot.Indent(""))
 	// Output:
 	// graph {
 	// 0 -- 1 [label = "0.33"]
