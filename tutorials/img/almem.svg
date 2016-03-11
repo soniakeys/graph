@@ -50,7 +50,7 @@
   <text font-size="9.03111" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="80" y="240">
     <tspan x="80" y="240">6</tspan>
   </text>
-  <text font-size="9.03097" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="96" y="120">
+  <text font-size="9.03111" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="96" y="120">
     <tspan x="96" y="120">nil</tspan>
   </text>
   <g>
@@ -61,7 +61,7 @@
     <rect style="fill: #ffffff" x="172" y="148" width="20" height="20"/>
     <rect style="fill: none; fill-opacity:0; stroke-width: 1.2; stroke: #000000" x="172" y="148" width="20" height="20"/>
   </g>
-  <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="84" y="136">
+  <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="84" y="136">
     <tspan x="84" y="136"></tspan>
   </text>
   <g>
@@ -130,4 +130,7 @@
     <polygon style="fill: #000000" points="138.658,238 134.658,240 135.658,238 134.658,236 "/>
     <polygon style="fill: none; fill-opacity:0; stroke-width: 1.2; stroke: #000000" points="138.658,238 134.658,240 135.658,238 134.658,236 "/>
   </g>
+  <text font-size="9.03111" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="96" y="220">
+    <tspan x="96" y="220">nil</tspan>
+  </text>
 </svg>
