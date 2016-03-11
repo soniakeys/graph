@@ -128,6 +128,21 @@ func (f FromList) Cyclic() (cyclic bool, n NI) {
 	return false, -1
 }
 
+// IsolatedNodeBits returns a bitmap of isolated nodes in receiver graph f.
+//
+// An isolated node is one with no arcs going to or from it.
+func (f FromList) IsolatedNodes() (iso big.Int) {
+	p := f.Paths
+	OneBits(&iso, len(p))
+	for n, e := range p {
+		if e.From >= 0 {
+			iso.SetBit(&iso, n, 0)
+			iso.SetBit(&iso, int(e.From), 0)
+		}
+	}
+	return
+}
+
 // PathTo decodes a FromList, recovering a single path.
 //
 // The path is returned as a list of nodes where the first element will be
