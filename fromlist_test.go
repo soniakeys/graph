@@ -31,24 +31,28 @@ func ExampleFromList_BoundsOk() {
 	// false 0
 }
 
-func ExampleFromList_CommonAncestor() {
-	//       4
-	//      /
-	//     1
+func ExampleFromList_CommonStart() {
+	//   4   5  
+	//  /   /
+	// 6   1
 	//    / \
 	//   0   2
 	//  /
 	// 3
 	t := &graph.FromList{Paths: []graph.PathEnd{
 		4: {From: -1, Len: 1},
-		1: {From: 4, Len: 2},
+		6: {From: 4, Len: 2},
+		5: {From: -1, Len: 1},
+		1: {From: 5, Len: 2},
 		0: {From: 1, Len: 3},
 		2: {From: 1, Len: 3},
 		3: {From: 0, Len: 4},
 	}}
-	fmt.Println(t.CommonAncestor(2, 3))
+	fmt.Println(t.CommonStart(2, 3))
+	fmt.Println(t.CommonStart(6, 3))
 	// Output:
 	// 1
+	// -1
 }
 
 func ExampleFromList_Cyclic_acyclic() {

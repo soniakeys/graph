@@ -79,22 +79,28 @@ func (f FromList) BoundsOk() (ok bool, n NI) {
 	return true, -1
 }
 
-// CommonAncestor returns the common ancestor of a and b.
+// CommonStart returns the common start node of minimal paths to a and b.
 //
-// It returns -1 if a or b are invalid node numbers.
-func (f FromList) CommonAncestor(a, b NI) NI {
+// It returns -1 if a and b cannot be traced back to a common node.
+//
+// The method relies on populated PathEnd.Len members.  Use RecalcLen if
+// the Len members are not known to be present and correct.
+func (f FromList) CommonStart(a, b NI) NI {
 	p := f.Paths
-	if a < 0 || b < 0 || a >= NI(len(p)) || b >= NI(len(p)) {
-		return -1
-	}
 	if p[a].Len < p[b].Len {
 		a, b = b, a
 	}
 	for bl := p[b].Len; p[a].Len > bl; {
 		a = p[a].From
+		if a < 0 {
+			return -1
+		}
 	}
 	for a != b {
 		a = p[a].From
+		if a < 0 {
+			return -1
+		}
 		b = p[b].From
 	}
 	return a
