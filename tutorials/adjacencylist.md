@@ -158,7 +158,7 @@ Or, as a Graphviz formatted diagram,
 
 ![Dijkstra data](https://cdn.rawgit.com/soniakeys/graph/svg-v0/tutorials/img/ald.svg)
 
-There is a separate type, `DirectedLabeled`, for specifically directed
+There is a separate type, `LabeledDirected`, for specifically directed
 labeled graphs, but the example here uses just a LabeledAdjacencyList.  Dijkstra's algorithm
 works with adjacency lists representing either directed or undirected graphs,
 so methods simply take the LabeledAdjacencyList type.
