@@ -15,7 +15,7 @@ import (
 
 // duplicate code in instr_test.go
 type testCase struct {
-	l graph.DirectedLabeled // generated labeled directed graph
+	l graph.LabeledDirected // generated labeled directed graph
 	w []float64             // arc weights for l
 	// variants
 	g graph.Directed // unlabeled
@@ -60,7 +60,7 @@ func r(nNodes, nArcs int, seed int64) testCase {
 		return math.Hypot(ce.x-cn.x, ce.y-cn.y)
 	}
 	// graph
-	tc.l = graph.DirectedLabeled{make(graph.LabeledAdjacencyList, nNodes)}
+	tc.l = graph.LabeledDirected{make(graph.LabeledAdjacencyList, nNodes)}
 	tc.w = make([]float64, nArcs)
 	// arcs
 	var tooFar, dup int

@@ -1,25 +1,17 @@
 // Copyright 2014 Sonia Keys
 // License MIT: http://opensource.org/licenses/MIT
 
-// dir.go
-//
-// Methods specific to directed graphs.
-// Doc for each method should specifically say directed.
-
 package graph
+
+// dir.go has methods specific to directed graphs, types Directed and
+// LabeledDirected.
+//
+// Methods on Directed are first, with exported methods alphabetized.
 
 import (
 	"errors"
 	"math/big"
 )
-
-// Directed represents a directed graph.
-//
-// Directed methods generally rely on the graph being directed, specifically
-// that arcs do not have reciprocals.
-type Directed struct {
-	AdjacencyList // embedded to include AdjacencyList methods
-}
 
 // DAGMaxLenPath finds a maximum length path in a directed acyclic graph.
 //
@@ -94,36 +86,6 @@ func (g Directed) EulerianCycleD(ma int) ([]NI, error) {
 		v := e.top() // v is node that starts cycle
 		e.push()
 		// if Eulerian, we'll always come back to starting node
-		if e.top() != v {
-			return nil, errors.New("not balanced")
-		}
-		e.keep()
-	}
-	if len(e.uv.Bits()) > 0 {
-		return nil, errors.New("not strongly connected")
-	}
-	return e.p, nil
-}
-
-// EulerianCycleD for undirected graphs is a bit of an experiment.
-//
-// It is about the same as the directed version, but modified for an undirected
-// multigraph.
-//
-// Parameter m in this case must be the size of the undirected graph -- the
-// number of edges.  Use Undirected.Size if the size is unknown.
-//
-// It works, but contains an extra loop that I think spoils the time
-// complexity.  Probably still pretty fast in practice, but a different
-// graph representation might be better.
-func (g Undirected) EulerianCycleD(m int) ([]NI, error) {
-	if len(g.AdjacencyList) == 0 {
-		return nil, nil
-	}
-	e := newEulerian(g.AdjacencyList, m)
-	for e.s >= 0 {
-		v := e.top()
-		e.pushUndir() // call modified method
 		if e.top() != v {
 			return nil, errors.New("not balanced")
 		}
@@ -335,6 +297,37 @@ func (g Directed) MaximalNonBranchingPaths(emit func([]NI) bool) {
 	}
 }
 
+// Undirected returns copy of g augmented as needed to make it undirected.
+func (g Directed) Undirected() Undirected {
+	c, _ := g.AdjacencyList.Copy()                  // start with a copy
+	rw := make(AdjacencyList, len(g.AdjacencyList)) // "reciprocals wanted"
+	for fr, to := range g.AdjacencyList {
+	arc: // for each arc in g
+		for _, to := range to {
+			if to == NI(fr) {
+				continue // loop
+			}
+			// search wanted arcs
+			wf := rw[fr]
+			for i, w := range wf {
+				if w == to { // found, remove
+					last := len(wf) - 1
+					wf[i] = wf[last]
+					rw[fr] = wf[:last]
+					continue arc
+				}
+			}
+			// arc not found, add to reciprocal to wanted list
+			rw[to] = append(rw[to], NI(fr))
+		}
+	}
+	// add missing reciprocals
+	for fr, to := range rw {
+		c[fr] = append(c[fr], to...)
+	}
+	return Undirected{c}
+}
+
 // StronglyConnectedComponents identifies strongly connected components
 // in a directed graph.
 //
@@ -345,7 +338,7 @@ func (g Directed) MaximalNonBranchingPaths(emit func([]NI) bool) {
 //
 // Returned is a list of components, each component is a list of nodes.
 /*
-func (g AdjacencyList) StronglyConnectedComponents() []int {
+func (g Directed) StronglyConnectedComponents() []int {
 	rindex := make([]int, len(g))
 	S := []int{}
 	index := 1
@@ -396,6 +389,149 @@ func (g Directed) Transpose() (t Directed, ma int) {
 	for n, nbs := range g.AdjacencyList {
 		for _, nb := range nbs {
 			ta[nb] = append(ta[nb], NI(n))
+			ma++
+		}
+	}
+	return Directed{ta}, ma
+}
+
+// DAGMaxLenPath finds a maximum length path in a directed acyclic graph.
+//
+// Length here means number of nodes or arcs, not a sum of arc weights.
+//
+// Argument ordering must be a topological ordering of g.
+//
+// Returned is a node beginning a maximum length path, and a path of arcs
+// starting from that node.
+func (g LabeledDirected) DAGMaxLenPath(ordering []NI) (n NI, path []Half) {
+	// dynamic programming. visit nodes in reverse order. for each, compute
+	// longest path as one plus longest of 'to' nodes.
+	// Visits each arc once.  Time complexity O(m).
+	//
+	// Similar code in dir.go.
+	mlp := make([][]Half, len(g.LabeledAdjacencyList)) // index by node number
+	for i := len(ordering) - 1; i >= 0; i-- {
+		fr := ordering[i] // node number
+		to := g.LabeledAdjacencyList[fr]
+		if len(to) == 0 {
+			continue
+		}
+		mt := to[0]
+		for _, to := range to[1:] {
+			if len(mlp[to.To]) > len(mlp[mt.To]) {
+				mt = to
+			}
+		}
+		p := append([]Half{mt}, mlp[mt.To]...)
+		mlp[fr] = p
+		if len(p) > len(path) {
+			n = fr
+			path = p
+		}
+	}
+	return
+}
+
+// FromListLabels transposes a labeled graph into a FromList and associated
+// list of labels.
+//
+// Receiver g should be connected as a tree or forest.  Specifically no node
+// can have multiple incoming arcs.  If any node n in g has multiple incoming
+// arcs, the method returns (nil, nil, n) where n is a node with multiple
+// incoming arcs.
+//
+// Otherwise (normally) the method populates the From members in a
+// FromList.Path, populates a slice of labels, and returns the FromList,
+// labels, and -1.
+//
+// Other members of the FromList are left as zero values.
+// Use FromList.RecalcLen and FromList.RecalcLeaves as needed.
+func (g LabeledDirected) FromListLabels() (*FromList, []LI, NI) {
+	labels := make([]LI, len(g.LabeledAdjacencyList))
+	paths := make([]PathEnd, len(g.LabeledAdjacencyList))
+	for i := range paths {
+		paths[i].From = -1
+	}
+	for fr, to := range g.LabeledAdjacencyList {
+		for _, to := range to {
+			if paths[to.To].From >= 0 {
+				return nil, nil, to.To
+			}
+			paths[to.To].From = NI(fr)
+			labels[to.To] = to.Label
+		}
+	}
+	return &FromList{Paths: paths}, labels, -1
+}
+
+// Transpose constructs a new adjacency list that is the transpose of g.
+//
+// For every arc from->to of g, the result will have an arc to->from.
+// Transpose also counts arcs as it traverses and returns ma the number of
+// arcs in g (equal to the number of arcs in the result.)
+func (g LabeledDirected) Transpose() (t LabeledDirected, ma int) {
+	ta := make(LabeledAdjacencyList, len(g.LabeledAdjacencyList))
+	for n, nbs := range g.LabeledAdjacencyList {
+		for _, nb := range nbs {
+			ta[nb.To] = append(ta[nb.To], Half{To: NI(n), Label: nb.Label})
+			ma++
+		}
+	}
+	return LabeledDirected{ta}, ma
+}
+
+// Undirected returns a new undirected graph derived from g, augmented as
+// needed to make it undirected, with reciprocal arcs having matching labels.
+func (g LabeledDirected) Undirected() LabeledUndirected {
+	c, _ := g.LabeledAdjacencyList.Copy() // start with a copy
+	// "reciprocals wanted"
+	rw := make(LabeledAdjacencyList, len(g.LabeledAdjacencyList))
+	for fr, to := range g.LabeledAdjacencyList {
+	arc: // for each arc in g
+		for _, to := range to {
+			if to.To == NI(fr) {
+				continue // arc is a loop
+			}
+			// search wanted arcs
+			wf := rw[fr]
+			for i, w := range wf {
+				if w == to { // found, remove
+					last := len(wf) - 1
+					wf[i] = wf[last]
+					rw[fr] = wf[:last]
+					continue arc
+				}
+			}
+			// arc not found, add to reciprocal to wanted list
+			rw[to.To] = append(rw[to.To], Half{To: NI(fr), Label: to.Label})
+		}
+	}
+	// add missing reciprocals
+	for fr, to := range rw {
+		c[fr] = append(c[fr], to...)
+	}
+	return LabeledUndirected{c}
+}
+
+// Unlabeled constructs the unlabeled directed graph corresponding to g.
+func (g LabeledDirected) Unlabeled() Directed {
+	return Directed{g.LabeledAdjacencyList.Unlabeled()}
+}
+
+// UnlabeledTranspose constructs a new adjacency list that is the unlabeled
+// transpose of g.
+//
+// For every arc from->to of g, the result will have an arc to->from.
+// Transpose also counts arcs as it traverses and returns ma, the number of
+// arcs in g (equal to the number of arcs in the result.)
+//
+// It is equivalent to g.Unlabeled().Transpose() but constructs the result
+// directly.
+func (g LabeledDirected) UnlabeledTranspose() (t Directed, ma int) {
+	ta := make(AdjacencyList, len(g.LabeledAdjacencyList))
+	for n, nbs := range g.LabeledAdjacencyList {
+		for _, nb := range nbs {
+			ta[nb.To] = append(ta[nb.To], NI(n))
 			ma++
 		}
 	}

@@ -421,7 +421,7 @@ func ExampleDAGPath_AllPaths() {
 	//                        \ /
 	//                         6------8
 	//                           (10)
-	g := graph.DirectedLabeled{graph.LabeledAdjacencyList{
+	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
 		0: {{To: 2, Label: 11}},
 		1: {{3, 11}},
 		3: {{5, 10}},
@@ -472,7 +472,7 @@ func ExampleDAGPath_Path_shortest() {
 	//                   \   /
 	//                 (2)\ /(3)
 	//                     5
-	g := graph.DirectedLabeled{graph.LabeledAdjacencyList{
+	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
 		0: {{To: 5, Label: 2}, {6, 5}},
 		1: {{0, -10}, {4, -3}},
 		3: {{1, 10}},
@@ -510,7 +510,7 @@ func ExampleDAGPath_Path_longest() {
 	//                   \   /
 	//                 (2)\ /(3)
 	//                     5
-	g := graph.DirectedLabeled{graph.LabeledAdjacencyList{
+	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
 		0: {{To: 5, Label: 2}, {6, 5}},
 		1: {{0, -10}, {4, -3}},
 		3: {{1, 10}},
@@ -537,7 +537,7 @@ func ExampleDAGPath_Path_longest() {
 	// Distance: 20
 }
 
-func ExampleDirectedLabeled_DAGMinDistPath() {
+func ExampleLabeledDirected_DAGMinDistPath() {
 	// arcs are directed right:
 	//             4
 	//        (-3)/ \(-2)
@@ -548,7 +548,7 @@ func ExampleDirectedLabeled_DAGMinDistPath() {
 	//                   \   /
 	//                 (2)\ /(3)
 	//                     5
-	g := graph.DirectedLabeled{graph.LabeledAdjacencyList{
+	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
 		0: {{To: 5, Label: 2}, {6, 5}},
 		1: {{0, -10}, {4, -3}},
 		3: {{1, 10}},
@@ -569,7 +569,7 @@ func ExampleDirectedLabeled_DAGMinDistPath() {
 	// Distance: 15
 }
 
-func ExampleDirectedLabeled_DAGMaxDistPath() {
+func ExampleLabeledDirected_DAGMaxDistPath() {
 	// arcs are directed right:
 	//             4
 	//        (-3)/ \(-2)
@@ -580,7 +580,7 @@ func ExampleDirectedLabeled_DAGMaxDistPath() {
 	//                   \   /
 	//                 (2)\ /(3)
 	//                     5
-	g := graph.DirectedLabeled{graph.LabeledAdjacencyList{
+	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
 		0: {{To: 5, Label: 2}, {6, 5}},
 		1: {{0, -10}, {4, -3}},
 		3: {{1, 10}},

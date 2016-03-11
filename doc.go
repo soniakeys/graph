@@ -39,7 +39,7 @@
 // with arcs.  While AdjacencyList represents an arc with simply an NI,
 // the type LabeledAdjacencyList uses a type that pairs an NI with an LI.
 // This type is named Half, for half-arc.  (A full arc would represent
-// both ends.)  Types DirectedLabeled and UndirectedLabeled embed a
+// both ends.)  Types LabeledDirected and LabeledUndirected embed a
 // LabeledAdjacencyList.
 //
 // In contrast to Half, the type Edge represents both ends of an edge (but
@@ -55,7 +55,7 @@
 // Code generation
 //
 // A number of methods on AdjacencyList, Directed, and Undirected are
-// applicable to LabeledAdjacencyList, DirectedLabeled, and UndirectedLabeled
+// applicable to LabeledAdjacencyList, LabeledDirected, and LabeledUndirected
 // simply by ignoring the label.  In these cases code generation provides
 // methods on both types from a single source implementation. These methods
 // are documented with the sentence "There are equivalent labeled and unlabeled

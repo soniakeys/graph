@@ -9,69 +9,21 @@ import (
 	"github.com/soniakeys/graph"
 )
 
-func ExampleDirected_Undirected() {
-	// arcs directed down:
-	//    0
-	//   / \
-	//  1   2
-	g := graph.Directed{graph.AdjacencyList{
-		0: {1, 2},
-		1: {},
-		2: {},
-	}}
-	u := g.Undirected()
-	for fr, to := range u.AdjacencyList {
-		fmt.Println(fr, to)
-	}
+func ExampleUndirected_EulerianCycleD() {
+	var g graph.Undirected
+	// add 6 edges
+	g.AddEdge(0, 1)
+	g.AddEdge(0, 2)
+	g.AddEdge(1, 2)
+	g.AddEdge(1, 2)
+	g.AddEdge(1, 2)
+	g.AddEdge(2, 2) // loop
+	m := g.Size()
+	fmt.Println("m =", m)
+	fmt.Println(g.EulerianCycleD(m))
 	// Output:
-	// 0 [1 2]
-	// 1 [0]
-	// 2 [0]
-}
-
-func ExampleDirected_Undirected_loopMultigraph() {
-	//  0--\   /->1--\
-	//  |  |   |  ^  |
-	//  \--/   |  |  |
-	//         \--2<-/
-	g := graph.Directed{graph.AdjacencyList{
-		0: {0},
-		1: {2},
-		2: {1, 1},
-	}}
-	u := g.Undirected()
-	for fr, to := range u.AdjacencyList {
-		fmt.Println(fr, to)
-	}
-	// Output:
-	// 0 [0]
-	// 1 [2 2]
-	// 2 [1 1]
-}
-
-func ExampleAdjacencyList_IsUndirected() {
-	// 0<--    2<--\
-	//  \  \   |   |
-	//   -->1  \---/
-	g := graph.AdjacencyList{
-		0: {1},
-		1: {0},
-		2: {2},
-	}
-	ud, _, _ := g.IsUndirected()
-	fmt.Println(ud)
-	// 0<--
-	//  \  \
-	//   -->1<--2
-	g = graph.AdjacencyList{
-		0: {1},
-		1: {0},
-		2: {1},
-	}
-	fmt.Println(g.IsUndirected())
-	// Output:
-	// true
-	// false 2 1
+	// m = 6
+	// [0 1 2 2 1 2 0] <nil>
 }
 
 func ExampleUndirected_TarjanBiconnectedComponents() {
@@ -96,6 +48,50 @@ func ExampleUndirected_TarjanBiconnectedComponents() {
 		fmt.Println("Edges:")
 		for _, e := range bcc {
 			fmt.Println(e)
+		}
+		return true
+	})
+	// Output:
+	// Edges:
+	// {4 2}
+	// {3 4}
+	// {2 3}
+	// Edges:
+	// {6 1}
+	// {5 6}
+	// {5 1}
+	// {2 5}
+	// {1 2}
+	// Edges:
+	// {8 7}
+	// {9 8}
+	// {7 9}
+	// Edges:
+	// {1 7}
+}
+
+func ExampleLabeledUndirected_TarjanBiconnectedComponents() {
+	// undirected edges:
+	// 3---2---1---7---9
+	//  \ / \ / \   \ /
+	//   4   5---6   8
+	var g graph.LabeledUndirected
+	g.AddEdge(graph.Edge{3, 4}, 0)
+	g.AddEdge(graph.Edge{3, 2}, 0)
+	g.AddEdge(graph.Edge{2, 4}, 0)
+	g.AddEdge(graph.Edge{2, 5}, 0)
+	g.AddEdge(graph.Edge{2, 1}, 0)
+	g.AddEdge(graph.Edge{5, 1}, 0)
+	g.AddEdge(graph.Edge{6, 1}, 0)
+	g.AddEdge(graph.Edge{6, 5}, 0)
+	g.AddEdge(graph.Edge{7, 1}, 0)
+	g.AddEdge(graph.Edge{7, 9}, 0)
+	g.AddEdge(graph.Edge{7, 8}, 0)
+	g.AddEdge(graph.Edge{9, 8}, 0)
+	g.TarjanBiconnectedComponents(func(bcc []graph.LabeledEdge) bool {
+		fmt.Println("Edges:")
+		for _, e := range bcc {
+			fmt.Println(e.Edge)
 		}
 		return true
 	})

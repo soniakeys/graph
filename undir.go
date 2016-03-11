@@ -1,27 +1,12 @@
 // Copyright 2014 Sonia Keys
 // License MIT: http://opensource.org/licenses/MIT
 
-// undir.go
-//
-// Methods specific to undirected graphs.
-// Doc for each method should specifically say undirected.
-
 package graph
 
-// Undirected represents an undirected graph.
-//
-// In an undirected graph, for each arc between distinct nodes there is also
-// a reciprocal arc, an arc in the opposite direction.  Loops do not have
-// reciprocals.
-//
-// Undirected methods generally rely on the graph being undirected,
-// specifically that every arc between distinct nodes has a reciprocal.
-type Undirected struct {
-	AdjacencyList // embedded to include AdjacencyList methods
-}
+// undir.go has methods specific to undirected graphs, Undirected and
+// LabeledUndirected.
 
-// Edge is an undirected edge between nodes N1 and N2.
-type Edge struct{ N1, N2 NI }
+import "errors"
 
 // AddEdge adds an edge to a graph.
 //
@@ -56,70 +41,34 @@ func (p *Undirected) AddEdge(n1, n2 NI) {
 	}
 }
 
-// IsUndirected returns true if g represents an undirected graph.
+// EulerianCycleD for undirected graphs is a bit of an experiment.
 //
-// Returns true when all non-loop arcs are paired in reciprocal pairs.
-// Otherwise returns false and an example unpaired arc.
-func (g AdjacencyList) IsUndirected() (u bool, from, to NI) {
-	// similar code in dot/writeUndirected
-	unpaired := make(AdjacencyList, len(g))
-	for fr, to := range g {
-	arc: // for each arc in g
-		for _, to := range to {
-			if to == NI(fr) {
-				continue // loop
-			}
-			// search unpaired arcs
-			ut := unpaired[to]
-			for i, u := range ut {
-				if u == NI(fr) { // found reciprocal
-					last := len(ut) - 1
-					ut[i] = ut[last]
-					unpaired[to] = ut[:last]
-					continue arc
-				}
-			}
-			// reciprocal not found
-			unpaired[fr] = append(unpaired[fr], to)
+// It is about the same as the directed version, but modified for an undirected
+// multigraph.
+//
+// Parameter m in this case must be the size of the undirected graph -- the
+// number of edges.  Use Undirected.Size if the size is unknown.
+//
+// It works, but contains an extra loop that I think spoils the time
+// complexity.  Probably still pretty fast in practice, but a different
+// graph representation might be better.
+func (g Undirected) EulerianCycleD(m int) ([]NI, error) {
+	if len(g.AdjacencyList) == 0 {
+		return nil, nil
+	}
+	e := newEulerian(g.AdjacencyList, m)
+	for e.s >= 0 {
+		v := e.top()
+		e.pushUndir() // call modified method
+		if e.top() != v {
+			return nil, errors.New("not balanced")
 		}
+		e.keep()
 	}
-	for fr, to := range unpaired {
-		if len(to) > 0 {
-			return false, NI(fr), to[0]
-		}
+	if len(e.uv.Bits()) > 0 {
+		return nil, errors.New("not strongly connected")
 	}
-	return true, -1, -1
-}
-
-// Undirected returns copy of g augmented as needed to make it undirected.
-func (g Directed) Undirected() Undirected {
-	c, _ := g.AdjacencyList.Copy()                  // start with a copy
-	rw := make(AdjacencyList, len(g.AdjacencyList)) // "reciprocals wanted"
-	for fr, to := range g.AdjacencyList {
-	arc: // for each arc in g
-		for _, to := range to {
-			if to == NI(fr) {
-				continue // loop
-			}
-			// search wanted arcs
-			wf := rw[fr]
-			for i, w := range wf {
-				if w == to { // found, remove
-					last := len(wf) - 1
-					wf[i] = wf[last]
-					rw[fr] = wf[:last]
-					continue arc
-				}
-			}
-			// arc not found, add to reciprocal to wanted list
-			rw[to] = append(rw[to], NI(fr))
-		}
-	}
-	// add missing reciprocals
-	for fr, to := range rw {
-		c[fr] = append(c[fr], to...)
-	}
-	return Undirected{c}
+	return e.p, nil
 }
 
 // TarjanBiconnectedComponents decomposes a graph into maximal biconnected
@@ -197,7 +146,7 @@ type BiconnectedComponents struct {
 	Leaves []int   // leaves of from-tree
 }
 
-func NewBiconnectedComponents(g AdjacencyList) *BiconnectedComponents {
+func NewBiconnectedComponents(g Undirected) *BiconnectedComponents {
 	return &BiconnectedComponents{
 		Graph: g,
 		From:  make([]int, len(g)),
@@ -267,3 +216,106 @@ func (b *BiconnectedComponents) Find(start int) {
 	return
 }
 */
+
+// AddEdge adds an edge to a labeled graph.
+//
+// It can be useful for constructing undirected graphs.
+//
+// When n1 and n2 are distinct, it adds the arc n1->n2 and the reciprocal
+// n2->n1.  When n1 and n2 are the same, it adds a single arc loop.
+//
+// If the edge already exists in *p, a parallel edge is added.
+//
+// The pointer receiver allows the method to expand the graph as needed
+// to include the values n1 and n2.  If n1 or n2 happen to be greater than
+// len(*p) the method does not panic, but simply expands the graph.
+func (p *LabeledUndirected) AddEdge(e Edge, l LI) {
+	// Similar code in AdjacencyList.AddEdge.
+
+	// determine max of the two end points
+	max := e.N1
+	if e.N2 > max {
+		max = e.N2
+	}
+	// expand graph if needed, to include both
+	g := p.LabeledAdjacencyList
+	if max >= NI(len(g)) {
+		p.LabeledAdjacencyList = make(LabeledAdjacencyList, max+1)
+		copy(p.LabeledAdjacencyList, g)
+		g = p.LabeledAdjacencyList
+	}
+	// create one half-arc,
+	g[e.N1] = append(g[e.N1], Half{To: e.N2, Label: l})
+	// and except for loops, create the reciprocal
+	if e.N1 != e.N2 {
+		g[e.N2] = append(g[e.N2], Half{To: e.N1, Label: l})
+	}
+}
+
+// TarjanBiconnectedComponents decomposes a graph into maximal biconnected
+// components, components for which if any node were removed the component
+// would remain connected.
+//
+// The reciever g must be a simple graph.  The method calls the emit argument
+// for each component identified, as long as emit returns true.  If emit
+// returns false, TarjanBiconnectedComponents returns immediately.
+//
+// See also the eqivalent unlabeled TarjanBiconnectedComponents.
+func (g LabeledUndirected) TarjanBiconnectedComponents(emit func([]LabeledEdge) bool) {
+	// Implemented closely to pseudocode in "Depth-first search and linear
+	// graph algorithms", Robert Tarjan, SIAM J. Comput. Vol. 1, No. 2,
+	// June 1972.
+	//
+	// Note Tarjan's "adjacency structure" is graph.AdjacencyList,
+	// His "adjacency list" is an element of a graph.AdjacencyList, also
+	// termed a "to-list", "neighbor list", or "child list."
+	//
+	// Nearly identical code in undir.go.
+	number := make([]int, len(g.LabeledAdjacencyList))
+	lowpt := make([]int, len(g.LabeledAdjacencyList))
+	var stack []LabeledEdge
+	var i int
+	var biconnect func(NI, NI) bool
+	biconnect = func(v, u NI) bool {
+		i++
+		number[v] = i
+		lowpt[v] = i
+		for _, w := range g.LabeledAdjacencyList[v] {
+			if number[w.To] == 0 {
+				stack = append(stack, LabeledEdge{Edge{v, w.To}, w.Label})
+				if !biconnect(w.To, v) {
+					return false
+				}
+				if lowpt[w.To] < lowpt[v] {
+					lowpt[v] = lowpt[w.To]
+				}
+				if lowpt[w.To] >= number[v] {
+					var bcc []LabeledEdge
+					top := len(stack) - 1
+					for number[stack[top].N1] >= number[w.To] {
+						bcc = append(bcc, stack[top])
+						stack = stack[:top]
+						top--
+					}
+					bcc = append(bcc, stack[top])
+					stack = stack[:top]
+					top--
+					if !emit(bcc) {
+						return false
+					}
+				}
+			} else if number[w.To] < number[v] && w.To != u {
+				stack = append(stack, LabeledEdge{Edge{v, w.To}, w.Label})
+				if number[w.To] < lowpt[v] {
+					lowpt[v] = number[w.To]
+				}
+			}
+		}
+		return true
+	}
+	for w := range g.LabeledAdjacencyList {
+		if number[w] == 0 && !biconnect(NI(w), 0) {
+			return
+		}
+	}
+}

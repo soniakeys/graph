@@ -92,7 +92,7 @@ func ExampleWrite_directedLabeled() {
 	//     | (20) |
 	//     |/     |(10)
 	//     2      3
-	g := graph.DirectedLabeled{graph.LabeledAdjacencyList{
+	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
 		0: {{2, 30}},
 		4: {{2, 20}, {3, 10}},
 	}}
@@ -171,7 +171,7 @@ func ExampleWrite_undirectedLabeled() {
 	// (12) / \ (17)
 	//     1---2
 	//      (64)
-	var g graph.UndirectedLabeled
+	var g graph.LabeledUndirected
 	g.AddEdge(graph.Edge{0, 1}, 12)
 	g.AddEdge(graph.Edge{0, 2}, 17)
 	g.AddEdge(graph.Edge{1, 2}, 64)

@@ -22,7 +22,7 @@ import "math/big"
 // is not bipartite, Bipartite returns false and a representative odd cycle.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g UndirectedLabeled) Bipartite(n NI) (b bool, c1, c2 *big.Int, oc []NI) {
+func (g LabeledUndirected) Bipartite(n NI) (b bool, c1, c2 *big.Int, oc []NI) {
 	c1 = &big.Int{}
 	c2 = &big.Int{}
 	b = true
@@ -78,7 +78,7 @@ func (g UndirectedLabeled) Bipartite(n NI) (b bool, c1, c2 *big.Int, oc []NI) {
 // There are equivalent labeled and unlabeled versions of this method.
 //
 // See also more sophisticated variants BronKerbosch2 and BronKerbosch3.
-func (g UndirectedLabeled) BronKerbosch1(emit func([]NI) bool) {
+func (g LabeledUndirected) BronKerbosch1(emit func([]NI) bool) {
 	var f func(R, P, X *big.Int) bool
 	f = func(R, P, X *big.Int) bool {
 		switch {
@@ -131,7 +131,7 @@ func (g UndirectedLabeled) BronKerbosch1(emit func([]NI) bool) {
 // in P.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g UndirectedLabeled) BKPivotMaxDegree(P, X *big.Int) int {
+func (g LabeledUndirected) BKPivotMaxDegree(P, X *big.Int) int {
 	// choose pivot u as highest degree node from P or X
 	n := NextOne(P, 0)
 	u := n
@@ -164,7 +164,7 @@ func (g UndirectedLabeled) BKPivotMaxDegree(P, X *big.Int) int {
 // The strategy is to simply pick the first node in P.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g UndirectedLabeled) BKPivotMinP(P, X *big.Int) int {
+func (g LabeledUndirected) BKPivotMinP(P, X *big.Int) int {
 	return NextOne(P, 0)
 }
 
@@ -190,7 +190,7 @@ func (g UndirectedLabeled) BKPivotMinP(P, X *big.Int) int {
 //
 // See also simpler variant BronKerbosch1 and more sophisticated variant
 // BronKerbosch3.
-func (g UndirectedLabeled) BronKerbosch2(pivot func(P, X *big.Int) int, emit func([]NI) bool) {
+func (g LabeledUndirected) BronKerbosch2(pivot func(P, X *big.Int) int, emit func([]NI) bool) {
 	var f func(R, P, X *big.Int) bool
 	f = func(R, P, X *big.Int) bool {
 		switch {
@@ -260,7 +260,7 @@ func (g UndirectedLabeled) BronKerbosch2(pivot func(P, X *big.Int) int, emit fun
 // There are equivalent labeled and unlabeled versions of this method.
 //
 // See also simpler variants BronKerbosch1 and BronKerbosch2.
-func (g UndirectedLabeled) BronKerbosch3(pivot func(P, X *big.Int) int, emit func([]NI) bool) {
+func (g LabeledUndirected) BronKerbosch3(pivot func(P, X *big.Int) int, emit func([]NI) bool) {
 	var f func(R, P, X *big.Int) bool
 	f = func(R, P, X *big.Int) bool {
 		switch {
@@ -341,7 +341,7 @@ func (g UndirectedLabeled) BronKerbosch3(pivot func(P, X *big.Int) int, emit fun
 // There are equivalent labeled and unlabeled versions of this method.
 //
 // See also ConnectedComponentReps, which has lighter weight return values.
-func (g UndirectedLabeled) ConnectedComponentBits() func() (order int, bits big.Int) {
+func (g LabeledUndirected) ConnectedComponentBits() func() (order int, bits big.Int) {
 	var vg big.Int  // nodes visited in graph
 	var vc *big.Int // nodes visited in current component
 	var nc int
@@ -381,7 +381,7 @@ func (g UndirectedLabeled) ConnectedComponentBits() func() (order int, bits big.
 // There are equivalent labeled and unlabeled versions of this method.
 //
 // See also ConnectedComponentReps, which has lighter weight return values.
-func (g UndirectedLabeled) ConnectedComponentLists() func() []NI {
+func (g LabeledUndirected) ConnectedComponentLists() func() []NI {
 	var vg big.Int // nodes visited in graph
 	var m []NI     // members of current component
 	var df func(NI)
@@ -424,7 +424,7 @@ func (g UndirectedLabeled) ConnectedComponentLists() func() []NI {
 // See also ConnectedComponentBits and ConnectedComponentLists which can
 // collect component members in a single traversal, and IsConnected which
 // is an even simpler boolean test.
-func (g UndirectedLabeled) ConnectedComponentReps() (reps []NI, orders []int) {
+func (g LabeledUndirected) ConnectedComponentReps() (reps []NI, orders []int) {
 	var c big.Int
 	var o int
 	var df func(NI)
@@ -453,9 +453,9 @@ func (g UndirectedLabeled) ConnectedComponentReps() (reps []NI, orders []int) {
 // Copy also computes the arc size ma, the number of arcs.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g UndirectedLabeled) Copy() (c UndirectedLabeled, ma int) {
+func (g LabeledUndirected) Copy() (c LabeledUndirected, ma int) {
 	l, s := g.LabeledAdjacencyList.Copy()
-	return UndirectedLabeled{l}, s
+	return LabeledUndirected{l}, s
 }
 
 // Degeneracy computes k-degeneracy, vertex ordering and k-cores.
@@ -463,7 +463,7 @@ func (g UndirectedLabeled) Copy() (c UndirectedLabeled, ma int) {
 // See Wikipedia https://en.wikipedia.org/wiki/Degeneracy_(graph_theory)
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g UndirectedLabeled) Degeneracy() (k int, ordering []NI, cores []int) {
+func (g LabeledUndirected) Degeneracy() (k int, ordering []NI, cores []int) {
 	// WP algorithm
 	ordering = make([]NI, len(g.LabeledAdjacencyList))
 	var L big.Int
@@ -533,7 +533,7 @@ func (g UndirectedLabeled) Degeneracy() (k int, ordering []NI, cores []int) {
 // See handshaking lemma example at AdjacencyList.ArcSize.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g UndirectedLabeled) Degree(n NI) int {
+func (g LabeledUndirected) Degree(n NI) int {
 	to := g.LabeledAdjacencyList[n]
 	d := len(to) // just "out" degree,
 	for _, to := range to {
@@ -563,7 +563,7 @@ func (g UndirectedLabeled) Degree(n NI) int {
 // not reachable from root will have PathEnd values of {From: -1, Len: 0}.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g UndirectedLabeled) FromList(root NI) (f FromList, cycle NI) {
+func (g LabeledUndirected) FromList(root NI) (f FromList, cycle NI) {
 	p := make([]PathEnd, len(g.LabeledAdjacencyList))
 	for i := range p {
 		p[i].From = -1
@@ -602,7 +602,7 @@ func (g UndirectedLabeled) FromList(root NI) (f FromList, cycle NI) {
 // There are equivalent labeled and unlabeled versions of this method.
 //
 // See also ConnectedComponentReps for a method returning more information.
-func (g UndirectedLabeled) IsConnected() bool {
+func (g LabeledUndirected) IsConnected() bool {
 	if len(g.LabeledAdjacencyList) == 0 {
 		return true
 	}
@@ -629,7 +629,7 @@ func (g UndirectedLabeled) IsConnected() bool {
 // connected.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g UndirectedLabeled) IsTree(root NI) (isTree, allTree bool) {
+func (g LabeledUndirected) IsTree(root NI) (isTree, allTree bool) {
 	var v big.Int
 	OneBits(&v, len(g.LabeledAdjacencyList))
 	var df func(NI, NI) bool
@@ -657,7 +657,7 @@ func (g UndirectedLabeled) IsTree(root NI) (isTree, allTree bool) {
 // Size returns the number of edges in g.
 //
 // See also ArcSize and HasLoop.
-func (g UndirectedLabeled) Size() int {
+func (g LabeledUndirected) Size() int {
 	m2 := 0
 	for fr, to := range g.LabeledAdjacencyList {
 		m2 += len(to)

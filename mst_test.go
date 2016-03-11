@@ -18,7 +18,7 @@ func ExampleWeightedEdgeList_Kruskal() {
 	//       (50)   (20)
 	w := func(l graph.LI) float64 { return float64(l) }
 	// undirected graph
-	var g graph.UndirectedLabeled
+	var g graph.LabeledUndirected
 	g.AddEdge(graph.Edge{0, 1}, 30)
 	g.AddEdge(graph.Edge{0, 4}, 10)
 	g.AddEdge(graph.Edge{1, 2}, 50)
@@ -99,7 +99,7 @@ func ExamplePrim_Span() {
 	//   |      \
 	//  (1)-----(0)
 	//       3
-	var g graph.UndirectedLabeled
+	var g graph.LabeledUndirected
 	g.AddEdge(graph.Edge{0, 1}, 3)
 	g.AddEdge(graph.Edge{1, 2}, 4)
 	g.AddEdge(graph.Edge{2, 0}, 5)

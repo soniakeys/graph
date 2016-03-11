@@ -40,23 +40,6 @@ func ExampleDirected_EulerianCycle() {
 	// [0 1 2 1 2 2 0] <nil>
 }
 
-func ExampleUndirected_EulerianCycleD() {
-	var g graph.Undirected
-	// add 6 edges
-	g.AddEdge(0, 1)
-	g.AddEdge(0, 2)
-	g.AddEdge(1, 2)
-	g.AddEdge(1, 2)
-	g.AddEdge(1, 2)
-	g.AddEdge(2, 2) // loop
-	m := g.Size()
-	fmt.Println("m =", m)
-	fmt.Println(g.EulerianCycleD(m))
-	// Output:
-	// m = 6
-	// [0 1 2 2 1 2 0] <nil>
-}
-
 func TestEulerianCycle(t *testing.T) {
 	same := func(a, b []graph.NI) bool {
 		if len(a) != len(b) {
@@ -196,4 +179,149 @@ func ExampleDirected_Transpose() {
 	// 1: [2]
 	// 2: []
 	// 2
+}
+
+func ExampleDirected_Undirected() {
+	// arcs directed down:
+	//    0
+	//   / \
+	//  1   2
+	g := graph.Directed{graph.AdjacencyList{
+		0: {1, 2},
+		1: {},
+		2: {},
+	}}
+	u := g.Undirected()
+	for fr, to := range u.AdjacencyList {
+		fmt.Println(fr, to)
+	}
+	// Output:
+	// 0 [1 2]
+	// 1 [0]
+	// 2 [0]
+}
+
+func ExampleDirected_Undirected_loopMultigraph() {
+	//  0--\   /->1--\
+	//  |  |   |  ^  |
+	//  \--/   |  |  |
+	//         \--2<-/
+	g := graph.Directed{graph.AdjacencyList{
+		0: {0},
+		1: {2},
+		2: {1, 1},
+	}}
+	u := g.Undirected()
+	for fr, to := range u.AdjacencyList {
+		fmt.Println(fr, to)
+	}
+	// Output:
+	// 0 [0]
+	// 1 [2 2]
+	// 2 [1 1]
+}
+
+func ExampleLabeledDirected_DAGMaxLenPath() {
+	// arcs directed right:
+	//            (M)
+	//    (W)  /---------\
+	//  3-----4   1-------0-----2
+	//         \    (S)  /  (P)
+	//          \       /
+	//           \-----/ (Q)
+	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
+		3: {{To: 0, Label: 'Q'}, {4, 'W'}},
+		4: {{0, 'M'}},
+		1: {{0, 'S'}},
+		0: {{2, 'P'}},
+	}}
+	o, _ := g.Topological()
+	fmt.Println("ordering:", o)
+	n, p := g.DAGMaxLenPath(o)
+	fmt.Printf("path from %d:", n)
+	for _, e := range p {
+		fmt.Printf(" {%d, '%c'}", e.To, e.Label)
+	}
+	fmt.Println()
+	fmt.Print("label path: ")
+	for _, h := range p {
+		fmt.Print(string(h.Label))
+	}
+	fmt.Println()
+	// Output:
+	// ordering: [3 4 1 0 2]
+	// path from 3: {4, 'W'} {0, 'M'} {2, 'P'}
+	// label path: WMP
+}
+
+func ExampleLabeledDirected_Transpose() {
+	// arcs directed down:
+	//             2
+	//  (label: 7)/ \(9)
+	//           0   1
+	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
+		2: {{To: 0, Label: 7}, {To: 1, Label: 9}},
+	}}
+	tr, m := g.Transpose()
+	for fr, to := range tr.LabeledAdjacencyList {
+		fmt.Printf("%d %#v\n", fr, to)
+	}
+	fmt.Println(m, "arcs")
+	// Output:
+	// 0 []graph.Half{graph.Half{To:2, Label:7}}
+	// 1 []graph.Half{graph.Half{To:2, Label:9}}
+	// 2 []graph.Half(nil)
+	// 2 arcs
+}
+
+func ExampleLabeledDirected_Undirected() {
+	// arcs directed down:
+	//             2
+	//  (label: 7)/ \(9)
+	//           0   1
+	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
+		2: {{To: 0, Label: 7}, {To: 1, Label: 9}},
+	}}
+	for fr, to := range g.Undirected().LabeledAdjacencyList {
+		fmt.Printf("%d %#v\n", fr, to)
+	}
+	// Output:
+	// 0 []graph.Half{graph.Half{To:2, Label:7}}
+	// 1 []graph.Half{graph.Half{To:2, Label:9}}
+	// 2 []graph.Half{graph.Half{To:0, Label:7}, graph.Half{To:1, Label:9}}
+}
+
+func ExampleLabeledDirected_UnlabeledTranspose() {
+	// arcs directed down:
+	//             2
+	//  (label: 7)/ \(9)
+	//           0   1
+	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
+		2: {{To: 0, Label: 7}, {To: 1, Label: 9}},
+	}}
+
+	fmt.Println("two steps:")
+	ut, m := g.Unlabeled().Transpose()
+	for fr, to := range ut.AdjacencyList {
+		fmt.Println(fr, to)
+	}
+	fmt.Println(m, "arcs")
+
+	fmt.Println("direct:")
+	ut, m = g.UnlabeledTranspose()
+	for fr, to := range ut.AdjacencyList {
+		fmt.Println(fr, to)
+	}
+	fmt.Println(m, "arcs")
+	// Output:
+	// two steps:
+	// 0 [2]
+	// 1 [2]
+	// 2 []
+	// 2 arcs
+	// direct:
+	// 0 [2]
+	// 1 [2]
+	// 2 []
+	// 2 arcs
 }

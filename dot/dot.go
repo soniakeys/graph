@@ -45,9 +45,9 @@ import (
 //   AdjacencyList
 //   LabeledAdjacencyList
 //   Directed
-//   DirectedLabeled
+//   LabeledDirected
 //   Undirected
-//   UndirectedLabeled
+//   LabeledUndirected
 //   FromList
 //   WeightedEdgeList
 //
@@ -69,9 +69,9 @@ func String(g interface{}, options ...func(*Config)) (string, error) {
 //   AdjacencyList
 //   LabeledAdjacencyList
 //   Directed
-//   DirectedLabeled
+//   LabeledDirected
 //   Undirected
-//   UndirectedLabeled
+//   LabeledUndirected
 //   FromList
 //   WeightedEdgeList
 //
@@ -110,14 +110,14 @@ func Write(g interface{}, w io.Writer, options ...func(*Config)) error {
 		return writeLabeledAdjacencyList(t, w, options)
 	case *graph.LabeledAdjacencyList:
 		return writeLabeledAdjacencyList(*t, w, options)
-	case graph.DirectedLabeled:
+	case graph.LabeledDirected:
 		return writeLabeledAdjacencyList(t.LabeledAdjacencyList, w, options)
-	case *graph.DirectedLabeled:
+	case *graph.LabeledDirected:
 		return writeLabeledAdjacencyList(t.LabeledAdjacencyList, w, options)
-	case graph.UndirectedLabeled:
-		return writeUndirectedLabeled(t.LabeledAdjacencyList, w, options)
-	case *graph.UndirectedLabeled:
-		return writeUndirectedLabeled(t.LabeledAdjacencyList, w, options)
+	case graph.LabeledUndirected:
+		return writeLabeledUndirected(t.LabeledAdjacencyList, w, options)
+	case *graph.LabeledUndirected:
+		return writeLabeledUndirected(t.LabeledAdjacencyList, w, options)
 	case graph.FromList:
 		return writeFromList(t, w, options)
 	case *graph.FromList:
@@ -313,7 +313,7 @@ func writeLabeledAdjacencyList(g graph.LabeledAdjacencyList, w io.Writer, option
 	return writeLAL(g, w, &cf)
 }
 
-func writeUndirectedLabeled(g graph.LabeledAdjacencyList, w io.Writer, options []func(*Config)) error {
+func writeLabeledUndirected(g graph.LabeledAdjacencyList, w io.Writer, options []func(*Config)) error {
 	cf := Defaults
 	cf.Directed = false
 	for _, o := range options {

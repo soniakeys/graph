@@ -301,7 +301,7 @@ func (f FromList) Transpose() Directed {
 //
 // See FromList.TransposeLabeledRoots for a version that also accumulates
 // and returns information about the roots.
-func (f FromList) TransposeLabeled(labels []LI) DirectedLabeled {
+func (f FromList) TransposeLabeled(labels []LI) LabeledDirected {
 	g := make(LabeledAdjacencyList, len(f.Paths))
 	for n, p := range f.Paths {
 		if p.From == -1 {
@@ -313,7 +313,7 @@ func (f FromList) TransposeLabeled(labels []LI) DirectedLabeled {
 		}
 		g[p.From] = append(g[p.From], Half{NI(n), l})
 	}
-	return DirectedLabeled{g}
+	return LabeledDirected{g}
 }
 
 // TransposeLabeledRoots constructs the labeled directed graph corresponding
@@ -334,7 +334,7 @@ func (f FromList) TransposeLabeled(labels []LI) DirectedLabeled {
 //
 // See FromList.TransposeLabeled for a simpler verstion that returns the
 // forest only.
-func (f FromList) TransposeLabeledRoots(labels []LI) (forest DirectedLabeled, nRoots int, roots big.Int) {
+func (f FromList) TransposeLabeledRoots(labels []LI) (forest LabeledDirected, nRoots int, roots big.Int) {
 	p := f.Paths
 	nRoots = len(p)
 	OneBits(&roots, len(p))
@@ -353,7 +353,7 @@ func (f FromList) TransposeLabeledRoots(labels []LI) (forest DirectedLabeled, nR
 			nRoots--
 		}
 	}
-	return DirectedLabeled{g}, nRoots, roots
+	return LabeledDirected{g}, nRoots, roots
 }
 
 // TransposeRoots constructs the directed graph corresponding to FromList f

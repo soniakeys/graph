@@ -9,37 +9,49 @@ import (
 	"github.com/soniakeys/graph"
 )
 
-func ExampleDirectedLabeled_DAGMaxLenPath() {
-	// arcs directed right:
-	//            (M)
-	//    (W)  /---------\
-	//  3-----4   1-------0-----2
-	//         \    (S)  /  (P)
-	//          \       /
-	//           \-----/ (Q)
-	g := graph.DirectedLabeled{graph.LabeledAdjacencyList{
-		3: {{To: 0, Label: 'Q'}, {4, 'W'}},
-		4: {{0, 'M'}},
-		1: {{0, 'S'}},
-		0: {{2, 'P'}},
-	}}
-	o, _ := g.Topological()
-	fmt.Println("ordering:", o)
-	n, p := g.DAGMaxLenPath(o)
-	fmt.Printf("path from %d:", n)
-	for _, e := range p {
-		fmt.Printf(" {%d, '%c'}", e.To, e.Label)
+func ExampleAdjacencyList_HasParallelSort_parallelArcs() {
+	g := graph.AdjacencyList{
+		1: {0, 0},
 	}
-	fmt.Println()
-	fmt.Print("label path: ")
-	for _, h := range p {
-		fmt.Print(string(h.Label))
-	}
-	fmt.Println()
+	// result true 1 0 means parallel arcs from node 1 to node 0
+	fmt.Println(g.HasParallelSort())
 	// Output:
-	// ordering: [3 4 1 0 2]
-	// path from 3: {4, 'W'} {0, 'M'} {2, 'P'}
-	// label path: WMP
+	// true 1 0
+}
+
+func ExampleAdjacencyList_HasParallelSort_noParallelArcs() {
+	g := graph.AdjacencyList{
+		1: {0},
+	}
+	// result false -1 -1 means no parallel arc
+	fmt.Println(g.HasParallelSort())
+	// Output:
+	// false -1 -1
+}
+
+func ExampleAdjacencyList_IsUndirected() {
+	// 0<--    2<--\
+	//  \  \   |   |
+	//   -->1  \---/
+	g := graph.AdjacencyList{
+		0: {1},
+		1: {0},
+		2: {2},
+	}
+	ud, _, _ := g.IsUndirected()
+	fmt.Println(ud)
+	// 0<--
+	//  \  \
+	//   -->1<--2
+	g = graph.AdjacencyList{
+		0: {1},
+		1: {0},
+		2: {1},
+	}
+	fmt.Println(g.IsUndirected())
+	// Output:
+	// true
+	// false 2 1
 }
 
 // A directed graph with negative arc weights.
@@ -62,13 +74,13 @@ func ExampleLabeledAdjacencyList_FloydWarshall() {
 	// [ 2  5  1  0]
 }
 
-func ExampleDirectedLabeled_FromListLabels() {
+func ExampleLabeledDirected_FromListLabels() {
 	//      0
 	// 'A' / \ 'B'
 	//    1   2
 	//         \ 'C'
 	//          3
-	g := graph.DirectedLabeled{graph.LabeledAdjacencyList{
+	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
 		0: {{1, 'A'}, {2, 'B'}},
 		2: {{3, 'C'}},
 		3: {},
@@ -143,7 +155,7 @@ func ExampleLabeledAdjacencyList_IsUndirected_undirectedMultigraph() {
 	//               0---
 	//  (Label: 'A')  \  \  (Label: 'B')
 	//                 ---1
-	var g graph.UndirectedLabeled
+	var g graph.LabeledUndirected
 	g.AddEdge(graph.Edge{0, 1}, 'A')
 	g.AddEdge(graph.Edge{0, 1}, 'B')
 	ok, _, _ := g.IsUndirected()
@@ -182,87 +194,6 @@ func ExampleLabeledAdjacencyList_NegativeArc() {
 	// true
 }
 
-func ExampleUndirectedLabeled_TarjanBiconnectedComponents() {
-	// undirected edges:
-	// 3---2---1---7---9
-	//  \ / \ / \   \ /
-	//   4   5---6   8
-	var g graph.UndirectedLabeled
-	g.AddEdge(graph.Edge{3, 4}, 0)
-	g.AddEdge(graph.Edge{3, 2}, 0)
-	g.AddEdge(graph.Edge{2, 4}, 0)
-	g.AddEdge(graph.Edge{2, 5}, 0)
-	g.AddEdge(graph.Edge{2, 1}, 0)
-	g.AddEdge(graph.Edge{5, 1}, 0)
-	g.AddEdge(graph.Edge{6, 1}, 0)
-	g.AddEdge(graph.Edge{6, 5}, 0)
-	g.AddEdge(graph.Edge{7, 1}, 0)
-	g.AddEdge(graph.Edge{7, 9}, 0)
-	g.AddEdge(graph.Edge{7, 8}, 0)
-	g.AddEdge(graph.Edge{9, 8}, 0)
-	g.TarjanBiconnectedComponents(func(bcc []graph.LabeledEdge) bool {
-		fmt.Println("Edges:")
-		for _, e := range bcc {
-			fmt.Println(e.Edge)
-		}
-		return true
-	})
-	// Output:
-	// Edges:
-	// {4 2}
-	// {3 4}
-	// {2 3}
-	// Edges:
-	// {6 1}
-	// {5 6}
-	// {5 1}
-	// {2 5}
-	// {1 2}
-	// Edges:
-	// {8 7}
-	// {9 8}
-	// {7 9}
-	// Edges:
-	// {1 7}
-}
-
-func ExampleDirectedLabeled_Transpose() {
-	// arcs directed down:
-	//             2
-	//  (label: 7)/ \(9)
-	//           0   1
-	g := graph.DirectedLabeled{graph.LabeledAdjacencyList{
-		2: {{To: 0, Label: 7}, {To: 1, Label: 9}},
-	}}
-	tr, m := g.Transpose()
-	for fr, to := range tr.LabeledAdjacencyList {
-		fmt.Printf("%d %#v\n", fr, to)
-	}
-	fmt.Println(m, "arcs")
-	// Output:
-	// 0 []graph.Half{graph.Half{To:2, Label:7}}
-	// 1 []graph.Half{graph.Half{To:2, Label:9}}
-	// 2 []graph.Half(nil)
-	// 2 arcs
-}
-
-func ExampleDirectedLabeled_Undirected() {
-	// arcs directed down:
-	//             2
-	//  (label: 7)/ \(9)
-	//           0   1
-	g := graph.DirectedLabeled{graph.LabeledAdjacencyList{
-		2: {{To: 0, Label: 7}, {To: 1, Label: 9}},
-	}}
-	for fr, to := range g.Undirected().LabeledAdjacencyList {
-		fmt.Printf("%d %#v\n", fr, to)
-	}
-	// Output:
-	// 0 []graph.Half{graph.Half{To:2, Label:7}}
-	// 1 []graph.Half{graph.Half{To:2, Label:9}}
-	// 2 []graph.Half{graph.Half{To:0, Label:7}, graph.Half{To:1, Label:9}}
-}
-
 func ExampleLabeledAdjacencyList_Unlabeled() {
 	// arcs directed down:
 	//             2
@@ -289,41 +220,6 @@ func ExampleLabeledAdjacencyList_Unlabeled() {
 	// 0, []graph.NI{}
 	// 1, []graph.NI{}
 	// 2, []graph.NI{0, 1}
-}
-
-func ExampleDirectedLabeled_UnlabeledTranspose() {
-	// arcs directed down:
-	//             2
-	//  (label: 7)/ \(9)
-	//           0   1
-	g := graph.DirectedLabeled{graph.LabeledAdjacencyList{
-		2: {{To: 0, Label: 7}, {To: 1, Label: 9}},
-	}}
-
-	fmt.Println("two steps:")
-	ut, m := g.Unlabeled().Transpose()
-	for fr, to := range ut.AdjacencyList {
-		fmt.Println(fr, to)
-	}
-	fmt.Println(m, "arcs")
-
-	fmt.Println("direct:")
-	ut, m = g.UnlabeledTranspose()
-	for fr, to := range ut.AdjacencyList {
-		fmt.Println(fr, to)
-	}
-	fmt.Println(m, "arcs")
-	// Output:
-	// two steps:
-	// 0 [2]
-	// 1 [2]
-	// 2 []
-	// 2 arcs
-	// direct:
-	// 0 [2]
-	// 1 [2]
-	// 2 []
-	// 2 arcs
 }
 
 func ExampleLabeledAdjacencyList_WeightedInDegree() {

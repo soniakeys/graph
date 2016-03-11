@@ -16,7 +16,7 @@ import (
 // Balanced returns true if for every node in g, in-degree equals out-degree.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g DirectedLabeled) Balanced() bool {
+func (g LabeledDirected) Balanced() bool {
 	for n, in := range g.InDegree() {
 		if in != len(g.LabeledAdjacencyList[n]) {
 			return false
@@ -29,9 +29,9 @@ func (g DirectedLabeled) Balanced() bool {
 // Copy also computes the arc size ma, the number of arcs.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g DirectedLabeled) Copy() (c DirectedLabeled, ma int) {
+func (g LabeledDirected) Copy() (c LabeledDirected, ma int) {
 	l, s := g.LabeledAdjacencyList.Copy()
-	return DirectedLabeled{l}, s
+	return LabeledDirected{l}, s
 }
 
 // Cyclic determines if g contains a cycle, a non-empty path from a node
@@ -44,7 +44,7 @@ func (g DirectedLabeled) Copy() (c DirectedLabeled, ma int) {
 // Also see Topological, which detects cycles.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g DirectedLabeled) Cyclic() (cyclic bool, fr NI, to Half) {
+func (g LabeledDirected) Cyclic() (cyclic bool, fr NI, to Half) {
 	fr, to.To = -1, -1
 	var temp, perm big.Int
 	var df func(NI)
@@ -101,7 +101,7 @@ func (g DirectedLabeled) Cyclic() (cyclic bool, fr NI, to Half) {
 // result.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g DirectedLabeled) FromList() (*FromList, NI) {
+func (g LabeledDirected) FromList() (*FromList, NI) {
 	paths := make([]PathEnd, len(g.LabeledAdjacencyList))
 	for i := range paths {
 		paths[i].From = -1
@@ -120,7 +120,7 @@ func (g DirectedLabeled) FromList() (*FromList, NI) {
 // InDegree computes the in-degree of each node in g
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g DirectedLabeled) InDegree() []int {
+func (g LabeledDirected) InDegree() []int {
 	ind := make([]int, len(g.LabeledAdjacencyList))
 	for _, nbs := range g.LabeledAdjacencyList {
 		for _, nb := range nbs {
@@ -137,7 +137,7 @@ func (g DirectedLabeled) InDegree() []int {
 // from root.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g DirectedLabeled) IsTree(root NI) (isTree, allTree bool) {
+func (g LabeledDirected) IsTree(root NI) (isTree, allTree bool) {
 	var v big.Int
 	OneBits(&v, len(g.LabeledAdjacencyList))
 	var df func(NI) bool
@@ -169,7 +169,7 @@ func (g DirectedLabeled) IsTree(root NI) (isTree, allTree bool) {
 // There are equivalent labeled and unlabeled versions of this method.
 //
 // See also TarjanForward and TarjanCondensation.
-func (g DirectedLabeled) Tarjan(emit func([]NI) bool) {
+func (g LabeledDirected) Tarjan(emit func([]NI) bool) {
 	// See "Depth-first search and linear graph algorithms", Robert Tarjan,
 	// SIAM J. Comput. Vol. 1, No. 2, June 1972.
 	//
@@ -231,7 +231,7 @@ func (g DirectedLabeled) Tarjan(emit func([]NI) bool) {
 //
 // It returns components in the reverse order of Tarjan, for situations
 // where a forward topological ordering is easier.
-func (g DirectedLabeled) TarjanForward() [][]NI {
+func (g LabeledDirected) TarjanForward() [][]NI {
 	var r [][]NI
 	g.Tarjan(func(c []NI) bool {
 		r = append(r, c)
@@ -249,7 +249,7 @@ func (g DirectedLabeled) TarjanForward() [][]NI {
 // condensation graph.
 //
 // Components are ordered in a forward topological ordering.
-func (g DirectedLabeled) TarjanCondensation() (scc [][]NI, cd AdjacencyList) {
+func (g LabeledDirected) TarjanCondensation() (scc [][]NI, cd AdjacencyList) {
 	scc = g.TarjanForward()
 	cd = make(AdjacencyList, len(scc))              // return value
 	cond := make([]NI, len(g.LabeledAdjacencyList)) // mapping from g node to cd node
@@ -282,7 +282,7 @@ func (g DirectedLabeled) TarjanCondensation() (scc [][]NI, cd AdjacencyList) {
 // cycle.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g DirectedLabeled) Topological() (ordering, cycle []NI) {
+func (g LabeledDirected) Topological() (ordering, cycle []NI) {
 	ordering = make([]NI, len(g.LabeledAdjacencyList))
 	i := len(ordering)
 	var temp, perm big.Int
@@ -344,7 +344,7 @@ func (g DirectedLabeled) Topological() (ordering, cycle []NI) {
 // transpose of g be passed as the argument.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g DirectedLabeled) TopologicalKahn(tr Directed) (ordering, cycle []NI) {
+func (g LabeledDirected) TopologicalKahn(tr Directed) (ordering, cycle []NI) {
 	// code follows Wikipedia pseudocode.
 	var L, S []NI
 	// rem for "remaining edges," this function makes a local copy of the

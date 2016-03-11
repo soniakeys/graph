@@ -96,7 +96,7 @@ func (ds disjointSet) find(n NI) NI {
 // The edge list of the receiver is sorted as a side effect of this method.
 // See KruskalSorted for a version that relies on the edge list being already
 // sorted.
-func (l WeightedEdgeList) Kruskal() (g UndirectedLabeled, dist float64) {
+func (l WeightedEdgeList) Kruskal() (g LabeledUndirected, dist float64) {
 	sort.Sort(l)
 	return l.KruskalSorted()
 }
@@ -116,7 +116,7 @@ func (l WeightedEdgeList) Kruskal() (g UndirectedLabeled, dist float64) {
 // The forest is returned as an undirected graph.
 //
 // Also returned is a total distance for the returned forest.
-func (l WeightedEdgeList) KruskalSorted() (g UndirectedLabeled, dist float64) {
+func (l WeightedEdgeList) KruskalSorted() (g LabeledUndirected, dist float64) {
 	ds := newDisjointSet(l.Order)
 	g.LabeledAdjacencyList = make(LabeledAdjacencyList, l.Order)
 	for _, e := range l.Edges {
@@ -133,7 +133,7 @@ func (l WeightedEdgeList) KruskalSorted() (g UndirectedLabeled, dist float64) {
 //
 // Construct with NewPrim.
 type Prim struct {
-	Graph  UndirectedLabeled
+	Graph  LabeledUndirected
 	Weight WeightFunc
 	Forest FromList
 	Labels []LI
@@ -143,7 +143,7 @@ type Prim struct {
 
 // NewPrim constructs a new Prim object.  Argument g must be an
 // undirected graph.
-func NewPrim(g UndirectedLabeled, w WeightFunc) *Prim {
+func NewPrim(g LabeledUndirected, w WeightFunc) *Prim {
 	b := make([]prNode, len(g.LabeledAdjacencyList))
 	for n := range b {
 		b[n].nx = NI(n)

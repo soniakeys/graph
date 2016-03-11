@@ -950,7 +950,7 @@ type DAGPath struct {
 // concurrently.  Searches can be run concurrently however, on DAGPath
 // objects obtained with separate calls to NewDAGPath, even with the same
 // graph argument to NewDAGPath.
-func NewDAGPath(g DirectedLabeled, ordering []NI, w WeightFunc, longest bool) *DAGPath {
+func NewDAGPath(g LabeledDirected, ordering []NI, w WeightFunc, longest bool) *DAGPath {
 	return &DAGPath{
 		Graph:    g.LabeledAdjacencyList,
 		Ordering: ordering,
@@ -979,7 +979,7 @@ func (d *DAGPath) Reset() {
 // Returned is the path and distance as returned by FromList.PathTo.
 //
 // This is a convenience method.  See the DAGPath type for more options.
-func (g DirectedLabeled) DAGMinDistPath(start, end NI, w WeightFunc) ([]NI, float64, error) {
+func (g LabeledDirected) DAGMinDistPath(start, end NI, w WeightFunc) ([]NI, float64, error) {
 	return g.dagPath(start, end, w, false)
 }
 
@@ -990,11 +990,11 @@ func (g DirectedLabeled) DAGMinDistPath(start, end NI, w WeightFunc) ([]NI, floa
 // Returned is the path and distance as returned by FromList.PathTo.
 //
 // This is a convenience method.  See the DAGPath type for more options.
-func (g DirectedLabeled) DAGMaxDistPath(start, end NI, w WeightFunc) ([]NI, float64, error) {
+func (g LabeledDirected) DAGMaxDistPath(start, end NI, w WeightFunc) ([]NI, float64, error) {
 	return g.dagPath(start, end, w, true)
 }
 
-func (g DirectedLabeled) dagPath(start, end NI, w WeightFunc, longest bool) ([]NI, float64, error) {
+func (g LabeledDirected) dagPath(start, end NI, w WeightFunc, longest bool) ([]NI, float64, error) {
 	o, _ := g.Topological()
 	if o == nil {
 		return nil, 0, fmt.Errorf("not a DAG")

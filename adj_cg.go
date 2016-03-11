@@ -3,14 +3,14 @@
 
 package graph
 
+// adj_RO.go is code generated from adj_cg.go by directives in graph.go.
+// Editing adj_cg.go is okay.
+// DO NOT EDIT adj_RO.go.  The RO is for Read Only.
+
 import (
 	"math/big"
 	"math/rand"
 )
-
-// cg_adj.go is code generated from cg_label.go by directive in graph.go.
-// Editing cg_label.go is okay.
-// DO NOT EDIT cg_adj.go.
 
 // ArcSize returns the number of arcs in g.
 //
