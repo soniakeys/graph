@@ -26,7 +26,7 @@ func ExampleWriteDirected() {
 		5: "y",
 		6: "eff",
 	}
-	treevis.WriteDirected(g,
+	treevis.WriteDirected(g, 0,
 		func(n graph.NI) string { return labels[n] },
 		os.Stdout)
 	// Output:

@@ -32,7 +32,7 @@ func ExampleFromList_BoundsOk() {
 }
 
 func ExampleFromList_CommonStart() {
-	//   4   5  
+	//   4   5
 	//  /   /
 	// 6   1
 	//    / \

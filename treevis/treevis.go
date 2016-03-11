@@ -6,21 +6,28 @@ package treevis
 import (
 	"fmt"
 	"io"
+	"math/big"
 
 	"github.com/soniakeys/graph"
 )
 
-func WriteDirected(g graph.Directed, label func(graph.NI) string, w io.Writer) {
+func WriteDirected(g graph.Directed, root graph.NI, label func(graph.NI) string, w io.Writer) {
 	if len(g.AdjacencyList) == 0 {
 		fmt.Fprintln(w, "<empty>")
 		return
 	}
-	var f func(graph.NI, string)
-	f = func(n graph.NI, pre string) {
+	var vis big.Int
+	var f func(graph.NI, string) bool
+	f = func(n graph.NI, pre string) bool {
+		if vis.Bit(int(n)) != 0 {
+			fmt.Fprintln(w, "<cycle detected>")
+			return false
+		}
+		vis.SetBit(&vis, int(n), 1)
 		to := g.AdjacencyList[n]
 		if len(to) == 0 {
 			fmt.Fprintln(w, "╴", label(n))
-			return
+			return true
 		}
 		fmt.Fprintln(w, "┐", label(n))
 		last := len(to) - 1
@@ -30,6 +37,7 @@ func WriteDirected(g graph.Directed, label func(graph.NI) string, w io.Writer) {
 		}
 		fmt.Fprint(w, pre, "└─")
 		f(to[last], pre+"  ")
+		return true
 	}
-	f(0, "")
+	f(root, "")
 }
