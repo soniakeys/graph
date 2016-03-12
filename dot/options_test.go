@@ -134,7 +134,7 @@ func ExampleIsolated() {
 	// }
 }
 
-func ExampleNodeLabel() {
+func ExampleNodeID() {
 	// arcs directed down:
 	// A  D
 	// | /|
@@ -151,7 +151,7 @@ func ExampleNodeLabel() {
 		0: {2},
 		4: {2, 3},
 	}
-	dot.Write(g, os.Stdout, dot.Indent(""), dot.NodeLabel(lf))
+	dot.Write(g, os.Stdout, dot.Indent(""), dot.NodeID(lf))
 	// Output:
 	// digraph {
 	// A -> B
@@ -159,7 +159,7 @@ func ExampleNodeLabel() {
 	// }
 }
 
-func ExampleNodeLabel_construction() {
+func ExampleNodeID_construction() {
 	// arcs directed down:
 	// A  D
 	// | /|
@@ -192,7 +192,7 @@ func ExampleNodeLabel_construction() {
 
 	// generate dot
 	lf := func(n graph.NI) string { return labels[n] }
-	dot.Write(g, os.Stdout, dot.Indent(""), dot.NodeLabel(lf))
+	dot.Write(g, os.Stdout, dot.Indent(""), dot.NodeID(lf))
 
 	// Output:
 	// digraph {

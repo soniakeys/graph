@@ -24,7 +24,7 @@ type Config struct {
 	GraphAttr    []AttrVal
 	Indent       string
 	Isolated     bool
-	NodeLabel    func(graph.NI) string
+	NodeID       func(graph.NI) string
 	UndirectArcs bool
 }
 
@@ -35,7 +35,7 @@ var Defaults = Config{
 	Directed:  true,
 	EdgeLabel: func(l graph.LI) string { return strconv.Itoa(int(l)) },
 	Indent:    "  ",
-	NodeLabel: func(n graph.NI) string { return strconv.Itoa(int(n)) },
+	NodeID:    func(n graph.NI) string { return strconv.Itoa(int(n)) },
 }
 
 // Directed specifies whether to write a dot format directected or undirected
@@ -95,13 +95,13 @@ func Isolated(i bool) func(*Config) {
 	return func(c *Config) { c.Isolated = i }
 }
 
-// NodeLabel specifies a function to generate node label strings for the
+// NodeID specifies a function to generate node ID strings for the
 // dot format given the node integers of graph package.
 //
 // The default function is simply strconv.Itoa of the graph package node
 // integer.
-func NodeLabel(f func(graph.NI) string) func(*Config) {
-	return func(c *Config) { c.NodeLabel = f }
+func NodeID(f func(graph.NI) string) func(*Config) {
+	return func(c *Config) { c.NodeID = f }
 }
 
 // UndirectArcs, for the WeightedEdgeList graph type, specifies to write

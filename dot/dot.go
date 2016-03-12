@@ -43,10 +43,10 @@ import (
 // g may be any of:
 //
 //   AdjacencyList
-//   LabeledAdjacencyList
 //   Directed
-//   LabeledDirected
 //   Undirected
+//   LabeledAdjacencyList
+//   LabeledDirected
 //   LabeledUndirected
 //   FromList
 //   WeightedEdgeList
@@ -67,10 +67,10 @@ func String(g interface{}, options ...func(*Config)) (string, error) {
 // g may be any of:
 //
 //   AdjacencyList
-//   LabeledAdjacencyList
 //   Directed
-//   LabeledDirected
 //   Undirected
+//   LabeledAdjacencyList
+//   LabeledDirected
 //   LabeledUndirected
 //   FromList
 //   WeightedEdgeList
@@ -206,20 +206,20 @@ func writeALEdgeStmt(fr int, to []graph.NI, op string, cf *Config, iso big.Int, 
 	if len(to) == 0 { // fast path
 		if cf.Isolated && iso.Bit(fr) == 1 {
 			_, err = fmt.Fprintf(b, "%s%s\n",
-				cf.Indent, cf.NodeLabel(graph.NI(fr)))
+				cf.Indent, cf.NodeID(graph.NI(fr)))
 		}
 		return
 	}
 	if len(to) == 1 { // fast path
 		_, err = fmt.Fprintf(b, "%s%s %s %s\n",
-			cf.Indent, cf.NodeLabel(graph.NI(fr)), op, cf.NodeLabel(to[0]))
+			cf.Indent, cf.NodeID(graph.NI(fr)), op, cf.NodeID(to[0]))
 		return
 	}
 	// otherwise it's complicated.  we like to use a subgraph rhs to keep
 	// output compact, but graphviz (some version) won't separate parallel
 	// arcs in a subgraph, so in that case we write multiple edge statments.
 	_, err = fmt.Fprintf(b, "%s%s %s ",
-		cf.Indent, cf.NodeLabel(graph.NI(fr)), op)
+		cf.Indent, cf.NodeID(graph.NI(fr)), op)
 	if err != nil {
 		return
 	}
@@ -229,7 +229,7 @@ func writeALEdgeStmt(fr int, to []graph.NI, op string, cf *Config, iso big.Int, 
 	// first pass is over the to-list, the slice
 	for _, to := range to {
 		if s1.Bit(int(to)) == 0 {
-			if _, err = b.WriteString(c + cf.NodeLabel(to)); err != nil {
+			if _, err = b.WriteString(c + cf.NodeID(to)); err != nil {
 				return
 			}
 			c = " "
@@ -244,13 +244,13 @@ func writeALEdgeStmt(fr int, to []graph.NI, op string, cf *Config, iso big.Int, 
 	// make additional passes over the map until it's fully consumed
 	for len(m) > 0 {
 		_, err = fmt.Fprintf(b, "%s%s %s ",
-			cf.Indent, cf.NodeLabel(graph.NI(fr)), op)
+			cf.Indent, cf.NodeID(graph.NI(fr)), op)
 		if err != nil {
 			return
 		}
 		c1 := "{"
 		for n, c := range m {
-			if _, err = b.WriteString(c1 + cf.NodeLabel(n)); err != nil {
+			if _, err = b.WriteString(c1 + cf.NodeID(n)); err != nil {
 				return
 			}
 			if c == 1 {
@@ -357,13 +357,13 @@ func writeLALEdgeStmt(fr int, to []graph.Half, op string, cf *Config, iso big.In
 	if len(to) == 0 {
 		if cf.Isolated && iso.Bit(fr) == 1 {
 			_, err = fmt.Fprintf(b, "%s%s\n",
-				cf.Indent, cf.NodeLabel(graph.NI(fr)))
+				cf.Indent, cf.NodeID(graph.NI(fr)))
 		}
 		return
 	}
 	for _, to := range to {
 		_, err = fmt.Fprintf(b, "%s%s %s %s [label = %s]\n",
-			cf.Indent, cf.NodeLabel(graph.NI(fr)), op, cf.NodeLabel(to.To),
+			cf.Indent, cf.NodeID(graph.NI(fr)), op, cf.NodeID(to.To),
 			cf.EdgeLabel(to.Label))
 		if err != nil {
 			return
@@ -428,7 +428,7 @@ func writeFromList(f graph.FromList, w io.Writer, options []func(*Config)) error
 		fr := e.From
 		if fr < 0 {
 			if cf.Isolated && iso.Bit(n) != 0 {
-				_, err := fmt.Fprintln(b, cf.Indent+cf.NodeLabel(graph.NI(fr)))
+				_, err := fmt.Fprintln(b, cf.Indent+cf.NodeID(graph.NI(fr)))
 				if err != nil {
 					return err
 				}
@@ -436,7 +436,7 @@ func writeFromList(f graph.FromList, w io.Writer, options []func(*Config)) error
 			continue
 		}
 		_, err := fmt.Fprintf(b, "%s%s -> %s\n",
-			cf.Indent, cf.NodeLabel(graph.NI(n)), cf.NodeLabel(fr))
+			cf.Indent, cf.NodeID(graph.NI(n)), cf.NodeID(fr))
 		if err != nil {
 			return err
 		}
@@ -465,7 +465,7 @@ rank:
 		if _, err := b.WriteString(" "); err != nil {
 			return err
 		}
-		if _, err := b.WriteString(cf.NodeLabel(graph.NI(n))); err != nil {
+		if _, err := b.WriteString(cf.NodeID(graph.NI(n))); err != nil {
 			return err
 		}
 	}
@@ -512,7 +512,7 @@ edge:
 			if u.To == e.N1 && u.Label == e.LI { // found reciprocal
 				// write the edge
 				_, err := fmt.Fprintf(b, "%s%s -- %s [label = %s]\n",
-					cf.Indent, cf.NodeLabel(e.N2), cf.NodeLabel(e.N1),
+					cf.Indent, cf.NodeID(e.N2), cf.NodeID(e.N1),
 					cf.EdgeLabel(e.LI))
 				if err != nil {
 					return err
@@ -542,7 +542,7 @@ func writeWELAllArcs(g graph.WeightedEdgeList, cf *Config, b *bufio.Writer) erro
 	}
 	for _, e := range g.Edges {
 		_, err := fmt.Fprintf(b, "%s%s %s %s [label = %s]\n",
-			cf.Indent, cf.NodeLabel(e.N1), op, cf.NodeLabel(e.N2),
+			cf.Indent, cf.NodeID(e.N1), op, cf.NodeID(e.N2),
 			cf.EdgeLabel(e.LI))
 		if err != nil {
 			return err
