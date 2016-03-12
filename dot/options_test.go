@@ -20,7 +20,7 @@ func ExampleDirected() {
 		4: {},
 	}
 	// default for AdjacencyList is directed
-	dot.Write(g, os.Stdout, dot.Indent(""))
+	dot.Write(g, os.Stdout)
 	fmt.Fprintln(os.Stdout)
 	fmt.Fprintln(os.Stdout)
 
@@ -31,19 +31,19 @@ func ExampleDirected() {
 
 	// undirected
 	u := graph.Directed{g}.Undirected()
-	dot.Write(u.AdjacencyList, os.Stdout, dot.Directed(false), dot.Indent(""))
+	dot.Write(u.AdjacencyList, os.Stdout, dot.Directed(false))
 
 	// Output:
 	// digraph {
-	// 0 -> 3
-	// 2 -> {3 4}
+	//   0 -> 3
+	//   2 -> {3 4}
 	// }
 	//
 	// Error: directed graph
 	//
 	// graph {
-	// 0 -- 3
-	// 2 -- {3 4}
+	//   0 -- 3
+	//   2 -- {3 4}
 	// }
 }
 
@@ -66,12 +66,12 @@ func ExampleEdgeLabel() {
 		0: {{2, 30}},
 		4: {{2, 20}, {3, 10}},
 	}
-	dot.Write(g, os.Stdout, dot.EdgeLabel(lf), dot.Indent(""))
+	dot.Write(g, os.Stdout, dot.EdgeLabel(lf))
 	// Output:
 	// digraph {
-	// 0 -> 2 [label = "0.33"]
-	// 4 -> 2 [label = "1.7"]
-	// 4 -> 3 [label = "2e+117"]
+	//   0 -> 2 [label = "0.33"]
+	//   4 -> 2 [label = "1.7"]
+	//   4 -> 3 [label = "2e+117"]
 	// }
 }
 
@@ -86,13 +86,13 @@ func ExampleGraphAttr() {
 		2: {3},
 		3: {},
 	}
-	dot.Write(g, os.Stdout, dot.GraphAttr("rankdir", "LR"), dot.Indent(""))
+	dot.Write(g, os.Stdout, dot.GraphAttr("rankdir", "LR"))
 	// Output:
 	// digraph {
-	// rankdir = LR
-	// 0 -> {1 2}
-	// 1 -> {2 3}
-	// 2 -> 3
+	//   rankdir = LR
+	//   0 -> {1 2}
+	//   1 -> {2 3}
+	//   2 -> 3
 	// }
 }
 
@@ -106,17 +106,11 @@ func ExampleIndent() {
 		0: {2},
 		4: {2, 3},
 	}
-	// All other examples have Indent("") to avoid a quirk of go test
-	// that it can't handle leading space in the output.  In this example a
-	// nonbreaking space works around the quirk to show indented output that
-	// looks like the default two space indent.
-	// (But then if you render it with graphviz, graphviz picks up the nbsp
-	// as a node statement...)
-	dot.Write(g, os.Stdout, dot.Indent("\u00a0 "))
+	dot.Write(g, os.Stdout, dot.Indent("")) // (default indent is 2 spaces)
 	// Output:
 	// digraph {
-	//   0 -> 2
-	//   4 -> {2 3}
+	// 0 -> 2
+	// 4 -> {2 3}
 	// }
 }
 
@@ -126,11 +120,11 @@ func ExampleIsolated() {
 		1: {2},
 		2: {},
 	}
-	dot.Write(g, os.Stdout, dot.Isolated(true), dot.Indent(""))
+	dot.Write(g, os.Stdout, dot.Isolated(true))
 	// Output:
 	// digraph {
-	// 0
-	// 1 -> 2
+	//   0
+	//   1 -> 2
 	// }
 }
 
@@ -151,11 +145,11 @@ func ExampleNodeID() {
 		0: {2},
 		4: {2, 3},
 	}
-	dot.Write(g, os.Stdout, dot.Indent(""), dot.NodeID(lf))
+	dot.Write(g, os.Stdout, dot.NodeID(lf))
 	// Output:
 	// digraph {
-	// A -> B
-	// D -> {B C}
+	//   A -> B
+	//   D -> {B C}
 	// }
 }
 
@@ -192,12 +186,12 @@ func ExampleNodeID_construction() {
 
 	// generate dot
 	lf := func(n graph.NI) string { return labels[n] }
-	dot.Write(g, os.Stdout, dot.Indent(""), dot.NodeID(lf))
+	dot.Write(g, os.Stdout, dot.NodeID(lf))
 
 	// Output:
 	// digraph {
-	// A -> B
-	// D -> {B C}
+	//   A -> B
+	//   D -> {B C}
 	// }
 }
 
@@ -223,11 +217,11 @@ func ExampleUndirectArcs() {
 			{graph.Edge{1, 2}, 2},
 		},
 	}
-	dot.Write(g, os.Stdout, dot.UndirectArcs(true), dot.Indent(""))
+	dot.Write(g, os.Stdout, dot.UndirectArcs(true))
 	// Output:
 	// graph {
-	// 0 -- 1 [label = "0.33"]
-	// 0 -- 2 [label = "1.6"]
-	// 1 -- 2 [label = "1.7"]
+	//   0 -- 1 [label = "0.33"]
+	//   0 -- 2 [label = "1.6"]
+	//   1 -- 2 [label = "1.7"]
 	// }
 }

@@ -18,13 +18,12 @@ func ExampleString() {
 		0: {2},
 		4: {2, 3},
 	}
-	// (default indent is 2)
-	s, _ := dot.String(g, dot.Indent(""))
+	s, _ := dot.String(g)
 	fmt.Println(s)
 	// Output:
 	// digraph {
-	// 0 -> 2
-	// 4 -> {2 3}
+	//   0 -> 2
+	//   4 -> {2 3}
 	// }
 }
 
@@ -38,12 +37,11 @@ func ExampleWrite_adjacencyList() {
 		0: {2},
 		4: {2, 3},
 	}
-	// (default indent is 2)
-	dot.Write(g, os.Stdout, dot.Indent(""))
+	dot.Write(g, os.Stdout)
 	// Output:
 	// digraph {
-	// 0 -> 2
-	// 4 -> {2 3}
+	//   0 -> 2
+	//   4 -> {2 3}
 	// }
 }
 
@@ -57,12 +55,12 @@ func ExampleWrite_adjacencyListParallelArcs() {
 		0: {2},
 		4: {2, 3, 3},
 	}
-	dot.Write(g, os.Stdout, dot.Indent(""))
+	dot.Write(g, os.Stdout)
 	// Output:
 	// digraph {
-	// 0 -> 2
-	// 4 -> {2 3}
-	// 4 -> {3}
+	//   0 -> 2
+	//   4 -> {2 3}
+	//   4 -> {3}
 	// }
 }
 
@@ -76,12 +74,11 @@ func ExampleWrite_directed() {
 		0: {2},
 		4: {2, 3},
 	}}
-	// (default indent is 2)
-	dot.Write(g, os.Stdout, dot.Indent(""))
+	dot.Write(g, os.Stdout)
 	// Output:
 	// digraph {
-	// 0 -> 2
-	// 4 -> {2 3}
+	//   0 -> 2
+	//   4 -> {2 3}
 	// }
 }
 
@@ -96,12 +93,12 @@ func ExampleWrite_directedLabeled() {
 		0: {{2, 30}},
 		4: {{2, 20}, {3, 10}},
 	}}
-	dot.Write(g, os.Stdout, dot.Indent(""))
+	dot.Write(g, os.Stdout)
 	// Output:
 	// digraph {
-	// 0 -> 2 [label = 30]
-	// 4 -> 2 [label = 20]
-	// 4 -> 3 [label = 10]
+	//   0 -> 2 [label = 30]
+	//   4 -> 2 [label = 20]
+	//   4 -> 3 [label = 10]
 	// }
 }
 
@@ -119,14 +116,14 @@ func ExampleWrite_fromList() {
 	}}
 	f.Leaves.SetBit(&f.Leaves, 1, 1)
 	f.Leaves.SetBit(&f.Leaves, 3, 1)
-	dot.Write(f, os.Stdout, dot.Indent(""))
+	dot.Write(f, os.Stdout)
 	// Output:
 	// digraph {
-	// rankdir = BT
-	// 1 -> 0
-	// 2 -> 0
-	// 3 -> 2
-	// {rank = same 1 3}
+	//   rankdir = BT
+	//   1 -> 0
+	//   2 -> 0
+	//   3 -> 2
+	//   {rank = same 1 3}
 	// }
 }
 
@@ -141,12 +138,12 @@ func ExampleWrite_labeledAdjacencyList() {
 		0: {{2, 30}},
 		4: {{2, 20}, {3, 10}},
 	}
-	dot.Write(g, os.Stdout, dot.Indent(""))
+	dot.Write(g, os.Stdout)
 	// Output:
 	// digraph {
-	// 0 -> 2 [label = 30]
-	// 4 -> 2 [label = 20]
-	// 4 -> 3 [label = 10]
+	//   0 -> 2 [label = 30]
+	//   4 -> 2 [label = 20]
+	//   4 -> 3 [label = 10]
 	// }
 }
 
@@ -158,11 +155,11 @@ func ExampleWrite_undirected() {
 	g.AddEdge(0, 1)
 	g.AddEdge(0, 2)
 	g.AddEdge(1, 2)
-	dot.Write(g, os.Stdout, dot.Indent(""))
+	dot.Write(g, os.Stdout)
 	// Output:
 	// graph {
-	// 0 -- {1 2}
-	// 1 -- 2
+	//   0 -- {1 2}
+	//   1 -- 2
 	// }
 }
 
@@ -175,12 +172,12 @@ func ExampleWrite_undirectedLabeled() {
 	g.AddEdge(graph.Edge{0, 1}, 12)
 	g.AddEdge(graph.Edge{0, 2}, 17)
 	g.AddEdge(graph.Edge{1, 2}, 64)
-	dot.Write(g, os.Stdout, dot.Indent(""))
+	dot.Write(g, os.Stdout)
 	// Output:
 	// graph {
-	// 0 -- 1 [label = 12]
-	// 0 -- 2 [label = 17]
-	// 1 -- 2 [label = 64]
+	//   0 -- 1 [label = 12]
+	//   0 -- 2 [label = 17]
+	//   1 -- 2 [label = 64]
 	// }
 }
 
@@ -211,11 +208,11 @@ func ExampleWrite_weightedEdgeList() {
 			{graph.Edge{2, 1}, 2},
 		},
 	}
-	dot.Write(g, os.Stdout, dot.Indent(""))
+	dot.Write(g, os.Stdout)
 	// Output:
 	// graph {
-	// 0 -- 1 [label = "0.33"]
-	// 0 -- 2 [label = "1.6"]
-	// 1 -- 2 [label = "1.7"]
+	//   0 -- 1 [label = "0.33"]
+	//   0 -- 2 [label = "1.6"]
+	//   1 -- 2 [label = "1.7"]
 	// }
 }
