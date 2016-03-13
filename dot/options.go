@@ -25,6 +25,7 @@ type Config struct {
 	Indent       string
 	Isolated     bool
 	NodeID       func(graph.NI) string
+	NodePos      func(graph.NI) string
 	UndirectArcs bool
 }
 
@@ -102,6 +103,14 @@ func Isolated(i bool) func(*Config) {
 // integer.
 func NodeID(f func(graph.NI) string) func(*Config) {
 	return func(c *Config) { c.NodeID = f }
+}
+
+// NodePos specifies a function to format coordinate strings.
+//
+// The resulting dot file should be rendered with Graphviz programs
+// neato or fdp.
+func NodePos(f func(graph.NI) string) func(*Config) {
+	return func(c *Config) { c.NodePos = f }
 }
 
 // UndirectArcs, for the WeightedEdgeList graph type, specifies to write

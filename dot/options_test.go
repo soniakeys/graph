@@ -128,6 +128,35 @@ func ExampleIsolated() {
 	// }
 }
 
+func ExampleNodePos() {
+	// 0--1
+	// |\
+	// | \
+	// 2  3
+	f := graph.AdjacencyList{
+		0: {1, 2, 3},
+		3: {},
+	}
+	pos := []struct{ x, y float64 }{
+		{0, 0},
+		{0, 1},
+		{1, 0},
+		{1, 1},
+	}
+	dot.Write(f, os.Stdout, dot.NodePos(func(n graph.NI) string {
+		return fmt.Sprintf("%.0f,%.0f", 4*pos[n].x, 4*pos[n].y)
+	}))
+	// Output:
+	// digraph {
+	//   node [shape=point]
+	//   0 [pos="0,0!"]
+	//   1 [pos="0,4!"]
+	//   2 [pos="4,0!"]
+	//   3 [pos="4,4!"]
+	//   0 -> {1 2 3}
+	// }
+}
+
 func ExampleNodeID() {
 	// arcs directed down:
 	// A  D

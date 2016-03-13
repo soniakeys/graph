@@ -147,10 +147,20 @@ func writeUndirected(g graph.AdjacencyList, w io.Writer, options []func(*Config)
 	return writeAL(g, w, &cf)
 }
 
-func writeAL(g graph.AdjacencyList, w io.Writer, cf *Config) error {
+func writeAL(g graph.AdjacencyList, w io.Writer, cf *Config) (err error) {
 	b := bufio.NewWriter(w)
-	if err := writeHead(cf, b); err != nil {
-		return err
+	if err = writeHead(cf, b); err != nil {
+		return
+	}
+	if cf.NodePos != nil {
+		_, err = fmt.Fprint(b, cf.Indent, "node [shape=point]\n")
+		for n := range g {
+			_, err = fmt.Fprintf(b, "%s%d [pos=\"%s!\"]\n",
+				cf.Indent, n, cf.NodePos(graph.NI(n)))
+			if err != nil {
+				return
+			}
+		}
 	}
 	var iso big.Int
 	if cf.Isolated {
@@ -322,10 +332,20 @@ func writeLabeledUndirected(g graph.LabeledAdjacencyList, w io.Writer, options [
 	return writeLAL(g, w, &cf)
 }
 
-func writeLAL(g graph.LabeledAdjacencyList, w io.Writer, cf *Config) error {
+func writeLAL(g graph.LabeledAdjacencyList, w io.Writer, cf *Config) (err error) {
 	b := bufio.NewWriter(w)
-	if err := writeHead(cf, b); err != nil {
-		return err
+	if err = writeHead(cf, b); err != nil {
+		return
+	}
+	if cf.NodePos != nil {
+		_, err = fmt.Fprint(b, cf.Indent, "node [shape=point]\n")
+		for n := range g {
+			_, err = fmt.Fprintf(b, "%s%d [pos=\"%s!\"]\n",
+				cf.Indent, n, cf.NodePos(graph.NI(n)))
+			if err != nil {
+				return
+			}
+		}
 	}
 	var iso big.Int
 	if cf.Isolated {
@@ -338,8 +358,8 @@ func writeLAL(g graph.LabeledAdjacencyList, w io.Writer, cf *Config) error {
 	if cf.Directed {
 		wf = writeLALDirected
 	}
-	if err := wf(g, cf, iso, b); err != nil {
-		return err
+	if err = wf(g, cf, iso, b); err != nil {
+		return
 	}
 	return writeTail(b)
 }
