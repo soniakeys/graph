@@ -4,7 +4,6 @@
 package graph_test
 
 import (
-	"fmt"
 	"math"
 	"math/big"
 	"math/rand"
@@ -33,21 +32,21 @@ var r100 = r(100, 200, 62)
 // generate random graphs and end points to test
 func r(nNodes, nArcs int, seed int64) testCase {
 	s.Seed(seed)
-	// generate random coordinates
-	type xy struct{ x, y float64 }
-	coords := make([]xy, nNodes)
-	for i := range coords {
-		coords[i].x = s.Float64()
-		coords[i].y = s.Float64()
+	l, coords, w, err := graph.LabeledEuclidean(nNodes, nArcs, 1, 1, s)
+	if err != nil {
+		panic(err)
 	}
-	// random start
-	tc := testCase{start: graph.NI(s.Intn(nNodes))}
+	tc := testCase{
+		l:     l,
+		w:     w,
+		start: graph.NI(s.Intn(nNodes)), // random start
+	}
 	// end is point at distance nearest target distance
 	const target = .3
 	nearest := 2.
 	c1 := coords[tc.start]
 	for i, c2 := range coords {
-		d := math.Abs(target - math.Hypot(c2.x-c1.x, c2.y-c1.y))
+		d := math.Abs(target - math.Hypot(c2.X-c1.X, c2.Y-c1.Y))
 		if d < nearest {
 			tc.end = graph.NI(i)
 			nearest = d
@@ -57,41 +56,7 @@ func r(nNodes, nArcs int, seed int64) testCase {
 	ce := coords[tc.end]
 	tc.h = func(n graph.NI) float64 {
 		cn := &coords[n]
-		return math.Hypot(ce.x-cn.x, ce.y-cn.y)
-	}
-	// graph
-	tc.l = graph.LabeledDirected{make(graph.LabeledAdjacencyList, nNodes)}
-	tc.w = make([]float64, nArcs)
-	// arcs
-	var tooFar, dup int
-arc:
-	for i := 0; i < nArcs; {
-		if tooFar == nArcs || dup == nArcs {
-			panic(fmt.Sprint("tooFar", tooFar, "dup", dup, "nArcs", nArcs,
-				"nNodes", nNodes, "seed", seed))
-		}
-		n1 := graph.NI(s.Intn(nNodes))
-		n2 := n1
-		for n2 == n1 {
-			n2 = graph.NI(s.Intn(nNodes)) // no graph loops
-		}
-		c1 := &coords[n1]
-		c2 := &coords[n2]
-		dist := math.Hypot(c2.x-c1.x, c2.y-c1.y)
-		if dist > s.ExpFloat64() { // favor near nodes
-			tooFar++
-			continue
-		}
-		for _, nb := range tc.l.LabeledAdjacencyList[n1] {
-			if nb.To == n2 {
-				dup++
-				continue arc
-			}
-		}
-		tc.w[i] = dist
-		tc.l.LabeledAdjacencyList[n1] = append(tc.l.LabeledAdjacencyList[n1],
-			graph.Half{To: n2, Label: graph.LI(i)})
-		i++
+		return math.Hypot(ce.X-cn.X, ce.Y-cn.Y)
 	}
 	// variants
 	tc.g = tc.l.Unlabeled()
