@@ -11,8 +11,8 @@ import (
 
 // Euclidean generates a random simple graph on the Euclidean plane.
 //
-// Nodes are associated with coordinates uniformly distributed from (0,0)
-// to (1,1).  Arcs are added between random nodes with a bias toward connecting
+// Nodes are associated with coordinates uniformly distributed on a unit
+// square.  Arcs are added between random nodes with a bias toward connecting
 // nearer nodes.
 //
 // Unfortunately the function has a few "knobs".
@@ -23,6 +23,9 @@ import (
 // As more affine or denser graphs are requested, rejections increase,
 // increasing run time.  The patience argument controls the number of arc
 // rejections allowed before the function gives up and returns an error.
+// Note that higher affinity will require more patience and that some
+// combinations of nNodes and nArcs cannot be achieved with any amount of
+// patience given that the returned graph must be simple.
 //
 // Returned is a directed simple graph and associated positions indexed by
 // node number.
