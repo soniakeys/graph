@@ -44,13 +44,12 @@ func main() {
 					break
 				}
 			}
-			f := func(b *testing.B) {
+			b := testing.Benchmark(func(b *testing.B) {
 				for i := 0; i < b.N; i++ {
 					d.AllPaths(start)
 					d.Reset()
 				}
-			}
-			b := testing.Benchmark(f)
+			})
 			fmt.Printf("n=%4d, run %d: %v\n", n, j, b)
 			x := float64(n)
 			y := float64(b.NsPerOp()) * .001
@@ -59,11 +58,6 @@ func main() {
 		}
 	}
 	c /= float64(len(ns) * rep)
-	pf(pts, "DijkstraAllPaths.svg",
-		func(n float64) float64 { return c * n * math.Log(n) })
-}
-
-func pf(pts []plotter.XYer, fn string, f func(float64) float64) {
 	p, err := plot.New()
 	if err != nil {
 		log.Fatal(err)
@@ -76,9 +70,12 @@ func pf(pts []plotter.XYer, fn string, f func(float64) float64) {
 	p.X.Tick.Marker = plot.LogTicks{}
 	p.Y.Tick.Marker = plot.LogTicks{}
 
-	nln := plotter.NewFunction(f)
+	nln := plotter.NewFunction(func(n float64) float64 {
+		return c * n * math.Log(n)
+	})
 	nln.Color = color.RGBA{B: 127, A: 255}
 	p.Add(nln)
+	p.Legend.Add(fmt.Sprintf("C(n log n), C = %.2f  ", c), nln)
 
 	mmm, err := plotutil.NewErrorPoints(meanMinMax, pts...)
 	if err != nil {
@@ -87,7 +84,7 @@ func pf(pts []plotter.XYer, fn string, f func(float64) float64) {
 	if err = plotutil.AddYErrorBars(p, mmm); err != nil {
 		log.Fatal(err)
 	}
-	if err = p.Save(4*vg.Inch, 4*vg.Inch, fn); err != nil {
+	if err = p.Save(4*vg.Inch, 4*vg.Inch, "DijkstraAllPaths.svg"); err != nil {
 		log.Fatal(err)
 	}
 }
