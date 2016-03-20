@@ -29,7 +29,7 @@ func main() {
 	}
 	c.Start()
 	dot.Write(g, w, dot.NodePos(func(n graph.NI) string {
-		return fmt.Sprintf("%.3f,%.3f", 8*pos[n].X, 8*pos[n].Y)
+		return fmt.Sprintf("%.3f,%.3f", 6*pos[n].X, 6*pos[n].Y)
 	}))
 	if err = w.Close(); err != nil {
 		log.Fatal(err)
