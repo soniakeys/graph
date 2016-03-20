@@ -1,4 +1,10 @@
+// +build ignore
+
 // go generate in this directory generates images for the tutorials.
+
+//go:generate go run al.go
+//go:generate dia -t svg -e almem.svg almem.dia
+
 package main
 
 import (
@@ -8,9 +14,6 @@ import (
 	"github.com/soniakeys/graph"
 	"github.com/soniakeys/graph/dot"
 )
-
-//go:generate go run al.go
-//go:generate dia -t svg -e almem.svg almem.dia
 
 func main() {
 	for _, f := range []func() error{al, al0, alpair, ald} {

@@ -1,3 +1,7 @@
+// +build ignore
+
+//go:generate go run Euclidean.go
+
 package main
 
 import (
@@ -10,8 +14,6 @@ import (
 	"github.com/soniakeys/graph"
 	"github.com/soniakeys/graph/dot"
 )
-
-//go:generate go run Euclidean.go
 
 func main() {
 	r := rand.New(rand.NewSource(time.Now().Unix()))

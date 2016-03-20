@@ -1,6 +1,8 @@
-package main
+// +build ignore
 
 //go:generate go run DijkstraAllPaths.go
+
+package main
 
 import (
 	"fmt"
@@ -24,6 +26,7 @@ func main() {
 		32768, 65536, 131072, 262144, 524288, 1048576, 2097152, 4194304}
 	rep := 5
 	pts := make([]plotter.XYer, len(ns))
+	c := 0.
 	for i, n := range ns {
 		g, _, wt, err := graph.LabeledEuclidean(n, n*10, 4, 100, r)
 		if err != nil {
@@ -49,10 +52,18 @@ func main() {
 			}
 			b := testing.Benchmark(f)
 			fmt.Printf("n=%4d, run %d: %v\n", n, j, b)
-			xys[j].X = float64(n)
-			xys[j].Y = float64(b.NsPerOp()) * .001
+			x := float64(n)
+			y := float64(b.NsPerOp()) * .001
+			xys[j] = struct{ X, Y float64 }{x, y}
+			c += y / (x * math.Log(x))
 		}
 	}
+	c /= float64(len(ns) * rep)
+	pf(pts, "DijkstraAllPaths.svg",
+		func(n float64) float64 { return c * n * math.Log(n) })
+}
+
+func pf(pts []plotter.XYer, fn string, f func(float64) float64) {
 	p, err := plot.New()
 	if err != nil {
 		log.Fatal(err)
@@ -60,12 +71,15 @@ func main() {
 	p.Title.Text = "Dijkstra.AllPaths, Directed Graph\nArc Size MA = 10N"
 	p.X.Label.Text = "Graph Order, N"
 	p.Y.Label.Text = "µsec"
-	nln := plotter.NewFunction(func(n float64) float64 {
-		ln := math.Log(n)
-		return (200*n + 40*n*ln + 6*n*ln*ln) * .001
-	})
+	p.X.Scale = plot.LogScale{}
+	p.Y.Scale = plot.LogScale{}
+	p.X.Tick.Marker = plot.LogTicks{}
+	p.Y.Tick.Marker = plot.LogTicks{}
+
+	nln := plotter.NewFunction(f)
 	nln.Color = color.RGBA{B: 127, A: 255}
 	p.Add(nln)
+
 	mmm, err := plotutil.NewErrorPoints(meanMinMax, pts...)
 	if err != nil {
 		log.Fatal(err)
@@ -73,12 +87,7 @@ func main() {
 	if err = plotutil.AddYErrorBars(p, mmm); err != nil {
 		log.Fatal(err)
 	}
-	p.X.Scale = plot.LogScale{}
-	p.Y.Scale = plot.LogScale{}
-	p.X.Tick.Marker = plot.LogTicks{}
-	p.Y.Tick.Marker = plot.LogTicks{}
-	err = p.Save(4*vg.Inch, 4*vg.Inch, "DijkstraAllPaths.svg")
-	if err != nil {
+	if err = p.Save(4*vg.Inch, 4*vg.Inch, fn); err != nil {
 		log.Fatal(err)
 	}
 }
