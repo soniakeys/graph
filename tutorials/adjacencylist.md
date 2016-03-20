@@ -36,7 +36,7 @@ memory digram is
 ![Memory diagram](https://cdn.rawgit.com/soniakeys/graph/svg-v0/tutorials/img/almem.svg)
 
 The top level slice has 7 elements, shown vertically here and numbered with
-their slice indexes 0-6.  Elements 1-6 are non-empty slices themselves, shown
+their slice indexes 0-6.  Elements 1-4 and 6 are non-empty slices themselves, shown
 horizontally.  These slices contain node indexes, NIs.
 
 A slice interally contains a pointer to its "backing" array.
