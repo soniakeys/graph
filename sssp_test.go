@@ -5,8 +5,10 @@ package graph_test
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"sort"
+	"testing"
 
 	"github.com/soniakeys/graph"
 )
@@ -801,4 +803,170 @@ func ExampleDijkstra_AllPaths() {
 	// 3:     [2 3]                   2    11
 	// 4:     [2 3 4]                 3    17
 	// 5:     [2 5]                   2     2
+}
+
+func TestSSSP(t *testing.T) {
+	testSSSP(r100, t)
+}
+
+func testSSSP(tc testCase, t *testing.T) {
+	w := func(label graph.LI) float64 { return tc.w[label] }
+	d := graph.NewDijkstra(tc.l.LabeledAdjacencyList, w)
+	d.Path(tc.start, tc.end)
+	pathD := d.Forest.PathTo(tc.end, nil)
+	distD := d.Dist[tc.end]
+	// test that repeating same search on same d gives same result
+	d.Path(tc.start, tc.end)
+	path2 := d.Forest.PathTo(tc.end, nil)
+	dist2 := d.Dist[tc.end]
+	if len(pathD) != len(path2) || distD != dist2 {
+		t.Fatal(len(tc.w), "D, D2 len or dist mismatch")
+	}
+	for i, half := range pathD {
+		if path2[i] != half {
+			t.Fatal(len(tc.w), "D, D2 path mismatch")
+		}
+	}
+	// A*
+	pathA, distA := tc.l.AStarAPath(tc.start, tc.end, tc.h, w)
+	// test that a* path is same distance and length as dijkstra path
+	if len(pathA) != len(pathD) {
+		t.Log("pathA:", pathA)
+		t.Log("pathD:", pathD)
+		t.Fatal(len(tc.w), "A, D len mismatch")
+	}
+	if distA != distD {
+		t.Log("distA:", distA)
+		t.Log("distD:", distD)
+		t.Log("delta:", math.Abs(distA-distD))
+		t.Fatal(len(tc.w), "A, D dist mismatch")
+	}
+	// test Bellman Ford against Dijkstra all paths
+	d.Reset()
+	d.AllPaths(tc.start)
+	b := graph.NewBellmanFord(tc.l.LabeledAdjacencyList, w)
+	b.Start(tc.start)
+	// result objects should be identical
+	dr := d.Forest
+	br := b.Forest
+	if len(dr.Paths) != len(br.Paths) {
+		t.Fatal("len(dr.Paths), len(br.Paths)",
+			len(dr.Paths), len(br.Paths))
+	}
+	/* this test not working, possibly not a valid test.
+	t.Log(dr.Paths)
+	t.Log(br.Paths)
+	for i, de := range dr.Paths {
+		t.Log(de, br.Paths[i])
+		if de != br.Paths[i] {
+			t.Fatal("dr.Paths ne br.Paths")
+		}
+	}
+	*/
+	// breadth first, compare to dijkstra with unit weights
+	d.Weight = func(graph.LI) float64 { return 1 }
+	d.Reset()
+	d.AllPaths(tc.start)
+	ur := d.Forest
+	bfs := graph.NewBreadthFirst(tc.g.AdjacencyList)
+	np := bfs.AllPaths(tc.start)
+	bfsr := bfs.Result
+	var ml, npf int
+	for i, ue := range ur.Paths {
+		bl := bfsr.Paths[i].Len
+		if bl != ue.Len {
+			t.Fatal("ue.From.Len, bfsr.Paths[i].Len", ue.Len, bl)
+		}
+		if bl > ml {
+			ml = bl
+		}
+		if bl > 0 {
+			npf++
+		}
+	}
+	if ml != bfsr.MaxLen {
+		t.Fatal("bfsr.MaxLen, recomputed", bfsr.MaxLen, ml)
+	}
+	if npf != np {
+		t.Fatal("bfs all paths returned", np, "recount:", npf)
+	}
+	// breadth first 2
+	bfs2 := graph.NewBreadthFirst2(tc.g.AdjacencyList, tc.t.AdjacencyList, tc.m)
+	np2 := bfs2.AllPaths(tc.start)
+	bfs2r := bfs2.Result
+	var ml2, npf2 int
+	for i, e := range bfsr.Paths {
+		bl2 := bfs2r.Paths[i].Len
+		if bl2 != e.Len {
+			t.Fatal("bfsr.Paths[i].Len, bfs2r", e.Len, bl2)
+		}
+		if bl2 > ml2 {
+			ml2 = bl2
+		}
+		if bl2 > 0 {
+			npf2++
+		}
+	}
+	if ml2 != bfs2r.MaxLen {
+		t.Fatal("bfs2r.MaxLen, recomputed", bfs2r.MaxLen, ml)
+	}
+	if npf2 != np2 {
+		t.Fatal("bfs2 all paths returned", np2, "recount:", npf2)
+	}
+	if ml2 != ml {
+		t.Fatal("bfs max len, bfs2", ml, ml2)
+	}
+	if npf2 != npf {
+		t.Fatal("bfs return, bfs2", npf, npf2)
+	}
+}
+
+type testCase struct {
+	l graph.LabeledDirected // generated labeled directed graph
+	w []float64             // arc weights for l
+	// variants
+	g graph.Directed // unlabeled
+	t graph.Directed // transpose
+
+	h graph.Heuristic
+
+	start, end graph.NI
+	m          int
+}
+
+var s = rand.New(rand.NewSource(59))
+var r100 = r(100, 200, 62)
+
+func r(nNodes, nArcs int, seed int64) testCase {
+	s.Seed(seed)
+	l, coords, w, err := graph.LabeledEuclidean(nNodes, nArcs, 1, 1, s)
+	if err != nil {
+		panic(err)
+	}
+	tc := testCase{
+		l:     l,
+		w:     w,
+		start: graph.NI(s.Intn(nNodes)), // random start
+	}
+	// end is point at distance nearest target distance
+	const target = .3
+	nearest := 2.
+	c1 := coords[tc.start]
+	for i, c2 := range coords {
+		d := math.Abs(target - math.Hypot(c2.X-c1.X, c2.Y-c1.Y))
+		if d < nearest {
+			tc.end = graph.NI(i)
+			nearest = d
+		}
+	}
+	// with end chosen, define heuristic
+	ce := coords[tc.end]
+	tc.h = func(n graph.NI) float64 {
+		cn := &coords[n]
+		return math.Hypot(ce.X-cn.X, ce.Y-cn.Y)
+	}
+	// variants
+	tc.g = tc.l.Unlabeled()
+	tc.t, tc.m = tc.g.Transpose()
+	return tc
 }
