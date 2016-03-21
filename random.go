@@ -138,6 +138,49 @@ arc:
 	return
 }
 
+func Geometric(nNodes int, radius float64, r *rand.Rand) (g Undirected, pos []struct{ X, Y float64 }, m int) {
+	// Expected degree is approximately nπr².
+	a := make(AdjacencyList, nNodes)
+	pos = make([]struct{ X, Y float64 }, nNodes)
+	for i := range pos {
+		pos[i].X = r.Float64()
+		pos[i].Y = r.Float64()
+	}
+	for u, up := range pos {
+		for v := u + 1; v < len(pos); v++ {
+			vp := pos[v]
+			if math.Hypot(up.X-vp.X, up.Y-vp.Y) < radius {
+				a[u] = append(a[u], NI(v))
+				a[v] = append(a[v], NI(u))
+				m++
+			}
+		}
+	}
+	g = Undirected{a}
+	return
+}
+
+func LabeledGeometric(nNodes int, radius float64, r *rand.Rand) (g LabeledUndirected, pos []struct{ X, Y float64 }, wt []float64) {
+	a := make(LabeledAdjacencyList, nNodes)
+	pos = make([]struct{ X, Y float64 }, nNodes)
+	for i := range pos {
+		pos[i].X = r.Float64()
+		pos[i].Y = r.Float64()
+	}
+	for u, up := range pos {
+		for v := u + 1; v < len(pos); v++ {
+			vp := pos[v]
+			if w := math.Hypot(up.X-vp.X, up.Y-vp.Y); w < radius {
+				a[u] = append(a[u], Half{NI(v), LI(len(wt))})
+				a[v] = append(a[v], Half{NI(u), LI(len(wt))})
+				wt = append(wt, w)
+			}
+		}
+	}
+	g = LabeledUndirected{a}
+	return
+}
+
 // KroneckerDir generates a Kronecker-like random directed graph.
 //
 // The returned graph g is simple and has no isolated nodes but is not
