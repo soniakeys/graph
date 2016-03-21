@@ -7,7 +7,10 @@ package graph
 
 import "math/big"
 
-const wordExp = 6 // 2^6 = 64
+const (
+	wordSize = 64
+	wordExp  = 6 // 2^6 = 64
+)
 
 // NextOne facilitates iteration over the one bits of a big.Int.
 //
@@ -23,7 +26,7 @@ func NextOne(b *big.Int, i int) int {
 		return -1
 	}
 	// test for 1 in this word at or after i
-	if wx := words[x] >> uint(i); wx != 0 {
+	if wx := words[x] >> (uint(i) & (wordSize - 1)); wx != 0 {
 		return i + trailingZeros(wx)
 	}
 	x++

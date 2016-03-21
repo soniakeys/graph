@@ -13,7 +13,7 @@ import (
 func ExampleNextOne() {
 	var b big.Int
 	b.SetString(""+
-		"0000000000000001"+ // bit postion 128
+		"0000000000000003"+ // bit postions 128, 129
 		"0000000000000000"+
 		"0000000000000005", 16) // bit positions 2, 0
 	for n := graph.NextOne(&b, 0); n >= 0; n = graph.NextOne(&b, n+1) {
@@ -23,6 +23,7 @@ func ExampleNextOne() {
 	// 0
 	// 2
 	// 128
+	// 129
 }
 
 func ExampleOneBits() {
