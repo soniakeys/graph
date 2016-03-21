@@ -3,5 +3,6 @@ language: go
 go: 1.6
 script:
  - go test ./...
+   GOARCH=386 go test ./...
  - go test -run NewDijkstra -race -v
  - go tool vet -example .
