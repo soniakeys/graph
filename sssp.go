@@ -434,6 +434,7 @@ func (g LabeledDirected) NegativeCycle(w WeightFunc) bool {
 	return false
 }
 
+/*
 // BreadthFirst associates a graph with a result object for returning
 // results from breadth first searches and traversals.
 //
@@ -471,73 +472,33 @@ func NewBreadthFirst(g AdjacencyList) *BreadthFirst {
 		Result: NewFromList(len(g)),
 	}
 }
-
-// BreadthFirstPath finds a single path from start to end with a minimum
-// number of nodes.
-//
-// Returned is the path as list of nodes.
-// The result is nil if no path was found.
-func (g AdjacencyList) BreadthFirstPath(start, end NI) []NI {
-	b := NewBreadthFirst(g)
-	b.Traverse(start, func(n NI) bool { return n != end })
-	return b.Result.PathTo(end, nil)
-}
-
-// Path finds a single path from start to end with a minimum number of nodes.
-//
-// Path returns true if a path exists, false if not.  The path can be recovered
-// from b.Result.
-func (b *BreadthFirst) Path(start, end NI) bool {
-	b.Traverse(start, func(n NI) bool { return n != end })
-	return b.Result.Paths[end].Len > 0
-}
-
-// AllPaths finds paths from start to all nodes reachable from start that
-// have a minimum number of nodes.
-//
-// AllPaths returns number of paths found, equivalent to the number of nodes
-// reached, including the path ending at start.  Path results are left in
-// d.Result.
-func (b *BreadthFirst) AllPaths(start NI) int {
-	return b.Traverse(start, func(NI) bool { return true })
-}
-
-// A Visitor function is an argument to graph traversal methods.
-//
-// Graph traversal methods call the visitor function for each node visited.
-// The argument n is the node being visited.  If the visitor function
-// returns true, the traversal will continue.  If the visitor function
-// returns false, the traversal will terminate immediately.
-type Visitor func(n NI) (ok bool)
-
+*/
 // Traverse traverses a graph in breadth first order starting from node start.
 //
 // Traverse calls the visitor function v for each node.  If v returns true,
 // the traversal will continue.  If v returns false, the traversal will
 // terminate immediately.  Traverse updates b.Result.Paths before calling v.
 //
-// Traverse returns the number of nodes successfully visited; if search is
-// is terminated by a false return from v, that node is not counted.
-func (b *BreadthFirst) Traverse(start NI, v Visitor) int {
-	b.Result.reset()
-	rp := b.Result.Paths
-	nVisitOk := 0 // accumulated for a return value
+// Traverse returns the number of nodes visited
+func (g AdjacencyList) BreadthFirst(r *rand.Rand, start NI, v Visitor) (f FromList, visited int, ok bool) {
+	f = NewFromList(len(g))
+	rp := f.Paths
 	// the frontier consists of nodes all at the same level
 	frontier := []NI{start}
 	level := 1
 	// assign path when node is put on frontier,
 	rp[start] = PathEnd{Len: level, From: -1}
 	for {
-		b.Result.MaxLen = level
+		f.MaxLen = level
 		level++
 		var next []NI
-		if b.Rand == nil {
+		if r == nil {
 			for _, n := range frontier {
+				visited++
 				if !v(n) { // visit nodes as they come off frontier
-					return -1
+					return
 				}
-				nVisitOk++
-				for _, nb := range b.Graph[n] {
+				for _, nb := range g[n] {
 					if rp[nb].Len == 0 {
 						next = append(next, nb)
 						rp[nb] = PathEnd{From: n, Len: level}
@@ -545,14 +506,14 @@ func (b *BreadthFirst) Traverse(start NI, v Visitor) int {
 				}
 			}
 		} else { // take nodes off frontier at random
-			for _, i := range b.Rand.Perm(len(frontier)) {
+			for _, i := range r.Perm(len(frontier)) {
 				n := frontier[i]
 				// remainder of block same as above
+				visited++
 				if !v(n) {
-					return -1
+					return
 				}
-				nVisitOk++
-				for _, nb := range b.Graph[n] {
+				for _, nb := range g[n] {
 					if rp[nb].Len == 0 {
 						next = append(next, nb)
 						rp[nb] = PathEnd{From: n, Len: level}
@@ -565,8 +526,26 @@ func (b *BreadthFirst) Traverse(start NI, v Visitor) int {
 		}
 		frontier = next
 	}
-	return nVisitOk
+	return f, visited, true
 }
+
+// BreadthFirstPath finds a single path from start to end with a minimum
+// number of nodes.
+//
+// Returned is the path as list of nodes.
+// The result is nil if no path was found.
+func (g AdjacencyList) BreadthFirstPath(start, end NI) []NI {
+	f, _, _ := g.BreadthFirst(nil, start, func(n NI) bool { return n != end })
+	return f.PathTo(end, nil)
+}
+
+// A Visitor function is an argument to graph traversal methods.
+//
+// Graph traversal methods call the visitor function for each node visited.
+// The argument n is the node being visited.  If the visitor function
+// returns true, the traversal will continue.  If the visitor function
+// returns false, the traversal will terminate immediately.
+type Visitor func(n NI) (ok bool)
 
 // BreadthFirstLabeled associates a graph with a result object for returning
 // results from breadth first searches and traversals.

@@ -207,54 +207,51 @@ func ExampleAdjacencyList_BreadthFirstPath() {
 	// [1 4 3]
 }
 
-func ExampleBreadthFirst_Path() {
+func ExampleAdjacencyList_BreadthFirst_singlePath() {
 	// arcs are directed right:
 	//    1   3---5
 	//   / \ /   /
 	//  2   4---6--\
 	//           \-/
-	b := graph.NewBreadthFirst(graph.AdjacencyList{
+	g := graph.AdjacencyList{
 		2: {1},
 		1: {4},
 		4: {3, 6},
 		3: {5},
 		6: {5, 6},
+	}
+	var start, end graph.NI = 1, 6
+	f, n, _ := g.BreadthFirst(nil, start, func(n graph.NI) bool {
+		return n != end
 	})
-	var start, end graph.NI = 1, 3
-	if !b.Path(start, end) {
-		return
-	}
-	fmt.Println("Path length:", b.Result.Paths[end].Len)
-	fmt.Print("Backtrack to start: ", end)
-	rp := b.Result.Paths
-	for n := end; n != start; {
-		n = rp[n].From
-		fmt.Print(" ", n)
-	}
-	fmt.Println()
+	fmt.Println(n, "nodes visited")
+	fmt.Println("path:", f.PathTo(end, nil))
 	// Output:
-	// Path length: 3
-	// Backtrack to start: 3 4 1
+	// 4 nodes visited
+	// path: [1 4 6]
 }
 
-func ExampleBreadthFirst_AllPaths() {
+func ExampleAdjacencyList_BreadthFirst_allPaths() {
 	// arcs are directed right:
 	//    1   3---5
 	//   / \ /   /
 	//  2   4---6--\
 	//           \-/
-	b := graph.NewBreadthFirst(graph.AdjacencyList{
+	g := graph.AdjacencyList{
 		2: {1},
 		1: {4},
 		4: {3, 6},
 		3: {5},
 		6: {5, 6},
+	}
+	start := graph.NI(1)
+	f, _, _ := g.BreadthFirst(nil, start, func(n graph.NI) bool {
+		return true
 	})
-	b.AllPaths(1)
-	fmt.Println("Max path length:", b.Result.MaxLen)
-	p := make([]graph.NI, b.Result.MaxLen)
-	for n := range b.Graph {
-		fmt.Println(n, b.Result.PathTo(graph.NI(n), p))
+	fmt.Println("Max path length:", f.MaxLen)
+	p := make([]graph.NI, f.MaxLen)
+	for n := range g {
+		fmt.Println(n, f.PathTo(graph.NI(n), p))
 	}
 	// Output:
 	// Max path length: 4
@@ -267,6 +264,7 @@ func ExampleBreadthFirst_AllPaths() {
 	// 6 [1 4 6]
 }
 
+/*
 func ExampleBreadthFirst_Traverse() {
 	// arcs directed down
 	//    0--
@@ -328,7 +326,7 @@ func ExampleBreadthFirst_Traverse_random() {
 	// visit 4 level 3
 	// visit 7 level 3
 }
-
+*/
 func ExampleAdjacencyList_BreadthFirst2Path() {
 	// arcs are directed right:
 	//    1   3---5
@@ -866,9 +864,8 @@ func testSSSP(tc testCase, t *testing.T) {
 	d.Reset()
 	d.AllPaths(tc.start)
 	ur := d.Forest
-	bfs := graph.NewBreadthFirst(tc.g.AdjacencyList)
-	np := bfs.AllPaths(tc.start)
-	bfsr := bfs.Result
+	bfsr, np, _ := tc.g.AdjacencyList.BreadthFirst(nil, tc.start,
+		func(n graph.NI) bool { return true })
 	var ml, npf int
 	for i, ue := range ur.Paths {
 		bl := bfsr.Paths[i].Len
