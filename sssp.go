@@ -10,68 +10,6 @@ import (
 	"math/rand"
 )
 
-// An AStar object allows shortest path searches by variants of the A*
-// algorithm.
-//
-// The variants are determined by the specific search method and heuristic used.
-//
-// Construct with NewAStar
-type AStar struct {
-	Graph  LabeledAdjacencyList // input graph
-	Weight WeightFunc           // input weight function
-	Forest FromList             // result paths
-	Dist   []float64            // distances for result paths
-	// heap values
-	r []rNode
-	// test instrumentation
-	ndVis, arcVis int
-}
-
-// NewAStar creates an AStar struct that allows shortest path searches.
-//
-// Argument g is the graph to be searched, as a weighted adjacency list.
-// As usual for AStar, arc weights must be non-negative.
-// Graphs may be directed or undirected.
-//
-// The graph g will not be modified by any AStar methods. NewAStar initializes
-// the AStar object for the order (number of nodes) of g. If you add nodes
-// to your graph, abandon any previously created Dijkstra object and call
-// NewAStar again.
-//
-// Searches on a single AStar object can be run consecutively but not
-// concurrently. Searches can be run concurrently however, on AStar objects
-// obtained with separate calls to NewAStar, even with the same graph argument
-// to NewAStar.
-func NewAStar(g LabeledAdjacencyList, w WeightFunc) *AStar {
-	r := make([]rNode, len(g))
-	for i := range r {
-		r[i].nx = NI(i)
-	}
-	return &AStar{
-		Graph:  g,
-		Weight: w,
-		Forest: NewFromList(len(g)),
-		Dist:   make([]float64, len(g)),
-		r:      r,
-	}
-}
-
-// Reset zeros results from any previous search.
-//
-// It leaves the graph and weight function initialized and otherwise prepares
-// the receiver for another search.
-func (a *AStar) Reset() {
-	a.ndVis = 0
-	a.arcVis = 0
-	a.Forest.reset()
-	for i := range a.r {
-		a.r[i].state = unreached
-	}
-	for i := range a.Dist {
-		a.Dist[i] = 0
-	}
-}
-
 // rNode holds data for a "reached" node
 type rNode struct {
 	nx    NI
@@ -185,16 +123,28 @@ func (h Heuristic) Monotonic(g LabeledAdjacencyList, w WeightFunc) (bool, string
 // increases.  In some cases it may be worth the effort to memoize or
 // precompute values.
 //
-// If AStarA finds a path it returns true.  The path can be decoded from
-// a.Forest.
-func (a *AStar) AStarA(start, end NI, h Heuristic) bool {
+// Argument g is the graph to be searched, with arc weights returned by w.
+// As usual for AStar, arc weights must be non-negative.
+// Graphs may be directed or undirected.
+//
+// If AStarA finds a path it returns a FromList encoding the path, the arc
+// labels for path nodes, the total path distance, and ok = true.
+// Otherwise it returns ok = false.
+func (g LabeledAdjacencyList) AStarA(w WeightFunc, start, end NI, h Heuristic) (f FromList, labels []LI, dist float64, ok bool) {
 	// NOTE: AStarM is largely duplicate code.
 
+	f = NewFromList(len(g))
+	labels = make([]LI, len(g))
+	d := make([]float64, len(g))
+	r := make([]rNode, len(g))
+	for i := range r {
+		r[i].nx = NI(i)
+	}
 	// start node is reached initially
-	cr := &a.r[start]
+	cr := &r[start]
 	cr.state = reached
 	cr.f = h(start) // total path estimate is estimate from start
-	rp := a.Forest.Paths
+	rp := f.Paths
 	rp[start] = PathEnd{Len: 1, From: -1} // path length at start is 1 node
 	// oh is a heap of nodes "open" for exploration.  nodes go on the heap
 	// when they get an initial or new "g" path distance, and therefore a
@@ -204,21 +154,21 @@ func (a *AStar) AStarA(start, end NI, h Heuristic) bool {
 		bestPath := heap.Pop(&oh).(*rNode)
 		bestNode := bestPath.nx
 		if bestNode == end {
-			return true
+			return f, labels, d[end], true
 		}
 		bp := &rp[bestNode]
 		nextLen := bp.Len + 1
-		for _, nb := range a.Graph[bestNode] {
-			alt := &a.r[nb.To]
+		for _, nb := range g[bestNode] {
+			alt := &r[nb.To]
 			ap := &rp[alt.nx]
 			// "g" path distance from start
-			g := a.Dist[bestNode] + a.Weight(nb.Label)
+			g := d[bestNode] + w(nb.Label)
 			if alt.state == reached {
-				if g > a.Dist[nb.To] {
+				if g > d[nb.To] {
 					// candidate path to nb is longer than some alternate path
 					continue
 				}
-				if g == a.Dist[nb.To] && nextLen >= ap.Len {
+				if g == d[nb.To] && nextLen >= ap.Len {
 					// candidate path has identical length of some alternate
 					// path but it takes no fewer hops.
 					continue
@@ -227,7 +177,8 @@ func (a *AStar) AStarA(start, end NI, h Heuristic) bool {
 				// record new path data for this node and
 				// update alt with new data and make sure it's on the heap.
 				*ap = PathEnd{From: bestNode, Len: nextLen}
-				a.Dist[nb.To] = g
+				labels[nb.To] = nb.Label
+				d[nb.To] = g
 				alt.f = g + h(nb.To)
 				if alt.fx < 0 {
 					heap.Push(&oh, alt)
@@ -237,25 +188,27 @@ func (a *AStar) AStarA(start, end NI, h Heuristic) bool {
 			} else {
 				// bestNode being reached for the first time.
 				*ap = PathEnd{From: bestNode, Len: nextLen}
-				a.Dist[nb.To] = g
+				labels[nb.To] = nb.Label
+				d[nb.To] = g
 				alt.f = g + h(nb.To)
 				alt.state = reached
 				heap.Push(&oh, alt) // and it's now open for exploration
 			}
 		}
 	}
-	return false // no path
+	return // no path
 }
 
-// AStarAPath finds a single shortest path using the AStarA algorithm.
+// AStarAPath finds a shortest path using the AStarA algorithm.
 //
-// See documentation on the AStarA method of the AStar type.
+// This is a convenience method with a simpler result than the AStarA method.
+// See documentation on the AStarA method.
 //
-// Returned is the path and distance as returned by FromList.PathTo.
+// If a path is found, the non-nil node path is returned with the total path
+// distance.  Otherwise the returned path will be nil.
 func (g LabeledAdjacencyList) AStarAPath(start, end NI, h Heuristic, w WeightFunc) ([]NI, float64) {
-	a := NewAStar(g, w)
-	a.AStarA(start, end, h)
-	return a.Forest.PathTo(end, nil), a.Dist[end]
+	f, _, d, _ := g.AStarA(w, start, end, h)
+	return f.PathTo(end, nil), d
 }
 
 // AStarM is AStarA optimized for monotonic heuristic estimates.
@@ -264,11 +217,18 @@ func (g LabeledAdjacencyList) AStarAPath(start, end NI, h Heuristic, w WeightFun
 // not be meaningful if argument h is non-monotonic.
 //
 // See AStarA for general usage.  See Heuristic for notes on monotonicity.
-func (a *AStar) AStarM(start, end NI, h Heuristic) bool {
+func (g LabeledAdjacencyList) AStarM(w WeightFunc, start, end NI, h Heuristic) (f FromList, labels []LI, dist float64, ok bool) {
 	// NOTE: AStarM is largely code duplicated from AStarA.
 	// Differences are noted in comments in this method.
 
-	cr := &a.r[start]
+	f = NewFromList(len(g))
+	labels = make([]LI, len(g))
+	d := make([]float64, len(g))
+	r := make([]rNode, len(g))
+	for i := range r {
+		r[i].nx = NI(i)
+	}
+	cr := &r[start]
 
 	// difference from AStarA:
 	// instead of a bit to mark a reached node, there are two states,
@@ -278,14 +238,14 @@ func (a *AStar) AStarM(start, end NI, h Heuristic) bool {
 	cr.state = open
 
 	cr.f = h(start)
-	rp := a.Forest.Paths
+	rp := f.Paths
 	rp[start] = PathEnd{Len: 1, From: -1}
 	oh := openHeap{cr}
 	for len(oh) > 0 {
 		bestPath := heap.Pop(&oh).(*rNode)
 		bestNode := bestPath.nx
 		if bestNode == end {
-			return true
+			return f, labels, d[end], true
 		}
 
 		// difference from AStarA:
@@ -294,8 +254,8 @@ func (a *AStar) AStarM(start, end NI, h Heuristic) bool {
 
 		bp := &rp[bestNode]
 		nextLen := bp.Len + 1
-		for _, nb := range a.Graph[bestNode] {
-			alt := &a.r[nb.To]
+		for _, nb := range g[bestNode] {
+			alt := &r[nb.To]
 
 			// difference from AStarA:
 			// Monotonicity means that f cannot be improved.
@@ -304,20 +264,21 @@ func (a *AStar) AStarM(start, end NI, h Heuristic) bool {
 			}
 
 			ap := &rp[alt.nx]
-			g := a.Dist[bestNode] + a.Weight(nb.Label)
+			g := d[bestNode] + w(nb.Label)
 
 			// difference from AStarA:
 			// test for open state, not just reached
 			if alt.state == open {
 
-				if g > a.Dist[nb.To] {
+				if g > d[nb.To] {
 					continue
 				}
-				if g == a.Dist[nb.To] && nextLen >= ap.Len {
+				if g == d[nb.To] && nextLen >= ap.Len {
 					continue
 				}
 				*ap = PathEnd{From: bestNode, Len: nextLen}
-				a.Dist[nb.To] = g
+				labels[nb.To] = nb.Label
+				d[nb.To] = g
 				alt.f = g + h(nb.To)
 
 				// difference from AStarA:
@@ -325,7 +286,8 @@ func (a *AStar) AStarM(start, end NI, h Heuristic) bool {
 				heap.Fix(&oh, alt.fx)
 			} else {
 				*ap = PathEnd{From: bestNode, Len: nextLen}
-				a.Dist[nb.To] = g
+				labels[nb.To] = nb.Label
+				d[nb.To] = g
 				alt.f = g + h(nb.To)
 
 				// difference from AStarA:
@@ -335,18 +297,19 @@ func (a *AStar) AStarM(start, end NI, h Heuristic) bool {
 			}
 		}
 	}
-	return false
+	return
 }
 
-// AStarMPath finds a single shortest path using the AStarM algorithm.
+// AStarMPath finds a shortest path using the AStarM algorithm.
 //
-// See documentation on the AStarM method of the AStar type.
+// This is a convenience method with a simpler result than the AStarM method.
+// See documentation on the AStarM and AStarA methods.
 //
-// Returned is the path and distance as returned by FromList.PathTo.
+// If a path is found, the non-nil node path is returned with the total path
+// distance.  Otherwise the returned path will be nil.
 func (g LabeledAdjacencyList) AStarMPath(start, end NI, h Heuristic, w WeightFunc) ([]NI, float64) {
-	a := NewAStar(g, w)
-	a.AStarM(start, end, h)
-	return a.Forest.PathTo(end, nil), a.Dist[end]
+	f, _, d, _ := g.AStarM(w, start, end, h)
+	return f.PathTo(end, nil), d
 }
 
 // implement container/heap
