@@ -50,6 +50,93 @@ func (g AdjacencyList) BoundsOk() (ok bool, fr NI, to NI) {
 	return true, -1, to
 }
 
+// BreadthFirst traverses a directed or undirected graph in breadth first order.
+//
+// Argument start is the start node for the traversal.  If r is nil, nodes are
+// visited in deterministic order.  If a random number generator is supplied,
+// nodes at each level are visited in random order.
+//
+// If FromList f is nil or has Paths of the wrong length, a new FromList is
+// created and assigned to f.  A valid FromList argument will be used as is.
+// The method uses a value of PathEnd.Len == 0 to indentify unvisited nodes.
+// Existing non-zero values will limit the traversal.
+//
+// Traversal calls the visitor function v for each node starting with node
+// start.  If v returns true, traversal continues.  If v returns false, the
+// traversal terminates immediately.  PathEnd Len and From values are updated
+// before calling the visitor function.
+//
+// On return f.Paths and f.MaxLen are set but not f.Leaves.
+//
+// Returned is the number of nodes visited and ok = true if the traversal
+// ran to completion or ok = false if it was terminated by the visitor
+// function returning false.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g AdjacencyList) BreadthFirst(start NI, r *rand.Rand, f *FromList, v Visitor) (visited int, ok bool) {
+	if f == nil || len(f.Paths) != len(g) {
+		*f = NewFromList(len(g))
+	}
+	rp := f.Paths
+	// the frontier consists of nodes all at the same level
+	frontier := []NI{start}
+	level := 1
+	// assign path when node is put on frontier,
+	rp[start] = PathEnd{Len: level, From: -1}
+	for {
+		f.MaxLen = level
+		level++
+		var next []NI
+		if r == nil {
+			for _, n := range frontier {
+				visited++
+				if !v(n) { // visit nodes as they come off frontier
+					return
+				}
+				for _, nb := range g[n] {
+					if rp[nb].Len == 0 {
+						next = append(next, nb)
+						rp[nb] = PathEnd{From: n, Len: level}
+					}
+				}
+			}
+		} else { // take nodes off frontier at random
+			for _, i := range r.Perm(len(frontier)) {
+				n := frontier[i]
+				// remainder of block same as above
+				visited++
+				if !v(n) {
+					return
+				}
+				for _, nb := range g[n] {
+					if rp[nb].Len == 0 {
+						next = append(next, nb)
+						rp[nb] = PathEnd{From: n, Len: level}
+					}
+				}
+			}
+		}
+		if len(next) == 0 {
+			break
+		}
+		frontier = next
+	}
+	return visited, true
+}
+
+// BreadthFirstPath finds a single path from start to end with a minimum
+// number of nodes.
+//
+// Returned is the path as list of nodes.
+// The result is nil if no path was found.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g AdjacencyList) BreadthFirstPath(start, end NI) []NI {
+	var f FromList
+	g.BreadthFirst(start, nil, &f, func(n NI) bool { return n != end })
+	return f.PathTo(end, nil)
+}
+
 // Copy makes a deep copy of g.
 // Copy also computes the arc size ma, the number of arcs.
 //
