@@ -434,54 +434,31 @@ func (g LabeledDirected) NegativeCycle(w WeightFunc) bool {
 	return false
 }
 
-/*
-// BreadthFirst associates a graph with a result object for returning
-// results from breadth first searches and traversals.
+// BreadthFirst traverses a directed or undirected graph in breadth first order.
 //
-// Construct with NewBreadthFirst.
+// Argument start is the start node for the traversal.  If r is nil, nodes are
+// visited in deterministic order.  If a random number generator is supplied,
+// nodes at each level are visited in random order.
 //
-// With all methods that traverse the graph, if the Rand member is left nil,
-// nodes are visited in the order they exist as to-arcs in the graph.
-// If Rand is assigned a random number generator, nodes are visited in random
-// order at each level.  See example at Traverse method.
+// If FromList f is nil or has Paths of the wrong length, a new FromList is
+// created and assigned to f.  A valid FromList argument will be used as is.
+// The method uses a value of PathEnd.Len == 0 to indentify unvisited nodes.
+// Existing non-zero values will limit the traversal.
 //
-// The search methods set Result.Paths and Result.MaxLen but not Result.Leaves.
-type BreadthFirst struct {
-	Graph  AdjacencyList
-	Rand   *rand.Rand
-	Result FromList
-}
-
-// NewBreadthFirst creates a BreadthFirst object.
+// Traversal calls the visitor function v for each node starting with node
+// start.  If v returns true, traversal continues.  If v returns false, the
+// traversal terminates immediately.  PathEnd Len and From values are updated
+// before calling the visitor function.
 //
-// Argument g is the graph to be searched, as an adjacency list.
-// Graphs may be directed or undirected.
+// On return f.Paths and f.MaxLen are set but not f.Leaves.
 //
-// The graph g will not be modified by any BreadthFirst methods.
-// NewBreadthFirst initializes the BreadthFirst object for the order
-// (number of nodes) of g.  If you add nodes to your graph, abandon any
-// previously created BreadthFirst object and call NewBreadthFirst again.
-//
-// Searches on a single BreadthFirst object can be run consecutively but not
-// concurrently.  Searches can be run concurrently however, on BreadthFirst
-// objects obtained with separate calls to NewBreadthFirst, even with the same
-// graph argument to NewBreadthFirst.
-func NewBreadthFirst(g AdjacencyList) *BreadthFirst {
-	return &BreadthFirst{
-		Graph:  g,
-		Result: NewFromList(len(g)),
+// Returned is the number of nodes visited and ok = true if the traversal
+// ran to completion or ok = false if it was terminated by the visitor
+// function returning false.
+func (g AdjacencyList) BreadthFirst(start NI, r *rand.Rand, f *FromList, v Visitor) (visited int, ok bool) {
+	if f == nil || len(f.Paths) != len(g) {
+		*f = NewFromList(len(g))
 	}
-}
-*/
-// Traverse traverses a graph in breadth first order starting from node start.
-//
-// Traverse calls the visitor function v for each node.  If v returns true,
-// the traversal will continue.  If v returns false, the traversal will
-// terminate immediately.  Traverse updates b.Result.Paths before calling v.
-//
-// Traverse returns the number of nodes visited
-func (g AdjacencyList) BreadthFirst(r *rand.Rand, start NI, v Visitor) (f FromList, visited int, ok bool) {
-	f = NewFromList(len(g))
 	rp := f.Paths
 	// the frontier consists of nodes all at the same level
 	frontier := []NI{start}
@@ -526,7 +503,7 @@ func (g AdjacencyList) BreadthFirst(r *rand.Rand, start NI, v Visitor) (f FromLi
 		}
 		frontier = next
 	}
-	return f, visited, true
+	return visited, true
 }
 
 // BreadthFirstPath finds a single path from start to end with a minimum
@@ -535,7 +512,8 @@ func (g AdjacencyList) BreadthFirst(r *rand.Rand, start NI, v Visitor) (f FromLi
 // Returned is the path as list of nodes.
 // The result is nil if no path was found.
 func (g AdjacencyList) BreadthFirstPath(start, end NI) []NI {
-	f, _, _ := g.BreadthFirst(nil, start, func(n NI) bool { return n != end })
+	var f FromList
+	g.BreadthFirst(start, nil, &f, func(n NI) bool { return n != end })
 	return f.PathTo(end, nil)
 }
 
