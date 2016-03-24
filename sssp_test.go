@@ -330,7 +330,7 @@ func ExampleAdjacencyList_BreadthFirst_traverseRandom() {
 	// visit 7 level 3
 }
 
-func ExampleAdjacencyList_BreadthFirst2Path() {
+func ExampleBreadthFirst2_allPaths() {
 	// arcs are directed right:
 	//    1   3---5
 	//   / \ /   /
@@ -343,63 +343,14 @@ func ExampleAdjacencyList_BreadthFirst2Path() {
 		3: {5},
 		6: {5, 6},
 	}
-	fmt.Println(g.BreadthFirst2Path(1, 3))
-	// Output:
-	// [1 4 3]
-}
-
-func ExampleBreadthFirst2_Path() {
-	// arcs are directed right:
-	//    1   3---5
-	//   / \ /   /
-	//  2   4---6--\
-	//           \-/
-	g := graph.Directed{graph.AdjacencyList{
-		2: {1},
-		1: {4},
-		4: {3, 6},
-		3: {5},
-		6: {5, 6},
-	}}
-	t, m := g.Transpose()
-	b := graph.NewBreadthFirst2(g.AdjacencyList, t.AdjacencyList, m)
-	var start, end graph.NI = 1, 3
-	if !b.Path(start, end) {
-		return
-	}
-	fmt.Println("Path length:", b.Result.Paths[end].Len)
-	fmt.Print("Backtrack to start: ", end)
-	rp := b.Result.Paths
-	for n := end; n != start; {
-		n = rp[n].From
-		fmt.Print(" ", n)
-	}
-	fmt.Println()
-	// Output:
-	// Path length: 3
-	// Backtrack to start: 3 4 1
-}
-
-func ExampleBreadthFirst2_AllPaths() {
-	// arcs are directed right:
-	//    1   3---5
-	//   / \ /   /
-	//  2   4---6--\
-	//           \-/
-	g := graph.Directed{graph.AdjacencyList{
-		2: {1},
-		1: {4},
-		4: {3, 6},
-		3: {5},
-		6: {5, 6},
-	}}
-	t, m := g.Transpose()
-	b := graph.NewBreadthFirst2(g.AdjacencyList, t.AdjacencyList, m)
-	b.AllPaths(1)
-	fmt.Println("Max path length:", b.Result.MaxLen)
-	p := make([]graph.NI, b.Result.MaxLen)
-	for n := range b.To {
-		fmt.Println(n, b.Result.PathTo(graph.NI(n), p))
+	var f graph.FromList
+	graph.BreadthFirst2(g, nil, 0, 1, &f, func(n graph.NI) bool {
+		return true
+	})
+	fmt.Println("Max path length:", f.MaxLen)
+	p := make([]graph.NI, f.MaxLen)
+	for n := range g {
+		fmt.Println(n, f.PathTo(graph.NI(n), p))
 	}
 	// Output:
 	// Max path length: 4
@@ -890,9 +841,9 @@ func testSSSP(tc testCase, t *testing.T) {
 		t.Fatal("bfs all paths returned", np, "recount:", npf)
 	}
 	// breadth first 2
-	bfs2 := graph.NewBreadthFirst2(tc.g.AdjacencyList, tc.t.AdjacencyList, tc.m)
-	np2 := bfs2.AllPaths(tc.start)
-	bfs2r := bfs2.Result
+	var bfs2r graph.FromList
+	np2 := graph.BreadthFirst2(tc.g.AdjacencyList, tc.t.AdjacencyList, tc.m,
+		tc.start, &bfs2r, func(n graph.NI) bool { return true })
 	var ml2, npf2 int
 	for i, e := range bfsr.Paths {
 		bl2 := bfs2r.Paths[i].Len

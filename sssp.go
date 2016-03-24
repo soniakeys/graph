@@ -441,6 +441,7 @@ func (g LabeledDirected) NegativeCycle(w WeightFunc) bool {
 // returns false, the traversal will terminate immediately.
 type Visitor func(n NI) (ok bool)
 
+/*
 // BreadthFirst2 methods implement a direction-optimized strategy.
 // Code is experimental and currently is no faster than basic BreadthFirst.
 type BreadthFirst2 struct {
@@ -481,37 +482,55 @@ func (b *BreadthFirst2) Path(start, end NI) bool {
 func (b *BreadthFirst2) AllPaths(start NI) int {
 	return b.Traverse(start, func(NI) bool { return true })
 }
+*/
 
-func (b *BreadthFirst2) Traverse(start NI, v Visitor) int {
-	b.Result.reset()
-	rp := b.Result.Paths
+// BreadthFirst2 traverses a graph in breadth first using a direction
+// optimizing algorithm.
+//
+// The code is experimental and currently seems no faster than the
+// conventional breadth first code.
+//
+// Use AdjacencyList.BreadthFirst instead.
+func BreadthFirst2(g, tr AdjacencyList, ma int, start NI, f *FromList, v Visitor) int {
+	if tr == nil {
+		var d Directed
+		d, ma = Directed{g}.Transpose()
+		tr = d.AdjacencyList
+	}
+	if f == nil || len(f.Paths) != len(g) {
+		*f = NewFromList(len(g))
+	}
+	if ma <= 0 {
+		ma = g.ArcSize()
+	}
+	rp := f.Paths
 	level := 1
 	rp[start] = PathEnd{Len: level, From: -1}
 	if !v(start) {
-		b.Result.MaxLen = level
+		f.MaxLen = level
 		return -1
 	}
 	nReached := 1 // accumulated for a return value
 	// the frontier consists of nodes all at the same level
 	frontier := []NI{start}
-	mf := len(b.To[start])         // number of arcs leading out from frontier
-	ctb := b.MArc / 10             // threshold change from top-down to bottom-up
-	k14 := 14 * b.MArc / len(b.To) // 14 * mean degree
-	cbt := len(b.To) / k14         // threshold change from bottom-up to top-down
+	mf := len(g[start])     // number of arcs leading out from frontier
+	ctb := ma / 10          // threshold change from top-down to bottom-up
+	k14 := 14 * ma / len(g) // 14 * mean degree
+	cbt := len(g) / k14     // threshold change from bottom-up to top-down
 	//	var fBits, nextb big.Int
-	fBits := make([]bool, len(b.To))
-	nextb := make([]bool, len(b.To))
-	zBits := make([]bool, len(b.To))
+	fBits := make([]bool, len(g))
+	nextb := make([]bool, len(g))
+	zBits := make([]bool, len(g))
 	for {
 		// top down step
 		level++
 		var next []NI
 		for _, n := range frontier {
-			for _, nb := range b.To[n] {
+			for _, nb := range g[n] {
 				if rp[nb].Len == 0 {
 					rp[nb] = PathEnd{From: n, Len: level}
 					if !v(nb) {
-						b.Result.MaxLen = level
+						f.MaxLen = level
 						return -1
 					}
 					next = append(next, nb)
@@ -539,14 +558,14 @@ func (b *BreadthFirst2) Traverse(start NI, v Visitor) int {
 	bottomUpLoop:
 		level++
 		nNext := 0
-		for n := range b.From {
+		for n := range tr {
 			if rp[n].Len == 0 {
-				for _, nb := range b.From[n] {
+				for _, nb := range tr[n] {
 					//					if fBits.Bit(nb) == 1 {
 					if fBits[nb] {
 						rp[n] = PathEnd{From: nb, Len: level}
 						if !v(nb) {
-							b.Result.MaxLen = level
+							f.MaxLen = level
 							return -1
 						}
 						//						nextb.SetBit(&nextb, n, 1)
@@ -574,17 +593,17 @@ func (b *BreadthFirst2) Traverse(start NI, v Visitor) int {
 		// convert frontier representation
 		mf = 0
 		frontier = frontier[:0]
-		for n := range b.To {
+		for n := range g {
 			//			if fBits.Bit(n) == 1 {
 			if fBits[n] {
 				frontier = append(frontier, NI(n))
-				mf += len(b.To[n])
+				mf += len(g[n])
 				fBits[n] = false
 			}
 		}
 		//		fBits.SetInt64(0)
 	}
-	b.Result.MaxLen = level - 1
+	f.MaxLen = level - 1
 	return nReached
 }
 
