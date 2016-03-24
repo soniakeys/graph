@@ -128,6 +128,7 @@ func (l WeightedEdgeList) KruskalSorted() (g LabeledUndirected, dist float64) {
 	return
 }
 
+/*
 // Prim implements the Jarník-Prim-Dijkstra algorithm for constructing
 // a minimum spanning tree on an undirected graph.
 //
@@ -157,39 +158,7 @@ func NewPrim(g LabeledUndirected, w WeightFunc) *Prim {
 		best:   b,
 	}
 }
-
-// fromHalf is a half arc, representing a labeled arc and the "neighbor" node
-// that the arc originates from.
-//
-// (This used to be exported when there was a LabeledFromList.  Currently
-// unexported now that it seems to have much more limited use.)
-type fromHalf struct {
-	From  NI
-	Label LI
-}
-
-type prNode struct {
-	nx   NI
-	from fromHalf
-	wt   float64 // p.Weight(from.Label)
-	fx   int
-}
-
-type prHeap []*prNode
-
-// Reset clears results of Span, allowing results to be recomputed.
-//
-// Reset is not meaningful following a change to the number of nodes in the
-// graph.  To recompute following addition or deletion of nodes, simply
-// abandon the Prim object and create a new one.
-func (p *Prim) Reset() {
-	p.Forest.reset()
-	b := p.best
-	for n := range b {
-		b[n].fx = -1
-	}
-}
-
+*/
 // Span computes a minimal spanning tree on the connected component containing
 // the given start node.
 //
@@ -211,30 +180,44 @@ func (p *Prim) Reset() {
 // Returned are the number of nodes spanned for the single tree (which will be
 // the order of the connected component) and the total spanned distance for the
 // single tree.
-func (p *Prim) Span(start NI, leaves *big.Int) (numSpanned int, dist float64) {
-	rp := p.Forest.Paths
+func (g LabeledUndirected) Prim(start NI, w WeightFunc, f *FromList, labels *[]LI, componentLeaves *big.Int) (numSpanned int, dist float64) {
+	b := make([]prNode, len(g.LabeledAdjacencyList)) // "best"
+	for n := range b {
+		b[n].nx = NI(n)
+		b[n].fx = -1
+	}
+	al := g.LabeledAdjacencyList
+	if f == nil || len(f.Paths) != len(al) {
+		fr := NewFromList(len(al))
+		f = &fr
+	}
+	if labels == nil || len(*labels) != len(al) {
+		lb := make([]LI, len(al))
+		labels = &lb
+	}
+	lb := *labels
+	rp := f.Paths
 	var frontier prHeap
 	rp[start] = PathEnd{From: -1, Len: 1}
-	b := p.best
 	numSpanned = 1
-	fLeaves := &p.Forest.Leaves
+	fLeaves := &f.Leaves
 	fLeaves.SetBit(fLeaves, int(start), 1)
-	if leaves != nil {
-		leaves.SetBit(leaves, int(start), 1)
+	if componentLeaves != nil {
+		componentLeaves.SetBit(componentLeaves, int(start), 1)
 	}
 	for a := start; ; {
-		for _, nb := range p.Graph.LabeledAdjacencyList[a] {
+		for _, nb := range al[a] {
 			if rp[nb.To].Len > 0 {
 				continue // already in MST, no action
 			}
 			switch bp := &b[nb.To]; {
 			case bp.fx == -1: // new node for frontier
 				bp.from = fromHalf{From: a, Label: nb.Label}
-				bp.wt = p.Weight(nb.Label)
+				bp.wt = w(nb.Label)
 				heap.Push(&frontier, bp)
-			case p.Weight(nb.Label) < bp.wt: // better arc
+			case w(nb.Label) < bp.wt: // better arc
 				bp.from = fromHalf{From: a, Label: nb.Label}
-				bp.wt = p.Weight(nb.Label)
+				bp.wt = w(nb.Label)
 				heap.Fix(&frontier, bp.fx)
 			}
 		}
@@ -245,18 +228,37 @@ func (p *Prim) Span(start NI, leaves *big.Int) (numSpanned int, dist float64) {
 		a = bp.nx
 		rp[a].Len = rp[bp.from.From].Len + 1
 		rp[a].From = bp.from.From
-		p.Labels[a] = bp.from.Label
+		lb[a] = bp.from.Label
 		dist += bp.wt
 		fLeaves.SetBit(fLeaves, int(bp.from.From), 0)
 		fLeaves.SetBit(fLeaves, int(a), 1)
-		if leaves != nil {
-			leaves.SetBit(leaves, int(bp.from.From), 0)
-			leaves.SetBit(leaves, int(a), 1)
+		if componentLeaves != nil {
+			componentLeaves.SetBit(componentLeaves, int(bp.from.From), 0)
+			componentLeaves.SetBit(componentLeaves, int(a), 1)
 		}
 		numSpanned++
 	}
 	return
 }
+
+// fromHalf is a half arc, representing a labeled arc and the "neighbor" node
+// that the arc originates from.
+//
+// (This used to be exported when there was a LabeledFromList.  Currently
+// unexported now that it seems to have much more limited use.)
+type fromHalf struct {
+	From  NI
+	Label LI
+}
+
+type prNode struct {
+	nx   NI
+	from fromHalf
+	wt   float64 // p.Weight(from.Label)
+	fx   int
+}
+
+type prHeap []*prNode
 
 func (h prHeap) Len() int           { return len(h) }
 func (h prHeap) Less(i, j int) bool { return h[i].wt < h[j].wt }

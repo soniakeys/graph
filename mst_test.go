@@ -86,7 +86,7 @@ func ExampleWeightedEdgeList_KruskalSorted() {
 	// total distance:  110
 }
 
-func ExamplePrim_Span() {
+func ExampleLabeledUndirected_Prim() {
 	// graph:
 	//
 	//  (2)     (3)
@@ -115,15 +115,16 @@ func ExamplePrim_Span() {
 		fmt.Printf("%d %20d\n", r, orders[i])
 	}
 
-	// construct prim object
-	p := graph.NewPrim(g, w)
+	a := g.LabeledAdjacencyList
+	f := graph.NewFromList(len(a))
+	labels := make([]graph.LI, len(a))
 
 	// construct spanning tree for each component
 	fmt.Println("Span results:")
 	fmt.Println("Root  Nodes spanned  Total tree distance  Leaves")
 	for _, r := range reps {
 		var leaves big.Int
-		ns, dist := p.Span(r, &leaves)
+		ns, dist := g.Prim(r, w, &f, &labels, &leaves)
 		// collect leaf node ints from bitmap
 		var ll []int
 		n := graph.NextOne(&leaves, 0)
@@ -137,13 +138,13 @@ func ExamplePrim_Span() {
 	// show final forest
 	fmt.Println("Spanning forest:")
 	fmt.Println("Node  From  Arc distance  Path length  Leaf")
-	for n, pe := range p.Forest.Paths {
+	for n, pe := range f.Paths {
 		fmt.Printf("%d %8d %13.0f %12d %5d\n",
-			n, pe.From, w(p.Labels[n]), pe.Len, p.Forest.Leaves.Bit(n))
+			n, pe.From, w(labels[n]), pe.Len, f.Leaves.Bit(n))
 	}
 
 	// optionally, convert to undirected graph
-	u := p.Forest.TransposeLabeled(p.Labels).Undirected()
+	u := f.TransposeLabeled(labels).Undirected()
 	fmt.Println("Equivalent undirected graph:")
 	for fr, to := range u.LabeledAdjacencyList {
 		fmt.Printf("%d:  %#v\n", fr, to)
@@ -177,11 +178,11 @@ var u100 = r100.l.Undirected()
 
 func TestPrim100(t *testing.T) {
 	reps, orders := u100.ConnectedComponentReps()
-	p := graph.NewPrim(u100, func(l graph.LI) float64 { return r100.w[l] })
+	w := func(l graph.LI) float64 { return r100.w[l] }
 
 	// construct spanning tree for each component
 	for i, r := range reps {
-		ns, _ := p.Span(r, nil)
+		ns, _ := u100.Prim(r, w, nil, nil, nil)
 		if ns != orders[i] {
 			t.Fatal("Not all nodes spanned within a connected component.")
 		}
@@ -190,11 +191,10 @@ func TestPrim100(t *testing.T) {
 
 func BenchmarkPrim100(b *testing.B) {
 	reps, _ := u100.ConnectedComponentReps()
-	p := graph.NewPrim(u100, func(l graph.LI) float64 { return r100.w[l] })
+	w := func(l graph.LI) float64 { return r100.w[l] }
 	for i := 0; i < b.N; i++ {
-		p.Reset()
 		for _, r := range reps {
-			p.Span(r, nil)
+			u100.Prim(r, w, nil, nil, nil)
 		}
 	}
 }
