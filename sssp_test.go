@@ -363,7 +363,7 @@ func ExampleBreadthFirst2_allPaths() {
 	// 6 [1 4 6]
 }
 
-func ExampleDAGPath_AllPaths() {
+func ExampleLabeledDirected_DAGOptimalPaths_allShortestPaths() {
 	// arcs are directed right:
 	//   (11)
 	// 0------2         4
@@ -386,18 +386,18 @@ func ExampleDAGPath_AllPaths() {
 		9: {},
 	}}
 	o := []graph.NI{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
-	d := graph.NewDAGPath(g, o,
-		func(l graph.LI) float64 { return float64(l) },
-		false)
-	reached := d.AllPaths(3)
+	w := func(l graph.LI) float64 { return float64(l) }
+	// find all shortest paths from 3
+	var start, end graph.NI = 3, -1
+	f, dist, reached := g.DAGOptimalPaths(start, end, o, w, false)
 	fmt.Println("node  path dist  path len  leaf")
-	for n, pd := range d.Dist {
+	for n, pd := range dist {
 		fmt.Printf("%d  %9.0f  %9d %7d\n",
-			n, pd, d.Forest.Paths[n].Len, d.Forest.Leaves.Bit(n))
+			n, pd, f.Paths[n].Len, f.Leaves.Bit(n))
 	}
 	fmt.Println()
 	fmt.Println("Nodes reached:       ", reached)
-	fmt.Println("Max path len:        ", d.Forest.MaxLen)
+	fmt.Println("Max path len:        ", f.MaxLen)
 	// Output:
 	// node  path dist  path len  leaf
 	// 0          0          0       0
@@ -413,82 +413,6 @@ func ExampleDAGPath_AllPaths() {
 	//
 	// Nodes reached:        6
 	// Max path len:         4
-}
-
-func ExampleDAGPath_Path_shortest() {
-	// arcs are directed right:
-	//             4
-	//        (-3)/ \(-2)
-	//           /   \
-	//    (10)  /     \   (5)    (10)
-	// 3-------1-------0-------6-------2
-	//           (-10)  \     /
-	//                   \   /
-	//                 (2)\ /(3)
-	//                     5
-	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
-		0: {{To: 5, Label: 2}, {6, 5}},
-		1: {{0, -10}, {4, -3}},
-		3: {{1, 10}},
-		4: {{0, -2}},
-		5: {{6, 3}},
-		6: {{2, 10}},
-	}}
-	o, _ := g.Topological()
-	fmt.Println("Ordering:", o)
-	d := graph.NewDAGPath(g, o,
-		func(l graph.LI) float64 { return float64(l) },
-		false)
-	var start, end graph.NI = 3, 2
-	if !d.Path(start, end) {
-		fmt.Println("not found")
-	}
-	fmt.Println("Path length:", d.Forest.Paths[end].Len)
-	fmt.Println("Path:", d.Forest.PathTo(end, nil))
-	fmt.Println("Distance:", d.Dist[end])
-	// Output:
-	// Ordering: [3 1 4 0 5 6 2]
-	// Path length: 5
-	// Path: [3 1 0 6 2]
-	// Distance: 15
-}
-
-func ExampleDAGPath_Path_longest() {
-	// arcs are directed right:
-	//             4
-	//        (-3)/ \(-2)
-	//           /   \
-	//    (10)  /     \   (5)    (10)
-	// 3-------1-------0-------6-------2
-	//           (-10)  \     /
-	//                   \   /
-	//                 (2)\ /(3)
-	//                     5
-	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
-		0: {{To: 5, Label: 2}, {6, 5}},
-		1: {{0, -10}, {4, -3}},
-		3: {{1, 10}},
-		4: {{0, -2}},
-		5: {{6, 3}},
-		6: {{2, 10}},
-	}}
-	o, _ := g.Topological()
-	fmt.Println("Ordering:", o)
-	d := graph.NewDAGPath(g, o,
-		func(l graph.LI) float64 { return float64(l) },
-		true)
-	var start, end graph.NI = 3, 2
-	if !d.Path(start, end) {
-		fmt.Println("not found")
-	}
-	fmt.Println("Path length:", d.Forest.Paths[end].Len)
-	fmt.Println("Path:", d.Forest.PathTo(end, nil))
-	fmt.Println("Distance:", d.Dist[end])
-	// Output:
-	// Ordering: [3 1 4 0 5 6 2]
-	// Path length: 7
-	// Path: [3 1 4 0 5 6 2]
-	// Distance: 20
 }
 
 func ExampleLabeledDirected_DAGMinDistPath() {
