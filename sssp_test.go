@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
-	"sort"
 	"testing"
 
 	"github.com/soniakeys/graph"
@@ -508,135 +507,7 @@ func ExampleLabeledAdjacencyList_DijkstraPath() {
 	// Path distance: 20
 }
 
-func ExampleDijkstra_Path() {
-	// arcs are directed right:
-	//          (wt: 11)
-	//       --------------6----
-	//      /             /     \
-	//     /             /(2)    \(9)
-	//    /     (9)     /         \
-	//   1-------------3----       5
-	//    \           /     \     /
-	//     \     (10)/   (11)\   /(7)
-	//   (7)\       /         \ /
-	//       ------2-----------4
-	//                 (15)
-	g := graph.LabeledAdjacencyList{
-		1: {{To: 2, Label: 7}, {To: 3, Label: 9}, {To: 6, Label: 11}},
-		2: {{To: 3, Label: 10}, {To: 4, Label: 15}},
-		3: {{To: 4, Label: 11}, {To: 6, Label: 2}},
-		4: {{To: 5, Label: 7}},
-		6: {{To: 5, Label: 9}},
-	}
-	w := func(label graph.LI) float64 { return float64(label) }
-	d := graph.NewDijkstra(g, w)
-	var start, end graph.NI = 1, 5
-	if d.Path(start, end) {
-		fmt.Println("Path", d.Forest.PathTo(end, nil), "distance", d.Dist[end])
-	}
-	// Output:
-	// Path [1 6 5] distance 20
-}
-
-func ExampleNewDijkstra_consecutive() {
-	// arcs are directed right:
-	//          (wt: 11)
-	//       --------------6----
-	//      /             /     \
-	//     /             /(2)    \(9)
-	//    /     (9)     /         \
-	//   1-------------3----       5
-	//    \           /     \     /
-	//     \     (10)/   (11)\   /(7)
-	//   (7)\       /         \ /
-	//       ------2-----------4
-	//                 (15)
-	g := graph.LabeledAdjacencyList{
-		1: {{To: 2, Label: 7}, {To: 3, Label: 9}, {To: 6, Label: 11}},
-		2: {{To: 3, Label: 10}, {To: 4, Label: 15}},
-		3: {{To: 4, Label: 11}, {To: 6, Label: 2}},
-		4: {{To: 5, Label: 7}},
-		6: {{To: 5, Label: 9}},
-	}
-	w := func(label graph.LI) float64 { return float64(label) }
-	d := graph.NewDijkstra(g, w)
-	out := func(d *graph.Dijkstra, end graph.NI) {
-		fmt.Println(
-			"Path", d.Forest.PathTo(end, nil), "distance", d.Dist[end])
-	}
-	if d.Path(1, 5) {
-		out(d, 5)
-	}
-	d.Reset()
-	if d.Path(2, 5) {
-		out(d, 5)
-	}
-	// Output:
-	// Path [1 6 5] distance 20
-	// Path [2 3 6 5] distance 21
-}
-
-func ExampleNewDijkstra_concurrent() {
-	// arcs are directed right:
-	//          (wt: 11)
-	//       --------------6----
-	//      /             /     \
-	//     /             /(2)    \(9)
-	//    /     (9)     /         \
-	//   1-------------3----       5
-	//    \           /     \     /
-	//     \     (10)/   (11)\   /(7)
-	//   (7)\       /         \ /
-	//       ------2-----------4
-	//                 (15)
-	g := graph.LabeledAdjacencyList{
-		1: {{To: 2, Label: 7}, {To: 3, Label: 9}, {To: 6, Label: 11}},
-		2: {{To: 3, Label: 10}, {To: 4, Label: 15}},
-		3: {{To: 4, Label: 11}, {To: 6, Label: 2}},
-		4: {{To: 5, Label: 7}},
-		6: {{To: 5, Label: 9}},
-	}
-	w := func(label graph.LI) float64 { return float64(label) }
-
-	// result channel
-	type result struct {
-		d   *graph.Dijkstra
-		end graph.NI
-		ok  bool
-	}
-	ch := make(chan result)
-
-	// Start two concurrent goroutines.  Each goroutine gets it's own
-	// Dijkstra struct, but they search the same graph.
-	f := func(d *graph.Dijkstra, start, end graph.NI) {
-		ch <- result{d, end, d.Path(start, end)}
-	}
-	go f(graph.NewDijkstra(g, w), 1, 5)
-	go f(graph.NewDijkstra(g, w), 2, 5)
-
-	var out []string // to sort formatted output
-
-	// format results from the two goroutines
-	for i := 0; i < 2; i++ {
-		if r := <-ch; r.ok {
-			out = append(out, fmt.Sprintln(
-				"Path", r.d.Forest.PathTo(r.end, nil),
-				"distance", r.d.Dist[r.end]))
-		}
-	}
-
-	// sort for determinism to pass go test
-	sort.Strings(out)
-	for _, l := range out {
-		fmt.Print(l)
-	}
-
-	// Output:
-	// Path [1 6 5] distance 20
-	// Path [2 3 6 5] distance 21
-}
-
-func ExampleDijkstra_AllPaths() {
+func ExampleLabeledAdjacencyList_Dijkstra_allPaths() {
 	// arcs are directed right:
 	//       -----------------------
 	//      /      (wt: 14)         \
@@ -657,18 +528,17 @@ func ExampleDijkstra_AllPaths() {
 		5: {},
 	}
 	w := func(label graph.LI) float64 { return float64(label) }
-	d := graph.NewDijkstra(g, w)
-	fmt.Println(d.AllPaths(2), "paths found.")
-	// column len is from Result, and will be equal to len(path).
-	// column dist is from Result, and will be equal to sum.
+	start := graph.NI(2)
+	f, dist, n := g.Dijkstra(start, -1, w)
+	fmt.Println(n, "paths found.")
 	fmt.Println("node:  path                  len  dist")
-	p := make([]graph.NI, d.Forest.MaxLen)
+	p := make([]graph.NI, f.MaxLen)
 	for nd := range g {
-		r := &d.Forest.Paths[nd]
-		path := d.Forest.PathTo(graph.NI(nd), p)
+		r := &f.Paths[nd]
+		path := f.PathTo(graph.NI(nd), p)
 		if r.Len > 0 {
 			fmt.Printf("%d:     %-23s %d    %2.0f\n",
-				nd, fmt.Sprint(path), r.Len, d.Dist[nd])
+				nd, fmt.Sprint(path), r.Len, dist[nd])
 		}
 	}
 
@@ -687,22 +557,9 @@ func TestSSSP(t *testing.T) {
 
 func testSSSP(tc testCase, t *testing.T) {
 	w := func(label graph.LI) float64 { return tc.w[label] }
-	d := graph.NewDijkstra(tc.l.LabeledAdjacencyList, w)
-	d.Path(tc.start, tc.end)
-	pathD := d.Forest.PathTo(tc.end, nil)
-	distD := d.Dist[tc.end]
-	// test that repeating same search on same d gives same result
-	d.Path(tc.start, tc.end)
-	path2 := d.Forest.PathTo(tc.end, nil)
-	dist2 := d.Dist[tc.end]
-	if len(pathD) != len(path2) || distD != dist2 {
-		t.Fatal(len(tc.w), "D, D2 len or dist mismatch")
-	}
-	for i, half := range pathD {
-		if path2[i] != half {
-			t.Fatal(len(tc.w), "D, D2 path mismatch")
-		}
-	}
+	f, dist, _ := tc.l.LabeledAdjacencyList.Dijkstra(tc.start, tc.end, w)
+	pathD := f.PathTo(tc.end, nil)
+	distD := dist[tc.end]
 	// A*
 	pathA, distA := tc.l.AStarAPath(tc.start, tc.end, tc.h, w)
 	// test that a* path is same distance and length as dijkstra path
@@ -718,11 +575,9 @@ func testSSSP(tc testCase, t *testing.T) {
 		t.Fatal(len(tc.w), "A, D dist mismatch")
 	}
 	// test Bellman Ford against Dijkstra all paths
-	d.Reset()
-	d.AllPaths(tc.start)
+	dr, _, _ := tc.l.LabeledAdjacencyList.Dijkstra(tc.start, -1, w)
 	br, _, _ := tc.l.BellmanFord(w, tc.start)
 	// result objects should be identical
-	dr := d.Forest
 	if len(dr.Paths) != len(br.Paths) {
 		t.Fatal("len(dr.Paths), len(br.Paths)",
 			len(dr.Paths), len(br.Paths))
@@ -738,10 +593,8 @@ func testSSSP(tc testCase, t *testing.T) {
 	}
 	*/
 	// breadth first, compare to dijkstra with unit weights
-	d.Weight = func(graph.LI) float64 { return 1 }
-	d.Reset()
-	d.AllPaths(tc.start)
-	ur := d.Forest
+	w = func(graph.LI) float64 { return 1 }
+	ur, _, _ := tc.l.LabeledAdjacencyList.Dijkstra(tc.start, -1, w)
 	var bfsr graph.FromList
 	np, _ := tc.g.AdjacencyList.BreadthFirst(tc.start, nil, &bfsr,
 		func(n graph.NI) bool { return true })
