@@ -336,86 +336,49 @@ func (p *openHeap) Pop() interface{} {
 	return h[last]
 }
 
-// A BellmanFord object allows shortest path searches using the
-// Bellman-Ford-Moore algorithm.
-type BellmanFord struct {
-	Graph  LabeledAdjacencyList
-	Weight WeightFunc
-	Forest FromList
-	Dist   []float64
-}
-
-// NewBellmanFord creates a BellmanFord object that allows shortest path
-// searches using the Bellman-Ford-Moore algorithm.
+// BellmanFord finds shortest paths from a start node in a directed graph
+// using the Bellman-Ford-Moore algorithm.
 //
-// Argument g is the graph to be searched, as a labeled adjacency list.
+// Argument g is the graph to be searched, as a labeled directed graph.
 // WeightFunc w must translate arc labels to arc weights.
-// Negative arc weights are allowed as long as there are no negative cycles.
-// Graphs may be directed or undirected.  Loops and parallel arcs are
-// allowed.
+// Negative arc weights are allowed but not negative cycles.
+// Loops and parallel arcs are allowed.
 //
-// The graph g will not be modified by any BellmanFord methods.  NewBellmanFord
-// initializes the BellmanFord object for the order (number of nodes) of g.
-// If you add nodes to your graph, abandon any previously created BellmanFord
-// object and call NewBellmanFord again.
+// If the algorithm completes without encountering a negative cycle the method
+// returns shortest paths encoded in a FromList, path distances indexed by
+// node, and ok = true.
 //
-// Searches on a single BellmanFord object can be run consecutively but not
-// concurrently.  Searches can be run concurrently however, on BellmanFord
-// objects obtained with separate calls to NewBellmanFord, even with the same
-// graph argument to NewBellmanFord.
-func NewBellmanFord(g LabeledAdjacencyList, w WeightFunc) *BellmanFord {
-	return &BellmanFord{
-		Graph:  g,
-		Weight: w,
-		Forest: NewFromList(len(g)),
-		Dist:   make([]float64, len(g)),
-	}
-}
-
-// Reset zeros results from any previous search.
-//
-// It leaves the graph and weight function initialized and otherwise prepares
-// the receiver for another search.
-func (b *BellmanFord) Reset() {
-	b.Forest.reset()
-	for i := range b.Dist {
-		b.Dist[i] = 0
-	}
-}
-
-// Start runs the BellmanFord algorithm to finds shortest paths from start
-// to all nodes reachable from start.
-//
-// The algorithm allows negative edge weights but not negative cycles.
-// Start returns true if the algorithm completes successfully.  In this case
-// FromList b.Forest will encode the shortest paths found.
-//
-// Start returns false in the case that it encounters a negative cycle
-// reachable from start.  In this case values in b.Forest are meaningless.
+// If it encounters a negative cycle reachable from start it returns ok = false.
+// In this case values in b.Forest are meaningless.
 //
 // Negative cycles are only detected when reachable from start.  A negative
 // cycle not reachable from start will not prevent the algorithm from finding
 // shortest paths reachable from start.
-func (b *BellmanFord) Start(start NI) (ok bool) {
+//
+// See also NegativeCycle.
+func (g LabeledDirected) BellmanFord(w WeightFunc, start NI) (f FromList, dist []float64, ok bool) {
+	a := g.LabeledAdjacencyList
+	f = NewFromList(len(a))
+	dist = make([]float64, len(a))
 	inf := math.Inf(1)
-	for i := range b.Dist {
-		b.Dist[i] = inf
+	for i := range dist {
+		dist[i] = inf
 	}
-	rp := b.Forest.Paths
+	rp := f.Paths
 	rp[start] = PathEnd{Len: 1, From: -1}
-	b.Dist[start] = 0
-	for _ = range b.Graph[1:] {
+	dist[start] = 0
+	for _ = range a[1:] {
 		imp := false
-		for from, nbs := range b.Graph {
+		for from, nbs := range a {
 			fp := &rp[from]
-			d1 := b.Dist[from]
+			d1 := dist[from]
 			for _, nb := range nbs {
-				d2 := d1 + b.Weight(nb.Label)
+				d2 := d1 + w(nb.Label)
 				to := &rp[nb.To]
 				// TODO improve to break ties
-				if fp.Len > 0 && d2 < b.Dist[nb.To] {
+				if fp.Len > 0 && d2 < dist[nb.To] {
 					*to = PathEnd{From: NI(from), Len: fp.Len + 1}
-					b.Dist[nb.To] = d2
+					dist[nb.To] = d2
 					imp = true
 				}
 			}
@@ -424,34 +387,34 @@ func (b *BellmanFord) Start(start NI) (ok bool) {
 			break
 		}
 	}
-	for from, nbs := range b.Graph {
-		d1 := b.Dist[from]
+	for from, nbs := range a {
+		d1 := dist[from]
 		for _, nb := range nbs {
-			if d1+b.Weight(nb.Label) < b.Dist[nb.To] {
-				return false // negative cycle
+			if d1+w(nb.Label) < dist[nb.To] {
+				return // negative cycle
 			}
 		}
 	}
-	return true
+	return f, dist, true
 }
 
 // NegativeCycle returns true if the graph contains any negative cycle.
 //
 // Path information is not computed.
 //
-// Note the sense of the returned value is opposite that of BellmanFord.Start().
-func (b *BellmanFord) NegativeCycle() bool {
-	for i := range b.Dist {
-		b.Dist[i] = 0
-	}
-	for _ = range b.Graph[1:] {
+// See also BellmanFord, but note the sense of the returned bool is opposite
+// that of BellmanFord.
+func (g LabeledDirected) NegativeCycle(w WeightFunc) bool {
+	a := g.LabeledAdjacencyList
+	dist := make([]float64, len(a))
+	for _ = range a[1:] {
 		imp := false
-		for from, nbs := range b.Graph {
-			d1 := b.Dist[from]
+		for from, nbs := range a {
+			d1 := dist[from]
 			for _, nb := range nbs {
-				d2 := d1 + b.Weight(nb.Label)
-				if d2 < b.Dist[nb.To] {
-					b.Dist[nb.To] = d2
+				d2 := d1 + w(nb.Label)
+				if d2 < dist[nb.To] {
+					dist[nb.To] = d2
 					imp = true
 				}
 			}
@@ -460,10 +423,10 @@ func (b *BellmanFord) NegativeCycle() bool {
 			break
 		}
 	}
-	for from, nbs := range b.Graph {
-		d1 := b.Dist[from]
+	for from, nbs := range a {
+		d1 := dist[from]
 		for _, nb := range nbs {
-			if d1+b.Weight(nb.Label) < b.Dist[nb.To] {
+			if d1+w(nb.Label) < dist[nb.To] {
 				return true // negative cycle
 			}
 		}

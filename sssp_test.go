@@ -131,7 +131,7 @@ func ExampleHeuristic_Monotonic() {
 	// true
 }
 
-func ExampleBellmanFord() {
+func ExampleLabeledDirected_BellmanFord() {
 	//              /--------3        4<-------9
 	//              |        ^        |   (6)  ^
 	//              |(1)     |        |        |
@@ -143,7 +143,7 @@ func ExampleBellmanFord() {
 	//  |           |(-4)    |(-1)
 	//  v     (1)   |        |
 	//  8---------->7--------/
-	g := graph.LabeledAdjacencyList{
+	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
 		1: {{2, 10}, {8, 8}},
 		2: {{6, 2}},
 		3: {{2, 1}},
@@ -153,25 +153,25 @@ func ExampleBellmanFord() {
 		7: {{6, -1}, {2, -4}},
 		8: {{7, 1}},
 		9: {{4, 6}},
-	}
+	}}
 	w := func(label graph.LI) float64 { return float64(label) }
-	b := graph.NewBellmanFord(g, w)
 	// graph contains negative cycle somewhere
-	fmt.Println("negative cycle:", b.NegativeCycle())
+	fmt.Println("negative cycle:", g.NegativeCycle(w))
 
 	// but negative cycle not reached starting at node 1
 	start := graph.NI(1)
 	fmt.Println("start:", start)
-	if !b.Start(start) {
+	f, dist, ok := g.BellmanFord(w, start)
+	if !ok {
 		fmt.Println("negative cycle")
 		return
 	}
 	fmt.Println("end   path  path")
 	fmt.Println("node  len   dist   path")
-	p := make([]graph.NI, b.Forest.MaxLen)
-	for n, e := range b.Forest.Paths {
+	p := make([]graph.NI, f.MaxLen)
+	for n, e := range f.Paths {
 		fmt.Printf("%d       %d   %4.0f   %d\n",
-			n, e.Len, b.Dist[n], b.Forest.PathTo(graph.NI(n), p))
+			n, e.Len, dist[n], f.PathTo(graph.NI(n), p))
 	}
 	// Output:
 	// negative cycle: true
@@ -844,11 +844,9 @@ func testSSSP(tc testCase, t *testing.T) {
 	// test Bellman Ford against Dijkstra all paths
 	d.Reset()
 	d.AllPaths(tc.start)
-	b := graph.NewBellmanFord(tc.l.LabeledAdjacencyList, w)
-	b.Start(tc.start)
+	br, _, _ := tc.l.BellmanFord(w, tc.start)
 	// result objects should be identical
 	dr := d.Forest
-	br := b.Forest
 	if len(dr.Paths) != len(br.Paths) {
 		t.Fatal("len(dr.Paths), len(br.Paths)",
 			len(dr.Paths), len(br.Paths))
