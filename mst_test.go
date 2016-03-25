@@ -124,7 +124,7 @@ func ExampleLabeledUndirected_Prim() {
 	fmt.Println("Root  Nodes spanned  Total tree distance  Leaves")
 	for _, r := range reps {
 		var leaves big.Int
-		ns, dist := g.Prim(r, w, &f, &labels, &leaves)
+		ns, dist := g.Prim(r, w, &f, labels, &leaves)
 		// collect leaf node ints from bitmap
 		var ll []int
 		n := graph.NextOne(&leaves, 0)
@@ -179,10 +179,10 @@ var u100 = r100.l.Undirected()
 func TestPrim100(t *testing.T) {
 	reps, orders := u100.ConnectedComponentReps()
 	w := func(l graph.LI) float64 { return r100.w[l] }
-
+	var f graph.FromList
 	// construct spanning tree for each component
 	for i, r := range reps {
-		ns, _ := u100.Prim(r, w, nil, nil, nil)
+		ns, _ := u100.Prim(r, w, &f, nil, nil)
 		if ns != orders[i] {
 			t.Fatal("Not all nodes spanned within a connected component.")
 		}

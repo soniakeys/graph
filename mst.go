@@ -128,74 +128,37 @@ func (l WeightedEdgeList) KruskalSorted() (g LabeledUndirected, dist float64) {
 	return
 }
 
-/*
 // Prim implements the Jarník-Prim-Dijkstra algorithm for constructing
 // a minimum spanning tree on an undirected graph.
 //
-// Construct with NewPrim.
-type Prim struct {
-	Graph  LabeledUndirected
-	Weight WeightFunc
-	Forest FromList
-	Labels []LI
-
-	best []prNode // slice backs heap
-}
-
-// NewPrim constructs a new Prim object.  Argument g must be an
-// undirected graph.
-func NewPrim(g LabeledUndirected, w WeightFunc) *Prim {
-	b := make([]prNode, len(g.LabeledAdjacencyList))
-	for n := range b {
-		b[n].nx = NI(n)
-		b[n].fx = -1
-	}
-	return &Prim{
-		Graph:  g,
-		Weight: w,
-		Forest: NewFromList(len(g.LabeledAdjacencyList)),
-		Labels: make([]LI, len(g.LabeledAdjacencyList)),
-		best:   b,
-	}
-}
-*/
-// Span computes a minimal spanning tree on the connected component containing
-// the given start node.
+// Prim computes a minimal spanning tree on the connected component containing
+// the given start node.  The tree is returned in FromList f.  Argument f
+// cannot be a nil pointer although it can point to a zero value FromList.
 //
-// If a graph has multiple connected components, a spanning forest can be
-// accumulated by calling Span successively on representative nodes of the
-// components.
+// If the passed FromList.Paths has the len of g though, it will be reused.
+// In the case of a graph with multiple connected components, this allows a
+// spanning forest to be accumulated by calling Prim successively on
+// representative nodes of the components.  In this case if leaves for
+// individual trees are of interest, pass a non-nil zero-value for the argument
+// componentLeaves and it will be populated with leaves for the single tree
+// spanned by the call.
 //
-// Argument start will become the root of a tree created in the FromList
-// p.Forest.  Leaves of the tree will be set in p.Forest.Leaves.  If the graph
-// consists of a single connected component, or if Span is called for only a
-// single connected component, this will represent leaves of the spanning tree.
-// In this case nil can be passed for the argument leaves.
-//
-// If Span is called multiple times to compute a spanning forest, leaves will
-// accumulate for the forest.  In this case if leaves for individual trees are
-// of interest, pass a non-nil zero-value for the argument leaves and it will
-// be populated with leaves for the single tree spanned by the call.
+// If argument labels is non-nil, it must have the same length as g and will
+// be populated with labels corresponding to the edges of the tree.
 //
 // Returned are the number of nodes spanned for the single tree (which will be
 // the order of the connected component) and the total spanned distance for the
 // single tree.
-func (g LabeledUndirected) Prim(start NI, w WeightFunc, f *FromList, labels *[]LI, componentLeaves *big.Int) (numSpanned int, dist float64) {
-	b := make([]prNode, len(g.LabeledAdjacencyList)) // "best"
+func (g LabeledUndirected) Prim(start NI, w WeightFunc, f *FromList, labels []LI, componentLeaves *big.Int) (numSpanned int, dist float64) {
+	al := g.LabeledAdjacencyList
+	if len(f.Paths) != len(al) {
+		*f = NewFromList(len(al))
+	}
+	b := make([]prNode, len(al)) // "best"
 	for n := range b {
 		b[n].nx = NI(n)
 		b[n].fx = -1
 	}
-	al := g.LabeledAdjacencyList
-	if f == nil || len(f.Paths) != len(al) {
-		fr := NewFromList(len(al))
-		f = &fr
-	}
-	if labels == nil || len(*labels) != len(al) {
-		lb := make([]LI, len(al))
-		labels = &lb
-	}
-	lb := *labels
 	rp := f.Paths
 	var frontier prHeap
 	rp[start] = PathEnd{From: -1, Len: 1}
@@ -228,7 +191,9 @@ func (g LabeledUndirected) Prim(start NI, w WeightFunc, f *FromList, labels *[]L
 		a = bp.nx
 		rp[a].Len = rp[bp.from.From].Len + 1
 		rp[a].From = bp.from.From
-		lb[a] = bp.from.Label
+		if len(labels) != 0 {
+			labels[a] = bp.from.Label
+		}
 		dist += bp.wt
 		fLeaves.SetBit(fLeaves, int(bp.from.From), 0)
 		fLeaves.SetBit(fLeaves, int(a), 1)
