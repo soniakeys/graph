@@ -32,13 +32,15 @@ func euc() {
 	rep := 5
 	pts := make([]plotter.XYer, len(ns))
 	c := 0.
+	top := len(ns) / 2
+	bot := len(ns) - top
+	fmt.Println("fit top", top)
 	for i, n := range ns {
 		g, _, wt, err := graph.LabeledEuclidean(n, n*10, 4, 100, r)
 		if err != nil {
 			log.Fatal(err)
 		}
-		d := graph.NewDijkstra(g.LabeledAdjacencyList,
-			func(l graph.LI) float64 { return wt[l] })
+		w := func(l graph.LI) float64 { return wt[l] }
 		xys := make(plotter.XYs, rep)
 		pts[i] = xys
 		for j := 0; j < rep; j++ {
@@ -51,18 +53,19 @@ func euc() {
 			}
 			b := testing.Benchmark(func(b *testing.B) {
 				for i := 0; i < b.N; i++ {
-					d.AllPaths(start)
-					d.Reset()
+					g.Dijkstra(start, -1, w)
 				}
 			})
 			fmt.Printf("n=%4d, run %d: %v\n", n, j, b)
 			x := float64(n)
 			y := float64(b.NsPerOp()) * .001
 			xys[j] = struct{ X, Y float64 }{x, y}
-			c += y / (x * math.Log(x))
+			if i >= bot {
+				c += y / (x * math.Log(x))
+			}
 		}
 	}
-	c /= float64(len(ns) * rep)
+	c /= float64(top * rep)
 	p, err := plot.New()
 	if err != nil {
 		log.Fatal(err)
@@ -122,16 +125,14 @@ func geo() {
 		radius := math.Sqrt(degree * 2 / (float64(n) * math.Pi))
 		g, _, wt := graph.LabeledGeometric(n, radius, r)
 		fmt.Println("n, m:", n, len(wt))
-		d := graph.NewDijkstra(g.LabeledAdjacencyList,
-			func(l graph.LI) float64 { return wt[l] })
+		w := func(l graph.LI) float64 { return wt[l] }
 		xys := make(plotter.XYs, rep)
 		pts[i] = xys
 		for j := 0; j < rep; j++ {
 			start := graph.NI(r.Intn(n))
 			b := testing.Benchmark(func(b *testing.B) {
 				for i := 0; i < b.N; i++ {
-					d.AllPaths(start)
-					d.Reset()
+					g.Dijkstra(start, -1, w)
 				}
 			})
 			fmt.Printf("run %d: %v\n", j, b)
