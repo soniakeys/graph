@@ -56,10 +56,13 @@ func (g AdjacencyList) BoundsOk() (ok bool, fr NI, to NI) {
 // visited in deterministic order.  If a random number generator is supplied,
 // nodes at each level are visited in random order.
 //
-// If FromList f is nil or has Paths of the wrong length, a new FromList is
-// created and assigned to f.  A valid FromList argument will be used as is.
-// The method uses a value of PathEnd.Len == 0 to indentify unvisited nodes.
-// Existing non-zero values will limit the traversal.
+// Argument f can be nil if you have no interest in the FromList path result.
+// If FromList f is non-nil, the method populates f.Paths and sets f.MaxLen.
+// It does not set f.Leaves.  For convenience argument f can be a zero value
+// FromList.  If f.Paths is nil, the FromList is initialized first.  If f.Paths
+// is non-nil however, the FromList is  used as is.  The method uses a value of
+// PathEnd.Len == 0 to indentify unvisited nodes.  Existing non-zero values
+// will limit the traversal.
 //
 // Traversal calls the visitor function v for each node starting with node
 // start.  If v returns true, traversal continues.  If v returns false, the
@@ -74,7 +77,11 @@ func (g AdjacencyList) BoundsOk() (ok bool, fr NI, to NI) {
 //
 // There are equivalent labeled and unlabeled versions of this method.
 func (g AdjacencyList) BreadthFirst(start NI, r *rand.Rand, f *FromList, v Visitor) (visited int, ok bool) {
-	if f == nil || len(f.Paths) != len(g) {
+	switch {
+	case f == nil:
+		e := NewFromList(len(g))
+		f = &e
+	case f.Paths == nil:
 		*f = NewFromList(len(g))
 	}
 	rp := f.Paths

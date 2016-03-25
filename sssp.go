@@ -440,49 +440,6 @@ func (g LabeledDirected) NegativeCycle(w WeightFunc) bool {
 // returns false, the traversal will terminate immediately.
 type Visitor func(n NI) (ok bool)
 
-/*
-// BreadthFirst2 methods implement a direction-optimized strategy.
-// Code is experimental and currently is no faster than basic BreadthFirst.
-type BreadthFirst2 struct {
-	To, From AdjacencyList
-	MArc     int
-	Result   FromList
-}
-
-func NewBreadthFirst2(to, from AdjacencyList, ma int) *BreadthFirst2 {
-	return &BreadthFirst2{
-		To:     to,
-		From:   from,
-		MArc:   ma,
-		Result: NewFromList(len(to)),
-	}
-}
-
-// BreadthFirst2Path finds a single path from start to end with a minimum
-// number of nodes using a direction optimizing algorithm.
-//
-// It is experimental and not currently recommended over BreadthFirstPath
-// as it is currently no faster and offers no benefits.
-//
-// Returned is the path as list of nodes.
-// The result is nil if no path was found.
-func (g AdjacencyList) BreadthFirst2Path(start, end NI) []NI {
-	t, ma := Directed{g}.Transpose()
-	b := NewBreadthFirst2(g, t.AdjacencyList, ma)
-	b.Traverse(start, func(n NI) bool { return n != end })
-	return b.Result.PathTo(end, nil)
-}
-
-func (b *BreadthFirst2) Path(start, end NI) bool {
-	b.Traverse(start, func(n NI) bool { return n != end })
-	return b.Result.Paths[end].Len > 0
-}
-
-func (b *BreadthFirst2) AllPaths(start NI) int {
-	return b.Traverse(start, func(NI) bool { return true })
-}
-*/
-
 // BreadthFirst2 traverses a graph in breadth first using a direction
 // optimizing algorithm.
 //
@@ -496,7 +453,11 @@ func BreadthFirst2(g, tr AdjacencyList, ma int, start NI, f *FromList, v Visitor
 		d, ma = Directed{g}.Transpose()
 		tr = d.AdjacencyList
 	}
-	if f == nil || len(f.Paths) != len(g) {
+	switch {
+	case f == nil:
+		e := NewFromList(len(g))
+		f = &e
+	case f.Paths == nil:
 		*f = NewFromList(len(g))
 	}
 	if ma <= 0 {
