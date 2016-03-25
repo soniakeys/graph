@@ -123,8 +123,6 @@
 //  DAGPath        O(n) algorithm for DAGs, arc weights of any sign.
 //  FloydWarshall  all pairs distances, no negative cycles.
 //
-// These searches are done in a similar way that involves creating a
-// search object, running a search method on the object, and decoding a result
-// structure.  Convenience functions are provided that perform these
-// steps for single path searches.
+// These searches typically have one method with some set of capabilities and
+// then a convenience method with a simpler API targeting a simpler use case.
 package graph
