@@ -5,7 +5,6 @@ package graph_test
 
 import (
 	"fmt"
-	"math/big"
 	"math/rand"
 	"testing"
 
@@ -143,7 +142,7 @@ func ExampleAdjacencyList_DepthFirst_bitmap() {
 		2: {3},
 		3: {1},
 	}
-	var vis big.Int
+	var vis graph.Bits
 	fmt.Println("3210")
 	fmt.Println("----")
 	g.DepthFirst(0, &vis, func(graph.NI) bool {

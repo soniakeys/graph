@@ -8,10 +8,7 @@ package graph
 //
 // Methods on Directed are first, with exported methods alphabetized.
 
-import (
-	"errors"
-	"math/big"
-)
+import "errors"
 
 // DAGMaxLenPath finds a maximum length path in a directed acyclic graph.
 //
@@ -91,7 +88,7 @@ func (g Directed) EulerianCycleD(ma int) ([]NI, error) {
 		}
 		e.keep()
 	}
-	if len(e.uv.Bits()) > 0 {
+	if !e.uv.Zero() {
 		return nil, errors.New("not strongly connected")
 	}
 	return e.p, nil
@@ -154,7 +151,7 @@ func (g Directed) EulerianPathD(ma int, start NI) ([]NI, error) {
 		}
 		e.keep()
 	}
-	if len(e.uv.Bits()) > 0 {
+	if !e.uv.Zero() {
 		return nil, errors.New("no Eulerian path")
 	}
 	return e.p, nil
@@ -164,7 +161,7 @@ func (g Directed) EulerianPathD(ma int, start NI) ([]NI, error) {
 // mark nodes visited, push nodes on stack, remove arcs from g.
 func (e *eulerian) push() {
 	for u := e.top(); ; {
-		e.uv.SetBit(&e.uv, int(u), 0) // reset unvisited bit
+		e.uv.SetBit(u, 0) // reset unvisited bit
 		arcs := e.g[u]
 		if len(arcs) == 0 {
 			return // stuck
@@ -180,7 +177,7 @@ func (e *eulerian) push() {
 // like push, but for for undirected graphs.
 func (e *eulerian) pushUndir() {
 	for u := e.top(); ; {
-		e.uv.SetBit(&e.uv, int(u), 0)
+		e.uv.SetBit(u, 0)
 		arcs := e.g[u]
 		if len(arcs) == 0 {
 			return
@@ -219,7 +216,7 @@ func (e *eulerian) keep() {
 type eulerian struct {
 	g  AdjacencyList // working copy of graph, it gets consumed
 	m  int           // number of arcs in g, updated as g is consumed
-	uv big.Int       // unvisited
+	uv Bits          // unvisited
 	// low end of p is stack of unfinished nodes
 	// high end is finished path
 	p []NI // stack + path
@@ -236,7 +233,7 @@ func newEulerian(g AdjacencyList, m int) *eulerian {
 		m: m,
 		p: make([]NI, m+1),
 	}
-	OneBits(&e.uv, len(g))
+	e.uv.SetAll(len(g))
 	return e
 }
 
@@ -258,19 +255,19 @@ func newEulerian(g AdjacencyList, m int) *eulerian {
 // MaximalNonBranchingPaths returns immediately.
 func (g Directed) MaximalNonBranchingPaths(emit func([]NI) bool) {
 	ind := g.InDegree()
-	var uv big.Int
-	OneBits(&uv, len(g.AdjacencyList))
+	var uv Bits
+	uv.SetAll(len(g.AdjacencyList))
 	for v, vTo := range g.AdjacencyList {
 		if !(ind[v] == 1 && len(vTo) == 1) {
 			for _, w := range vTo {
 				n := []NI{NI(v), w}
-				uv.SetBit(&uv, v, 0)
-				uv.SetBit(&uv, int(w), 0)
+				uv.SetBit(NI(v), 0)
+				uv.SetBit(w, 0)
 				wTo := g.AdjacencyList[w]
 				for ind[w] == 1 && len(wTo) == 1 {
 					u := wTo[0]
 					n = append(n, u)
-					uv.SetBit(&uv, int(u), 0)
+					uv.SetBit(u, 0)
 					w = u
 					wTo = g.AdjacencyList[w]
 				}
@@ -280,12 +277,14 @@ func (g Directed) MaximalNonBranchingPaths(emit func([]NI) bool) {
 			}
 		}
 	}
-	for b := NextOne(&uv, 0); b >= 0; b = NextOne(&uv, b+1) {
+	// use uv.NextOne rather than uv.Iterate.
+	// Iterate doesn't work here because we're modifying uv
+	for b := uv.NextOne(0); b >= 0; b = uv.NextOne(b + 1) {
 		v := NI(b)
 		n := []NI{v}
 		for w := v; ; {
 			w = g.AdjacencyList[w][0]
-			uv.SetBit(&uv, int(w), 0)
+			uv.SetBit(w, 0)
 			n = append(n, w)
 			if w == v {
 				break

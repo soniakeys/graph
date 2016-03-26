@@ -5,9 +5,6 @@ package graph_test
 
 import (
 	"fmt"
-	//	"math/big"
-	//	"math/rand"
-	//	"testing"
 
 	"github.com/soniakeys/graph"
 )

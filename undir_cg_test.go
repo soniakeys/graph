@@ -5,7 +5,6 @@ package graph_test
 
 import (
 	"fmt"
-	"math/big"
 
 	"github.com/soniakeys/graph"
 )
@@ -235,7 +234,7 @@ func ExampleUndirected_ConnectedComponentReps_collectingBits() {
 	fmt.Println("543210  rep  order")
 	fmt.Println("------  ---  -----")
 	for i, r := range rep {
-		var bits big.Int
+		var bits graph.Bits
 		g.DepthFirst(r, &bits, nil)
 		fmt.Printf("%0*b   %d     %d\n",
 			len(g.AdjacencyList), &bits, r, order[i])

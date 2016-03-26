@@ -645,14 +645,14 @@ func (g LabeledDirected) DAGOptimalPaths(start, end NI, ordering []NI, w WeightF
 	p[start] = PathEnd{From: -1, Len: 1}
 	f.MaxLen = 1
 	leaves := &f.Leaves
-	leaves.SetBit(leaves, int(start), 1)
+	leaves.SetBit(start, 1)
 	nReached = 1
 	for n := start; n != end; n = ordering[o] {
 		if p[n].Len > 0 && len(a[n]) > 0 {
 			nDist := dist[n]
 			candLen := p[n].Len + 1 // len for any candidate arc followed from n
 			for _, to := range a[n] {
-				leaves.SetBit(leaves, int(to.To), 1)
+				leaves.SetBit(to.To, 1)
 				candDist := nDist + w(to.Label)
 				switch {
 				case p[to.To].Len == 0: // first path to node to.To
@@ -668,7 +668,7 @@ func (g LabeledDirected) DAGOptimalPaths(start, end NI, ordering []NI, w WeightF
 					f.MaxLen = candLen
 				}
 			}
-			leaves.SetBit(leaves, int(n), 0)
+			leaves.SetBit(n, 0)
 		}
 		o++
 		if o == len(ordering) {

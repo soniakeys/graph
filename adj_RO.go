@@ -7,10 +7,7 @@ package graph
 // Editing adj_cg.go is okay.
 // DO NOT EDIT adj_RO.go.  The RO is for Read Only.
 
-import (
-	"math/big"
-	"math/rand"
-)
+import "math/rand"
 
 // ArcSize returns the number of arcs in g.
 //
@@ -179,20 +176,20 @@ func (g AdjacencyList) Copy() (c AdjacencyList, ma int) {
 // returns false immediately.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g AdjacencyList) DepthFirst(start NI, bm *big.Int, v Visitor) (ok bool) {
+func (g AdjacencyList) DepthFirst(start NI, bm *Bits, v Visitor) (ok bool) {
 	if bm == nil {
 		if v == nil {
 			return false
 		}
-		bm = new(big.Int)
+		bm = &Bits{}
 	}
 	ok = true
 	var df func(n NI)
 	df = func(n NI) {
-		if bm.Bit(int(n)) == 1 {
+		if bm.Bit(n) == 1 {
 			return
 		}
-		bm.SetBit(bm, int(n), 1)
+		bm.SetBit(n, 1)
 		if v != nil && !v(n) {
 			ok = false
 			return
@@ -211,20 +208,20 @@ func (g AdjacencyList) DepthFirst(start NI, bm *big.Int, v Visitor) (ok bool) {
 // Usage is otherwise like the DepthFirst method.  See DepthFirst.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g AdjacencyList) DepthFirstRandom(start NI, bm *big.Int, v Visitor, r *rand.Rand) (ok bool) {
+func (g AdjacencyList) DepthFirstRandom(start NI, bm *Bits, v Visitor, r *rand.Rand) (ok bool) {
 	if bm == nil {
 		if v == nil {
 			return false
 		}
-		bm = new(big.Int)
+		bm = &Bits{}
 	}
 	ok = true
 	var df func(n NI)
 	df = func(n NI) {
-		if bm.Bit(int(n)) == 1 {
+		if bm.Bit(n) == 1 {
 			return
 		}
-		bm.SetBit(bm, int(n), 1)
+		bm.SetBit(n, 1)
 		if v != nil && !v(n) {
 			ok = false
 			return
@@ -332,13 +329,13 @@ func (g AdjacencyList) IsSimple() (ok bool, n NI) {
 // An isolated node is one with no arcs going to or from it.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g AdjacencyList) IsolatedNodeBits() (i big.Int) {
-	OneBits(&i, len(g))
+func (g AdjacencyList) IsolatedNodeBits() (i Bits) {
+	i.SetAll(len(g))
 	for fr, to := range g {
 		if len(to) > 0 {
-			i.SetBit(&i, fr, 0)
+			i.SetBit(NI(fr), 0)
 			for _, to := range to {
-				i.SetBit(&i, int(to), 0)
+				i.SetBit(to, 0)
 			}
 		}
 	}

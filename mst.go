@@ -5,7 +5,6 @@ package graph
 
 import (
 	"container/heap"
-	"math/big"
 	"sort"
 )
 
@@ -149,7 +148,7 @@ func (l WeightedEdgeList) KruskalSorted() (g LabeledUndirected, dist float64) {
 // Returned are the number of nodes spanned for the single tree (which will be
 // the order of the connected component) and the total spanned distance for the
 // single tree.
-func (g LabeledUndirected) Prim(start NI, w WeightFunc, f *FromList, labels []LI, componentLeaves *big.Int) (numSpanned int, dist float64) {
+func (g LabeledUndirected) Prim(start NI, w WeightFunc, f *FromList, labels []LI, componentLeaves *Bits) (numSpanned int, dist float64) {
 	al := g.LabeledAdjacencyList
 	if len(f.Paths) != len(al) {
 		*f = NewFromList(len(al))
@@ -164,9 +163,9 @@ func (g LabeledUndirected) Prim(start NI, w WeightFunc, f *FromList, labels []LI
 	rp[start] = PathEnd{From: -1, Len: 1}
 	numSpanned = 1
 	fLeaves := &f.Leaves
-	fLeaves.SetBit(fLeaves, int(start), 1)
+	fLeaves.SetBit(start, 1)
 	if componentLeaves != nil {
-		componentLeaves.SetBit(componentLeaves, int(start), 1)
+		componentLeaves.SetBit(start, 1)
 	}
 	for a := start; ; {
 		for _, nb := range al[a] {
@@ -195,11 +194,11 @@ func (g LabeledUndirected) Prim(start NI, w WeightFunc, f *FromList, labels []LI
 			labels[a] = bp.from.Label
 		}
 		dist += bp.wt
-		fLeaves.SetBit(fLeaves, int(bp.from.From), 0)
-		fLeaves.SetBit(fLeaves, int(a), 1)
+		fLeaves.SetBit(bp.from.From, 0)
+		fLeaves.SetBit(a, 1)
 		if componentLeaves != nil {
-			componentLeaves.SetBit(componentLeaves, int(bp.from.From), 0)
-			componentLeaves.SetBit(componentLeaves, int(a), 1)
+			componentLeaves.SetBit(bp.from.From, 0)
+			componentLeaves.SetBit(a, 1)
 		}
 		numSpanned++
 	}

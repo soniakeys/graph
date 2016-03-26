@@ -65,7 +65,7 @@ func (g Undirected) EulerianCycleD(m int) ([]NI, error) {
 		}
 		e.keep()
 	}
-	if len(e.uv.Bits()) > 0 {
+	if !e.uv.Zero() {
 		return nil, errors.New("not strongly connected")
 	}
 	return e.p, nil

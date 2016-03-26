@@ -5,18 +5,34 @@ package graph_test
 
 import (
 	"fmt"
-	"math/big"
 
 	"github.com/soniakeys/graph"
 )
 
-func ExampleNextOne() {
-	var b big.Int
-	b.SetString(""+
-		"0000000000000003"+ // bit postions 128, 129
-		"0000000000000000"+
-		"0000000000000005", 16) // bit positions 2, 0
-	for n := graph.NextOne(&b, 0); n >= 0; n = graph.NextOne(&b, n+1) {
+func ExampleBits_Iterate() {
+	var b graph.Bits
+	b.SetBit(0, 1)
+	b.SetBit(2, 1)
+	b.SetBit(128, 1)
+	b.SetBit(129, 1)
+	b.Iterate(func(n graph.NI) bool {
+		fmt.Println(n)
+		return true
+	})
+	// Output:
+	// 0
+	// 2
+	// 128
+	// 129
+}
+
+func ExampleBits_NextOne() {
+	var b graph.Bits
+	b.SetBit(0, 1)
+	b.SetBit(2, 1)
+	b.SetBit(128, 1)
+	b.SetBit(129, 1)
+	for n := b.NextOne(0); n >= 0; n = b.NextOne(n + 1) {
 		fmt.Println(n)
 	}
 	// Output:
@@ -26,21 +42,21 @@ func ExampleNextOne() {
 	// 129
 }
 
-func ExampleOneBits() {
-	g := make(graph.AdjacencyList, 5)
-	var b big.Int
-	fmt.Printf("%b\n", graph.OneBits(&b, len(g)))
-	// Output:
-	// 11111
-}
-
-func ExamplePopCount() {
-	var b big.Int
-	b.SetString(""+
-		"0000000000000001"+
-		"0000000000000000"+
-		"0000000000000005", 16)
-	fmt.Println(graph.PopCount(&b))
+func ExampleBits_PopCount() {
+	var b graph.Bits
+	b.SetBit(0, 1)
+	b.SetBit(2, 1)
+	b.SetBit(128, 1)
+	fmt.Println(b.PopCount())
 	// Output:
 	// 3
+}
+
+func ExampleBits_SetAll() {
+	g := make(graph.AdjacencyList, 5)
+	var b graph.Bits
+	b.SetAll(len(g))
+	fmt.Printf("%b\n", b)
+	// Output:
+	// 11111
 }

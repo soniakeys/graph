@@ -2,7 +2,6 @@ package graph_test
 
 import (
 	"fmt"
-	"math/big"
 	"testing"
 
 	"github.com/soniakeys/graph"
@@ -123,16 +122,9 @@ func ExampleLabeledUndirected_Prim() {
 	fmt.Println("Span results:")
 	fmt.Println("Root  Nodes spanned  Total tree distance  Leaves")
 	for _, r := range reps {
-		var leaves big.Int
+		var leaves graph.Bits
 		ns, dist := g.Prim(r, w, &f, labels, &leaves)
-		// collect leaf node ints from bitmap
-		var ll []int
-		n := graph.NextOne(&leaves, 0)
-		for n >= 0 {
-			ll = append(ll, n)
-			n = graph.NextOne(&leaves, n+1)
-		}
-		fmt.Printf("%d %17d %20.0f  %d\n", r, ns, dist, ll)
+		fmt.Printf("%d %17d %20.0f  %d\n", r, ns, dist, leaves.Slice())
 	}
 
 	// show final forest
@@ -140,7 +132,7 @@ func ExampleLabeledUndirected_Prim() {
 	fmt.Println("Node  From  Arc distance  Path length  Leaf")
 	for n, pe := range f.Paths {
 		fmt.Printf("%d %8d %13.0f %12d %5d\n",
-			n, pe.From, w(labels[n]), pe.Len, f.Leaves.Bit(n))
+			n, pe.From, w(labels[n]), pe.Len, f.Leaves.Bit(graph.NI(n)))
 	}
 
 	// optionally, convert to undirected graph

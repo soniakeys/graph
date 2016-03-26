@@ -125,17 +125,18 @@ func ExampleFromList_PathTo() {
 		MaxLen: 3,
 	}
 	lv := &t.Leaves
-	lv.SetBit(&t.Leaves, 0, 1)
-	lv.SetBit(&t.Leaves, 2, 1)
-	lv.SetBit(&t.Leaves, 3, 1)
+	lv.SetBit(0, 1)
+	lv.SetBit(2, 1)
+	lv.SetBit(3, 1)
 	// end at non-leaf, let PathEnd allocate result
 	fmt.Println(t.PathTo(1, nil))
 	fmt.Println()
 	// preallocate buffer, enumerate paths to all leaves
 	p := make([]graph.NI, t.MaxLen)
-	for n := graph.NextOne(lv, 0); n >= 0; n = graph.NextOne(lv, n+1) {
+	lv.Iterate(func(n graph.NI) bool {
 		fmt.Println(t.PathTo(graph.NI(n), p))
-	}
+		return true
+	})
 	// Output:
 	// [4 1]
 	//
@@ -159,7 +160,7 @@ func ExampleFromList_RecalcLeaves() {
 	f.RecalcLeaves()
 	fmt.Println("Node  Leaf")
 	for n := range f.Paths {
-		fmt.Println(n, "      ", f.Leaves.Bit(n))
+		fmt.Println(n, "      ", f.Leaves.Bit(graph.NI(n)))
 	}
 	// Output:
 	// Node  Leaf

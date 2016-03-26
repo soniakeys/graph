@@ -6,7 +6,6 @@ package graph
 import (
 	"errors"
 	"math"
-	"math/big"
 	"math/rand"
 	"time"
 )
@@ -234,18 +233,18 @@ func KroneckerUndir(scale uint, edgeFactor float64) (g Undirected, ma int) {
 // here is meaningful or not.
 func kronecker(scale uint, edgeFactor float64, dir bool) (g AdjacencyList, ma int) {
 	rand.Seed(time.Now().Unix())
-	N := 1 << scale                      // node extent
+	N := NI(1 << scale)                  // node extent
 	M := int(edgeFactor*float64(N) + .5) // number of arcs/edges to generate
 	a, b, c := 0.57, 0.19, 0.19          // initiator probabilities
 	ab := a + b
 	cNorm := c / (1 - ab)
 	aNorm := a / ab
-	ij := make([][2]int, M)
-	var bm big.Int
+	ij := make([][2]NI, M)
+	var bm Bits
 	var nNodes int
 	for k := range ij {
-		var i, j int
-		for b := 1; b < N; b <<= 1 {
+		var i, j NI
+		for b := NI(1); b < N; b <<= 1 {
 			if rand.Float64() > ab {
 				i |= b
 				if rand.Float64() > cNorm {
@@ -256,22 +255,22 @@ func kronecker(scale uint, edgeFactor float64, dir bool) (g AdjacencyList, ma in
 			}
 		}
 		if bm.Bit(i) == 0 {
-			bm.SetBit(&bm, i, 1)
+			bm.SetBit(i, 1)
 			nNodes++
 		}
 		if bm.Bit(j) == 0 {
-			bm.SetBit(&bm, j, 1)
+			bm.SetBit(j, 1)
 			nNodes++
 		}
 		r := rand.Intn(k + 1) // shuffle edges as they are generated
 		ij[k] = ij[r]
-		ij[r] = [2]int{i, j}
+		ij[r] = [2]NI{i, j}
 	}
 	p := rand.Perm(nNodes) // mapping to shuffle IDs of non-isolated nodes
 	px := 0
 	r := make([]NI, N)
 	for i := range r {
-		if bm.Bit(i) == 1 {
+		if bm.Bit(NI(i)) == 1 {
 			r[i] = NI(p[px]) // fill lookup table
 			px++
 		}

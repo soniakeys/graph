@@ -3,10 +3,6 @@
 
 package graph
 
-import (
-	"math/big"
-)
-
 // dir_RO.go is code generated from dir_cg.go by directives in graph.go.
 // Editing dir_cg.go is okay.  It is the code generation source.
 // DO NOT EDIT dir_RO.go.
@@ -45,19 +41,20 @@ func (g LabeledDirected) Copy() (c LabeledDirected, ma int) {
 //
 // There are equivalent labeled and unlabeled versions of this method.
 func (g LabeledDirected) Cyclic() (cyclic bool, fr NI, to Half) {
+	a := g.LabeledAdjacencyList
 	fr, to.To = -1, -1
-	var temp, perm big.Int
+	var temp, perm Bits
 	var df func(NI)
 	df = func(n NI) {
 		switch {
-		case temp.Bit(int(n)) == 1:
+		case temp.Bit(n) == 1:
 			cyclic = true
 			return
-		case perm.Bit(int(n)) == 1:
+		case perm.Bit(n) == 1:
 			return
 		}
-		temp.SetBit(&temp, int(n), 1)
-		for _, nb := range g.LabeledAdjacencyList[n] {
+		temp.SetBit(n, 1)
+		for _, nb := range a[n] {
 			df(nb.To)
 			if cyclic {
 				if fr < 0 {
@@ -66,11 +63,11 @@ func (g LabeledDirected) Cyclic() (cyclic bool, fr NI, to Half) {
 				return
 			}
 		}
-		temp.SetBit(&temp, int(n), 0)
-		perm.SetBit(&perm, int(n), 1)
+		temp.SetBit(n, 0)
+		perm.SetBit(n, 1)
 	}
-	for n := range g.LabeledAdjacencyList {
-		if perm.Bit(n) == 1 {
+	for n := range a {
+		if perm.Bit(NI(n)) == 1 {
 			continue
 		}
 		if df(NI(n)); cyclic { // short circuit as soon as a cycle is found
@@ -138,15 +135,16 @@ func (g LabeledDirected) InDegree() []int {
 //
 // There are equivalent labeled and unlabeled versions of this method.
 func (g LabeledDirected) IsTree(root NI) (isTree, allTree bool) {
-	var v big.Int
-	OneBits(&v, len(g.LabeledAdjacencyList))
+	a := g.LabeledAdjacencyList
+	var v Bits
+	v.SetAll(len(a))
 	var df func(NI) bool
 	df = func(n NI) bool {
-		if v.Bit(int(n)) == 0 {
+		if v.Bit(n) == 0 {
 			return false
 		}
-		v.SetBit(&v, int(n), 0)
-		for _, to := range g.LabeledAdjacencyList[n] {
+		v.SetBit(n, 0)
+		for _, to := range a[n] {
 			if !df(to.To) {
 				return false
 			}
@@ -154,7 +152,7 @@ func (g LabeledDirected) IsTree(root NI) (isTree, allTree bool) {
 		return true
 	}
 	isTree = df(root)
-	return isTree, isTree && len(v.Bits()) == 0
+	return isTree, isTree && v.Zero()
 }
 
 // Tarjan identifies strongly connected components in a directed graph using
@@ -175,28 +173,29 @@ func (g LabeledDirected) Tarjan(emit func([]NI) bool) {
 	//
 	// Implementation here from Wikipedia pseudocode,
 	// http://en.wikipedia.org/w/index.php?title=Tarjan%27s_strongly_connected_components_algorithm&direction=prev&oldid=647184742
-	var indexed, stacked big.Int
-	index := make([]int, len(g.LabeledAdjacencyList))
-	lowlink := make([]int, len(g.LabeledAdjacencyList))
+	var indexed, stacked Bits
+	a := g.LabeledAdjacencyList
+	index := make([]int, len(a))
+	lowlink := make([]int, len(a))
 	x := 0
 	var S []NI
 	var sc func(NI) bool
 	sc = func(n NI) bool {
 		index[n] = x
-		indexed.SetBit(&indexed, int(n), 1)
+		indexed.SetBit(n, 1)
 		lowlink[n] = x
 		x++
 		S = append(S, n)
-		stacked.SetBit(&stacked, int(n), 1)
-		for _, nb := range g.LabeledAdjacencyList[n] {
-			if indexed.Bit(int(nb.To)) == 0 {
+		stacked.SetBit(n, 1)
+		for _, nb := range a[n] {
+			if indexed.Bit(nb.To) == 0 {
 				if !sc(nb.To) {
 					return false
 				}
 				if lowlink[nb.To] < lowlink[n] {
 					lowlink[n] = lowlink[nb.To]
 				}
-			} else if stacked.Bit(int(nb.To)) == 1 {
+			} else if stacked.Bit(nb.To) == 1 {
 				if index[nb.To] < lowlink[n] {
 					lowlink[n] = index[nb.To]
 				}
@@ -208,7 +207,7 @@ func (g LabeledDirected) Tarjan(emit func([]NI) bool) {
 				last := len(S) - 1
 				w := S[last]
 				S = S[:last]
-				stacked.SetBit(&stacked, int(w), 0)
+				stacked.SetBit(w, 0)
 				c = append(c, w)
 				if w == n {
 					if !emit(c) {
@@ -220,8 +219,8 @@ func (g LabeledDirected) Tarjan(emit func([]NI) bool) {
 		}
 		return true
 	}
-	for n := range g.LabeledAdjacencyList {
-		if indexed.Bit(n) == 0 && !sc(NI(n)) {
+	for n := range a {
+		if indexed.Bit(NI(n)) == 0 && !sc(NI(n)) {
 			return
 		}
 	}
@@ -253,18 +252,18 @@ func (g LabeledDirected) TarjanCondensation() (scc [][]NI, cd AdjacencyList) {
 	scc = g.TarjanForward()
 	cd = make(AdjacencyList, len(scc))              // return value
 	cond := make([]NI, len(g.LabeledAdjacencyList)) // mapping from g node to cd node
-	for cn := len(scc) - 1; cn >= 0; cn-- {
+	for cn := NI(len(scc) - 1); cn >= 0; cn-- {
 		c := scc[cn]
 		for _, n := range c {
 			cond[n] = NI(cn) // map g node to cd node
 		}
-		var tos []NI  // list of 'to' nodes
-		var m big.Int // tos map
-		m.SetBit(&m, cn, 1)
+		var tos []NI // list of 'to' nodes
+		var m Bits   // tos map
+		m.SetBit(cn, 1)
 		for _, n := range c {
 			for _, to := range g.LabeledAdjacencyList[n] {
-				if ct := cond[to.To]; m.Bit(int(ct)) == 0 {
-					m.SetBit(&m, int(ct), 1)
+				if ct := cond[to.To]; m.Bit(ct) == 0 {
+					m.SetBit(ct, 1)
 					tos = append(tos, ct)
 				}
 			}
@@ -283,23 +282,24 @@ func (g LabeledDirected) TarjanCondensation() (scc [][]NI, cd AdjacencyList) {
 //
 // There are equivalent labeled and unlabeled versions of this method.
 func (g LabeledDirected) Topological() (ordering, cycle []NI) {
-	ordering = make([]NI, len(g.LabeledAdjacencyList))
+	a := g.LabeledAdjacencyList
+	ordering = make([]NI, len(a))
 	i := len(ordering)
-	var temp, perm big.Int
+	var temp, perm Bits
 	var cycleFound bool
 	var cycleStart NI
 	var df func(NI)
 	df = func(n NI) {
 		switch {
-		case temp.Bit(int(n)) == 1:
+		case temp.Bit(n) == 1:
 			cycleFound = true
 			cycleStart = n
 			return
-		case perm.Bit(int(n)) == 1:
+		case perm.Bit(n) == 1:
 			return
 		}
-		temp.SetBit(&temp, int(n), 1)
-		for _, nb := range g.LabeledAdjacencyList[n] {
+		temp.SetBit(n, 1)
+		for _, nb := range a[n] {
 			df(nb.To)
 			if cycleFound {
 				if cycleStart >= 0 {
@@ -316,13 +316,13 @@ func (g LabeledDirected) Topological() (ordering, cycle []NI) {
 				return
 			}
 		}
-		temp.SetBit(&temp, int(n), 0)
-		perm.SetBit(&perm, int(n), 1)
+		temp.SetBit(n, 0)
+		perm.SetBit(n, 1)
 		i--
 		ordering[i] = n
 	}
-	for n := range g.LabeledAdjacencyList {
-		if perm.Bit(n) == 1 {
+	for n := range a {
+		if perm.Bit(NI(n)) == 1 {
 			continue
 		}
 		df(NI(n))

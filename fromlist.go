@@ -1,11 +1,7 @@
 // Copyright 2014 Sonia Keys
 // License MIT: http://opensource.org/licenses/MIT
 
-// fromlist.go
-
 package graph
-
-import "math/big"
 
 // FromList represents a rooted tree (or forest) where each node is associated
 // with a half arc identifying an arc "from" another node.
@@ -36,7 +32,7 @@ import "math/big"
 // that a FromList is acyclic in a case where the validity is unknown.
 type FromList struct {
 	Paths  []PathEnd // tree representation
-	Leaves big.Int   // leaves of tree
+	Leaves Bits      // leaves of tree
 	MaxLen int       // length of longest path, max of all PathEnd.Len values
 }
 
@@ -60,7 +56,7 @@ func (f *FromList) reset() {
 	for n := range f.Paths {
 		f.Paths[n] = PathEnd{From: -1, Len: 0}
 	}
-	f.Leaves = big.Int{}
+	f.Leaves = Bits{}
 	f.MaxLen = 0
 }
 
@@ -116,17 +112,17 @@ func (f FromList) CommonStart(a, b NI) NI {
 // Note that the bool is not an "ok" return.  A cyclic FromList is usally
 // not okay.
 func (f FromList) Cyclic() (cyclic bool, n NI) {
-	var vis big.Int
+	var vis Bits
 	p := f.Paths
 	for i := range p {
-		var path big.Int
-		for n := NI(i); vis.Bit(int(n)) == 0; {
-			vis.SetBit(&vis, int(n), 1)
-			path.SetBit(&path, int(n), 1)
+		var path Bits
+		for n := NI(i); vis.Bit(n) == 0; {
+			vis.SetBit(n, 1)
+			path.SetBit(n, 1)
 			if n = p[n].From; n < 0 {
 				break
 			}
-			if path.Bit(int(n)) == 1 {
+			if path.Bit(n) == 1 {
 				return true, n
 			}
 		}
@@ -137,13 +133,13 @@ func (f FromList) Cyclic() (cyclic bool, n NI) {
 // IsolatedNodeBits returns a bitmap of isolated nodes in receiver graph f.
 //
 // An isolated node is one with no arcs going to or from it.
-func (f FromList) IsolatedNodes() (iso big.Int) {
+func (f FromList) IsolatedNodes() (iso Bits) {
 	p := f.Paths
-	OneBits(&iso, len(p))
+	iso.SetAll(len(p))
 	for n, e := range p {
 		if e.From >= 0 {
-			iso.SetBit(&iso, n, 0)
-			iso.SetBit(&iso, int(e.From), 0)
+			iso.SetBit(NI(n), 0)
+			iso.SetBit(e.From, 0)
 		}
 	}
 	return
@@ -199,10 +195,10 @@ func PathTo(paths []PathEnd, end NI, p []NI) []NI {
 func (f *FromList) RecalcLeaves() {
 	p := f.Paths
 	lv := &f.Leaves
-	OneBits(lv, len(p))
+	lv.SetAll(len(p))
 	for n := range f.Paths {
 		if fr := p[n].From; fr >= 0 {
-			lv.SetBit(lv, int(fr), 0)
+			lv.SetBit(fr, 0)
 		}
 	}
 }
@@ -230,12 +226,12 @@ func (f *FromList) RecalcLen() {
 		p[n].Len = 0
 	}
 	f.MaxLen = 0
-	lv := &f.Leaves
-	for n := NextOne(lv, 0); n >= 0; n = NextOne(lv, n+1) {
+	f.Leaves.Iterate(func(n NI) bool {
 		if l := setLen(NI(n)); l > f.MaxLen {
 			f.MaxLen = l
 		}
-	}
+		return true
+	})
 }
 
 // ReRoot reorients the tree containing n to make n the root node.
@@ -340,22 +336,23 @@ func (f FromList) TransposeLabeled(labels []LI) LabeledDirected {
 //
 // See FromList.TransposeLabeled for a simpler verstion that returns the
 // forest only.
-func (f FromList) TransposeLabeledRoots(labels []LI) (forest LabeledDirected, nRoots int, roots big.Int) {
+func (f FromList) TransposeLabeledRoots(labels []LI) (forest LabeledDirected, nRoots int, roots Bits) {
 	p := f.Paths
 	nRoots = len(p)
-	OneBits(&roots, len(p))
+	roots.SetAll(len(p))
 	g := make(LabeledAdjacencyList, len(p))
-	for n, p := range f.Paths {
+	for i, p := range f.Paths {
 		if p.From == -1 {
 			continue
 		}
-		l := LI(n)
+		l := LI(i)
 		if labels != nil {
-			l = labels[n]
+			l = labels[i]
 		}
-		g[p.From] = append(g[p.From], Half{NI(n), l})
+		n := NI(i)
+		g[p.From] = append(g[p.From], Half{n, l})
 		if roots.Bit(n) == 1 {
-			roots.SetBit(&roots, n, 0)
+			roots.SetBit(n, 0)
 			nRoots--
 		}
 	}
@@ -372,18 +369,19 @@ func (f FromList) TransposeLabeledRoots(labels []LI) (forest LabeledDirected, nR
 // the FromList are not used.
 //
 // See FromList.Transpose for a simpler verstion that returns the forest only.
-func (f FromList) TransposeRoots() (forest Directed, nRoots int, roots big.Int) {
+func (f FromList) TransposeRoots() (forest Directed, nRoots int, roots Bits) {
 	p := f.Paths
 	nRoots = len(p)
-	OneBits(&roots, len(p))
+	roots.SetAll(len(p))
 	g := make(AdjacencyList, len(p))
-	for n, e := range p {
+	for i, e := range p {
 		if e.From == -1 {
 			continue
 		}
-		g[e.From] = append(g[e.From], NI(n))
+		n := NI(i)
+		g[e.From] = append(g[e.From], n)
 		if roots.Bit(n) == 1 {
-			roots.SetBit(&roots, n, 0)
+			roots.SetBit(n, 0)
 			nRoots--
 		}
 	}
