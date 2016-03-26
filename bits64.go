@@ -1,7 +1,7 @@
 // Copyright 2014 Sonia Keys
 // License MIT: http://opensource.org/licenses/MIT
 
-// +build !386
+// +build !386,!arm
 
 package graph
 
