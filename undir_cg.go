@@ -82,7 +82,7 @@ func (g LabeledUndirected) BronKerbosch1(emit func([]NI) bool) {
 		case !P.Zero():
 			var r2, p2, x2 Bits
 			pf := func(n NI) bool {
-				r2.Set(R)
+				r2.Set(*R)
 				r2.SetBit(n, 1)
 				p2.Clear()
 				x2.Clear()
@@ -187,13 +187,13 @@ func (g LabeledUndirected) BronKerbosch2(pivot func(P, X *Bits) NI, emit func([]
 		case !P.Zero():
 			var r2, p2, x2, pnu Bits
 			// compute P \ N(u).  next 5 lines are only difference from BK1
-			pnu.Set(P)
+			pnu.Set(*P)
 			for _, to := range a[pivot(P, X)] {
 				pnu.SetBit(to.To, 0)
 			}
 			// remaining code like BK1
 			pf := func(n NI) bool {
-				r2.Set(R)
+				r2.Set(*R)
 				r2.SetBit(n, 1)
 				p2.Clear()
 				x2.Clear()
@@ -254,13 +254,13 @@ func (g LabeledUndirected) BronKerbosch3(pivot func(P, X *Bits) NI, emit func([]
 		case !P.Zero():
 			var r2, p2, x2, pnu Bits
 			// compute P \ N(u).  next lines are only difference from BK1
-			pnu.Set(P)
+			pnu.Set(*P)
 			for _, to := range a[pivot(P, X)] {
 				pnu.SetBit(to.To, 0)
 			}
 			// remaining code like BK2
 			pf := func(n NI) bool {
-				r2.Set(R)
+				r2.Set(*R)
 				r2.SetBit(n, 1)
 				p2.Clear()
 				x2.Clear()

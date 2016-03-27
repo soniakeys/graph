@@ -18,7 +18,7 @@ type Bits struct {
 }
 
 // AndNot sets z = x &^ y and returns z.
-func (z *Bits) AndNot(x, y *Bits) {
+func (z *Bits) AndNot(x, y Bits) {
 	z.i.AndNot(&x.i, &y.i)
 }
 
@@ -111,8 +111,8 @@ func (b Bits) PopCount() (c int) {
 	return
 }
 
-// Set sets all bits of z to the bits of x.
-func (z *Bits) Set(x *Bits) {
+// Set sets the bits of z to the bits of x.
+func (z *Bits) Set(x Bits) {
 	z.i.Set(&x.i)
 }
 

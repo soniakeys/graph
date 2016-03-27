@@ -468,7 +468,7 @@ func writeFromList(f graph.FromList, w io.Writer, options []func(*Config)) error
 	// repurpose iso for ranked same leaves.
 	// leaves are ranked same if they not isolated nodes and there are
 	// at least two of them.
-	iso.AndNot(&f.Leaves, &iso)
+	iso.AndNot(f.Leaves, iso)
 	if !iso.Zero() && !iso.Single() { // rank:
 		if _, err := b.WriteString(cf.Indent + "{rank = same"); err != nil {
 			return err
