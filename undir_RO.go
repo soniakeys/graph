@@ -154,7 +154,7 @@ func (g Undirected) BKPivotMaxDegree(P, X *Bits) (p NI) {
 //
 // There are equivalent labeled and unlabeled versions of this method.
 func (g Undirected) BKPivotMinP(P, X *Bits) NI {
-	return P.NextOne(0)
+	return P.From(0)
 }
 
 // BronKerbosch2 finds maximal cliques in an undirected graph.

@@ -277,9 +277,9 @@ func (g Directed) MaximalNonBranchingPaths(emit func([]NI) bool) {
 			}
 		}
 	}
-	// use uv.NextOne rather than uv.Iterate.
+	// use uv.From rather than uv.Iterate.
 	// Iterate doesn't work here because we're modifying uv
-	for b := uv.NextOne(0); b >= 0; b = uv.NextOne(b + 1) {
+	for b := uv.From(0); b >= 0; b = uv.From(b + 1) {
 		v := NI(b)
 		n := []NI{v}
 		for w := v; ; {

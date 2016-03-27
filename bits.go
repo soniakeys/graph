@@ -17,7 +17,20 @@ type Bits struct {
 	i big.Int
 }
 
-// AndNot sets z = x &^ y and returns z.
+// AllNot sets n bits of z to the complement of x.
+//
+// It is a convenience method for SetAll followed by AndNot.
+func (z *Bits) AllNot(n int, x Bits) {
+	z.SetAll(n)
+	z.AndNot(*z, x)
+}
+
+// And sets z = x & y.
+func (z *Bits) And(x, y Bits) {
+	z.i.And(&x.i, &y.i)
+}
+
+// AndNot sets z = x &^ y.
 func (z *Bits) AndNot(x, y Bits) {
 	z.i.AndNot(&x.i, &y.i)
 }
@@ -29,7 +42,7 @@ func (b Bits) Bit(n NI) uint {
 
 // Clear sets all bits to 0.
 func (z *Bits) Clear() {
-	z.i.SetInt64(0)
+	*z = Bits{}
 }
 
 // Format satisfies fmt.Formatter for fmt.Printf and related methods.
@@ -37,6 +50,40 @@ func (z *Bits) Clear() {
 // graph.Bits format exactly like big.Ints.
 func (b Bits) Format(s fmt.State, ch rune) {
 	b.i.Format(s, ch)
+}
+
+// From returns the position of the first 1 bit at or after (from) position n.
+//
+// It returns -1 if there is no one bit at or after position n.
+//
+// This provides one way to iterate over one bits.
+// To iterate over the one bits, call with n = 0 to get the the first
+// one bit, then call with the result + 1 to get successive one bits.
+// Unlike the Iterate method, this technique is stateless and so allows
+// bits to be changed between successive calls.
+//
+// See also Iterate.
+//
+// (From is just a short word that means "at or after" here;
+// it has nothing to do with arc direction.)
+func (b Bits) From(n NI) NI {
+	words := b.i.Bits()
+	i := int(n)
+	x := i >> wordExp // x now index of word containing bit i.
+	if x >= len(words) {
+		return -1
+	}
+	// test for 1 in this word at or after n
+	if wx := words[x] >> (uint(i) & (wordSize - 1)); wx != 0 {
+		return n + NI(trailingZeros(wx))
+	}
+	x++
+	for y, wy := range words[x:] {
+		if wy != 0 {
+			return NI((x+y)<<wordExp | trailingZeros(wy))
+		}
+	}
+	return -1
 }
 
 // Iterate calls Visitor v for each bit with a value of 1, in order
@@ -48,7 +95,7 @@ func (b Bits) Format(s fmt.State, ch rune) {
 // Iterate returns true normally.  It returns false if v returns false.
 //
 // Bit values should not be modified during iteration, by the visitor function
-// for example.  See NextOne for an iteration method that allows modification.
+// for example.  See From for an iteration method that allows modification.
 func (b Bits) Iterate(v Visitor) bool {
 	for x, w := range b.i.Bits() {
 		if w != 0 {
@@ -70,33 +117,9 @@ func (b Bits) Iterate(v Visitor) bool {
 	return true
 }
 
-// NextOne facilitates iteration over 1 bits.
-//
-// It returns the position of the first one bit at or after position n.
-// It returns -1 if there is no one bit at or after position n.
-//
-// To iterate over the one bits, call with n = 0 to get the the first
-// one bit, then call with the result + 1 to get successive one bits.
-// Unlike the Iterate method, this technique is stateless and so allows
-// bits to be changed between successive calls.
-func (b Bits) NextOne(n NI) NI {
-	words := b.i.Bits()
-	i := int(n)
-	x := i >> wordExp // x now index of word containing bit i.
-	if x >= len(words) {
-		return -1
-	}
-	// test for 1 in this word at or after n
-	if wx := words[x] >> (uint(i) & (wordSize - 1)); wx != 0 {
-		return n + NI(trailingZeros(wx))
-	}
-	x++
-	for y, wy := range words[x:] {
-		if wy != 0 {
-			return NI((x+y)<<wordExp | trailingZeros(wy))
-		}
-	}
-	return -1
+// Or sets z = x | y.
+func (z *Bits) Or(x, y Bits) {
+	z.i.Or(&x.i, &y.i)
 }
 
 // PopCount returns the number of 1 bits.
@@ -155,6 +178,11 @@ func (b Bits) Slice() (s []NI) {
 		return true
 	})
 	return
+}
+
+// Xor sets z = x ^ y.
+func (z *Bits) Xor(x, y Bits) {
+	z.i.Xor(&x.i, &y.i)
 }
 
 // Zero returns true if there are no 1 bits.

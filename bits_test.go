@@ -64,13 +64,13 @@ func ExampleBits_Iterate() {
 	// 129
 }
 
-func ExampleBits_NextOne() {
+func ExampleBits_From() {
 	var b graph.Bits
 	b.SetBit(0, 1)
 	b.SetBit(2, 1)
 	b.SetBit(128, 1)
 	b.SetBit(129, 1)
-	for n := b.NextOne(0); n >= 0; n = b.NextOne(n + 1) {
+	for n := b.From(0); n >= 0; n = b.From(n + 1) {
 		fmt.Println(n)
 	}
 	// Output:

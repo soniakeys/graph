@@ -473,7 +473,7 @@ func writeFromList(f graph.FromList, w io.Writer, options []func(*Config)) error
 		if _, err := b.WriteString(cf.Indent + "{rank = same"); err != nil {
 			return err
 		}
-		for n := iso.NextOne(0); n >= 0; n = iso.NextOne(n + 1) {
+		for n := iso.From(0); n >= 0; n = iso.From(n + 1) {
 			if _, err := b.WriteString(" "); err != nil {
 				return err
 			}
