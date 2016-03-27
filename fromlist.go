@@ -12,12 +12,12 @@ package graph
 //
 // The Paths member represents the tree structure.  Leaves and MaxLen are
 // not always needed.  Where Leaves is used it serves as a bitmap where
-// Leave.Bit() == 1 for each leaf of the tree.  Where MaxLen is used it is
+// Leaves.Bit(n) == 1 for each leaf n of the tree.  Where MaxLen is used it is
 // provided primarily as a convenience for functions that might want to
 // anticipate the maximum path length that would be encountered traversing
 // the tree.
 //
-// Various graph search functions use a FromList to returns search results.
+// Various graph search methods use a FromList to returns search results.
 // For a start node of a search, From will be -1 and Len will be 1. For other
 // nodes reached by the search, From represents a half arc in a path back to
 // start and Len represents the number of nodes in the path.  For nodes not
@@ -28,8 +28,10 @@ package graph
 //
 // While a FromList generally encodes a tree or forest, it is technically
 // possible to encode a cyclic graph.  A number of FromList methods require
-// the receiver to be acyclic.  The Cyclic method can be used to validate
-// that a FromList is acyclic in a case where the validity is unknown.
+// the receiver to be acyclic.  Graph methods documented to return a tree or
+// forest will never return a cyclic FromList.  In other cases however,
+// where a FromList is not known to by cyclic, the Cyclic method can be
+// useful to validate the acyclic property.
 type FromList struct {
 	Paths  []PathEnd // tree representation
 	Leaves Bits      // leaves of tree
@@ -189,6 +191,39 @@ func PathTo(paths []PathEnd, end NI, p []NI) []NI {
 		}
 		end = paths[end].From
 	}
+}
+
+// Preorder traverses f calling Visitor v in preorder.
+//
+// Nodes are visited in order such that for any node n with from node fr,
+// fr is visited before n.  Where f represents a tree, the visit ordering
+// corresponds to a preordering, or depth first traversal of the tree.
+// Where f represents a forest, the preorderings of the trees can be
+// intermingled.
+//
+// Leaves must be set correctly first.  Use RecalcLeaves if leaves are not
+// known to be set correctly.  FromList f cannot be cyclic.
+//
+// Traversal continues while v returns true.  It terminates if v returns false.
+// Preorder returns true if it completes without v returning false.  Preorder
+// returns false if traversal is terminated by v returning false.
+func (f FromList) Preorder(v Visitor) bool {
+	p := f.Paths
+	var done Bits
+	var df func(NI) bool
+	df = func(n NI) bool {
+		done.SetBit(n, 1)
+		if fr := p[n].From; fr >= 0 && done.Bit(fr) == 0 {
+			df(fr)
+		}
+		return v(n)
+	}
+	for n := range f.Paths {
+		p[n].Len = 0
+	}
+	return f.Leaves.Iterate(func(n NI) bool {
+		return df(n)
+	})
 }
 
 // RecalcLeaves recomputes the Leaves member of f.

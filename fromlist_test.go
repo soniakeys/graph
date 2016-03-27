@@ -145,6 +145,60 @@ func ExampleFromList_PathTo() {
 	// [3]
 }
 
+func ExampleFromList_Preorder() {
+	//     2
+	//    / \
+	//   0   3
+	//  /
+	// 1
+	f := graph.FromList{Paths: []graph.PathEnd{
+		0: {From: 2},
+		1: {From: 0},
+		2: {From: -1},
+		3: {From: 2},
+	}}
+	f.RecalcLeaves()
+	f.Preorder(func(n graph.NI) bool {
+		fmt.Println(n)
+		return true
+	})
+	// Output:
+	// 2
+	// 0
+	// 1
+	// 3
+}
+
+func ExampleFromList_Preorder_forest() {
+	//     4      0
+	//    / \    / \
+	//   5   3  2   6
+	//  /
+	// 1
+	f := graph.FromList{Paths: []graph.PathEnd{
+		0: {From: -1},
+		1: {From: 5},
+		2: {From: 0},
+		3: {From: 4},
+		4: {From: -1},
+		5: {From: 4},
+		6: {From: 0},
+	}}
+	f.RecalcLeaves()
+	f.Preorder(func(n graph.NI) bool {
+		fmt.Println(n)
+		return true
+	})
+	// Output:
+	// 4
+	// 5
+	// 1
+	// 0
+	// 2
+	// 3
+	// 6
+}
+
 func ExampleFromList_RecalcLeaves() {
 	//   0
 	//  / \
