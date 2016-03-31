@@ -1,3 +1,6 @@
+// Copyright 2016 Sonia Keys
+// License MIT: https://opensource.org/licenses/MIT
+
 package graph_test
 
 import (

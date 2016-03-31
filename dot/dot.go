@@ -1,3 +1,6 @@
+// Copyright 2016 Sonia Keys
+// License MIT: https://opensource.org/licenses/MIT
+
 // Package dot writes graphs from package graph in the Graphviz dot format.
 //
 // This package provides a minimal capability to output graphs simply and
