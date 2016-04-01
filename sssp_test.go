@@ -74,7 +74,7 @@ func ExampleLabeledAdjacencyList_AStarMPath() {
 	// Path distance: 26
 }
 
-func ExampleHeuristic_Admissable() {
+func ExampleHeuristic_Admissible() {
 	// arcs are directed right:
 	//       -----------------------
 	//      /      (wt: 14)         \
