@@ -29,13 +29,13 @@ type openHeap []*rNode
 
 // A Heuristic is defined on a specific end node.  The function
 // returns an estimate of the path distance from node argument
-// "from" to the end node.  Two subclasses of heuristics are "admissable"
+// "from" to the end node.  Two subclasses of heuristics are "admissible"
 // and "monotonic."
 //
-// Admissable means the value returned is guaranteed to be less than or
+// Admissible means the value returned is guaranteed to be less than or
 // equal to the actual shortest path distance from the node to end.
 //
-// An admissable estimate may further be monotonic.
+// An admissible estimate may further be monotonic.
 // Monotonic means that for any neighboring nodes A and B with half arc aB
 // leading from A to B, and for heuristic h defined on some end node, then
 // h(A) <= aB.ArcWeight + h(B).
@@ -44,11 +44,11 @@ type openHeap []*rNode
 // AStar search methods.
 type Heuristic func(from NI) float64
 
-// Admissable returns true if heuristic h is admissable on graph g relative to
+// Admissible returns true if heuristic h is admissible on graph g relative to
 // the given end node.
 //
-// If h is inadmissable, the string result describes a counter example.
-func (h Heuristic) Admissable(g LabeledAdjacencyList, w WeightFunc, end NI) (bool, string) {
+// If h is inadmissible, the string result describes a counter example.
+func (h Heuristic) Admissible(g LabeledAdjacencyList, w WeightFunc, end NI) (bool, string) {
 	// invert graph
 	inv := make(LabeledAdjacencyList, len(g))
 	for from, nbs := range g {
@@ -103,16 +103,16 @@ func (h Heuristic) Monotonic(g LabeledAdjacencyList, w WeightFunc) (bool, string
 //
 // AStarA implements both algorithm A and algorithm A*.  The difference in the
 // two algorithms is strictly in the heuristic estimate returned by argument h.
-// If h is an "admissable" heuristic estimate, then the algorithm is termed A*,
+// If h is an "admissible" heuristic estimate, then the algorithm is termed A*,
 // otherwise it is algorithm A.
 //
-// Like Dijkstra's algorithm, AStarA with an admissable heuristic finds the
+// Like Dijkstra's algorithm, AStarA with an admissible heuristic finds the
 // shortest path between start and end.  AStarA generally runs faster than
 // Dijkstra though, by using the heuristic distance estimate.
 //
-// AStarA with an inadmissable heuristic becomes algorithm A.  Algorithm A
+// AStarA with an inadmissible heuristic becomes algorithm A.  Algorithm A
 // will find a path, but it is not guaranteed to be the shortest path.
-// The heuristic still guides the search however, so a nearly admissable
+// The heuristic still guides the search however, so a nearly admissible
 // heuristic is likely to find a very good path, if not the best.  Quality
 // of the path returned degrades gracefully with the quality of the heuristic.
 //
@@ -440,7 +440,7 @@ func (g LabeledDirected) NegativeCycle(w WeightFunc) bool {
 // returns false, the traversal will terminate immediately.
 type Visitor func(n NI) (ok bool)
 
-// BreadthFirst2 traverses a graph in breadth first using a direction
+// BreadthFirst2 traverses a graph breadth first using a direction
 // optimizing algorithm.
 //
 // The code is experimental and currently seems no faster than the

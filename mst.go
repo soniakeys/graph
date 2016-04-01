@@ -109,7 +109,7 @@ func (l WeightedEdgeList) Kruskal() (g LabeledUndirected, dist float64) {
 // a reciprocal pair must be present in the edge list.  Reciprocal arcs (and
 // parallel arcs) are allowed though, and do not affect the result.
 //
-// When called, the edge list of the reciever must be already sorted by weight.
+// When called, the edge list of the receiver must be already sorted by weight.
 // See Kruskal for a version that accepts an unsorted edge list.
 //
 // The forest is returned as an undirected graph.

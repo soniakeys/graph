@@ -206,7 +206,7 @@ func (g LabeledAdjacencyList) HasParallelSort() (has bool, fr, to NI) {
 // matching labels.  Otherwise returns false and an example unpaired arc.
 //
 // Note the requirement that reciprocal pairs have matching labels is
-// an additional test not present in the otherwise equivalent unlabled version
+// an additional test not present in the otherwise equivalent unlabeled version
 // of IsUndirected.
 func (g LabeledAdjacencyList) IsUndirected() (u bool, from NI, to Half) {
 	unpaired := make(LabeledAdjacencyList, len(g))

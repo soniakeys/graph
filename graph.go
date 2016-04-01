@@ -3,7 +3,7 @@
 
 package graph
 
-// graph.go contains type defintions for all graph types and components.
+// graph.go contains type definitions for all graph types and components.
 // Also, go generate directives for source transformations.
 //
 // For readability, the types are defined in a dependency order:
@@ -56,6 +56,8 @@ func (l NodeList) Swap(i, j int)      { l[i], l[j] = l[j], l[i] }
 
 // An AdjacencyList represents a graph as a list of neighbors for each node.
 // The "node ID" of a node is simply it's slice index in the AdjacencyList.
+// For an AdjacencyList g, g[n] represents arcs going from node n to nodes
+// g[n].
 //
 // Adjacency lists are inherently directed but can be used to represent
 // directed or undirected graphs.  See types Directed and Undirected.
@@ -93,7 +95,7 @@ type Half struct {
 	Label LI // half-arc ID for application data, often a weight
 }
 
-// A LabledAdjacencyList represents a graph as a list of neighbors for each
+// A LabeledAdjacencyList represents a graph as a list of neighbors for each
 // node, connected by labeled arcs.
 //
 // Arc labels are not necessarily unique arc IDs.  Different arcs can have

@@ -169,7 +169,7 @@ func (b Bits) Single() bool {
 	return c == 1
 }
 
-// Slice returns a slice with the positons of each 1 bit.
+// Slice returns a slice with the positions of each 1 bit.
 func (b Bits) Slice() (s []NI) {
 	// (alternative implementation might use Popcount and make to get the
 	// exact cap slice up front.  unclear if that would be better.)

@@ -168,7 +168,7 @@ func (g AdjacencyList) Copy() (c AdjacencyList, ma int) {
 // Argument bm can be nil if you have no need for it.
 // In this case a bitmap is created internally for one-time use.
 //
-// Alternatively v can be nil.  In this case traversal still procedes and
+// Alternatively v can be nil.  In this case traversal still proceeds and
 // updates the bitmap, which can be a useful result.
 // DepthFirst always returns true in this case.
 //

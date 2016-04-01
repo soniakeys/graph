@@ -227,7 +227,7 @@ func writeALEdgeStmt(fr graph.NI, to []graph.NI, op string, cf *Config, iso grap
 	}
 	// otherwise it's complicated.  we like to use a subgraph rhs to keep
 	// output compact, but graphviz (some version) won't separate parallel
-	// arcs in a subgraph, so in that case we write multiple edge statments.
+	// arcs in a subgraph, so in that case we write multiple edge statements.
 	_, err = fmt.Fprintf(b, "%s%s %s ",
 		cf.Indent, cf.NodeID(fr), op)
 	if err != nil {

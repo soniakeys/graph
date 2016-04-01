@@ -43,28 +43,6 @@ func ExampleAdjacencyList_ArcSize() {
 	// 5
 }
 
-func ExampleAdjacencyList_ArcSize_handshakingLemma() {
-	// undirected graph with three edges:
-	//   0
-	//   |
-	//   1   2
-	//  / \
-	// 3   4
-	var g graph.Undirected
-	g.AddEdge(0, 1)
-	g.AddEdge(1, 3)
-	g.AddEdge(1, 4)
-	// for undirected g without loops, degree == out-degree == len(to)
-	degSum := 0
-	for _, to := range g.AdjacencyList {
-		degSum += len(to)
-	}
-	// for undirected g without loops, ArcSize is 2 * number of edges
-	fmt.Println(degSum, "==", g.ArcSize())
-	// Output:
-	// 6 == 6
-}
-
 func ExampleAdjacencyList_BoundsOk() {
 	var g graph.AdjacencyList
 	ok, _, _ := g.BoundsOk() // zero value adjacency list is valid

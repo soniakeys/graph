@@ -59,7 +59,7 @@
 // simply by ignoring the label.  In these cases code generation provides
 // methods on both types from a single source implementation. These methods
 // are documented with the sentence "There are equivalent labeled and unlabeled
-// versions of this method" and examples are provided only for the unlabled
+// versions of this method" and examples are provided only for the unlabeled
 // version.
 //
 // Terminology
@@ -81,10 +81,10 @@
 // one arc leading from n1 to n2 and the other arc leading from n2 to n1.
 // Undirected graphs are represented with reciprocal arcs.
 //
-// A node that is a neighbor of itself represents a "loop."  Duplicate
-// neighbors (when a node appears more than once in the same neighbor list)
-// represent "parallel arcs."  A graph with no loops or parallel arcs
-// is "simple."  A graph that allows parallel arcs is a "multigraph"
+// A node with an arc to itself represents a "loop."  Duplicate arcs, where
+// a node has multiple arcs to another node, are termed "parallel arcs."
+// A graph with no loops or parallel arcs is "simple."  A graph that allows
+// parallel arcs is a "multigraph"
 //
 // The "size" of a graph traditionally means the number of undirected edges.
 // This package uses "arc size" to mean the number of arcs in a graph.  For an
@@ -111,7 +111,7 @@
 // that may have loops or parallel arcs.  For weighted graphs, "shortest"
 // is defined as the path distance (sum of arc weights) with path length
 // (number of nodes) breaking ties.  If multiple paths have the same minimum
-// distance with the same minumum length, search methods are free to return
+// distance with the same minimum length, search methods are free to return
 // any of them.
 //
 //  Type name      Description, methods
@@ -123,6 +123,6 @@
 //  DAGPath        O(n) algorithm for DAGs, arc weights of any sign.
 //  FloydWarshall  all pairs distances, no negative cycles.
 //
-// These searches typically have one method with some set of capabilities and
+// These searches typically have one method that is full-featured and
 // then a convenience method with a simpler API targeting a simpler use case.
 package graph

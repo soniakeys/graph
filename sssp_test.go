@@ -97,7 +97,7 @@ func ExampleHeuristic_Admissable() {
 	w := func(label graph.LI) float64 { return float64(label) }
 	h4 := []float64{19, 20, 10, 6, 0, 9}
 	var h graph.Heuristic = func(from graph.NI) float64 { return h4[from] }
-	fmt.Println(h.Admissable(g, w, 4))
+	fmt.Println(h.Admissible(g, w, 4))
 	// Output:
 	// true
 }

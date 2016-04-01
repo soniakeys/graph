@@ -75,7 +75,7 @@ func (g Undirected) EulerianCycleD(m int) ([]NI, error) {
 // components, components for which if any node were removed the component
 // would remain connected.
 //
-// The reciever g must be a simple graph.  The method calls the emit argument
+// The receiver g must be a simple graph.  The method calls the emit argument
 // for each component identified, as long as emit returns true.  If emit
 // returns false, TarjanBiconnectedComponents returns immediately.
 //
@@ -256,7 +256,7 @@ func (p *LabeledUndirected) AddEdge(e Edge, l LI) {
 // components, components for which if any node were removed the component
 // would remain connected.
 //
-// The reciever g must be a simple graph.  The method calls the emit argument
+// The receiver g must be a simple graph.  The method calls the emit argument
 // for each component identified, as long as emit returns true.  If emit
 // returns false, TarjanBiconnectedComponents returns immediately.
 //

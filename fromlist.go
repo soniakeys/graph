@@ -111,7 +111,7 @@ func (f FromList) CommonStart(a, b NI) NI {
 // an example of a node involved in a cycle.
 //
 // Cyclic returns (false, -1) in the normal case where f is acyclic.
-// Note that the bool is not an "ok" return.  A cyclic FromList is usally
+// Note that the bool is not an "ok" return.  A cyclic FromList is usually
 // not okay.
 func (f FromList) Cyclic() (cyclic bool, n NI) {
 	var vis Bits
@@ -166,7 +166,9 @@ func (f FromList) PathTo(end NI, p []NI) []NI {
 
 // PathTo decodes a single path from a PathEnd list.
 //
-// The path is returned as a list of nodes where the first element will be
+// A PathEnd list is the main data representation in a FromList.  See FromList.
+//
+// PathTo returns a list of nodes where the first element will be
 // a root node and the last element will be the specified end node.
 //
 // Argument p can provide the result slice.  If p has capacity for the result

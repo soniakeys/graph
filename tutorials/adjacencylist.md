@@ -42,7 +42,7 @@ horizontally.  These slices contain node indexes, NIs.
 A slice interally contains a pointer to its "backing" array.
 Elements in the top level slice thus contain pointers *to* arrays of NIs.
 Each pointer thus represents a set of graph arcs from one node (implicit in
-the index) *to* others (with NIs stored explicity).
+the index) *to* others (with NIs stored explicitly).
 
 Because Go slices are zero based an AdjacencyList represents a graph of zero
 based node numbers.  Actually there's a node 0 in this graph too.  A more
@@ -131,7 +131,7 @@ type Half struct {
 }
 ```
 It is called Half because it represents a "half arc", a full arc being
-something that would explicity store both end points of the arc.
+something that would explicitly store both end points of the arc.
 
 LI stands for label integer and can be used for associating arbitrary
 information with an arc.  Note that unlike an NI, an LI does not correspond
