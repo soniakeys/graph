@@ -1,3 +1,6 @@
+// Copyright 2016 Sonia Keys
+// License MIT: https://opensource.org/licenses/MIT
+
 // +build ignore
 
 // go generate in this directory generates images for the tutorials.

@@ -1,7 +1,11 @@
 sudo: false
 language: go
 go: 1.6
+install:
+ - go get github.com/soniakeys/vetc
+ - go get -t ./...
 script:
  - go test ./...
  - GOARCH=386 go test ./...
  - go tool vet -example .
+ - vetc
