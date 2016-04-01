@@ -47,6 +47,9 @@ type PathEnd struct {
 }
 
 // NewFromList creates a FromList object of given order.
+//
+// The Paths member is allocated to length n but there is no other
+// initialization.
 func NewFromList(n int) FromList {
 	return FromList{Paths: make([]PathEnd, n)}
 }

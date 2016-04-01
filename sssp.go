@@ -334,27 +334,27 @@ func (p *openHeap) Pop() interface{} {
 	return h[last]
 }
 
-// BellmanFord finds shortest paths from a start node in a directed graph
-// using the Bellman-Ford-Moore algorithm.
+// BellmanFord finds shortest paths from a start node in a weighted directed
+// graph using the Bellman-Ford-Moore algorithm.
 //
-// Argument g is the graph to be searched, as a labeled directed graph.
 // WeightFunc w must translate arc labels to arc weights.
 // Negative arc weights are allowed but not negative cycles.
 // Loops and parallel arcs are allowed.
 //
 // If the algorithm completes without encountering a negative cycle the method
 // returns shortest paths encoded in a FromList, path distances indexed by
-// node, and ok = true.
+// node, and return value end = -1.
 //
-// If it encounters a negative cycle reachable from start it returns ok = false.
-// In this case values in b.Forest are meaningless.
+// If it encounters a negative cycle reachable from start it returns end >= 0.
+// In this case the cycle can be obtained by calling f.BellmanFordCycle(end).
 //
 // Negative cycles are only detected when reachable from start.  A negative
 // cycle not reachable from start will not prevent the algorithm from finding
-// shortest paths reachable from start.
+// shortest paths from start.
 //
-// See also NegativeCycle.
-func (g LabeledDirected) BellmanFord(w WeightFunc, start NI) (f FromList, dist []float64, ok bool) {
+// See also NegativeCycle to find a cycle anywhere in the graph, and see
+// HasNegativeCycle for lighter-weight negative cycle detection,
+func (g LabeledDirected) BellmanFord(w WeightFunc, start NI) (f FromList, dist []float64, end NI) {
 	a := g.LabeledAdjacencyList
 	f = NewFromList(len(a))
 	dist = make([]float64, len(a))
@@ -389,20 +389,44 @@ func (g LabeledDirected) BellmanFord(w WeightFunc, start NI) (f FromList, dist [
 		d1 := dist[from]
 		for _, nb := range nbs {
 			if d1+w(nb.Label) < dist[nb.To] {
-				return // negative cycle
+				// return nb as end of a path with negative cycle at root
+				return f, dist, NI(from)
 			}
 		}
 	}
-	return f, dist, true
+	return f, dist, -1
 }
 
-// NegativeCycle returns true if the graph contains any negative cycle.
+// BellmanFordCycle decodes a negative cycle detected by BellmanFord.
 //
-// Path information is not computed.
+// Receiver f and argument end must be results returned from BellmanFord.
+func (f FromList) BellmanFordCycle(end NI) (c []NI) {
+	p := f.Paths
+	var b Bits
+	for b.Bit(end) == 0 {
+		b.SetBit(end, 1)
+		end = p[end].From
+	}
+	for b.Bit(end) == 1 {
+		c = append(c, end)
+		b.SetBit(end, 0)
+		end = p[end].From
+	}
+	for i, j := 0, len(c)-1; i < j; i, j = i+1, j-1 {
+		c[i], c[j] = c[j], c[i]
+	}
+	return
+}
+
+// HasNegativeCycle returns true if the graph contains any negative cycle.
 //
-// See also BellmanFord, but note the sense of the returned bool is opposite
-// that of BellmanFord.
-func (g LabeledDirected) NegativeCycle(w WeightFunc) bool {
+// HasNegativeCycle uses a Bellman-Ford-like algorithm, but finds negative
+// cycles anywhere in the graph.  Also path information is not computed,
+// reducing memory use somewhat compared to BellmanFord.
+//
+// See also NegativeCycle to obtain the cycle, and see BellmanFord for
+// single source shortest path searches.
+func (g LabeledDirected) HasNegativeCycle(w WeightFunc) bool {
 	a := g.LabeledAdjacencyList
 	dist := make([]float64, len(a))
 	for _ = range a[1:] {
@@ -430,6 +454,70 @@ func (g LabeledDirected) NegativeCycle(w WeightFunc) bool {
 		}
 	}
 	return false
+}
+
+// NegativeCycle finds a negative cycle if one exists.
+//
+// NegativeCycle uses a Bellman-Ford-like algorithm, but finds negative
+// cycles anywhere in the graph.  If a negative cycle exists, one will be
+// returned.  The result is nil if no negative cycle exists.
+//
+// See also HasNegativeCycle for lighter-weight cycle detection, and see
+// BellmanFord for single source shortest paths.
+func (g LabeledDirected) NegativeCycle(w WeightFunc) (c []NI) {
+	a := g.LabeledAdjacencyList
+	f := NewFromList(len(a))
+	p := f.Paths
+	for n := range p {
+		p[n] = PathEnd{From: -1, Len: 1}
+	}
+	dist := make([]float64, len(a))
+	for range a {
+		imp := false
+		for from, nbs := range a {
+			fp := &p[from]
+			d1 := dist[from]
+			for _, nb := range nbs {
+				d2 := d1 + w(nb.Label)
+				to := &p[nb.To]
+				if fp.Len > 0 && d2 < dist[nb.To] {
+					*to = PathEnd{From: NI(from), Len: fp.Len + 1}
+					dist[nb.To] = d2
+					imp = true
+				}
+			}
+		}
+		if !imp {
+			return nil
+		}
+	}
+	var vis Bits
+a:
+	for n := range a {
+		end := NI(n)
+		var b Bits
+		for b.Bit(end) == 0 {
+			if vis.Bit(end) == 1 {
+				continue a
+			}
+			vis.SetBit(end, 1)
+			b.SetBit(end, 1)
+			end = p[end].From
+			if end < 0 {
+				continue a
+			}
+		}
+		for b.Bit(end) == 1 {
+			c = append(c, end)
+			b.SetBit(end, 0)
+			end = p[end].From
+		}
+		for i, j := 0, len(c)-1; i < j; i, j = i+1, j-1 {
+			c[i], c[j] = c[j], c[i]
+		}
+		return c
+	}
+	return nil // no negative cycle
 }
 
 // A Visitor function is an argument to graph traversal methods.

@@ -155,15 +155,17 @@ func ExampleLabeledDirected_BellmanFord() {
 	}}
 	w := func(label graph.LI) float64 { return float64(label) }
 	// graph contains negative cycle somewhere
-	fmt.Println("negative cycle:", g.NegativeCycle(w))
+	fmt.Println("negative cycle:", g.HasNegativeCycle(w))
 
 	// but negative cycle not reached starting at node 1
 	start := graph.NI(1)
 	fmt.Println("start:", start)
-	f, dist, ok := g.BellmanFord(w, start)
-	if !ok {
+	f, dist, end := g.BellmanFord(w, start)
+	if end >= 0 {
 		fmt.Println("negative cycle")
 		return
+	} else {
+		fmt.Println("no negative cycle reachable from", start)
 	}
 	fmt.Println("end   path  path")
 	fmt.Println("node  len   dist   path")
@@ -175,6 +177,7 @@ func ExampleLabeledDirected_BellmanFord() {
 	// Output:
 	// negative cycle: true
 	// start: 1
+	// no negative cycle reachable from 1
 	// end   path  path
 	// node  len   dist   path
 	// 0       0   +Inf   []
@@ -188,6 +191,72 @@ func ExampleLabeledDirected_BellmanFord() {
 	// 8       2      8   [1 8]
 	// 9       0   +Inf   []
 }
+
+func ExampleFromList_BellmanFordCycle() {
+	//              /--------3        4<-------9<------10
+	//              |        ^        |   (6)  ^   (7)
+	//              |(1)     |        |        |
+	//              |        |(-2)    |(3)     |
+	//    (wt: 10)  v   (2)  |        v        |
+	//  1---------->2------->6<-------5--------/
+	//  |           ^        ^   (-1)    (-10)
+	//  |(8)        |        |
+	//  |           |(-4)    |(-1)
+	//  v     (1)   |        |
+	//  8---------->7--------/
+	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
+		1:  {{2, 10}, {8, 8}},
+		2:  {{6, 2}},
+		3:  {{2, 1}},
+		4:  {{5, 3}},
+		5:  {{6, -1}, {9, -10}},
+		6:  {{3, -2}},
+		7:  {{6, -1}, {2, -4}},
+		8:  {{7, 1}},
+		9:  {{4, 6}},
+		10: {{9, 7}},
+	}}
+	w := func(label graph.LI) float64 { return float64(label) }
+	start := graph.NI(10)
+	fmt.Println("start:", start)
+	f, _, end := g.BellmanFord(w, start)
+	fmt.Println("end of path with negative cycle:", end)
+	fmt.Println("negative cycle:", f.BellmanFordCycle(end))
+	// Output:
+	// start: 10
+	// end of path with negative cycle: 3
+	// negative cycle: [9 4 5]
+}
+
+func ExampleLabeledDirected_NegativeCycle() {
+	//              /--------3        4<-------9
+	//              |        ^        |   (6)  ^
+	//              |(1)     |        |        |
+	//              |        |(-2)    |(3)     |
+	//    (wt: 10)  v   (2)  |        v        |
+	//  1---------->2------->6<-------5--------/
+	//  |           ^        ^   (-1)    (-10)
+	//  |(8)        |        |
+	//  |           |(-4)    |(-1)
+	//  v     (1)   |        |
+	//  8---------->7--------/
+	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
+		1: {{2, 10}, {8, 8}},
+		2: {{6, 2}},
+		3: {{2, 1}},
+		4: {{5, 3}},
+		5: {{6, -1}, {9, -10}},
+		6: {{3, -2}},
+		7: {{6, -1}, {2, -4}},
+		8: {{7, 1}},
+		9: {{4, 6}},
+	}}
+	w := func(label graph.LI) float64 { return float64(label) }
+	fmt.Println(g.NegativeCycle(w))
+	// Output:
+	// [9 4 5]
+}
+
 func ExampleAdjacencyList_BreadthFirstPath() {
 	// arcs are directed right:
 	//    1   3---5
