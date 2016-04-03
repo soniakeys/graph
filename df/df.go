@@ -1,6 +1,8 @@
 // Copyright 2016 Sonia Keys
 // License MIT: https://opensource.org/licenses/MIT
 
+// Package df provides a paramertized depth-first search.  A single variadic
+// function, Search, takes options in the form of configuration functions.
 package df
 
 import (
@@ -9,6 +11,14 @@ import (
 	"github.com/soniakeys/graph"
 )
 
+// Search performs a depth-first search or traversal of graph g starting at
+// node start.
+//
+// Options controlling the search are specified with configuration functions
+// defined in this package.
+//
+// A non-nil error indicates some problem initializing the search, such as
+// an invalid graph type or options.
 func Search(g interface{}, start graph.NI, options ...func(*config)) (err error) {
 	cf := &config{}
 	for _, o := range options {
@@ -24,7 +34,7 @@ func Search(g interface{}, start graph.NI, options ...func(*config)) (err error)
 	case graph.LabeledAdjacencyList:
 		f, err = cf.labSearchFunc(t)
 	default:
-		return errors.New("unsupported graph type")
+		return errors.New("invalid graph type")
 	}
 	if err == nil {
 		f(start)

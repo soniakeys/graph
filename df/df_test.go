@@ -12,6 +12,12 @@ import (
 )
 
 func ExampleBits() {
+	//   0
+	//  / \
+	// 1-->2
+	// ^   |
+	// |   v
+	// \---3
 	g := graph.AdjacencyList{
 		0: {1, 2},
 		1: {2},
@@ -35,6 +41,12 @@ func ExampleBits() {
 }
 
 func ExampleVisitor() {
+	//   0
+	//  / \
+	// 1-->2
+	// ^   |
+	// |   v
+	// \---3
 	g := graph.AdjacencyList{
 		0: {1, 2},
 		1: {2},
@@ -51,6 +63,30 @@ func ExampleVisitor() {
 	// visit 1
 	// visit 2
 	// visit 3
+}
+
+func ExampleVisitor_earlyTermination() {
+	//   0
+	//  / \
+	// 1-->2
+	// ^   |
+	// |   v
+	// \---3
+	g := graph.AdjacencyList{
+		0: {1, 2},
+		1: {2},
+		2: {3},
+		3: {1},
+	}
+	var ok bool
+	df.Search(g, 0, df.Visitor(func(n graph.NI) (ok bool) {
+		fmt.Println("visit", n)
+		return n != 2
+	}, &ok))
+	// Output:
+	// visit 0
+	// visit 1
+	// visit 2
 }
 
 var k10, _ = graph.KroneckerDir(10, 10)
