@@ -183,23 +183,23 @@ func (g LabeledAdjacencyList) DepthFirst(start NI, bm *Bits, v Visitor) (ok bool
 		}
 		bm = &Bits{}
 	}
-	ok = true
-	var df func(n NI)
-	df = func(n NI) {
+	var df func(n NI) bool
+	df = func(n NI) bool {
 		if bm.Bit(n) == 1 {
-			return
+			return true
 		}
 		bm.SetBit(n, 1)
 		if v != nil && !v(n) {
-			ok = false
-			return
+			return false
 		}
 		for _, nb := range g[n] {
-			df(nb.To)
+			if !df(nb.To) {
+				return false
+			}
 		}
+		return true
 	}
-	df(start)
-	return
+	return df(start)
 }
 
 // DepthFirstRandom traverses a graph depth first, but following arcs in
@@ -215,24 +215,24 @@ func (g LabeledAdjacencyList) DepthFirstRandom(start NI, bm *Bits, v Visitor, r 
 		}
 		bm = &Bits{}
 	}
-	ok = true
-	var df func(n NI)
-	df = func(n NI) {
+	var df func(n NI) bool
+	df = func(n NI) bool {
 		if bm.Bit(n) == 1 {
-			return
+			return true
 		}
 		bm.SetBit(n, 1)
 		if v != nil && !v(n) {
-			ok = false
-			return
+			return false
 		}
 		to := g[n]
 		for _, i := range r.Perm(len(to)) {
-			df(to[i].To)
+			if !df(to[i].To) {
+				return false
+			}
 		}
+		return true
 	}
-	df(start)
-	return
+	return df(start)
 }
 
 // HasArc returns true if g has any arc from node fr to node to.
