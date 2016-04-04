@@ -7,7 +7,10 @@ package graph
 // Editing adj_cg.go is okay.
 // DO NOT EDIT adj_RO.go.  The RO is for Read Only.
 
-import "math/rand"
+import (
+	"math/rand"
+	"time"
+)
 
 // ArcSize returns the number of arcs in g.
 //
@@ -205,6 +208,9 @@ func (g LabeledAdjacencyList) DepthFirst(start NI, bm *Bits, v Visitor) (ok bool
 // DepthFirstRandom traverses a graph depth first, but following arcs in
 // random order among arcs from a single node.
 //
+// If Rand r is nil, the method creates a new source and generator for
+// one-time use.
+//
 // Usage is otherwise like the DepthFirst method.  See DepthFirst.
 //
 // There are equivalent labeled and unlabeled versions of this method.
@@ -214,6 +220,9 @@ func (g LabeledAdjacencyList) DepthFirstRandom(start NI, bm *Bits, v Visitor, r 
 			return false
 		}
 		bm = &Bits{}
+	}
+	if r == nil {
+		r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	}
 	var df func(n NI) bool
 	df = func(n NI) bool {
