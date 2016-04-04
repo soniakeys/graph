@@ -1,7 +1,6 @@
 #!/bin/bash
 set -ev
 go test ./...
-echo $TRAVIS_GO_VERSION
 if [ "$TRAVIS_GO_VERSION" = "1.6" ]; then
  GOARCH=386 go test ./...
  go tool vet -example .
@@ -9,4 +8,6 @@ if [ "$TRAVIS_GO_VERSION" = "1.6" ]; then
  go get github.com/soniakeys/vetc
  misspell * **/*
  vetc
+ echo $TRAVIS_GO_VERSION
+ false
 fi
