@@ -5,6 +5,7 @@ package df_test
 
 import (
 	"fmt"
+	"math/rand"
 	"testing"
 
 	"github.com/soniakeys/graph"
@@ -89,7 +90,12 @@ func ExampleVisitor_earlyTermination() {
 	// visit 2
 }
 
-var k10, _ = graph.KroneckerDir(10, 10)
+var k10 graph.Directed
+
+func init() {
+	r := rand.New(rand.NewSource(11))
+	k10, _ = graph.KroneckerDir(10, 10, r)
+}
 
 func TestK10(t *testing.T) {
 	var b graph.Bits
