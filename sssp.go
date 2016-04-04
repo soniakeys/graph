@@ -472,7 +472,7 @@ func (g LabeledDirected) NegativeCycle(w WeightFunc) (c []NI) {
 		p[n] = PathEnd{From: -1, Len: 1}
 	}
 	dist := make([]float64, len(a))
-	for range a {
+	for _ = range a {
 		imp := false
 		for from, nbs := range a {
 			fp := &p[from]
