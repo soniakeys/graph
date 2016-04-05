@@ -10,11 +10,12 @@ import (
 )
 
 type config struct {
-	iterateFrom func(n graph.NI)
-	bits        *graph.Bits
-	visitor     graph.Visitor
-	visitOk     *bool
-	rand        *rand.Rand
+	iterateFrom   func(n graph.NI)
+	bits          *graph.Bits
+	nodeVisitor   graph.NodeVisitor
+	okNodeVisitor graph.OkNodeVisitor
+	visitOk       *bool
+	rand          *rand.Rand
 }
 
 // Bits specifies a graph.Bits value to record visited nodes.
@@ -27,12 +28,16 @@ func Bits(b *graph.Bits) func(*config) {
 	return func(c *config) { c.bits = b }
 }
 
-// Rand specifies to traverse edges from each visited node in random order.
-func Rand(r *rand.Rand) func(*config) {
-	return func(c *config) { c.rand = r }
+// NodeVisitor specifies a visitor function to call at each node.
+//
+// See also OkNodeVisitor.
+func NodeVisitor(v graph.NodeVisitor) func(*config) {
+	return func(c *config) {
+		c.nodeVisitor = v
+	}
 }
 
-// Visitor specifies a visitor function to call at each node.
+// OkNodeVisitor specifies a visitor function to call at each node.
 //
 // As long as v return true, the search progresses to traverse all nodes
 // reachable from start, and ok is ultimately set to true.
@@ -41,9 +46,16 @@ func Rand(r *rand.Rand) func(*config) {
 // and ok is set to false.
 //
 // The ok pointer can be nil if the bool result is not needed.
-func Visitor(v graph.Visitor, ok *bool) func(*config) {
+//
+// See also NodeVisitor.
+func OkNodeVisitor(v graph.OkNodeVisitor, ok *bool) func(*config) {
 	return func(c *config) {
-		c.visitor = v
+		c.okNodeVisitor = v
 		c.visitOk = ok
 	}
+}
+
+// Rand specifies to traverse edges from each visited node in random order.
+func Rand(r *rand.Rand) func(*config) {
+	return func(c *config) { c.rand = r }
 }

@@ -96,7 +96,7 @@ func (b Bits) From(n NI) NI {
 //
 // Bit values should not be modified during iteration, by the visitor function
 // for example.  See From for an iteration method that allows modification.
-func (b Bits) Iterate(v Visitor) bool {
+func (b Bits) Iterate(v OkNodeVisitor) bool {
 	for x, w := range b.i.Bits() {
 		if w != 0 {
 			t := trailingZeros(w)

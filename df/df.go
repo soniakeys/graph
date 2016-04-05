@@ -69,7 +69,7 @@ func (cf *config) termFunc() func(graph.NI) bool {
 		}
 		return
 	}
-	if v := cf.visitor; v != nil {
+	if v := cf.okNodeVisitor; v != nil {
 		return func(n graph.NI) bool {
 			return t(n) || !v(n)
 		}

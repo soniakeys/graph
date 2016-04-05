@@ -520,13 +520,19 @@ a:
 	return nil // no negative cycle
 }
 
-// A Visitor function is an argument to graph traversal methods.
+// A NodeVisitor is an argument to some graph traversal methods.
+//
+// Graph traversal methods call the visitor function for each node visited.
+// Argument n is the node being visited.
+type NodeVisitor func(n NI)
+
+// An OkNodeVisitor function is an argument to some graph traversal methods.
 //
 // Graph traversal methods call the visitor function for each node visited.
 // The argument n is the node being visited.  If the visitor function
 // returns true, the traversal will continue.  If the visitor function
 // returns false, the traversal will terminate immediately.
-type Visitor func(n NI) (ok bool)
+type OkNodeVisitor func(n NI) (ok bool)
 
 // BreadthFirst2 traverses a graph breadth first using a direction
 // optimizing algorithm.
@@ -535,7 +541,7 @@ type Visitor func(n NI) (ok bool)
 // conventional breadth first code.
 //
 // Use AdjacencyList.BreadthFirst instead.
-func BreadthFirst2(g, tr AdjacencyList, ma int, start NI, f *FromList, v Visitor) int {
+func BreadthFirst2(g, tr AdjacencyList, ma int, start NI, f *FromList, v OkNodeVisitor) int {
 	if tr == nil {
 		var d Directed
 		d, ma = Directed{g}.Transpose()

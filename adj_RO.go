@@ -76,7 +76,7 @@ func (g AdjacencyList) BoundsOk() (ok bool, fr NI, to NI) {
 // function returning false.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g AdjacencyList) BreadthFirst(start NI, r *rand.Rand, f *FromList, v Visitor) (visited int, ok bool) {
+func (g AdjacencyList) BreadthFirst(start NI, r *rand.Rand, f *FromList, v OkNodeVisitor) (visited int, ok bool) {
 	switch {
 	case f == nil:
 		e := NewFromList(len(g))
@@ -179,7 +179,7 @@ func (g AdjacencyList) Copy() (c AdjacencyList, ma int) {
 // returns false immediately.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g AdjacencyList) DepthFirst(start NI, bm *Bits, v Visitor) (ok bool) {
+func (g AdjacencyList) DepthFirst(start NI, bm *Bits, v OkNodeVisitor) (ok bool) {
 	if bm == nil {
 		if v == nil {
 			return false
@@ -214,7 +214,7 @@ func (g AdjacencyList) DepthFirst(start NI, bm *Bits, v Visitor) (ok bool) {
 // Usage is otherwise like the DepthFirst method.  See DepthFirst.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g AdjacencyList) DepthFirstRandom(start NI, bm *Bits, v Visitor, r *rand.Rand) (ok bool) {
+func (g AdjacencyList) DepthFirstRandom(start NI, bm *Bits, v OkNodeVisitor, r *rand.Rand) (ok bool) {
 	if bm == nil {
 		if v == nil {
 			return false

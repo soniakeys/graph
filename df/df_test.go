@@ -28,7 +28,7 @@ func ExampleBits() {
 	var b graph.Bits
 	fmt.Println("3210")
 	fmt.Println("----")
-	df.Search(g, 0, df.Bits(&b), df.Visitor(func(graph.NI) bool {
+	df.Search(g, 0, df.Bits(&b), df.OkNodeVisitor(func(graph.NI) bool {
 		fmt.Printf("%04b\n", &b)
 		return true
 	}, nil))
@@ -55,7 +55,7 @@ func ExampleVisitor() {
 		3: {1},
 	}
 	var ok bool
-	df.Search(g, 0, df.Visitor(func(n graph.NI) (ok bool) {
+	df.Search(g, 0, df.OkNodeVisitor(func(n graph.NI) (ok bool) {
 		fmt.Println("visit", n)
 		return true
 	}, &ok))
@@ -80,7 +80,7 @@ func ExampleVisitor_earlyTermination() {
 		3: {1},
 	}
 	var ok bool
-	df.Search(g, 0, df.Visitor(func(n graph.NI) (ok bool) {
+	df.Search(g, 0, df.OkNodeVisitor(func(n graph.NI) (ok bool) {
 		fmt.Println("visit", n)
 		return n != 2
 	}, &ok))

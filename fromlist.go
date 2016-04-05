@@ -212,7 +212,7 @@ func PathTo(paths []PathEnd, end NI, p []NI) []NI {
 // Traversal continues while v returns true.  It terminates if v returns false.
 // Preorder returns true if it completes without v returning false.  Preorder
 // returns false if traversal is terminated by v returning false.
-func (f FromList) Preorder(v Visitor) bool {
+func (f FromList) Preorder(v OkNodeVisitor) bool {
 	p := f.Paths
 	var done Bits
 	var df func(NI) bool
