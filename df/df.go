@@ -27,7 +27,7 @@ func Search(g interface{}, start graph.NI, options ...func(*config)) (err error)
 	if cf.bits == nil {
 		cf.bits = &graph.Bits{}
 	}
-	var f func(start graph.NI)
+	var f func(start graph.NI) bool
 	switch t := g.(type) {
 	case graph.AdjacencyList:
 		f, err = cf.adjSearchFunc(t)
@@ -43,57 +43,106 @@ func Search(g interface{}, start graph.NI, options ...func(*config)) (err error)
 }
 
 type dff struct {
-	term    func(graph.NI) bool
-	recurse func(graph.NI)
+	visited func(graph.NI) bool
+	recurse func(graph.NI) bool
 }
 
-func (f *dff) search(n graph.NI) {
-	if !f.term(n) {
-		f.recurse(n)
-	}
+func (f *dff) search(n graph.NI) bool {
+	return f.visited(n) || f.recurse(n)
 }
 
-func (cf *config) adjSearchFunc(g graph.AdjacencyList) (func(graph.NI), error) {
+func (cf *config) adjSearchFunc(g graph.AdjacencyList) (func(graph.NI) bool, error) {
 	f := &dff{}
 	search := f.search
-	f.term = cf.termFunc()
+	f.visited = cf.visitedFunc()
 	f.recurse = cf.adjRecurseFunc(g, search)
 	return search, nil
 }
 
-func (cf *config) termFunc() func(graph.NI) bool {
+func (cf *config) visitedFunc() func(graph.NI) bool {
 	b := cf.bits
-	t := func(n graph.NI) (t bool) {
-		if t = b.Bit(n) != 0; !t {
-			b.SetBit(n, 1)
+	return func(n graph.NI) (t bool) {
+		if b.Bit(n) != 0 {
+			return true
 		}
-		return
+		b.SetBit(n, 1)
+		return false
 	}
+}
+
+/*
 	if v := cf.okNodeVisitor; v != nil {
 		return func(n graph.NI) bool {
 			return t(n) || !v(n)
 		}
 	}
-	return t
 }
+*/
 
-func (cf *config) adjRecurseFunc(g graph.AdjacencyList, search func(graph.NI)) func(graph.NI) {
+func (cf *config) adjRecurseFunc(g graph.AdjacencyList, search func(graph.NI) bool) func(graph.NI) bool {
 	if r := cf.rand; r != nil {
-		return func(n graph.NI) {
+		if v := cf.okNodeVisitor; v != nil {
+			if cf.visitOk != nil {
+				*cf.visitOk = true
+			}
+			return func(n graph.NI) bool {
+				if !v(n) {
+					if cf.visitOk != nil {
+						*cf.visitOk = false
+					}
+					return false
+				}
+				to := g[n]
+				for _, i := range r.Perm(len(to)) {
+					if !search(to[i]) {
+						return false
+					}
+				}
+				return true
+			}
+		} // else just rand, no visitor
+		return func(n graph.NI) bool {
 			to := g[n]
 			for _, i := range r.Perm(len(to)) {
-				search(to[i])
+				if !search(to[i]) {
+					return false
+				}
 			}
+			return true
 
 		}
 	}
-	return func(n graph.NI) {
-		for _, to := range g[n] {
-			search(to)
+	// else no rand
+	if v := cf.okNodeVisitor; v != nil {
+		if cf.visitOk != nil {
+			*cf.visitOk = true
 		}
+		return func(n graph.NI) bool {
+			if !v(n) {
+				if cf.visitOk != nil {
+					*cf.visitOk = false
+				}
+				return false
+			}
+			for _, to := range g[n] {
+				if !search(to) {
+					return false
+				}
+			}
+			return true
+		}
+	}
+	// else no rand, no visitor
+	return func(n graph.NI) bool {
+		for _, to := range g[n] {
+			if !search(to) {
+				return false
+			}
+		}
+		return true
 	}
 }
 
-func (cf *config) labSearchFunc(g graph.LabeledAdjacencyList) (func(start graph.NI), error) {
+func (cf *config) labSearchFunc(g graph.LabeledAdjacencyList) (func(start graph.NI) bool, error) {
 	return nil, nil
 }
