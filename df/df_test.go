@@ -103,14 +103,14 @@ func TestK10(t *testing.T) {
 	r := b.PopCount()
 	t.Log("K10 reached =", r)
 	if r < 500 {
-		t.Fatal(r)
+		t.Fatal(r) // bump seed in init function if this fails.
 	}
 }
 
 func BenchmarkADF(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		var b graph.Bits
-		k10.DepthFirst(0, &b, nil)
+		var bm graph.Bits
+		k10.DepthFirst(0, &bm, nil)
 	}
 }
 

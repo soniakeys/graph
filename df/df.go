@@ -1,8 +1,9 @@
 // Copyright 2016 Sonia Keys
 // License MIT: https://opensource.org/licenses/MIT
 
-// Package df provides a paramertized depth-first search.  A single variadic
-// function, Search, takes options in the form of configuration functions.
+// Package df provides a paramertized depth-first search.
+//
+// A single variadic function, Search, takes options in the form of configuration functions.
 package df
 
 import (
@@ -25,15 +26,18 @@ func Search(g interface{}, start graph.NI, options ...func(*config)) (err error)
 	for _, o := range options {
 		o(cf)
 	}
+	if cf.nodeVisitor != nil && cf.okNodeVisitor != nil {
+		return errors.New("NodeVisitor and OkNodeVisitor cannot both be specified")
+	}
 	if cf.bits == nil { // for now, bits required as visit marks
 		cf.bits = &graph.Bits{}
 	}
 	var f func(start graph.NI)
 	switch t := g.(type) {
 	case graph.AdjacencyList:
-		f, err = cf.adjSearchFunc(t)
+		f, err = cf.adjFunc(t)
 	case graph.LabeledAdjacencyList:
-		f, err = cf.labSearchFunc(t)
+		f, err = cf.labFunc(t)
 	default:
 		return errors.New("invalid graph type")
 	}
@@ -67,14 +71,21 @@ func (f *dfSearchNodes) search(n graph.NI) bool {
 	return f.visited(n) || f.recurse(n)
 }
 
-func (cf *config) adjSearchFunc(g graph.AdjacencyList) (func(graph.NI), error) {
-	f := dfSearchNodes{visited: cf.visitedFunc()}
-	// take method value
-	search := f.search
-	// define recurse using the method value
-	f.recurse = cf.composeVisitor(cf.adjRecurseFunc(g, search))
-	// closure to drop return value
-	return func(start graph.NI) { search(start) }, nil
+func (cf *config) adjFunc(g graph.AdjacencyList) (func(graph.NI), error) {
+	if v := cf.okNodeVisitor; v != nil {
+		f := dfSearchNodes{visited: cf.visitedFunc()}
+		// take method value
+		search := f.search
+		// define recurse using the method value
+		f.recurse = cf.composeOkVisitor(v, cf.adjRecurseSearch(g, search))
+		// closure to drop return value
+		return func(start graph.NI) { search(start) }, nil
+	}
+	// simpler case of full traversal
+	f := dfTraverseNodes{visited: cf.visitedFunc()}
+	traverse := f.traverse
+	f.recurse = cf.composeVisitor(cf.adjRecurseTraverse(g, traverse))
+	return traverse, nil
 }
 
 func (cf *config) visitedFunc() func(graph.NI) bool {
@@ -88,11 +99,7 @@ func (cf *config) visitedFunc() func(graph.NI) bool {
 	}
 }
 
-func (cf *config) composeVisitor(f func(graph.NI) bool) func(graph.NI) bool {
-	v := cf.okNodeVisitor
-	if v == nil {
-		return f
-	}
+func (cf *config) composeOkVisitor(v graph.OkNodeVisitor, f func(graph.NI) bool) func(graph.NI) bool {
 	if cf.visitOk != nil { // TODO move this to a pre-func
 		*cf.visitOk = true
 	}
@@ -107,14 +114,24 @@ func (cf *config) composeVisitor(f func(graph.NI) bool) func(graph.NI) bool {
 	}
 }
 
-func (cf *config) adjRecurseFunc(g graph.AdjacencyList, search func(graph.NI) bool) func(graph.NI) bool {
-	if r := cf.rand; r != nil {
-		return cf.adjRandFunc(g, search, r)
+func (cf *config) composeVisitor(f func(graph.NI)) func(graph.NI) {
+	if v := cf.nodeVisitor; v != nil {
+		return func(n graph.NI) {
+			v(n)
+			f(n)
+		}
 	}
-	return cf.adjToFunc(g, search)
+	return f
 }
 
-func (cf *config) adjRandFunc(g graph.AdjacencyList, search func(graph.NI) bool, r *rand.Rand) func(graph.NI) bool {
+func (cf *config) adjRecurseSearch(g graph.AdjacencyList, search func(graph.NI) bool) func(graph.NI) bool {
+	if r := cf.rand; r != nil {
+		return cf.adjRandSearch(g, search, r)
+	}
+	return cf.adjToSearch(g, search)
+}
+
+func (cf *config) adjRandSearch(g graph.AdjacencyList, search func(graph.NI) bool, r *rand.Rand) func(graph.NI) bool {
 	return func(n graph.NI) bool {
 		to := g[n]
 		for _, i := range r.Perm(len(to)) {
@@ -126,7 +143,7 @@ func (cf *config) adjRandFunc(g graph.AdjacencyList, search func(graph.NI) bool,
 	}
 }
 
-func (cf *config) adjToFunc(g graph.AdjacencyList, search func(graph.NI) bool) func(graph.NI) bool {
+func (cf *config) adjToSearch(g graph.AdjacencyList, search func(graph.NI) bool) func(graph.NI) bool {
 	return func(n graph.NI) bool {
 		for _, to := range g[n] {
 			if !search(to) {
@@ -137,21 +154,51 @@ func (cf *config) adjToFunc(g graph.AdjacencyList, search func(graph.NI) bool) f
 	}
 }
 
-func (cf *config) labSearchFunc(g graph.LabeledAdjacencyList) (func(graph.NI), error) {
-	f := dfSearchNodes{visited: cf.visitedFunc()}
-	search := f.search
-	f.recurse = cf.labRecurseFunc(g, search)
-	return func(start graph.NI) { search(start) }, nil
-}
-
-func (cf *config) labRecurseFunc(g graph.LabeledAdjacencyList, search func(graph.NI) bool) func(graph.NI) bool {
+func (cf *config) adjRecurseTraverse(g graph.AdjacencyList, traverse func(graph.NI)) func(graph.NI) {
 	if r := cf.rand; r != nil {
-		return cf.labRandFunc(g, search, r)
+		return cf.adjRandTraverse(g, traverse, r)
 	}
-	return cf.labToFunc(g, search)
+	return cf.adjToTraverse(g, traverse)
 }
 
-func (cf *config) labRandFunc(g graph.LabeledAdjacencyList, search func(graph.NI) bool, r *rand.Rand) func(graph.NI) bool {
+func (cf *config) adjRandTraverse(g graph.AdjacencyList, traverse func(graph.NI), r *rand.Rand) func(graph.NI) {
+	return func(n graph.NI) {
+		to := g[n]
+		for _, i := range r.Perm(len(to)) {
+			traverse(to[i])
+		}
+	}
+}
+
+func (cf *config) adjToTraverse(g graph.AdjacencyList, traverse func(graph.NI)) func(graph.NI) {
+	return func(n graph.NI) {
+		for _, to := range g[n] {
+			traverse(to)
+		}
+	}
+}
+
+func (cf *config) labFunc(g graph.LabeledAdjacencyList) (func(graph.NI), error) {
+	if v := cf.okNodeVisitor; v != nil {
+		f := dfSearchNodes{visited: cf.visitedFunc()}
+		search := f.search
+		f.recurse = cf.composeOkVisitor(v, cf.labRecurseSearch(g, search))
+		return func(start graph.NI) { search(start) }, nil
+	}
+	f := dfTraverseNodes{visited: cf.visitedFunc()}
+	traverse := f.traverse
+	f.recurse = cf.composeVisitor(cf.labRecurseTraverse(g, traverse))
+	return traverse, nil
+}
+
+func (cf *config) labRecurseSearch(g graph.LabeledAdjacencyList, search func(graph.NI) bool) func(graph.NI) bool {
+	if r := cf.rand; r != nil {
+		return cf.labRandSearch(g, search, r)
+	}
+	return cf.labToSearch(g, search)
+}
+
+func (cf *config) labRandSearch(g graph.LabeledAdjacencyList, search func(graph.NI) bool, r *rand.Rand) func(graph.NI) bool {
 	return func(n graph.NI) bool {
 		to := g[n]
 		for _, i := range r.Perm(len(to)) {
@@ -163,7 +210,7 @@ func (cf *config) labRandFunc(g graph.LabeledAdjacencyList, search func(graph.NI
 	}
 }
 
-func (cf *config) labToFunc(g graph.LabeledAdjacencyList, search func(graph.NI) bool) func(graph.NI) bool {
+func (cf *config) labToSearch(g graph.LabeledAdjacencyList, search func(graph.NI) bool) func(graph.NI) bool {
 	return func(n graph.NI) bool {
 		for _, to := range g[n] {
 			if !search(to.To) {
@@ -171,5 +218,29 @@ func (cf *config) labToFunc(g graph.LabeledAdjacencyList, search func(graph.NI) 
 			}
 		}
 		return true
+	}
+}
+
+func (cf *config) labRecurseTraverse(g graph.LabeledAdjacencyList, traverse func(graph.NI)) func(graph.NI) {
+	if r := cf.rand; r != nil {
+		return cf.labRandTraverse(g, traverse, r)
+	}
+	return cf.labToTraverse(g, traverse)
+}
+
+func (cf *config) labRandTraverse(g graph.LabeledAdjacencyList, traverse func(graph.NI), r *rand.Rand) func(graph.NI) {
+	return func(n graph.NI) {
+		to := g[n]
+		for _, i := range r.Perm(len(to)) {
+			traverse(to[i].To)
+		}
+	}
+}
+
+func (cf *config) labToTraverse(g graph.LabeledAdjacencyList, traverse func(graph.NI)) func(graph.NI) {
+	return func(n graph.NI) {
+		for _, to := range g[n] {
+			traverse(to.To)
+		}
 	}
 }

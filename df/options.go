@@ -37,13 +37,13 @@ func NodeVisitor(v graph.NodeVisitor) func(*config) {
 	}
 }
 
-// OkNodeVisitor specifies a visitor function to call at each node.
+// OkNodeVisitor specifies a visitor function to perform some test at each node
+// and return a boolean result.
 //
-// As long as v return true, the search progresses to traverse all nodes
-// reachable from start, and ok is ultimately set to true.
+// As long as v return a result of true, the search progresses to traverse all
+// nodes, and ok is ultimately set to true.
 //
-// If the visitor function returns false, the search terminates immediately
-// and ok is set to false.
+// If v returns false, the search terminates immediately and ok is set to false.
 //
 // The ok pointer can be nil if the bool result is not needed.
 //
