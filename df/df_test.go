@@ -41,7 +41,7 @@ func ExampleBits() {
 	// 1111
 }
 
-func ExampleVisitor() {
+func ExampleOkNodeVisitor() {
 	//   0
 	//  / \
 	// 1-->2
@@ -68,7 +68,7 @@ func ExampleVisitor() {
 	// true
 }
 
-func ExampleVisitor_earlyTermination() {
+func ExampleOkNodeVisitor_earlyTermination() {
 	//   0-->3
 	//  / \
 	// 1-->2
