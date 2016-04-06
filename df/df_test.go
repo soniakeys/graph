@@ -12,7 +12,7 @@ import (
 	"github.com/soniakeys/graph/df"
 )
 
-func ExampleBits() {
+func ExampleVisited() {
 	//   0
 	//  / \
 	// 1-->2
@@ -28,10 +28,10 @@ func ExampleBits() {
 	var b graph.Bits
 	fmt.Println("3210")
 	fmt.Println("----")
-	df.Search(g, 0, df.Bits(&b), df.OkNodeVisitor(func(graph.NI) bool {
+	df.Search(g, 0, df.Visited(&b), df.OkNodeVisitor(func(graph.NI) bool {
 		fmt.Printf("%04b\n", &b)
 		return true
-	}, nil))
+	}))
 	// Output:
 	// 3210
 	// ----
@@ -54,18 +54,15 @@ func ExampleOkNodeVisitor() {
 		2: {3},
 		3: {1},
 	}
-	var ok bool
-	df.Search(g, 0, df.OkNodeVisitor(func(n graph.NI) (ok bool) {
+	df.Search(g, 0, df.OkNodeVisitor(func(n graph.NI) bool {
 		fmt.Println("visit", n)
 		return true
-	}, &ok))
-	fmt.Println(ok)
+	}))
 	// Output:
 	// visit 0
 	// visit 1
 	// visit 2
 	// visit 3
-	// true
 }
 
 func ExampleOkNodeVisitor_earlyTermination() {
@@ -77,18 +74,44 @@ func ExampleOkNodeVisitor_earlyTermination() {
 		1: {2},
 		3: {},
 	}
-	var ok bool
-	df.Search(g, 0, df.OkNodeVisitor(func(n graph.NI) (ok bool) {
+	var found bool
+	df.Search(g, 0, df.OkNodeVisitor(func(n graph.NI) bool {
 		fmt.Println("visit", n)
-		return n != 2
-	}, &ok))
-	fmt.Println(ok)
+		found = n == 2
+		return !found
+	}))
+	fmt.Println("found =", found)
 	// Output:
 	// visit 0
 	// visit 1
 	// visit 2
-	// false
+	// found = true
 }
+
+/*
+func ExampleOkArcVisitor_cyclic() {
+    //   0
+    //  / \
+    // 1-->2
+    // ^   |
+    // |   v
+    // \---3
+    g := graph.AdjacencyList{
+        0: {1, 2},
+        1: {2},
+        2: {3},
+        3: {1},
+    }
+	var p graph.Bits
+	v := func(n graph.NI, x int) bool {
+		to := g[n][x]
+		fmt.Println("arc", n, "->", to)
+		return p.Bit(to) == 0
+	}
+	df.Search(g, 0, df.PathBits(&p), df.OkArcVisitor(v))
+	// Output:
+}
+*/
 
 var k10 graph.Directed
 
@@ -117,6 +140,6 @@ func BenchmarkADF(b *testing.B) {
 func BenchmarkDFA(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		var bm graph.Bits
-		df.Search(k10.AdjacencyList, 0, df.Bits(&bm))
+		df.Search(k10.AdjacencyList, 0, df.Visited(&bm))
 	}
 }
