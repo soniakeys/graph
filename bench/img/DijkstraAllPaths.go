@@ -114,7 +114,7 @@ func meanMinMax(vs []float64) (mean, lowerr, higherr float64) {
 
 func geo() {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
-	// shorter list here becuase of Geometric O(n²) construction time
+	// shorter list here because of Geometric O(n²) construction time
 	ns := []int{16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384,
 		32768, 65536, 131072}
 	const degree = 10
