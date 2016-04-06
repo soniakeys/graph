@@ -6,6 +6,6 @@ if [ "$TRAVIS_GO_VERSION" = "1.6" ]; then
  go tool vet -example .
  go get github.com/client9/misspell/cmd/misspell
  go get github.com/soniakeys/vetc
- misspell * **/*
+ misspell * */* */*/*
  vetc
 fi
