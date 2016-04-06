@@ -1,5 +1,5 @@
 #!/bin/bash
-set -ev
+set -ex
 go test ./...
 if [ "$TRAVIS_GO_VERSION" = "1.6" ]; then
  GOARCH=386 go test ./...
