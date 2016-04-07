@@ -71,6 +71,46 @@ func ExampleGeometric() {
 	// 2 - 3
 }
 
+func ExampleKroneckerDirected() {
+	r := rand.New(rand.NewSource(7))
+	g, ma := graph.KroneckerDirected(2, 2, r)
+	a := g.AdjacencyList
+	fmt.Println(len(a), "nodes")
+	fmt.Println(ma, "arcs:")
+	for fr, to := range a {
+		fmt.Println(fr, "->", to)
+	}
+	// Output:
+	// 4 nodes
+	// 5 arcs:
+	// 0 -> [2]
+	// 1 -> [2]
+	// 2 -> [1]
+	// 3 -> [2 1]
+}
+
+func ExampleKroneckerUndirected() {
+	r := rand.New(rand.NewSource(7))
+	g, m := graph.KroneckerUndirected(2, 2, r)
+	a := g.AdjacencyList
+	fmt.Println(len(a), "nodes")
+	fmt.Println(m, "edges:")
+	for fr, to := range a {
+		for _, to := range to {
+			if graph.NI(fr) < to {
+				fmt.Println(fr, "-", to)
+			}
+		}
+	}
+	// Output:
+	// 4 nodes
+	// 4 edges:
+	// 0 - 2
+	// 1 - 2
+	// 1 - 3
+	// 2 - 3
+}
+
 func ExampleLabeledGeometric() {
 	r := rand.New(rand.NewSource(7))
 	g, pos, wt := graph.LabeledGeometric(4, .6, r)
@@ -178,7 +218,7 @@ func TestEuclidean(t *testing.T) {
 }
 
 func TestKroneckerDir(t *testing.T) {
-	g, _ := graph.KroneckerDir(10, 10, nil)
+	g, _ := graph.KroneckerDirected(10, 10, nil)
 	if s, n := g.IsSimple(); !s {
 		t.Fatalf("KroneckerDir returned non-simple graph.  Node %d to: %v",
 			n, g.AdjacencyList[n])
@@ -186,7 +226,7 @@ func TestKroneckerDir(t *testing.T) {
 }
 
 func TestKroneckerUndir(t *testing.T) {
-	g, _ := graph.KroneckerUndir(10, 10, nil)
+	g, _ := graph.KroneckerUndirected(10, 10, nil)
 	if s, n := g.IsSimple(); !s {
 		t.Fatalf("KroneckerUndir returned non-simple graph.  Node %d to: %v",
 			n, g.AdjacencyList[n])

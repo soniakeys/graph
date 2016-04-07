@@ -117,7 +117,7 @@ var k10 graph.Directed
 
 func init() {
 	r := rand.New(rand.NewSource(11))
-	k10, _ = graph.KroneckerDir(10, 10, r)
+	k10, _ = graph.KroneckerDirected(10, 10, r)
 }
 
 func TestK10(t *testing.T) {

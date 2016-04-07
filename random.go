@@ -217,7 +217,7 @@ func LabeledGeometric(nNodes int, radius float64, r *rand.Rand) (g LabeledUndire
 	return
 }
 
-// KroneckerDir generates a Kronecker-like random directed graph.
+// KroneckerDirected generates a Kronecker-like random directed graph.
 //
 // The returned graph g is simple and has no isolated nodes but is not
 // necessarily fully connected.  The number of of nodes will be <= 2^scale,
@@ -229,12 +229,12 @@ func LabeledGeometric(nNodes int, radius float64, r *rand.Rand) (g LabeledUndire
 // one-time use.
 //
 // Return value ma is the number of arcs retained in the result graph.
-func KroneckerDir(scale uint, arcFactor float64, r *rand.Rand) (g Directed, ma int) {
+func KroneckerDirected(scale uint, arcFactor float64, r *rand.Rand) (g Directed, ma int) {
 	a, m := kronecker(scale, arcFactor, true, r)
 	return Directed{a}, m
 }
 
-// KroneckerUndir generates a Kronecker-like random undirected graph.
+// KroneckerUndirected generates a Kronecker-like random undirected graph.
 //
 // The returned graph g is simple and has no isolated nodes but is not
 // necessarily fully connected.  The number of of nodes will be <= 2^scale,
@@ -245,17 +245,19 @@ func KroneckerDir(scale uint, arcFactor float64, r *rand.Rand) (g Directed, ma i
 // If Rand r is nil, the method creates a new source and generator for
 // one-time use.
 //
-// Return value ma is the number of arcs--not edges--retained in the result
+// Return value m is the true number of edges--not arcs--retained in the result
 // graph.
-func KroneckerUndir(scale uint, edgeFactor float64, r *rand.Rand) (g Undirected, ma int) {
-	al, as := kronecker(scale, edgeFactor, false, r)
-	return Undirected{al}, as
+func KroneckerUndirected(scale uint, edgeFactor float64, r *rand.Rand) (g Undirected, m int) {
+	al, s := kronecker(scale, edgeFactor, false, r)
+	return Undirected{al}, s
 }
 
 // Styled after the Graph500 example code.  Not well tested currently.
 // Graph500 example generates undirected only.  No idea if the directed variant
 // here is meaningful or not.
-func kronecker(scale uint, edgeFactor float64, dir bool, r *rand.Rand) (g AdjacencyList, ma int) {
+//
+// note mma returns arc size ma for dir=true, but returns size m for dir=false
+func kronecker(scale uint, edgeFactor float64, dir bool, r *rand.Rand) (g AdjacencyList, mma int) {
 	if r == nil {
 		r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	}
@@ -314,10 +316,9 @@ ij:
 			}
 		}
 		g[ri] = append(g[ri], rj)
-		ma++
+		mma++
 		if !dir {
 			g[rj] = append(g[rj], ri)
-			ma++
 		}
 	}
 	return
