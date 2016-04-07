@@ -3,11 +3,15 @@
 
 package graph_test
 
-// dir_cg_test.go -- tests for code in dir_cg.go.
+// dir_ro_test.go -- tests on dir_RO.go
 //
-// These are tests on the labeled versions of methods.
+// These are tests on the code-generated unlabeled versions of methods.
 //
-// See also dir_ro_test.go when editing this file.  Try to keep the tests
+// If testing prompts changes in the tested method, be sure to edit
+// dir_cg.go, go generate to generate the dir_RO.go, and then retest.
+// Do not edit dir_RO.go
+//
+// See also dir_cg_test.go when editing this file.  Try to keep the tests
 // in the two files as similar as possible.
 
 import (
@@ -16,14 +20,14 @@ import (
 	"github.com/soniakeys/graph"
 )
 
-func ExampleLabeledDirected_Balanced() {
+func ExampleDirected_Balanced() {
 	// 2
 	// |
 	// v
 	// 0----->1
-	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
-		2: {{To: 0}},
-		0: {{To: 1}},
+	g := graph.Directed{graph.AdjacencyList{
+		2: {0},
+		0: {1},
 	}}
 	fmt.Println(g.Balanced())
 
@@ -31,21 +35,21 @@ func ExampleLabeledDirected_Balanced() {
 	// |    \
 	// v     \
 	// 1----->2
-	g.LabeledAdjacencyList[1] = []graph.Half{{To: 2}}
+	g.AdjacencyList[1] = []graph.NI{2}
 	fmt.Println(g.Balanced())
 	// Output:
 	// false
 	// true
 }
 
-func ExampleLabeledDirected_Cyclic() {
+func ExampleDirected_Cyclic() {
 	//   0
 	//  / \
 	// 1-->2-->3
-	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
-		0: {{To: 1}, {To: 2}},
-		1: {{To: 2}},
-		2: {{To: 3}},
+	g := graph.Directed{graph.AdjacencyList{
+		0: {1, 2},
+		1: {2},
+		2: {3},
 		3: {},
 	}}
 	cyclic, _, _ := g.Cyclic()
@@ -57,23 +61,23 @@ func ExampleLabeledDirected_Cyclic() {
 	// ^   |
 	// |   v
 	// \---3
-	g.LabeledAdjacencyList[3] = []graph.Half{{To: 1}}
+	g.AdjacencyList[3] = []graph.NI{1}
 	fmt.Println(g.Cyclic())
 
 	// Output:
 	// false
-	// true 3 {1 0}
+	// true 3 1
 }
 
-func ExampleLabeledDirected_FromList() {
+func ExampleDirected_FromList() {
 	//    4   3
 	//   / \
 	//  2   1
 	//       \
 	//        0
-	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
-		4: {{To: 2}, {To: 1}},
-		1: {{To: 0}},
+	g := graph.Directed{graph.AdjacencyList{
+		4: {2, 1},
+		1: {0},
 	}}
 	f, n := g.FromList()
 	fmt.Println("n:", n)
@@ -91,16 +95,16 @@ func ExampleLabeledDirected_FromList() {
 	// 4   -1
 }
 
-func ExampleLabeledDirected_FromList_nonTree() {
+func ExampleDirected_FromList_nonTree() {
 	//    0
 	//   / \
 	//  1   2
 	//   \ /
 	//    3
-	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
-		0: {{To: 1}, {To: 2}},
-		1: {{To: 3}},
-		2: {{To: 3}},
+	g := graph.Directed{graph.AdjacencyList{
+		0: {1, 2},
+		1: {3},
+		2: {3},
 		3: {},
 	}}
 	fmt.Println(g.FromList())
@@ -108,12 +112,12 @@ func ExampleLabeledDirected_FromList_nonTree() {
 	// <nil> 3
 }
 
-func ExampleLabeledDirected_FromList_multigraphTree() {
+func ExampleDirected_FromList_multigraphTree() {
 	//    0
 	//   / \\
 	//  1   2
-	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
-		0: {{To: 1}, {To: 2}, {To: 2}},
+	g := graph.Directed{graph.AdjacencyList{
+		0: {1, 2, 2},
 		2: {},
 	}}
 	fmt.Println(g.FromList())
@@ -121,14 +125,14 @@ func ExampleLabeledDirected_FromList_multigraphTree() {
 	// <nil> 2
 }
 
-func ExampleLabeledDirected_FromList_rootLoops() {
+func ExampleDirected_FromList_rootLoops() {
 	//     /-\
 	//    0--/  3--\
 	//   / \     \-/
 	//  1   2
-	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
-		0: {{To: 0}, {To: 1}, {To: 2}},
-		3: {{To: 3}},
+	g := graph.Directed{graph.AdjacencyList{
+		0: {0, 1, 2},
+		3: {3},
 	}}
 	f, n := g.FromList()
 	fmt.Println("n:", n)
@@ -145,7 +149,7 @@ func ExampleLabeledDirected_FromList_rootLoops() {
 	// 3    3
 }
 
-func ExampleLabeledDirected_InDegree() {
+func ExampleDirected_InDegree() {
 	// arcs directed down:
 	//  0     2
 	//  |
@@ -154,10 +158,10 @@ func ExampleLabeledDirected_InDegree() {
 	//  | \
 	//  3  4<-\
 	//     \--/
-	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
-		0: {{To: 1}},
-		1: {{To: 3}, {To: 4}},
-		4: {{To: 4}},
+	g := graph.Directed{graph.AdjacencyList{
+		0: {1},
+		1: {3, 4},
+		4: {4},
 	}}
 	fmt.Println("node:    0 1 2 3 4")
 	fmt.Println("in-deg:", g.InDegree())
@@ -166,7 +170,7 @@ func ExampleLabeledDirected_InDegree() {
 	// in-deg: [0 1 0 1 2]
 }
 
-func ExampleLabeledDirected_IsTree() {
+func ExampleDirected_IsTree() {
 	// Example graph
 	// Arcs point down unless otherwise indicated
 	//           1
@@ -174,11 +178,11 @@ func ExampleLabeledDirected_IsTree() {
 	//         0   5
 	//        /   / \
 	//       2   3-->4
-	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
-		1: {{To: 0}, {To: 5}},
-		0: {{To: 2}},
-		5: {{To: 3}, {To: 4}},
-		3: {{To: 4}},
+	g := graph.Directed{graph.AdjacencyList{
+		1: {0, 5},
+		0: {2},
+		5: {3, 4},
+		3: {4},
 	}}
 	fmt.Println(g.IsTree(0))
 	fmt.Println(g.IsTree(1))
@@ -187,7 +191,7 @@ func ExampleLabeledDirected_IsTree() {
 	// false false
 }
 
-func ExampleLabeledDirected_Tarjan() {
+func ExampleDirected_Tarjan() {
 	// /---0---\
 	// |   |\--/
 	// |   v
@@ -200,15 +204,15 @@ func ExampleLabeledDirected_Tarjan() {
 	//         |   ^
 	//         |   |
 	//         \-->1
-	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
-		0: {{To: 0}, {To: 5}, {To: 7}},
-		5: {{To: 4}, {To: 6}},
-		4: {{To: 5}, {To: 2}, {To: 3}},
-		7: {{To: 6}},
-		6: {{To: 7}, {To: 3}},
-		3: {{To: 1}},
-		1: {{To: 2}},
-		2: {{To: 3}},
+	g := graph.Directed{graph.AdjacencyList{
+		0: {0, 5, 7},
+		5: {4, 6},
+		4: {5, 2, 3},
+		7: {6},
+		6: {7, 3},
+		3: {1},
+		1: {2},
+		2: {3},
 	}}
 	g.Tarjan(func(c []graph.NI) bool {
 		fmt.Println(c)
@@ -221,7 +225,7 @@ func ExampleLabeledDirected_Tarjan() {
 	// [0]
 }
 
-func ExampleLabeledDirected_TarjanForward() {
+func ExampleDirected_TarjanForward() {
 	// /---0---\
 	// |   |\--/
 	// |   v
@@ -234,15 +238,15 @@ func ExampleLabeledDirected_TarjanForward() {
 	//         |   ^
 	//         |   |
 	//         \-->1
-	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
-		0: {{To: 0}, {To: 5}, {To: 7}},
-		5: {{To: 4}, {To: 6}},
-		4: {{To: 5}, {To: 2}, {To: 3}},
-		7: {{To: 6}},
-		6: {{To: 7}, {To: 3}},
-		3: {{To: 1}},
-		1: {{To: 2}},
-		2: {{To: 3}},
+	g := graph.Directed{graph.AdjacencyList{
+		0: {0, 5, 7},
+		5: {4, 6},
+		4: {5, 2, 3},
+		7: {6},
+		6: {7, 3},
+		3: {1},
+		1: {2},
+		2: {3},
 	}}
 	for _, c := range g.TarjanForward() {
 		fmt.Println(c)
@@ -254,7 +258,7 @@ func ExampleLabeledDirected_TarjanForward() {
 	// [1 3 2]
 }
 
-func ExampleLabeledDirected_TarjanCondensation() {
+func ExampleDirected_TarjanCondensation() {
 	// input:          condensation:
 	// /---0---\      <->  /---0
 	// |   |\--/           |   |
@@ -268,15 +272,15 @@ func ExampleLabeledDirected_TarjanCondensation() {
 	//         |   ^
 	//         |   |
 	//         \-->1
-	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
-		0: {{To: 0}, {To: 5}, {To: 7}},
-		5: {{To: 4}, {To: 6}},
-		4: {{To: 5}, {To: 2}, {To: 3}},
-		7: {{To: 6}},
-		6: {{To: 7}, {To: 3}},
-		3: {{To: 1}},
-		1: {{To: 2}},
-		2: {{To: 3}},
+	g := graph.Directed{graph.AdjacencyList{
+		0: {0, 5, 7},
+		5: {4, 6},
+		4: {5, 2, 3},
+		7: {6},
+		6: {7, 3},
+		3: {1},
+		1: {2},
+		2: {3},
 	}}
 	scc, cd := g.TarjanCondensation()
 	fmt.Println(len(scc), "components:")
@@ -300,31 +304,31 @@ func ExampleLabeledDirected_TarjanCondensation() {
 	// 3 []
 }
 
-func ExampleLabeledDirected_Topological() {
-	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
-		1: {{To: 2}},
-		3: {{To: 1}, {To: 2}},
-		4: {{To: 3}, {To: 2}},
+func ExampleDirected_Topological() {
+	g := graph.Directed{graph.AdjacencyList{
+		1: {2},
+		3: {1, 2},
+		4: {3, 2},
 	}}
 	fmt.Println(g.Topological())
-	g.LabeledAdjacencyList[2] = []graph.Half{{To: 3}}
+	g.AdjacencyList[2] = []graph.NI{3}
 	fmt.Println(g.Topological())
 	// Output:
 	// [4 3 1 2 0] []
 	// [] [1 2 3]
 }
 
-func ExampleLabeledDirected_TopologicalKahn() {
-	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
-		1: {{To: 2}},
-		3: {{To: 1}, {To: 2}},
-		4: {{To: 3}, {To: 2}},
+func ExampleDirected_TopologicalKahn() {
+	g := graph.Directed{graph.AdjacencyList{
+		1: {2},
+		3: {1, 2},
+		4: {3, 2},
 	}}
-	tr, _ := g.UnlabeledTranspose()
+	tr, _ := g.Transpose()
 	fmt.Println(g.TopologicalKahn(tr))
 
-	g.LabeledAdjacencyList[2] = []graph.Half{{To: 3}}
-	tr, _ = g.UnlabeledTranspose()
+	g.AdjacencyList[2] = []graph.NI{3}
+	tr, _ = g.Transpose()
 	fmt.Println(g.TopologicalKahn(tr))
 	// Output:
 	// [4 3 1 2 0] []

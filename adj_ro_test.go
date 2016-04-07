@@ -3,11 +3,15 @@
 
 package graph_test
 
-// adj_cg_test.go -- tests for code in adj_cg.go.
+// adj_ro_test.go -- tests on adj_RO.go
 //
-// These are tests on the labeled versions of methods.
+// These are tests on the code-generated unlabeled versions of methods.
 //
-// See also adj_ro_test.go when editing this file.  Try to keep the tests
+// If testing prompts changes in the tested method, be sure to edit
+// adj_cg.go, go generate to generate the adj_RO.go, and then retest.
+// Do not edit adj_RO.go
+//
+// See also adj_cg_test.go when editing this file.  Try to keep the tests
 // in the two files as similar as possible.
 
 import (
@@ -18,13 +22,13 @@ import (
 	"github.com/soniakeys/graph"
 )
 
-func ExampleLabeledAdjacencyList_ArcSize() {
+func ExampleAdjacencyList_ArcSize() {
 	// arcs directed down
 	//   2
 	//  / \
 	// 0   1
-	g := graph.LabeledDirected{graph.LabeledAdjacencyList{ // simple graph
-		2: {{To: 0}, {To: 1}},
+	g := graph.Directed{graph.AdjacencyList{ // simple graph
+		2: {0, 1},
 	}}
 	fmt.Println(g.ArcSize())
 
@@ -34,7 +38,7 @@ func ExampleLabeledAdjacencyList_ArcSize() {
 	// size, m = ArcSize() / 2 here, but only because there are no loops.
 	fmt.Println(u.ArcSize())
 
-	g.LabeledAdjacencyList[1] = []graph.Half{{To: 1}} // add a loop
+	g.AdjacencyList[1] = []graph.NI{1} // add a loop
 	//   2
 	//  / \
 	// 0   1---\
@@ -50,49 +54,49 @@ func ExampleLabeledAdjacencyList_ArcSize() {
 	// 5
 }
 
-func ExampleLabeledAdjacencyList_BoundsOk() {
-	var g graph.LabeledAdjacencyList
+func ExampleAdjacencyList_BoundsOk() {
+	var g graph.AdjacencyList
 	ok, _, _ := g.BoundsOk() // zero value adjacency list is valid
 	fmt.Println(ok)
-	g = graph.LabeledAdjacencyList{
-		0: {{To: 9}},
+	g = graph.AdjacencyList{
+		0: {9},
 	}
 	fmt.Println(g.BoundsOk()) // arc 0 to 9 invalid with only one node
 	// Output:
 	// true
-	// false 0 {9 0}
+	// false 0 9
 }
 
-func ExampleLabeledAdjacencyList_BreadthFirstPath() {
+func ExampleAdjacencyList_BreadthFirstPath() {
 	// arcs are directed right:
 	//    1   3---5
 	//   / \ /   /
 	//  2   4---6--\
 	//           \-/
-	g := graph.LabeledAdjacencyList{
-		2: {{To: 1}},
-		1: {{To: 4}},
-		4: {{To: 3}, {To: 6}},
-		3: {{To: 5}},
-		6: {{To: 5}, {To: 6}},
+	g := graph.AdjacencyList{
+		2: {1},
+		1: {4},
+		4: {3, 6},
+		3: {5},
+		6: {5, 6},
 	}
 	fmt.Println(g.BreadthFirstPath(1, 3))
 	// Output:
 	// [1 4 3]
 }
 
-func ExampleLabeledAdjacencyList_BreadthFirst_singlePath() {
+func ExampleAdjacencyList_BreadthFirst_singlePath() {
 	// arcs are directed right:
 	//    1   3---5
 	//   / \ /   /
 	//  2   4---6--\
 	//           \-/
-	g := graph.LabeledAdjacencyList{
-		2: {{To: 1}},
-		1: {{To: 4}},
-		4: {{To: 3}, {To: 6}},
-		3: {{To: 5}},
-		6: {{To: 5}, {To: 6}},
+	g := graph.AdjacencyList{
+		2: {1},
+		1: {4},
+		4: {3, 6},
+		3: {5},
+		6: {5, 6},
 	}
 	var start, end graph.NI = 1, 6
 	var f graph.FromList
@@ -106,18 +110,18 @@ func ExampleLabeledAdjacencyList_BreadthFirst_singlePath() {
 	// path: [1 4 6]
 }
 
-func ExampleLabeledAdjacencyList_BreadthFirst_allPaths() {
+func ExampleAdjacencyList_BreadthFirst_allPaths() {
 	// arcs are directed right:
 	//    1   3---5
 	//   / \ /   /
 	//  2   4---6--\
 	//           \-/
-	g := graph.LabeledAdjacencyList{
-		2: {{To: 1}},
-		1: {{To: 4}},
-		4: {{To: 3}, {To: 6}},
-		3: {{To: 5}},
-		6: {{To: 5}, {To: 6}},
+	g := graph.AdjacencyList{
+		2: {1},
+		1: {4},
+		4: {3, 6},
+		3: {5},
+		6: {5, 6},
 	}
 	start := graph.NI(1)
 	var f graph.FromList
@@ -140,17 +144,17 @@ func ExampleLabeledAdjacencyList_BreadthFirst_allPaths() {
 	// 6 [1 4 6]
 }
 
-func ExampleLabeledAdjacencyList_BreadthFirst_traverse() {
+func ExampleAdjacencyList_BreadthFirst_traverse() {
 	// arcs directed down
 	//    0--
 	//   /|  \
 	//  1 2   3
 	//   /|\  |\
 	//  4 5 6 7 8
-	g := graph.LabeledAdjacencyList{
-		0: {{To: 1}, {To: 2}, {To: 3}},
-		2: {{To: 4}, {To: 5}, {To: 6}},
-		3: {{To: 7}, {To: 8}},
+	g := graph.AdjacencyList{
+		0: {1, 2, 3},
+		2: {4, 5, 6},
+		3: {7, 8},
 		8: {},
 	}
 	var f graph.FromList
@@ -170,17 +174,17 @@ func ExampleLabeledAdjacencyList_BreadthFirst_traverse() {
 	// visit 8 level 3
 }
 
-func ExampleLabeledAdjacencyList_BreadthFirst_traverseRandom() {
+func ExampleAdjacencyList_BreadthFirst_traverseRandom() {
 	// arcs directed down
 	//    0--
 	//   /|  \
 	//  1 2   3
 	//   /|\  |\
 	//  4 5 6 7 8
-	g := graph.LabeledAdjacencyList{
-		0: {{To: 1}, {To: 2}, {To: 3}},
-		2: {{To: 4}, {To: 5}, {To: 6}},
-		3: {{To: 7}, {To: 8}},
+	g := graph.AdjacencyList{
+		0: {1, 2, 3},
+		2: {4, 5, 6},
+		3: {7, 8},
 		8: {},
 	}
 
@@ -204,18 +208,18 @@ func ExampleLabeledAdjacencyList_BreadthFirst_traverseRandom() {
 	// visit 7 level 3
 }
 
-func ExampleLabeledAdjacencyList_DepthFirst() {
+func ExampleAdjacencyList_DepthFirst() {
 	//   0
 	//  / \
 	// 1-->2
 	// ^   |
 	// |   v
 	// \---3
-	g := graph.LabeledAdjacencyList{
-		0: {{To: 1}, {To: 2}},
-		1: {{To: 2}},
-		2: {{To: 3}},
-		3: {{To: 1}},
+	g := graph.AdjacencyList{
+		0: {1, 2},
+		1: {2},
+		2: {3},
+		3: {1},
 	}
 	ok := g.DepthFirst(0, nil, func(n graph.NI) (ok bool) {
 		fmt.Println("visit", n)
@@ -230,13 +234,13 @@ func ExampleLabeledAdjacencyList_DepthFirst() {
 	// true
 }
 
-func ExampleLabeledAdjacencyList_DepthFirst_earlyTermination() {
+func ExampleAdjacencyList_DepthFirst_earlyTermination() {
 	//   0-->3
 	//  / \
 	// 1-->2
-	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
-		0: {{To: 1}, {To: 2}, {To: 3}},
-		1: {{To: 2}},
+	g := graph.Directed{graph.AdjacencyList{
+		0: {1, 2, 3},
+		1: {2},
 		3: {},
 	}}
 	ok := g.DepthFirst(0, nil, func(n graph.NI) bool {
@@ -251,18 +255,18 @@ func ExampleLabeledAdjacencyList_DepthFirst_earlyTermination() {
 	// false
 }
 
-func ExampleLabeledAdjacencyList_DepthFirst_bitmap() {
+func ExampleAdjacencyList_DepthFirst_bitmap() {
 	//   0
 	//  / \
 	// 1-->2
 	// ^   |
 	// |   v
 	// \---3
-	g := graph.LabeledAdjacencyList{
-		0: {{To: 1}, {To: 2}},
-		1: {{To: 2}},
-		2: {{To: 3}},
-		3: {{To: 1}},
+	g := graph.AdjacencyList{
+		0: {1, 2},
+		1: {2},
+		2: {3},
+		3: {1},
 	}
 	var vis graph.Bits
 	fmt.Println("3210")
@@ -280,25 +284,25 @@ func ExampleLabeledAdjacencyList_DepthFirst_bitmap() {
 	// 1111
 }
 
-func TestLabeledAdjacencyList_DepthFirst_bothNil(t *testing.T) {
+func TestAdjacencyList_DepthFirst_bothNil(t *testing.T) {
 	// for coverage
-	var g graph.LabeledAdjacencyList
+	var g graph.AdjacencyList
 	if g.DepthFirst(0, nil, nil) {
 		t.Fatal("DepthFirst both nil must return false")
 	}
 }
 
-func ExampleLabeledAdjacencyList_DepthFirstRandom() {
+func ExampleAdjacencyList_DepthFirstRandom() {
 	//     ----0-----
 	//    /    |     \
 	//   1     2      3
 	//  /|\   /|\   / | \
 	// 4 5 6 7 8 9 10 11 12
-	g := graph.LabeledAdjacencyList{
-		0:  {{To: 1}, {To: 2}, {To: 3}},
-		1:  {{To: 4}, {To: 5}, {To: 6}},
-		2:  {{To: 7}, {To: 8}, {To: 9}},
-		3:  {{To: 10}, {To: 11}, {To: 12}},
+	g := graph.AdjacencyList{
+		0:  {1, 2, 3},
+		1:  {4, 5, 6},
+		2:  {7, 8, 9},
+		3:  {10, 11, 12},
 		12: {},
 	}
 	r := rand.New(rand.NewSource(12))
@@ -323,27 +327,27 @@ func ExampleLabeledAdjacencyList_DepthFirstRandom() {
 	// visit 8
 }
 
-func ExampleLabeledAdjacencyList_HasArc() {
-	g := graph.LabeledAdjacencyList{
-		2: {{To: 0}, {To: 2}, {To: 0}, {To: 1}, {To: 1}},
+func ExampleAdjacencyList_HasArc() {
+	g := graph.AdjacencyList{
+		2: {0, 2, 0, 1, 1},
 	}
 	fmt.Println(g.HasArc(2, 1))
 	// Output:
 	// true 3
 }
 
-func ExampleLabeledAdjacencyList_HasLoop_loop() {
-	g := graph.LabeledAdjacencyList{
-		2: {{To: 2}},
+func ExampleAdjacencyList_HasLoop_loop() {
+	g := graph.AdjacencyList{
+		2: {2},
 	}
 	fmt.Println(g.HasLoop())
 	// Output:
 	// true 2
 }
 
-func ExampleLabeledAdjacencyList_HasLoop_noLoop() {
-	g := graph.LabeledAdjacencyList{
-		1: {{To: 0}},
+func ExampleAdjacencyList_HasLoop_noLoop() {
+	g := graph.AdjacencyList{
+		1: {0},
 	}
 	lp, _ := g.HasLoop()
 	fmt.Println("has loop:", lp)
@@ -351,9 +355,9 @@ func ExampleLabeledAdjacencyList_HasLoop_noLoop() {
 	// has loop: false
 }
 
-func ExampleLabeledAdjacencyList_HasParallelMap_parallelArcs() {
-	g := graph.LabeledAdjacencyList{
-		1: {{To: 0}, {To: 0}},
+func ExampleAdjacencyList_HasParallelMap_parallelArcs() {
+	g := graph.AdjacencyList{
+		1: {0, 0},
 	}
 	// result true 1 0 means parallel arcs from node 1 to node 0
 	fmt.Println(g.HasParallelMap())
@@ -361,21 +365,21 @@ func ExampleLabeledAdjacencyList_HasParallelMap_parallelArcs() {
 	// true 1 0
 }
 
-func ExampleLabeledAdjacencyList_HasParallelMap_noParallelArcs() {
-	g := graph.LabeledAdjacencyList{
-		1: {{To: 0}},
+func ExampleAdjacencyList_HasParallelMap_noParallelArcs() {
+	g := graph.AdjacencyList{
+		1: {0},
 	}
 	fmt.Println(g.HasParallelMap()) // result false -1 -1 means no parallel arc
 	// Output:
 	// false -1 -1
 }
 
-func ExampleLabeledAdjacencyList_IsolatedNodes() {
+func ExampleAdjacencyList_IsolatedNodes() {
 	//   0  1
 	//  / \
 	// 2   3  4
-	g := graph.LabeledAdjacencyList{
-		0: {{To: 2}, {To: 3}},
+	g := graph.AdjacencyList{
+		0: {2, 3},
 		4: {},
 	}
 	fmt.Println(g.IsolatedNodes().Slice())
@@ -383,42 +387,42 @@ func ExampleLabeledAdjacencyList_IsolatedNodes() {
 	// [1 4]
 }
 
-func ExampleLabeledAdjacencyList_IsSimple() {
+func ExampleAdjacencyList_IsSimple() {
 	// arcs directed down
 	//   2
 	//  / \
 	// 0   1
-	g := graph.LabeledAdjacencyList{
-		2: {{To: 0}, {To: 1}},
+	g := graph.AdjacencyList{
+		2: {0, 1},
 	}
 	fmt.Println(g.IsSimple())
 	// Output:
 	// true -1
 }
 
-func ExampleLabeledAdjacencyList_IsSimple_loop() {
+func ExampleAdjacencyList_IsSimple_loop() {
 	// arcs directed down
 	//   2
 	//  / \
 	// 0   1---\
 	//      \--/
-	g := graph.LabeledAdjacencyList{
-		2: {{To: 0}, {To: 1}},
-		1: {{To: 1}}, // loop
+	g := graph.AdjacencyList{
+		2: {0, 1},
+		1: {1}, // loop
 	}
 	fmt.Println(g.IsSimple())
 	// Output:
 	// false 1
 }
 
-func ExampleLabeledAdjacencyList_IsSimple_parallelArc() {
+func ExampleAdjacencyList_IsSimple_parallelArc() {
 	// arcs directed down
 	//   2
 	//  /|\
 	//  |/ \
 	//  0   1
-	g := graph.LabeledAdjacencyList{
-		2: {{To: 0}, {To: 1}, {To: 0}},
+	g := graph.AdjacencyList{
+		2: {0, 1, 0},
 	}
 	fmt.Println(g.IsSimple())
 	// Output:
