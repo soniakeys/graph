@@ -4,10 +4,164 @@
 package graph_test
 
 import (
+	"fmt"
+	"math/rand"
 	"testing"
 
 	"github.com/soniakeys/graph"
 )
+
+func ExampleEuclidean() {
+	r := rand.New(rand.NewSource(7))
+	g, pos, err := graph.Euclidean(4, 6, 1, 1, r)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(len(g.AdjacencyList), "nodes")
+	fmt.Println("n  position")
+	for n, p := range pos {
+		fmt.Printf("%d  (%.2f, %.2f)\n", n, p.X, p.Y)
+	}
+	fmt.Println(g.ArcSize(), "arcs:")
+	for n, to := range g.AdjacencyList {
+		fmt.Println(n, "->", to)
+	}
+	// Output:
+	// 4 nodes
+	// n  position
+	// 0  (0.92, 0.23)
+	// 1  (0.24, 0.91)
+	// 2  (0.70, 0.15)
+	// 3  (0.35, 0.34)
+	// 6 arcs:
+	// 0 -> [2 1]
+	// 1 -> [0]
+	// 2 -> [3 0]
+	// 3 -> [1]
+}
+
+func ExampleGeometric() {
+	r := rand.New(rand.NewSource(7))
+	g, pos, m := graph.Geometric(4, .6, r)
+	fmt.Println(len(g.AdjacencyList), "nodes")
+	fmt.Println("n  position")
+	for n, p := range pos {
+		fmt.Printf("%d  (%.2f, %.2f)\n", n, p.X, p.Y)
+	}
+	fmt.Println(m, "edges:")
+	for n, to := range g.AdjacencyList {
+		for _, to := range to {
+			if graph.NI(n) < to {
+				fmt.Println(n, "-", to)
+			}
+		}
+	}
+	// Output:
+	// 4 nodes
+	// n  position
+	// 0  (0.92, 0.23)
+	// 1  (0.24, 0.91)
+	// 2  (0.70, 0.15)
+	// 3  (0.35, 0.34)
+	// 4 edges:
+	// 0 - 2
+	// 0 - 3
+	// 1 - 3
+	// 2 - 3
+}
+
+func ExampleLabeledGeometric() {
+	r := rand.New(rand.NewSource(7))
+	g, pos, wt := graph.LabeledGeometric(4, .6, r)
+	fmt.Println(len(g.LabeledAdjacencyList), "nodes")
+	fmt.Println("n  position")
+	for n, p := range pos {
+		fmt.Printf("%d  (%.2f, %.2f)\n", n, p.X, p.Y)
+	}
+	fmt.Println(len(wt), "edges:")
+	for n, to := range g.LabeledAdjacencyList {
+		for _, to := range to {
+			if graph.NI(n) < to.To {
+				fmt.Println(n, "-", to.To)
+			}
+		}
+	}
+	fmt.Println(g.ArcSize(), "arcs:")
+	fmt.Println("arc  label  weight")
+	for n, to := range g.LabeledAdjacencyList {
+		for _, to := range to {
+			fmt.Printf("%d->%d   %d    %.2f\n",
+				n, to.To, to.Label, wt[to.Label])
+		}
+	}
+	// Output:
+	// 4 nodes
+	// n  position
+	// 0  (0.92, 0.23)
+	// 1  (0.24, 0.91)
+	// 2  (0.70, 0.15)
+	// 3  (0.35, 0.34)
+	// 4 edges:
+	// 0 - 2
+	// 0 - 3
+	// 1 - 3
+	// 2 - 3
+	// 8 arcs:
+	// arc  label  weight
+	// 0->2   0    0.24
+	// 0->3   1    0.58
+	// 1->3   2    0.58
+	// 2->0   0    0.24
+	// 2->3   3    0.40
+	// 3->0   1    0.58
+	// 3->1   2    0.58
+	// 3->2   3    0.40
+}
+
+func ExampleLabeledEuclidean() {
+	r := rand.New(rand.NewSource(7))
+	g, pos, wt, err := graph.LabeledEuclidean(4, 6, 1, 1, r)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(len(g.LabeledAdjacencyList), "nodes")
+	fmt.Println("n  position")
+	for n, p := range pos {
+		fmt.Printf("%d  (%.2f, %.2f)\n", n, p.X, p.Y)
+	}
+	fmt.Println(g.ArcSize(), "arcs:")
+	for n, to := range g.LabeledAdjacencyList {
+		fmt.Println(n, "->", to)
+	}
+	fmt.Println("arc  label  weight")
+	for n, to := range g.LabeledAdjacencyList {
+		for _, to := range to {
+			fmt.Printf("%d->%d   %d    %.2f\n",
+				n, to.To, to.Label, wt[to.Label])
+		}
+	}
+	// Output:
+	// 4 nodes
+	// n  position
+	// 0  (0.92, 0.23)
+	// 1  (0.24, 0.91)
+	// 2  (0.70, 0.15)
+	// 3  (0.35, 0.34)
+	// 6 arcs:
+	// 0 -> [{2 1} {1 5}]
+	// 1 -> [{0 4}]
+	// 2 -> [{3 0} {0 2}]
+	// 3 -> [{1 3}]
+	// arc  label  weight
+	// 0->2   1    0.24
+	// 0->1   5    0.96
+	// 1->0   4    0.96
+	// 2->3   0    0.40
+	// 2->0   2    0.24
+	// 3->1   3    0.58
+}
 
 func TestEuclidean(t *testing.T) {
 	var g graph.Directed

@@ -54,17 +54,6 @@ func NewFromList(n int) FromList {
 	return FromList{Paths: make([]PathEnd, n)}
 }
 
-// reset initializes a FromList in preparation for a search.  Search methods
-// will call this function and you don't typically call it from application
-// code.
-func (f *FromList) reset() {
-	for n := range f.Paths {
-		f.Paths[n] = PathEnd{From: -1, Len: 0}
-	}
-	f.Leaves = Bits{}
-	f.MaxLen = 0
-}
-
 // BoundsOk validates the "from" values in the list.
 //
 // Negative values are allowed as they indicate root nodes.

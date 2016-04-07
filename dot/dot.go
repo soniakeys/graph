@@ -166,7 +166,7 @@ func writeAL(g graph.AdjacencyList, w io.Writer, cf *Config) (err error) {
 	}
 	var iso graph.Bits
 	if cf.Isolated {
-		iso = g.IsolatedNodeBits()
+		iso = g.IsolatedNodes()
 		if iso.Zero() {
 			cf.Isolated = false // optimization. turn off checking
 		}
@@ -353,7 +353,7 @@ func writeLAL(g graph.LabeledAdjacencyList, w io.Writer, cf *Config) (err error)
 	}
 	var iso graph.Bits
 	if cf.Isolated {
-		iso = g.IsolatedNodeBits()
+		iso = g.IsolatedNodes()
 		if iso.Zero() {
 			cf.Isolated = false // optimization. turn off checking
 		}

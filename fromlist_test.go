@@ -89,6 +89,22 @@ func ExampleFromList_Cyclic_cyclic() {
 	// true 2
 }
 
+func ExampleFromList_IsolatedNodes() {
+	//   0  1
+	//  / \
+	// 2   3  4
+	g := graph.FromList{Paths: []graph.PathEnd{
+		0: {From: -1},
+		1: {From: -1},
+		2: {From: 0},
+		3: {From: 0},
+		4: {From: -1},
+	}}
+	fmt.Println(g.IsolatedNodes().Slice())
+	// Output:
+	// [1 4]
+}
+
 func ExamplePathTo() {
 	//       4  3
 	//      /
@@ -406,4 +422,40 @@ func ExampleFromList_TransposeLabeled_indexed() {
 	// 1
 	// 2 {3 C}
 	// 3
+}
+
+func ExampleFromList_TransposeLabeledRoots() {
+	//      0        4
+	// 'A' / \ 'B'
+	//    1   2
+	//         \ 'C'
+	//          3
+	f := graph.FromList{Paths: []graph.PathEnd{
+		0: {From: -1},
+		1: {From: 0},
+		2: {From: 0},
+		3: {From: 2},
+		4: {From: -1},
+	}}
+	labels := []graph.LI{
+		1: 'A',
+		2: 'B',
+		3: 'C',
+	}
+	g, n, r := f.TransposeLabeledRoots(labels)
+	for fr, to := range g.LabeledAdjacencyList {
+		fmt.Print(fr)
+		for _, to := range to {
+			fmt.Printf(" {%d %c}", to.To, to.Label)
+		}
+		fmt.Println()
+	}
+	fmt.Println(n, "roots:", r.Slice())
+	// Output:
+	// 0 {1 A} {2 B}
+	// 1
+	// 2 {3 C}
+	// 3
+	// 4
+	// 2 roots: [0 4]
 }

@@ -17,12 +17,21 @@ type Bits struct {
 	i big.Int
 }
 
+// NewBits constructs a Bits value with the bits ns set to 1.
+func NewBits(ns ...NI) (b Bits) {
+	for _, n := range ns {
+		b.SetBit(n, 1)
+	}
+	return
+}
+
 // AllNot sets n bits of z to the complement of x.
 //
 // It is a convenience method for SetAll followed by AndNot.
 func (z *Bits) AllNot(n int, x Bits) {
-	z.SetAll(n)
-	z.AndNot(*z, x)
+	var y Bits
+	y.SetAll(n)
+	z.AndNot(y, x)
 }
 
 // And sets z = x & y.

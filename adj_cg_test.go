@@ -222,6 +222,19 @@ func ExampleAdjacencyList_HasParallelMap_noParallelArcs() {
 	// false -1 -1
 }
 
+func ExampleAdjacencyList_IsolatedNodes() {
+	//   0  1
+	//  / \
+	// 2   3  4
+	g := graph.AdjacencyList{
+		0: {2, 3},
+		4: {},
+	}
+	fmt.Println(g.IsolatedNodes().Slice())
+	// Output:
+	// [1 4]
+}
+
 func ExampleAdjacencyList_IsSimple() {
 	// arcs directed down
 	//   2

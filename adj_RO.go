@@ -333,12 +333,12 @@ func (g AdjacencyList) IsSimple() (ok bool, n NI) {
 	return true, -1
 }
 
-// IsolatedNodeBits returns a bitmap of isolated nodes in receiver graph g.
+// IsolatedNodes returns a bitmap of isolated nodes in receiver graph g.
 //
 // An isolated node is one with no arcs going to or from it.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g AdjacencyList) IsolatedNodeBits() (i Bits) {
+func (g AdjacencyList) IsolatedNodes() (i Bits) {
 	i.SetAll(len(g))
 	for fr, to := range g {
 		if len(to) > 0 {
