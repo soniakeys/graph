@@ -1,5 +1,4 @@
-Graph
-=====
+#Graph
 
 A graph library with goals of speed and simplicity, Graph implements
 graph algorithms on graphs of zero-based integer node IDs.
@@ -10,3 +9,12 @@ Status, 4 Apr 2016:  The repo has benefitted recently from being included
 in another package.  In response to users of that package, this repo now
 builds for 32 bit Windows and ARM, and for Go versions back to 1.2.1.
 Thank you all who have filed issues.
+
+###Test coverage
+8 Apr 2016
+```
+graph          95.3%
+graph/df       20.7%
+graph/dot      77.5%
+graph/treevis  79.4%
+```
