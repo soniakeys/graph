@@ -24,7 +24,7 @@ Im not big on making go vet happy just for a badge but I really like the
 example check that I believe appeared with go 1.6.  (I think it will be a
 standard check with 1.7, so the test script will have to change then.)
 
-https://github.com/client9/misspell/cmd/misspell has been valuable.
+https://github.com/client9/misspell has been valuable.
 
 Also I wrote https://github.com/soniakeys/vetc to validate that each source
 file has copyright/license statement.
