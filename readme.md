@@ -10,6 +10,24 @@ in another package.  In response to users of that package, this repo now
 builds for 32 bit Windows and ARM, and for Go versions back to 1.2.1.
 Thank you all who have filed issues.
 
+###Non-source files of interest
+
+The directory [tutorials](tutorials) is a work in progress - there are only
+a couple of tutorials there yet - but the concept is to provide some topical
+walk-throughs to supplement godoc.  The source-based godoc documentation
+remains the primary documentation.
+
+* [Dijkstra's algorithm](tutorials/dijkstra.md)
+* [AdjacencyList types](tutorials/adjacencylist.md)
+
+The directory [bench](bench) is another work in progress.  The concept is
+to present some plots showing benchmark performance approaching some
+theoretical asymptote.
+
+[hacking.md](hacking.md) has some information about how the library is
+developed, built, and tested.  It might be of interest if for example you
+plan to fork or contribute to the the repository.
+
 ###Test coverage
 8 Apr 2016
 ```
