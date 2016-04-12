@@ -174,7 +174,15 @@ func Geometric(nNodes int, radius float64, r *rand.Rand) (g Undirected, pos []st
 	for u, up := range pos {
 		for v := u + 1; v < len(pos); v++ {
 			vp := pos[v]
-			if math.Hypot(up.X-vp.X, up.Y-vp.Y) < radius {
+			dx := math.Abs(up.X - vp.X)
+			if dx >= radius {
+				continue
+			}
+			dy := math.Abs(up.Y - vp.Y)
+			if dy >= radius {
+				continue
+			}
+			if math.Hypot(dx, dy) < radius {
 				a[u] = append(a[u], NI(v))
 				a[v] = append(a[v], NI(u))
 				m++
