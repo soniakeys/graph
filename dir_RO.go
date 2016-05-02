@@ -282,6 +282,39 @@ func (g Directed) TarjanCondensation() (scc [][]NI, cd AdjacencyList) {
 //
 // There are equivalent labeled and unlabeled versions of this method.
 func (g Directed) Topological() (ordering, cycle []NI) {
+	i := -1
+	return g.dfTopo(func() NI {
+		i++
+		if i < len(g.AdjacencyList) {
+			return NI(i)
+		}
+		return -1
+	})
+}
+
+// TopologicalSubgraph computes a topological ordering of a subgraph of a
+// directed acyclic graph.
+//
+// The subgraph considered is that reachable from the specified node list.
+//
+// For an acyclic subgraph, return value ordering is a permutation of node
+// numbers in topologically sorted order and cycle will be nil.  If the
+// subgraph is found to be cyclic, ordering will be nil and cycle will be
+// the path of a found cycle.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g Directed) TopologicalSubgraph(nodes []NI) (ordering, cycle []NI) {
+	i := -1
+	return g.dfTopo(func() NI {
+		i++
+		if i < len(nodes) {
+			return nodes[i]
+		}
+		return -1
+	})
+}
+
+func (g Directed) dfTopo(f func() NI) (ordering, cycle []NI) {
 	a := g.AdjacencyList
 	ordering = make([]NI, len(a))
 	i := len(ordering)
@@ -321,16 +354,19 @@ func (g Directed) Topological() (ordering, cycle []NI) {
 		i--
 		ordering[i] = n
 	}
-	for n := range a {
+	for {
+		n := f()
+		if n < 0 {
+			return ordering[i:], nil
+		}
 		if perm.Bit(NI(n)) == 1 {
 			continue
 		}
-		df(NI(n))
+		df(n)
 		if cycleFound {
 			return nil, cycle
 		}
 	}
-	return ordering, nil
 }
 
 // TopologicalKahn computes a topological ordering of a directed acyclic graph.
