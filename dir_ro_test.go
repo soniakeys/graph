@@ -334,3 +334,23 @@ func ExampleDirected_TopologicalKahn() {
 	// [4 3 1 2 0] []
 	// [] [1 2 3]
 }
+
+func ExampleDirected_TopologicalSubgraph() {
+	// arcs directected down unless otherwise indicated
+	// 0       1<-\
+	//  \     / \ /
+	//   2   3   4
+	//    \ / \
+	//     5   6
+	g := graph.Directed{graph.AdjacencyList{
+		0: {2},
+		1: {3, 4},
+		2: {5},
+		3: {5, 6},
+		4: {1},
+		6: {},
+	}}
+	fmt.Println(g.TopologicalSubgraph([]graph.NI{0, 3}))
+	// Output:
+	// [3 6 0 2 5] []
+}

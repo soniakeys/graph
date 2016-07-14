@@ -85,6 +85,19 @@ func ExampleBits_From() {
 	// 129
 }
 
+func ExampleBits_Iterate() {
+	b := graph.NewBits(0, 2, 128, 129)
+	b.Iterate(func(n graph.NI) bool {
+		fmt.Println(n)
+		return true
+	})
+	// Output:
+	// 0
+	// 2
+	// 128
+	// 129
+}
+
 func ExampleBits_Or() {
 	x := graph.NewBits(3, 5, 6)
 	y := graph.NewBits(4, 5, 6)
