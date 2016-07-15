@@ -54,6 +54,10 @@ func (z *Bits) Clear() {
 	*z = Bits{}
 }
 
+func (a Bits) Eq(b Bits) bool {
+	return a.i.Cmp(&b.i) == 0
+}
+
 // Format satisfies fmt.Formatter for fmt.Printf and related methods.
 //
 // graph.Bits format exactly like big.Ints.
