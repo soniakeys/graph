@@ -77,6 +77,143 @@ func (g Directed) Cyclic() (cyclic bool, fr NI, to NI) {
 	return
 }
 
+// Dominators computes the immediate dominator for each node reachable from
+// start.
+//
+// See also the method Doms.  Internally Dominators must construct the
+// transpose of g and also compute a postordering of a spanning tree of the
+// subgraph reachable from start.  If you happen to have either of these
+// computed anyway, it can be more efficient to call Doms directly.
+func (g Directed) Dominators(start NI) Dominators {
+	a := g.AdjacencyList
+	l := len(a)
+	post := make([]NI, l)
+	a.BreadthFirst(start, nil, nil, func(n NI) bool {
+		l--
+		post[l] = n
+		return true
+	})
+	tr, _ := g.Transpose()
+	return g.Doms(tr, post[l:])
+}
+
+// Doms computes either immediate dominators or postdominators.
+//
+// But see also the simpler methods Dominators and PostDominators.
+//
+// Doms requires argument tr to be the transpose graph of receiver g,
+// and requres argument post to be a post ordering of receiver g.  More
+// specifically a post ordering of a spanning tree of the subgraph reachable
+// from some start node in g.  The start node will always be the last node in
+// this postordering so it does not need to passed as a separate argument.
+//
+// Doms can be used to construct either dominators or postdominators.
+// To construct dominators on a graph f, generate a postordering p on f
+// and call f.Doms(f.Transpose(), p).  To construct postdominators, generate
+// the transpose t first, then a postordering p on t (not f), and call
+// t.Doms(f, p).
+//
+// Caution:  The argument tr is retained in the returned Dominators object
+// and is used by the method Dominators.Frontier.  It is not deep-copied
+// so it is invalid to call Doms, modify the tr graph, and then call Frontier.
+func (g Directed) Doms(tr Directed, post []NI) Dominators {
+	a := g.AdjacencyList
+	dom := make([]NI, len(a))
+	pi := make([]int, len(a))
+	for i, n := range post {
+		pi[n] = i
+	}
+	intersect := func(b1, b2 NI) NI {
+		for b1 != b2 {
+			for pi[b1] < pi[b2] {
+				b1 = dom[b1]
+			}
+			for pi[b2] < pi[b1] {
+				b2 = dom[b2]
+			}
+		}
+		return b1
+	}
+	for n := range dom {
+		dom[n] = -1
+	}
+	start := post[len(post)-1]
+	dom[start] = start
+	for changed := false; ; changed = false {
+		for i := len(post) - 2; i >= 0; i-- {
+			b := post[i]
+			var im NI
+			fr := tr.AdjacencyList[b]
+			var j int
+			var fp NI
+			for j, fp = range fr {
+				if dom[fp] >= 0 {
+					im = fp
+					break
+				}
+			}
+			for _, p := range fr[j:] {
+				if dom[p] >= 0 {
+					im = intersect(im, p)
+				}
+			}
+			if dom[b] != im {
+				dom[b] = im
+				changed = true
+			}
+		}
+		if !changed {
+			return Dominators{dom, tr}
+		}
+	}
+}
+
+// PostDominators computes the immediate postdominator for each node that can
+// reach node end.
+//
+// See also the method Doms.  Internally Dominators must construct the
+// transpose of g and also compute a postordering of a spanning tree of the
+// subgraph reachable from start.  If you happen to have either of these
+// computed anyway, it can be more efficient to call Doms directly.
+//
+// See the method Doms anyway for the caution note.  PostDominators calls
+// Doms internally, passing receiver g as Doms argument tr.  The caution means
+// that it is invalid to call PostDominators, modify the graph g, then call
+// Frontier.
+func (g Directed) PostDominators(end NI) Dominators {
+	tr, _ := g.Transpose()
+	a := tr.AdjacencyList
+	l := len(a)
+	post := make([]NI, l)
+	a.BreadthFirst(end, nil, nil, func(n NI) bool {
+		l--
+		post[l] = n
+		return true
+	})
+	return tr.Doms(g, post[l:])
+}
+
+// called from Dominators.Frontier via interface
+func (from Directed) domFrontier(d Dominators) []map[NI]struct{} {
+	im := d.Immediate
+	f := make([]map[NI]struct{}, len(im))
+	for i := range f {
+		f[i] = map[NI]struct{}{}
+	}
+	for b, fr := range from.AdjacencyList {
+		if len(fr) < 2 {
+			continue
+		}
+		imb := im[b]
+		for _, p := range fr {
+			for runner := p; runner != imb; runner = im[runner] {
+				f[runner][NI(b)] = struct{}{}
+			}
+		}
+	}
+	return f
+}
+
 // FromList transposes a labeled graph into a FromList.
 //
 // Receiver g should be connected as a tree or forest.  Specifically no node
@@ -292,28 +429,6 @@ func (g Directed) Topological() (ordering, cycle []NI) {
 	})
 }
 
-// TopologicalSubgraph computes a topological ordering of a subgraph of a
-// directed acyclic graph.
-//
-// The subgraph considered is that reachable from the specified node list.
-//
-// For an acyclic subgraph, return value ordering is a permutation of node
-// numbers in topologically sorted order and cycle will be nil.  If the
-// subgraph is found to be cyclic, ordering will be nil and cycle will be
-// the path of a found cycle.
-//
-// There are equivalent labeled and unlabeled versions of this method.
-func (g Directed) TopologicalSubgraph(nodes []NI) (ordering, cycle []NI) {
-	i := -1
-	return g.dfTopo(func() NI {
-		i++
-		if i < len(nodes) {
-			return nodes[i]
-		}
-		return -1
-	})
-}
-
 func (g Directed) dfTopo(f func() NI) (ordering, cycle []NI) {
 	a := g.AdjacencyList
 	ordering = make([]NI, len(a))
@@ -428,4 +543,26 @@ func (g Directed) TopologicalKahn(tr Directed) (ordering, cycle []NI) {
 		return nil, cycle
 	}
 	return L, nil
+}
+
+// TopologicalSubgraph computes a topological ordering of a subgraph of a
+// directed acyclic graph.
+//
+// The subgraph considered is that reachable from the specified node list.
+//
+// For an acyclic subgraph, return value ordering is a permutation of reachable
+// node numbers in topologically sorted order and cycle will be nil.  If the
+// subgraph is found to be cyclic, ordering will be nil and cycle will be
+// the path of a found cycle.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g Directed) TopologicalSubgraph(nodes []NI) (ordering, cycle []NI) {
+	i := -1
+	return g.dfTopo(func() NI {
+		i++
+		if i < len(nodes) {
+			return nodes[i]
+		}
+		return -1
+	})
 }

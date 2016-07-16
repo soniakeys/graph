@@ -69,6 +69,27 @@ func ExampleDirected_Cyclic() {
 	// true 3 1
 }
 
+func ExampleDirected_Dominators() {
+	//   0
+	//   |
+	//   1
+	//  / \
+	// 2   3
+	//  \ / \
+	//   4   5
+	g := graph.Directed{graph.AdjacencyList{
+		0: {1},
+		1: {2, 3},
+		2: {4},
+		3: {4, 5},
+		5: {},
+	}}
+	d := g.Dominators(0)
+	fmt.Println(d.Immediate)
+	// Output:
+	// [0 0 1 1 1 3]
+}
+
 func ExampleDirected_FromList() {
 	//    4   3
 	//   / \

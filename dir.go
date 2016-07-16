@@ -4,9 +4,10 @@
 package graph
 
 // dir.go has methods specific to directed graphs, types Directed and
-// LabeledDirected.
+// LabeledDirected, also Dominators.
 //
 // Methods on Directed are first, with exported methods alphabetized.
+// Dominators type and methods are at the end.
 
 import "errors"
 
@@ -535,4 +536,51 @@ func (g LabeledDirected) UnlabeledTranspose() (t Directed, ma int) {
 		}
 	}
 	return Directed{ta}, ma
+}
+
+// Dominators holds immediate dominators.
+//
+// Dominators is a return type from methods Dominators, PostDominators, and
+// Doms.
+//
+// The list of immediate dominators represents the "dominator tree"
+// (in the same way as a FromList, but somewhat lighter weight.)
+//
+// In addition to the exported immediate dominators, the type also retains
+// the transpose graph that was used to compute the dominators.
+// See PostDominators and Doms for a caution about modifying the transpose
+// graph.
+type Dominators struct {
+	Immediate []NI
+	from      interface { // either Directed or LabeledDirected
+		domFrontier(Dominators) []map[NI]struct{}
+	}
+}
+
+// Frontier constructs the dominator frontier for each node.
+//
+// The frontier for a node is a set of nodes, represented as a map.
+func (d Dominators) Frontier() []map[NI]struct{} {
+	return d.from.domFrontier(d)
+}
+
+// Set constructs the dominator set for a given node.
+//
+// The dominator set for a node always includes the node itself as the first
+// node in the returned slice, as long as the node was in the subgraph
+// reachable from the start node used to construct the dominators.
+// If the argument n is a node not in the subgraph, Set returns nil.
+func (d Dominators) Set(n NI) []NI {
+	im := d.Immediate
+	if im[n] < 0 {
+		return nil
+	}
+	for s := []NI{n}; ; {
+		if p := im[n]; p < 0 || p == n {
+			return s
+		} else {
+			s = append(s, p)
+			n = p
+		}
+	}
 }

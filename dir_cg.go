@@ -77,6 +77,143 @@ func (g LabeledDirected) Cyclic() (cyclic bool, fr NI, to Half) {
 	return
 }
 
+// Dominators computes the immediate dominator for each node reachable from
+// start.
+//
+// See also the method Doms.  Internally Dominators must construct the
+// transpose of g and also compute a postordering of a spanning tree of the
+// subgraph reachable from start.  If you happen to have either of these
+// computed anyway, it can be more efficient to call Doms directly.
+func (g LabeledDirected) Dominators(start NI) Dominators {
+	a := g.LabeledAdjacencyList
+	l := len(a)
+	post := make([]NI, l)
+	a.BreadthFirst(start, nil, nil, func(n NI) bool {
+		l--
+		post[l] = n
+		return true
+	})
+	tr, _ := g.Transpose()
+	return g.Doms(tr, post[l:])
+}
+
+// Doms computes either immediate dominators or postdominators.
+//
+// But see also the simpler methods Dominators and PostDominators.
+//
+// Doms requires argument tr to be the transpose graph of receiver g,
+// and requres argument post to be a post ordering of receiver g.  More
+// specifically a post ordering of a spanning tree of the subgraph reachable
+// from some start node in g.  The start node will always be the last node in
+// this postordering so it does not need to passed as a separate argument.
+//
+// Doms can be used to construct either dominators or postdominators.
+// To construct dominators on a graph f, generate a postordering p on f
+// and call f.Doms(f.Transpose(), p).  To construct postdominators, generate
+// the transpose t first, then a postordering p on t (not f), and call
+// t.Doms(f, p).
+//
+// Caution:  The argument tr is retained in the returned Dominators object
+// and is used by the method Dominators.Frontier.  It is not deep-copied
+// so it is invalid to call Doms, modify the tr graph, and then call Frontier.
+func (g LabeledDirected) Doms(tr LabeledDirected, post []NI) Dominators {
+	a := g.LabeledAdjacencyList
+	dom := make([]NI, len(a))
+	pi := make([]int, len(a))
+	for i, n := range post {
+		pi[n] = i
+	}
+	intersect := func(b1, b2 NI) NI {
+		for b1 != b2 {
+			for pi[b1] < pi[b2] {
+				b1 = dom[b1]
+			}
+			for pi[b2] < pi[b1] {
+				b2 = dom[b2]
+			}
+		}
+		return b1
+	}
+	for n := range dom {
+		dom[n] = -1
+	}
+	start := post[len(post)-1]
+	dom[start] = start
+	for changed := false; ; changed = false {
+		for i := len(post) - 2; i >= 0; i-- {
+			b := post[i]
+			var im NI
+			fr := tr.LabeledAdjacencyList[b]
+			var j int
+			var fp Half
+			for j, fp = range fr {
+				if dom[fp.To] >= 0 {
+					im = fp.To
+					break
+				}
+			}
+			for _, p := range fr[j:] {
+				if dom[p.To] >= 0 {
+					im = intersect(im, p.To)
+				}
+			}
+			if dom[b] != im {
+				dom[b] = im
+				changed = true
+			}
+		}
+		if !changed {
+			return Dominators{dom, tr}
+		}
+	}
+}
+
+// PostDominators computes the immediate postdominator for each node that can
+// reach node end.
+//
+// See also the method Doms.  Internally Dominators must construct the
+// transpose of g and also compute a postordering of a spanning tree of the
+// subgraph reachable from start.  If you happen to have either of these
+// computed anyway, it can be more efficient to call Doms directly.
+//
+// See the method Doms anyway for the caution note.  PostDominators calls
+// Doms internally, passing receiver g as Doms argument tr.  The caution means
+// that it is invalid to call PostDominators, modify the graph g, then call
+// Frontier.
+func (g LabeledDirected) PostDominators(end NI) Dominators {
+	tr, _ := g.Transpose()
+	a := tr.LabeledAdjacencyList
+	l := len(a)
+	post := make([]NI, l)
+	a.BreadthFirst(end, nil, nil, func(n NI) bool {
+		l--
+		post[l] = n
+		return true
+	})
+	return tr.Doms(g, post[l:])
+}
+
+// called from Dominators.Frontier via interface
+func (from LabeledDirected) domFrontier(d Dominators) []map[NI]struct{} {
+	im := d.Immediate
+	f := make([]map[NI]struct{}, len(im))
+	for i := range f {
+		f[i] = map[NI]struct{}{}
+	}
+	for b, fr := range from.LabeledAdjacencyList {
+		if len(fr) < 2 {
+			continue
+		}
+		imb := im[b]
+		for _, p := range fr {
+			for runner := p.To; runner != imb; runner = im[runner] {
+				f[runner][NI(b)] = struct{}{}
+			}
+		}
+	}
+	return f
+}
+
 // FromList transposes a labeled graph into a FromList.
 //
 // Receiver g should be connected as a tree or forest.  Specifically no node
