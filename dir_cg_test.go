@@ -12,6 +12,7 @@ package graph_test
 
 import (
 	"fmt"
+	"math/big"
 
 	"github.com/soniakeys/graph"
 )
@@ -84,6 +85,44 @@ func ExampleLabeledDirected_Dominators() {
 	fmt.Println(d.Immediate)
 	// Output:
 	// [0 0 1 1 1 3]
+}
+
+func ExampleLabeledDirected_Doms() {
+	//   0
+	//   |
+	//   1
+	//  / \
+	// 2   3
+	//  \ / \
+	//   4   5
+	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
+		0: {{To: 1}},
+		1: {{To: 2}, {To: 3}},
+		2: {{To: 4}},
+		3: {{To: 4}, {To: 5}},
+		5: {},
+	}}
+	// compute postorder with depth-first traversal
+	var post []graph.NI
+	var vis big.Int
+	var f func(graph.NI)
+	f = func(n graph.NI) {
+		vis.SetBit(&vis, int(n), 1)
+		for _, to := range g.LabeledAdjacencyList[n] {
+			if vis.Bit(int(to.To)) == 0 {
+				f(to.To)
+			}
+		}
+		post = append(post, n)
+	}
+	f(0)
+	fmt.Println("post:", post)
+	tr, _ := g.Transpose()
+	d := g.Doms(tr, post)
+	fmt.Println("doms:", d.Immediate)
+	// Output:
+	// post: [4 2 5 3 1 0]
+	// doms: [0 0 1 1 1 3]
 }
 
 func ExampleLabeledDirected_FromList() {
@@ -206,6 +245,29 @@ func ExampleLabeledDirected_IsTree() {
 	// Output:
 	// true false
 	// false false
+}
+
+func ExampleLabeledDirected_PostDominators() {
+	// Example graph here is transpose of that in the Dominators example
+	// to show result is the same.
+	//   4   5
+	//  / \ /
+	// 2   3
+	//  \ /
+	//   1
+	//   |
+	//   0
+	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
+		4: {{To: 2}, {To: 3}},
+		5: {{To: 3}},
+		2: {{To: 1}},
+		3: {{To: 1}},
+		1: {{To: 0}},
+	}}
+	d := g.PostDominators(0)
+	fmt.Println(d.Immediate)
+	// Output:
+	// [0 0 1 1 1 3]
 }
 
 func ExampleLabeledDirected_Tarjan() {

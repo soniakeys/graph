@@ -16,6 +16,7 @@ package graph_test
 
 import (
 	"fmt"
+	"math/big"
 
 	"github.com/soniakeys/graph"
 )
@@ -88,6 +89,44 @@ func ExampleDirected_Dominators() {
 	fmt.Println(d.Immediate)
 	// Output:
 	// [0 0 1 1 1 3]
+}
+
+func ExampleDirected_Doms() {
+	//   0
+	//   |
+	//   1
+	//  / \
+	// 2   3
+	//  \ / \
+	//   4   5
+	g := graph.Directed{graph.AdjacencyList{
+		0: {1},
+		1: {2, 3},
+		2: {4},
+		3: {4, 5},
+		5: {},
+	}}
+	// compute postorder with depth-first traversal
+	var post []graph.NI
+	var vis big.Int
+	var f func(graph.NI)
+	f = func(n graph.NI) {
+		vis.SetBit(&vis, int(n), 1)
+		for _, to := range g.AdjacencyList[n] {
+			if vis.Bit(int(to)) == 0 {
+				f(to)
+			}
+		}
+		post = append(post, n)
+	}
+	f(0)
+	fmt.Println("post:", post)
+	tr, _ := g.Transpose()
+	d := g.Doms(tr, post)
+	fmt.Println("doms:", d.Immediate)
+	// Output:
+	// post: [4 2 5 3 1 0]
+	// doms: [0 0 1 1 1 3]
 }
 
 func ExampleDirected_FromList() {
@@ -210,6 +249,29 @@ func ExampleDirected_IsTree() {
 	// Output:
 	// true false
 	// false false
+}
+
+func ExampleDirected_PostDominators() {
+	// Example graph here is transpose of that in the Dominators example
+	// to show result is the same.
+	//   4   5
+	//  / \ /
+	// 2   3
+	//  \ /
+	//   1
+	//   |
+	//   0
+	g := graph.Directed{graph.AdjacencyList{
+		4: {2, 3},
+		5: {3},
+		2: {1},
+		3: {1},
+		1: {0},
+	}}
+	d := g.PostDominators(0)
+	fmt.Println(d.Immediate)
+	// Output:
+	// [0 0 1 1 1 3]
 }
 
 func ExampleDirected_Tarjan() {

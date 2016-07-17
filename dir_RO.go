@@ -87,6 +87,10 @@ func (g Directed) Cyclic() (cyclic bool, fr NI, to NI) {
 func (g Directed) Dominators(start NI) Dominators {
 	a := g.AdjacencyList
 	l := len(a)
+	// ExampleDoms shows traditional depth-first postorder, but it works to
+	// generate a reverse preorder.  Also breadth-first works instead of
+	// depth-first and may allow Doms to run a little faster by presenting
+	// a shallower tree.
 	post := make([]NI, l)
 	a.BreadthFirst(start, nil, nil, func(n NI) bool {
 		l--

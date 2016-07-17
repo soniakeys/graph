@@ -87,6 +87,10 @@ func (g LabeledDirected) Cyclic() (cyclic bool, fr NI, to Half) {
 func (g LabeledDirected) Dominators(start NI) Dominators {
 	a := g.LabeledAdjacencyList
 	l := len(a)
+	// ExampleDoms shows traditional depth-first postorder, but it works to
+	// generate a reverse preorder.  Also breadth-first works instead of
+	// depth-first and may allow Doms to run a little faster by presenting
+	// a shallower tree.
 	post := make([]NI, l)
 	a.BreadthFirst(start, nil, nil, func(n NI) bool {
 		l--
@@ -173,8 +177,8 @@ func (g LabeledDirected) Doms(tr LabeledDirected, post []NI) Dominators {
 //
 // See also the method Doms.  Internally Dominators must construct the
 // transpose of g and also compute a postordering of a spanning tree of the
-// subgraph reachable from start.  If you happen to have either of these
-// computed anyway, it can be more efficient to call Doms directly.
+// subgraph of the transpose reachable from end.  If you happen to have either
+// of these computed anyway, it can be more efficient to call Doms directly.
 //
 // See the method Doms anyway for the caution note.  PostDominators calls
 // Doms internally, passing receiver g as Doms argument tr.  The caution means
