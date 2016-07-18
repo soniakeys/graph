@@ -71,40 +71,40 @@ func ExampleDirected_Cyclic() {
 }
 
 func ExampleDirected_Dominators() {
-	//   0
-	//   |
-	//   1
-	//  / \
-	// 2   3
-	//  \ / \
+	//   0   6
+	//   |   |
+	//   1   |
+	//  / \  |
+	// 2   3 |
+	//  \ / \|
 	//   4   5
 	g := graph.Directed{graph.AdjacencyList{
 		0: {1},
 		1: {2, 3},
 		2: {4},
 		3: {4, 5},
-		5: {},
+		6: {5},
 	}}
 	d := g.Dominators(0)
 	fmt.Println(d.Immediate)
 	// Output:
-	// [0 0 1 1 1 3]
+	// [0 0 1 1 1 3 -1]
 }
 
 func ExampleDirected_Doms() {
-	//   0
-	//   |
-	//   1
-	//  / \
-	// 2   3
-	//  \ / \
+	//   0   6
+	//   |   |
+	//   1   |
+	//  / \  |
+	// 2   3 |
+	//  \ / \|
 	//   4   5
 	g := graph.Directed{graph.AdjacencyList{
 		0: {1},
 		1: {2, 3},
 		2: {4},
 		3: {4, 5},
-		5: {},
+		6: {5},
 	}}
 	// compute postorder with depth-first traversal
 	var post []graph.NI
@@ -126,7 +126,7 @@ func ExampleDirected_Doms() {
 	fmt.Println("doms:", d.Immediate)
 	// Output:
 	// post: [4 2 5 3 1 0]
-	// doms: [0 0 1 1 1 3]
+	// doms: [0 0 1 1 1 3 -1]
 }
 
 func ExampleDirected_FromList() {
@@ -255,23 +255,24 @@ func ExampleDirected_PostDominators() {
 	// Example graph here is transpose of that in the Dominators example
 	// to show result is the same.
 	//   4   5
-	//  / \ /
-	// 2   3
-	//  \ /
-	//   1
-	//   |
-	//   0
+	//  / \ /|
+	// 2   3 |
+	//  \ /  |
+	//   1   |
+	//   |   |
+	//   0   6
 	g := graph.Directed{graph.AdjacencyList{
 		4: {2, 3},
-		5: {3},
+		5: {3, 6},
 		2: {1},
 		3: {1},
 		1: {0},
+		6: {},
 	}}
 	d := g.PostDominators(0)
 	fmt.Println(d.Immediate)
 	// Output:
-	// [0 0 1 1 1 3]
+	// [0 0 1 1 1 3 -1]
 }
 
 func ExampleDirected_Tarjan() {

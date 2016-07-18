@@ -80,6 +80,9 @@ func (g Directed) Cyclic() (cyclic bool, fr NI, to NI) {
 // Dominators computes the immediate dominator for each node reachable from
 // start.
 //
+// The slice returned as Dominators.Immediate will have the length of
+// g.AdjacencyList.  Nodes without a path to end will have a value of -1.
+//
 // See also the method Doms.  Internally Dominators must construct the
 // transpose of g and also compute a postordering of a spanning tree of the
 // subgraph reachable from start.  If you happen to have either of these
@@ -102,6 +105,9 @@ func (g Directed) Dominators(start NI) Dominators {
 }
 
 // Doms computes either immediate dominators or postdominators.
+//
+// The slice returned as Dominators.Immediate will have the length of
+// g.AdjacencyList.  Nodes without a path to end will have a value of -1.
 //
 // But see also the simpler methods Dominators and PostDominators.
 //
@@ -175,10 +181,13 @@ func (g Directed) Doms(tr Directed, post []NI) Dominators {
 // PostDominators computes the immediate postdominator for each node that can
 // reach node end.
 //
+// The slice returned as Dominators.Immediate will have the length of
+// g.AdjacencyList.  Nodes without a path to end will have a value of -1.
+//
 // See also the method Doms.  Internally Dominators must construct the
 // transpose of g and also compute a postordering of a spanning tree of the
-// subgraph reachable from start.  If you happen to have either of these
-// computed anyway, it can be more efficient to call Doms directly.
+// subgraph of the transpose reachable from end.  If you happen to have either
+// of these computed anyway, it can be more efficient to call Doms directly.
 //
 // See the method Doms anyway for the caution note.  PostDominators calls
 // Doms internally, passing receiver g as Doms argument tr.  The caution means
@@ -202,7 +211,9 @@ func (from Directed) domFrontier(d Dominators) []map[NI]struct{} {
 	im := d.Immediate
 	f := make([]map[NI]struct{}, len(im))
 	for i := range f {
-		f[i] = map[NI]struct{}{}
+		if im[i] >= 0 {
+			f[i] = map[NI]struct{}{}
+		}
 	}
 	for b, fr := range from.AdjacencyList {
 		if len(fr) < 2 {

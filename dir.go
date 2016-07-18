@@ -541,10 +541,10 @@ func (g LabeledDirected) UnlabeledTranspose() (t Directed, ma int) {
 // Dominators holds immediate dominators.
 //
 // Dominators is a return type from methods Dominators, PostDominators, and
-// Doms.
+// Doms.  See those methods for construction examples.
 //
 // The list of immediate dominators represents the "dominator tree"
-// (in the same way as a FromList, but somewhat lighter weight.)
+// (in the same way a FromList represents a tree, but somewhat lighter weight.)
 //
 // In addition to the exported immediate dominators, the type also retains
 // the transpose graph that was used to compute the dominators.
@@ -559,7 +559,11 @@ type Dominators struct {
 
 // Frontier constructs the dominator frontier for each node.
 //
-// The frontier for a node is a set of nodes, represented as a map.
+// The frontier for a node is a set of nodes, represented as a map.  The
+// returned slice has the length of d.Immediate, which is the length of
+// the original graph.  The frontier is valid however only for nodes of the
+// reachable subgraph.  Nodes not in the reachable subgraph, those with a
+// d.Immediate value of -1, will have a nil map.
 func (d Dominators) Frontier() []map[NI]struct{} {
 	return d.from.domFrontier(d)
 }

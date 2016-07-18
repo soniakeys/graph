@@ -67,40 +67,40 @@ func ExampleLabeledDirected_Cyclic() {
 }
 
 func ExampleLabeledDirected_Dominators() {
-	//   0
-	//   |
-	//   1
-	//  / \
-	// 2   3
-	//  \ / \
+	//   0   6
+	//   |   |
+	//   1   |
+	//  / \  |
+	// 2   3 |
+	//  \ / \|
 	//   4   5
 	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
 		0: {{To: 1}},
 		1: {{To: 2}, {To: 3}},
 		2: {{To: 4}},
 		3: {{To: 4}, {To: 5}},
-		5: {},
+		6: {{To: 5}},
 	}}
 	d := g.Dominators(0)
 	fmt.Println(d.Immediate)
 	// Output:
-	// [0 0 1 1 1 3]
+	// [0 0 1 1 1 3 -1]
 }
 
 func ExampleLabeledDirected_Doms() {
-	//   0
-	//   |
-	//   1
-	//  / \
-	// 2   3
-	//  \ / \
+	//   0   6
+	//   |   |
+	//   1   |
+	//  / \  |
+	// 2   3 |
+	//  \ / \|
 	//   4   5
 	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
 		0: {{To: 1}},
 		1: {{To: 2}, {To: 3}},
 		2: {{To: 4}},
 		3: {{To: 4}, {To: 5}},
-		5: {},
+		6: {{To: 5}},
 	}}
 	// compute postorder with depth-first traversal
 	var post []graph.NI
@@ -122,7 +122,7 @@ func ExampleLabeledDirected_Doms() {
 	fmt.Println("doms:", d.Immediate)
 	// Output:
 	// post: [4 2 5 3 1 0]
-	// doms: [0 0 1 1 1 3]
+	// doms: [0 0 1 1 1 3 -1]
 }
 
 func ExampleLabeledDirected_FromList() {
@@ -251,23 +251,24 @@ func ExampleLabeledDirected_PostDominators() {
 	// Example graph here is transpose of that in the Dominators example
 	// to show result is the same.
 	//   4   5
-	//  / \ /
-	// 2   3
-	//  \ /
-	//   1
-	//   |
-	//   0
+	//  / \ /|
+	// 2   3 |
+	//  \ /  |
+	//   1   |
+	//   |   |
+	//   0   6
 	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
 		4: {{To: 2}, {To: 3}},
-		5: {{To: 3}},
+		5: {{To: 3}, {To: 6}},
 		2: {{To: 1}},
 		3: {{To: 1}},
 		1: {{To: 0}},
+		6: {},
 	}}
 	d := g.PostDominators(0)
 	fmt.Println(d.Immediate)
 	// Output:
-	// [0 0 1 1 1 3]
+	// [0 0 1 1 1 3 -1]
 }
 
 func ExampleLabeledDirected_Tarjan() {
