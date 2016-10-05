@@ -9,13 +9,13 @@ import (
 	"github.com/soniakeys/graph"
 )
 
-func Example_ArcDensity() {
+func ExampleArcDensity() {
 	fmt.Println(graph.ArcDensity(4, 3))
 	// Output:
 	// 0.25
 }
 
-func Example_Density() {
+func ExampleDensity() {
 	fmt.Println(graph.Density(4, 3))
 	// Output:
 	// 0.5
