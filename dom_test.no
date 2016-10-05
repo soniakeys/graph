@@ -1,0 +1,183 @@
+package graph_test
+
+import (
+	"fmt"
+
+	"github.com/soniakeys/graph"
+)
+
+func ExampleDirected_Dominators() {
+	//    6
+	//  /   \
+	// 5     4
+	// |    / \
+	// 1<=>2<=>3
+	g := graph.Directed{graph.AdjacencyList{
+		6: {5, 4},
+		5: {1},
+		4: {2, 3},
+		1: {2},
+		2: {1, 3},
+		3: {2},
+	}}
+	fmt.Println(g.Dominators(6).Immediate)
+	// Output:
+	// [-1 6 6 6 6 6 6]
+}
+
+func ExampleDirected_Doms() {
+	//    6
+	//  /   \
+	// 5     4
+	// |    / \
+	// 1<=>2<=>3
+	g := graph.Directed{graph.AdjacencyList{
+		6: {5, 4},
+		5: {1},
+		4: {2, 3},
+		1: {2},
+		2: {1, 3},
+		3: {2},
+	}}
+	tr, _ := g.Transpose()
+	fmt.Println(g.Doms(tr, []graph.NI{1, 2, 3, 4, 5, 6}).Immediate)
+	// Output:
+	// [-1 6 6 6 6 6 6]
+}
+
+func ExampleDirected_PostDominators() {
+	//    6
+	//  /   \
+	// 5     4
+	// |    / \
+	// 1<=>2<=>3
+	g := graph.Directed{graph.AdjacencyList{
+		6: {5, 4},
+		5: {1},
+		4: {2, 3},
+		1: {2},
+		2: {1, 3},
+		3: {2},
+	}}
+	fmt.Println(g.PostDominators(1).Immediate)
+	// Output:
+	// [-1 1 1 2 2 1 1]
+}
+
+func ExampleDominators_Set() {
+	//    6
+	//  /   \
+	// 5     4
+	// |    / \
+	// 1<=>2<=>3
+	g := graph.Directed{graph.AdjacencyList{
+		6: {5, 4},
+		5: {1},
+		4: {2, 3},
+		1: {2},
+		2: {1, 3},
+		3: {2},
+	}}
+	d := g.Dominators(6)
+	for n := range d.Immediate {
+		fmt.Println(n, d.Set(graph.NI(n)))
+	}
+	// Output:
+	// 0 []
+	// 1 [1 6]
+	// 2 [2 6]
+	// 3 [3 6]
+	// 4 [4 6]
+	// 5 [5 6]
+	// 6 [6]
+}
+
+func ExampleDominators_Frontier() {
+	//     1<-\
+	//    / \  \
+	//   2   \ |
+	//  / \   \|
+	// 3   4   5
+	//  \ /   /
+	//   6   /
+	//    \ /
+	//     7
+	g := graph.Directed{graph.AdjacencyList{
+		1: {2, 5},
+		2: {3, 4},
+		3: {6},
+		4: {6},
+		5: {7, 1},
+		6: {7},
+		7: {},
+	}}
+	d := g.Dominators(1)
+	for n, s := range d.Frontier() {
+		fmt.Print(n, ": ")
+		for e := range s {
+			fmt.Print(" ", e)
+		}
+		fmt.Println()
+	}
+	// Output:
+}
+
+func ExampleDominators_Frontier_b() {
+	//       1
+	//     /   \
+	//    2     5<-\
+	//    |    / \  \
+	// /->3   6   7 |
+	// \-/ \ / \ /  /
+	//      4   8--/
+	//       \ /
+	//        13
+	g := graph.Directed{graph.AdjacencyList{
+		1:  {2, 5},
+		2:  {3},
+		5:  {6, 7},
+		3:  {3, 4},
+		6:  {4, 8},
+		7:  {8},
+		4:  {13},
+		8:  {13, 5},
+		13: {},
+	}}
+	d := g.Dominators(1)
+	for n := range d.Immediate {
+		fmt.Println(n, d.Set(graph.NI(n)))
+	}
+	f := d.Frontier()
+	fmt.Print("DF(5): ")
+	for e := range f[5] {
+		fmt.Print(" ", e)
+	}
+	fmt.Println()
+	// Output:
+}
+
+func ExampleDominators_Frontier_c() {
+	//    6
+	//  /   \
+	// 5     4
+	// |    / \
+	// 1<=>2<=>3
+	g := graph.Directed{graph.AdjacencyList{
+		6: {5, 4},
+		5: {1},
+		4: {2, 3},
+		1: {2},
+		2: {1, 3},
+		3: {2},
+	}}
+	d := g.Dominators(6)
+	fmt.Println(d.Immediate)
+	for n, s := range d.Frontier() {
+		fmt.Print(n, ": ")
+		for e := range s {
+			fmt.Print(" ", e)
+		}
+		fmt.Println()
+	}
+	// Output:
+}

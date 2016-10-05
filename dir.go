@@ -538,6 +538,30 @@ func (g LabeledDirected) UnlabeledTranspose() (t Directed, ma int) {
 	return Directed{ta}, ma
 }
 
+type DominanceFrontier []map[NI]struct{}
+
+func (d DominanceFrontier) Closure(s map[NI]struct{}) map[NI]struct{} {
+	c := map[NI]struct{}{}
+	w := map[NI]struct{}{}
+	var n NI
+	for n = range s {
+		c[n] = struct{}{}
+		w[n] = struct{}{}
+	}
+	for len(w) > 0 {
+		for n = range w {
+			break
+		}
+		for f := range d[n] {
+			if _, ok := c[f]; !ok {
+				c[f] = struct{}{}
+				w[f] = struct{}{}
+			}
+		}
+	}
+	return c
+}
+
 // Dominators holds immediate dominators.
 //
 // Dominators is a return type from methods Dominators, PostDominators, and
@@ -553,7 +577,7 @@ func (g LabeledDirected) UnlabeledTranspose() (t Directed, ma int) {
 type Dominators struct {
 	Immediate []NI
 	from      interface { // either Directed or LabeledDirected
-		domFrontier(Dominators) []map[NI]struct{}
+		domFrontier(Dominators) DominanceFrontier
 	}
 }
 
@@ -564,7 +588,7 @@ type Dominators struct {
 // the original graph.  The frontier is valid however only for nodes of the
 // reachable subgraph.  Nodes not in the reachable subgraph, those with a
 // d.Immediate value of -1, will have a nil map.
-func (d Dominators) Frontier() []map[NI]struct{} {
+func (d Dominators) Frontier() DominanceFrontier {
 	return d.from.domFrontier(d)
 }
 
