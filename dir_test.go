@@ -326,7 +326,7 @@ func ExampleLabeledDirected_UnlabeledTranspose() {
 	// 2 arcs
 }
 
-func ExampleDominators_Frontier() {
+func ExampleDominators_Frontiers() {
 	//   0
 	//   |
 	//   1
@@ -341,7 +341,7 @@ func ExampleDominators_Frontier() {
 		3: {4, 5},
 		6: {},
 	}}
-	for n, f := range g.Dominators(0).Frontier() {
+	for n, f := range g.Dominators(0).Frontiers() {
 		fmt.Print(n, ":")
 		if f == nil {
 			fmt.Println(" nil")

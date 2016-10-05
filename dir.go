@@ -538,9 +538,13 @@ func (g LabeledDirected) UnlabeledTranspose() (t Directed, ma int) {
 	return Directed{ta}, ma
 }
 
-type DominanceFrontier []map[NI]struct{}
+// DominanceFrontiers holds dominance frontiers for all nodes in some graph.
+// The frontier for a given node is a set of nodes, represented here as a map.
+type DominanceFrontiers []map[NI]struct{}
 
-func (d DominanceFrontier) Closure(s map[NI]struct{}) map[NI]struct{} {
+// Closure computes the closure, or iterated dominance frontier for a node set
+// given computed dominance frontiers.
+func (d DominanceFrontiers) Closure(s map[NI]struct{}) map[NI]struct{} {
 	c := map[NI]struct{}{}
 	w := map[NI]struct{}{}
 	var n NI
@@ -577,19 +581,19 @@ func (d DominanceFrontier) Closure(s map[NI]struct{}) map[NI]struct{} {
 type Dominators struct {
 	Immediate []NI
 	from      interface { // either Directed or LabeledDirected
-		domFrontier(Dominators) DominanceFrontier
+		domFrontiers(Dominators) DominanceFrontiers
 	}
 }
 
-// Frontier constructs the dominator frontier for each node.
+// Frontiers constructs the dominator frontier for each node.
 //
 // The frontier for a node is a set of nodes, represented as a map.  The
 // returned slice has the length of d.Immediate, which is the length of
 // the original graph.  The frontier is valid however only for nodes of the
 // reachable subgraph.  Nodes not in the reachable subgraph, those with a
 // d.Immediate value of -1, will have a nil map.
-func (d Dominators) Frontier() DominanceFrontier {
-	return d.from.domFrontier(d)
+func (d Dominators) Frontiers() DominanceFrontiers {
+	return d.from.domFrontiers(d)
 }
 
 // Set constructs the dominator set for a given node.

@@ -207,9 +207,9 @@ func (g Directed) PostDominators(end NI) Dominators {
 }
 
 // called from Dominators.Frontier via interface
-func (from Directed) domFrontier(d Dominators) DominanceFrontier {
+func (from Directed) domFrontiers(d Dominators) DominanceFrontiers {
 	im := d.Immediate
-	f := make(DominanceFrontier, len(im))
+	f := make(DominanceFrontiers, len(im))
 	for i := range f {
 		if im[i] >= 0 {
 			f[i] = map[NI]struct{}{}
