@@ -9,6 +9,18 @@ import (
 	"github.com/soniakeys/graph"
 )
 
+func Example_ArcDensity() {
+	fmt.Println(graph.ArcDensity(4, 3))
+	// Output:
+	// 0.25
+}
+
+func Example_Density() {
+	fmt.Println(graph.Density(4, 3))
+	// Output:
+	// 0.5
+}
+
 func ExampleUndirected_EulerianCycleD() {
 	var g graph.Undirected
 	// add 6 edges

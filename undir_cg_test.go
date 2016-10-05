@@ -337,6 +337,19 @@ func ExampleLabeledUndirected_Degree() {
 	// 3
 }
 
+func ExampleLabeledUndirected_Density() {
+	// 0---1
+	// |
+	// 2---3
+	var g graph.LabeledUndirected
+	g.AddEdge(graph.Edge{0, 1}, 0)
+	g.AddEdge(graph.Edge{0, 2}, 0)
+	g.AddEdge(graph.Edge{2, 3}, 0)
+	fmt.Println(g.Density())
+	// Output:
+	// 0.5
+}
+
 func ExampleLabeledUndirected_FromList() {
 	//    4   3
 	//   / \

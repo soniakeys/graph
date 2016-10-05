@@ -41,6 +41,28 @@ func (p *Undirected) AddEdge(n1, n2 NI) {
 	}
 }
 
+// ArcDensity returns density for a simple directed graph.
+//
+// Parameter n is order, or number of nodes of a simple directed graph.
+// Parameter a is the arc size, or number of directed arcs.
+//
+// Returned density is the fraction m over the total possible number of arcs
+// or a / (n * (n-1)).
+func ArcDensity(n, a int) float64 {
+	return float64(a) / (float64(n) * float64(n-1))
+}
+
+// Density returns density for a simple undirected graph.
+//
+// Parameter n is order, or number of nodes of a simple undirected graph.
+// Parameter m is the size, or number of undirected edges.
+//
+// Returned density is the fraction m over the total possible number of edges
+// or m / ((n * (n-1))/2).
+func Density(n, m int) float64 {
+	return float64(m) * 2 / (float64(n) * float64(n-1))
+}
+
 // EulerianCycleD for undirected graphs is a bit of an experiment.
 //
 // It is about the same as the directed version, but modified for an undirected

@@ -531,6 +531,15 @@ func (g LabeledUndirected) Degree(n NI) int {
 	return d
 }
 
+// Density returns density for a simple graph.
+//
+// See also Density function.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g LabeledUndirected) Density() float64 {
+	return Density(len(g.LabeledAdjacencyList), g.Size())
+}
+
 // FromList constructs a FromList representing the tree reachable from
 // the given root.
 //

@@ -12,6 +12,15 @@ import (
 	"time"
 )
 
+// ArcDensity returns density for an simple directed graph.
+//
+// See also ArcDensity function.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g AdjacencyList) ArcDensity() float64 {
+	return ArcDensity(len(g), g.ArcSize())
+}
+
 // ArcSize returns the number of arcs in g.
 //
 // Note that for an undirected graph without loops, the number of undirected

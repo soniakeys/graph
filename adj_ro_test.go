@@ -22,6 +22,21 @@ import (
 	"github.com/soniakeys/graph"
 )
 
+func ExampleAdjacencyList_ArcDensity() {
+	// 0-->1
+	// |
+	// v
+	// 2-->3
+	g := graph.AdjacencyList{
+		0: {1, 2},
+		2: {3},
+		3: {},
+	}
+	fmt.Println(g.ArcDensity())
+	// Output:
+	// 0.25
+}
+
 func ExampleAdjacencyList_ArcSize() {
 	// arcs directed down
 	//   2
