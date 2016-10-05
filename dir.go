@@ -553,9 +553,9 @@ func (d DominanceFrontier) Closure(s map[NI]struct{}) map[NI]struct{} {
 			break
 		}
 		for f := range d[n] {
-			if n, ok := c[f]; !ok {
-				c[n] = struct{}{}
-				w[n] = struct{}{}
+			if _, ok := c[f]; !ok {
+				c[f] = struct{}{}
+				w[f] = struct{}{}
 			}
 		}
 	}
