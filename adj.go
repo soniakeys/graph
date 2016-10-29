@@ -84,21 +84,6 @@ func (g AdjacencyList) IsUndirected() (u bool, from, to NI) {
 	return true, -1, -1
 }
 
-// Edgelist constructs the edge list rerpresentation of a graph.
-//
-// An edge is returned for each arc of the graph.  For undirected graphs
-// this includes reciprocal edges.
-//
-// See also WeightedEdgeList method.
-func (g LabeledAdjacencyList) EdgeList() (el []LabeledEdge) {
-	for fr, to := range g {
-		for _, to := range to {
-			el = append(el, LabeledEdge{Edge{NI(fr), to.To}, to.Label})
-		}
-	}
-	return
-}
-
 // FloydWarshall finds all pairs shortest distances for a simple weighted
 // graph without negative cycles.
 //
@@ -263,6 +248,7 @@ func (g LabeledAdjacencyList) Unlabeled() AdjacencyList {
 	return a
 }
 
+/*
 // WeightedEdgeList constructs a WeightedEdgeList object from a
 // LabeledAdjacencyList.
 //
@@ -275,6 +261,7 @@ func (g LabeledAdjacencyList) WeightedEdgeList(w WeightFunc) *WeightedEdgeList {
 		Edges:      g.EdgeList(),
 	}
 }
+*/
 
 // WeightedInDegree computes the weighted in-degree of each node in g
 // for a given weight function w.

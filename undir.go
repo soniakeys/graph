@@ -351,3 +351,29 @@ func (g LabeledUndirected) TarjanBiconnectedComponents(emit func([]LabeledEdge) 
 		}
 	}
 }
+
+// WeightedArcsAsEdges constructs a WeightedEdgeList object from the receiver.
+//
+// Internally it calls g.ArcsAsEdges() to obtain the Edges member.
+// See LabeledUndirected.ArcsAsEdges().
+func (g LabeledUndirected) WeightedArcsAsEdges(w WeightFunc) *WeightedEdgeList {
+	return &WeightedEdgeList{
+		Order:      len(g.LabeledAdjacencyList),
+		WeightFunc: w,
+		Edges:      g.ArcsAsEdges(),
+	}
+}
+
+// ArcsAsEdges constructs an edge list with an edge for each arc, including
+// reciprocals.
+//
+// This is a simple way to construct an edge list for algorithms that allow
+// the duplication represented by the reciprocal arcs.  (e.g. Kruskal)
+func (g LabeledUndirected) ArcsAsEdges() (el []LabeledEdge) {
+	for fr, to := range g.LabeledAdjacencyList {
+		for _, to := range to {
+			el = append(el, LabeledEdge{Edge{NI(fr), to.To}, to.Label})
+		}
+	}
+	return
+}
