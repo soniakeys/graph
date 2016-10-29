@@ -46,8 +46,13 @@ func (p *Undirected) AddEdge(n1, n2 NI) {
 // Parameter n is order, or number of nodes of a simple directed graph.
 // Parameter a is the arc size, or number of directed arcs.
 //
-// Returned density is the fraction m over the total possible number of arcs
+// Returned density is the fraction `a` over the total possible number of arcs
 // or a / (n * (n-1)).
+//
+// See also Density for density of a simple undirected graph.
+//
+// See also the corresponding methods AdjacencyList.ArcDensity and
+// LabeledAdjacencyList.ArcDensity.
 func ArcDensity(n, a int) float64 {
 	return float64(a) / (float64(n) * float64(n-1))
 }
@@ -59,6 +64,11 @@ func ArcDensity(n, a int) float64 {
 //
 // Returned density is the fraction m over the total possible number of edges
 // or m / ((n * (n-1))/2).
+//
+// See also ArcDensity for simple directed graphs.
+//
+// See also the corresponding methods AdjacencyList.Density and
+// LabeledAdjacencyList.Density.
 func Density(n, m int) float64 {
 	return float64(m) * 2 / (float64(n) * float64(n-1))
 }
