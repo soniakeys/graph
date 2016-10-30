@@ -73,6 +73,48 @@ func Density(n, m int) float64 {
 	return float64(m) * 2 / (float64(n) * float64(n-1))
 }
 
+// An EdgeVisitor is an argument to some traversal methods.
+//
+// Traversal methods call the visitor function for each edge visited.
+// Argument e is the edge being visited.
+type EdgeVisitor func(e Edge)
+
+// Edges iterates over the edges of an undirected graph.
+//
+// Edge visitor v is called for each edge of the graph.  That is, it is called
+// once for each reciprocal arc pair and once for each loop.
+//
+// See also LabeledUndirected.Edges for a labeled version.
+// See also Undirected.SimpleEdges for a version that emits only the simple
+// subgraph.
+func (g Undirected) Edges(v EdgeVisitor) {
+	a := g.AdjacencyList
+	unpaired := make(AdjacencyList, len(a))
+	for fr, to := range a {
+	arc: // for each arc in a
+		for _, to := range to {
+			if to == NI(fr) {
+				v(Edge{NI(fr), to}) // output loop
+				continue
+			}
+			// search unpaired arcs
+			ut := unpaired[to]
+			for i, u := range ut {
+				if u == NI(fr) { // found reciprocal
+					v(Edge{u, to}) // output edge
+					last := len(ut) - 1
+					ut[i] = ut[last]
+					unpaired[to] = ut[:last]
+					continue arc
+				}
+			}
+			// reciprocal not found
+			unpaired[fr] = append(unpaired[fr], to)
+		}
+	}
+	// undefined behavior is that unpaired arcs are silently ignored.
+}
+
 // EulerianCycleD for undirected graphs is a bit of an experiment.
 //
 // It is about the same as the directed version, but modified for an undirected
@@ -101,6 +143,27 @@ func (g Undirected) EulerianCycleD(m int) ([]NI, error) {
 		return nil, errors.New("not strongly connected")
 	}
 	return e.p, nil
+}
+
+// SimpleEdges iterates over the edges of the simple subgraph of an undirected
+// graph.
+//
+// Edge visitor v is called for each pair of distinct nodes that is connected
+// with an edge.  That is, loops are ignored and parallel edges are reduced to
+// a single edge.
+//
+// See also Undirected.Edges for a version that emits all edges.
+func (g Undirected) SimpleEdges(v EdgeVisitor) {
+	for fr, to := range g.AdjacencyList {
+		var e Bits
+		for _, to := range to {
+			if to > NI(fr) && e.Bit(to) == 0 {
+				e.SetBit(to, 1)
+				v(Edge{NI(fr), to})
+			}
+		}
+	}
+	// undefined behavior is that unpaired arcs may or may not be emitted.
 }
 
 // TarjanBiconnectedComponents decomposes a graph into maximal biconnected
@@ -284,6 +347,63 @@ func (p *LabeledUndirected) AddEdge(e Edge, l LI) {
 	}
 }
 
+// ArcsAsEdges constructs an edge list with an edge for each arc, including
+// reciprocals.
+//
+// This is a simple way to construct an edge list for algorithms that allow
+// the duplication represented by the reciprocal arcs.  (e.g. Kruskal)
+//
+// See also LabeledUndirected.Edges for the edge list without this duplication.
+func (g LabeledUndirected) ArcsAsEdges() (el []LabeledEdge) {
+	for fr, to := range g.LabeledAdjacencyList {
+		for _, to := range to {
+			el = append(el, LabeledEdge{Edge{NI(fr), to.To}, to.Label})
+		}
+	}
+	return
+}
+
+// A LabeledEdgeVisitor is an argument to some traversal methods.
+//
+// Traversal methods call the visitor function for each edge visited.
+// Argument e is the edge being visited.
+type LabeledEdgeVisitor func(e LabeledEdge)
+
+// Edges iterates over the edges of a labeled undirected graph.
+//
+// Edge visitor v is called for each edge of the graph.  That is, it is called
+// once for each reciprocal arc pair and once for each loop.
+//
+// See also Undirected.Edges for an unlabeled version.
+// See also the more simplistic LabeledUndirected.ArcsAsEdges.
+func (g LabeledUndirected) Edges(v LabeledEdgeVisitor) {
+	// similar code in LabeledAdjacencyList.InUndirected
+	a := g.LabeledAdjacencyList
+	unpaired := make(LabeledAdjacencyList, len(a))
+	for fr, to := range a {
+	arc: // for each arc in a
+		for _, to := range to {
+			if to.To == NI(fr) {
+				v(LabeledEdge{Edge{NI(fr), to.To}, to.Label}) // output loop
+				continue
+			}
+			// search unpaired arcs
+			ut := unpaired[to.To]
+			for i, u := range ut {
+				if u.To == NI(fr) && u.Label == to.Label { // found reciprocal
+					v(LabeledEdge{Edge{NI(fr), to.To}, to.Label}) // output edge
+					last := len(ut) - 1
+					ut[i] = ut[last]
+					unpaired[to.To] = ut[:last]
+					continue arc
+				}
+			}
+			// reciprocal not found
+			unpaired[fr] = append(unpaired[fr], to)
+		}
+	}
+}
+
 // TarjanBiconnectedComponents decomposes a graph into maximal biconnected
 // components, components for which if any node were removed the component
 // would remain connected.
@@ -362,18 +482,4 @@ func (g LabeledUndirected) WeightedArcsAsEdges(w WeightFunc) *WeightedEdgeList {
 		WeightFunc: w,
 		Edges:      g.ArcsAsEdges(),
 	}
-}
-
-// ArcsAsEdges constructs an edge list with an edge for each arc, including
-// reciprocals.
-//
-// This is a simple way to construct an edge list for algorithms that allow
-// the duplication represented by the reciprocal arcs.  (e.g. Kruskal)
-func (g LabeledUndirected) ArcsAsEdges() (el []LabeledEdge) {
-	for fr, to := range g.LabeledAdjacencyList {
-		for _, to := range to {
-			el = append(el, LabeledEdge{Edge{NI(fr), to.To}, to.Label})
-		}
-	}
-	return
 }

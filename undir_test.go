@@ -21,6 +21,24 @@ func ExampleDensity() {
 	// 0.5
 }
 
+func ExampleUndirected_Edges() {
+	var g graph.Undirected
+	g.AddEdge(0, 1)
+	g.AddEdge(1, 2)
+	g.AddEdge(2, 0)
+	g.AddEdge(2, 0) // parallel
+	g.AddEdge(0, 0) // loop
+	g.Edges(func(e graph.Edge) {
+		fmt.Println(e)
+	})
+	// Output:
+	// {0 0}
+	// {1 0}
+	// {2 1}
+	// {2 0}
+	// {2 0}
+}
+
 func ExampleUndirected_EulerianCycleD() {
 	var g graph.Undirected
 	// add 6 edges
@@ -36,6 +54,22 @@ func ExampleUndirected_EulerianCycleD() {
 	// Output:
 	// m = 6
 	// [0 1 2 2 1 2 0] <nil>
+}
+
+func ExampleUndirected_SimpleEdges() {
+	var g graph.Undirected
+	g.AddEdge(0, 1)
+	g.AddEdge(1, 2)
+	g.AddEdge(2, 0)
+	g.AddEdge(2, 0) // parallel
+	g.AddEdge(0, 0) // loop
+	g.SimpleEdges(func(e graph.Edge) {
+		fmt.Println(e)
+	})
+	// Output:
+	// {0 1}
+	// {0 2}
+	// {1 2}
 }
 
 func ExampleUndirected_TarjanBiconnectedComponents() {
@@ -80,6 +114,22 @@ func ExampleUndirected_TarjanBiconnectedComponents() {
 	// {7 9}
 	// Edges:
 	// {1 7}
+}
+
+func ExampleLabeledUndirected_Edges() {
+	var g graph.LabeledUndirected
+	g.AddEdge(graph.Edge{0, 0}, 'A')
+	g.AddEdge(graph.Edge{0, 1}, 'B')
+	g.AddEdge(graph.Edge{1, 2}, 'C')
+	g.AddEdge(graph.Edge{1, 2}, 'D')
+	g.Edges(func(e graph.LabeledEdge) {
+		fmt.Printf("%d %c\n", e.Edge, e.LI)
+	})
+	// Output:
+	// {0 0} A
+	// {1 0} B
+	// {2 1} C
+	// {2 1} D
 }
 
 func ExampleLabeledUndirected_TarjanBiconnectedComponents() {

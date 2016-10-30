@@ -194,6 +194,7 @@ func (g LabeledAdjacencyList) HasParallelSort() (has bool, fr, to NI) {
 // an additional test not present in the otherwise equivalent unlabeled version
 // of IsUndirected.
 func (g LabeledAdjacencyList) IsUndirected() (u bool, from NI, to Half) {
+	// similar code in LabeledAdjacencyList.Edges
 	unpaired := make(LabeledAdjacencyList, len(g))
 	for fr, to := range g {
 	arc: // for each arc in g
