@@ -4,7 +4,7 @@
 // Graph algorithms: Dijkstra, A*, Bellman Ford, Floyd Warshall;
 // Kruskal and Prim minimal spanning tree; topological sort and DAG longest
 // and shortest paths; Eulerian cycle and path; degeneracy and k-cores;
-// Bron Kerbosch clique finding; connected components; and others.
+// Bron Kerbosch clique finding; connected components; dominance; and others.
 //
 // This is a graph library of integer indexes.  To use it with application
 // data, you associate data with integer indexes, perform searches or other
