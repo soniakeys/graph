@@ -198,6 +198,21 @@ func ExampleLabeledAdjacencyList_NegativeArc() {
 	// true
 }
 
+func ExampleLabeledAdjacencyList_ParallelArcsLabel() {
+	g := graph.LabeledAdjacencyList{
+		2: {{0, 10}, {2, 20}, {0, 10}, {0, 30}},
+	}
+	fmt.Println(g.ParallelArcsLabel(2, 0, 10))
+	fmt.Println(g.ParallelArcsLabel(2, 0, 30))
+	fmt.Println(g.ParallelArcsLabel(0, 0, 30))
+	fmt.Println(g.ParallelArcsLabel(2, 0, 100))
+	// Output:
+	// [0 2]
+	// [3]
+	// []
+	// []
+}
+
 func ExampleLabeledAdjacencyList_Unlabeled() {
 	// arcs directed down:
 	//             2

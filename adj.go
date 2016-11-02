@@ -19,7 +19,7 @@ import (
 // that lead from a node to the same node.
 //
 // If the graph has parallel arcs, the results fr and to represent an example
-// where there are parallel arcs from node fr to node to.
+// where there are parallel arcs from node `fr` to node `to`.
 //
 // If there are no parallel arcs, the method returns false -1 -1.
 //
@@ -84,6 +84,8 @@ func (g AdjacencyList) IsUndirected() (u bool, from, to NI) {
 	return true, -1, -1
 }
 
+// ------- Labeled methods below -------
+
 // FloydWarshall finds all pairs shortest distances for a simple weighted
 // graph without negative cycles.
 //
@@ -133,11 +135,12 @@ func solveFW(d [][]float64) {
 	}
 }
 
-// HasArcLabel returns true if g has any arc from node fr to node to
-// with label l.
+// HasArcLabel returns true if g has any arc from node `fr` to node `to`
+// with label `l`.
 //
-// Also returned is the index within the slice of arcs from node fr.
-// If no arc from fr to to is present, HasArcLabel returns false, -1.
+// Also returned is the index within the slice of arcs from node `fr`.
+// If no arc from `fr` to `to` with label `l` is present, HasArcLabel returns
+// false, -1.
 func (g LabeledAdjacencyList) HasArcLabel(fr, to NI, l LI) (bool, int) {
 	t := Half{to, l}
 	for x, h := range g[fr] {
@@ -152,7 +155,7 @@ func (g LabeledAdjacencyList) HasArcLabel(fr, to NI, l LI) (bool, int) {
 // that lead from a node to the same node.
 //
 // If the graph has parallel arcs, the results fr and to represent an example
-// where there are parallel arcs from node fr to node to.
+// where there are parallel arcs from node `fr` to node `to`.
 //
 // If there are no parallel arcs, the method returns -1 -1.
 //
@@ -234,6 +237,23 @@ func (g LabeledAdjacencyList) NegativeArc(w WeightFunc) bool {
 		}
 	}
 	return false
+}
+
+// ParallelArcsLabel identifies all arcs from node `fr` to node `to` with label `l`.
+//
+// The returned slice contains an element for each arc from node `fr` to node `to`
+// with label `l`.  The element value is the index within the slice of arcs from node
+// `fr`.
+//
+// See also the method HasArcLabel, which stops after finding a single arc.
+func (g LabeledAdjacencyList) ParallelArcsLabel(fr, to NI, l LI) (p []int) {
+	t := Half{to, l}
+	for x, h := range g[fr] {
+		if h == t {
+			p = append(p, x)
+		}
+	}
+	return
 }
 
 // Unlabeled constructs the unlabeled graph corresponding to g.

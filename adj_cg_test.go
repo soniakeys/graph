@@ -439,3 +439,18 @@ func ExampleLabeledAdjacencyList_IsSimple_parallelArc() {
 	// Output:
 	// false 2
 }
+
+func ExampleLabeledAdjacencyList_ParallelArcs() {
+	g := graph.LabeledAdjacencyList{
+		2: {{To: 0}, {To: 2}, {To: 0}, {To: 1}, {To: 1}},
+	}
+	fmt.Println(g.ParallelArcs(0, 2))
+	fmt.Println(g.ParallelArcs(2, 0))
+	fmt.Println(g.ParallelArcs(2, 1))
+	fmt.Println(g.ParallelArcs(2, 2))
+	// Output:
+	// []
+	// [0 2]
+	// [3 4]
+	// [1]
+}

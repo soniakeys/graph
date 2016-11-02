@@ -253,12 +253,14 @@ func (g LabeledAdjacencyList) DepthFirstRandom(start NI, bm *Bits, v OkNodeVisit
 	return df(start)
 }
 
-// HasArc returns true if g has any arc from node fr to node to.
+// HasArc returns true if g has any arc from node `fr` to node `to`.
 //
-// Also returned is the index within the slice of arcs from node fr.
-// If no arc from fr to to is present, HasArc returns false, -1.
+// Also returned is the index within the slice of arcs from node `fr`.
+// If no arc from `fr` to `to` is present, HasArc returns false, -1.
 //
 // There are equivalent labeled and unlabeled versions of this method.
+//
+// See also the method ParallelArcs, which finds all parallel arcs from `fr` to `to`.
 func (g LabeledAdjacencyList) HasArc(fr, to NI) (bool, int) {
 	for x, h := range g[fr] {
 		if h.To == to {
@@ -293,7 +295,7 @@ func (g LabeledAdjacencyList) HasLoop() (bool, NI) {
 //
 // If the graph has parallel arcs, the method returns true and
 // results fr and to represent an example where there are parallel arcs
-// from node fr to node to.
+// from node `fr` to node `to`.
 //
 // If there are no parallel arcs, the method returns false, -1 -1.
 //
@@ -394,3 +396,20 @@ func (g LabeledAdjacencyList) MaximalClique(n int) []int {
 	return c
 }
 */
+
+// ParallelArcs identifies all arcs from node `fr` to node `to`.
+//
+// The returned slice contains an element for each arc from node `fr` to node `to`.
+// The element value is the index within the slice of arcs from node `fr`.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+//
+// See also the method HasArc, which stops after finding a single arc.
+func (g LabeledAdjacencyList) ParallelArcs(fr, to NI) (p []int) {
+	for x, h := range g[fr] {
+		if h.To == to {
+			p = append(p, x)
+		}
+	}
+	return
+}
