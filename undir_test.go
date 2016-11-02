@@ -22,21 +22,25 @@ func ExampleDensity() {
 }
 
 func ExampleUndirected_Edges() {
+	//    0
+	//   / \\
+	//  1---2--\
+	//       \-/
 	var g graph.Undirected
 	g.AddEdge(0, 1)
 	g.AddEdge(1, 2)
 	g.AddEdge(2, 0)
 	g.AddEdge(2, 0) // parallel
-	g.AddEdge(0, 0) // loop
+	g.AddEdge(2, 2) // loop
 	g.Edges(func(e graph.Edge) {
 		fmt.Println(e)
 	})
 	// Output:
-	// {0 0}
 	// {1 0}
 	// {2 1}
 	// {2 0}
 	// {2 0}
+	// {2 2}
 }
 
 func ExampleUndirected_EulerianCycleD() {
@@ -57,12 +61,16 @@ func ExampleUndirected_EulerianCycleD() {
 }
 
 func ExampleUndirected_SimpleEdges() {
+	//    0
+	//   / \\
+	//  1---2--\
+	//       \-/
 	var g graph.Undirected
 	g.AddEdge(0, 1)
 	g.AddEdge(1, 2)
 	g.AddEdge(2, 0)
 	g.AddEdge(2, 0) // parallel
-	g.AddEdge(0, 0) // loop
+	g.AddEdge(2, 2) // loop
 	g.SimpleEdges(func(e graph.Edge) {
 		fmt.Println(e)
 	})
