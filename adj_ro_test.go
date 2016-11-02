@@ -351,40 +351,40 @@ func ExampleAdjacencyList_HasArc() {
 	// true 3
 }
 
-func ExampleAdjacencyList_HasLoop_loop() {
+func ExampleAdjacencyList_AnyLoop_loop() {
 	g := graph.AdjacencyList{
 		2: {2},
 	}
-	fmt.Println(g.HasLoop())
+	fmt.Println(g.AnyLoop())
 	// Output:
 	// true 2
 }
 
-func ExampleAdjacencyList_HasLoop_noLoop() {
+func ExampleAdjacencyList_AnyLoop_noLoop() {
 	g := graph.AdjacencyList{
 		1: {0},
 	}
-	lp, _ := g.HasLoop()
+	lp, _ := g.AnyLoop()
 	fmt.Println("has loop:", lp)
 	// Output:
 	// has loop: false
 }
 
-func ExampleAdjacencyList_HasParallelMap_parallelArcs() {
+func ExampleAdjacencyList_AnyParallelMap_parallelArcs() {
 	g := graph.AdjacencyList{
 		1: {0, 0},
 	}
 	// result true 1 0 means parallel arcs from node 1 to node 0
-	fmt.Println(g.HasParallelMap())
+	fmt.Println(g.AnyParallelMap())
 	// Output:
 	// true 1 0
 }
 
-func ExampleAdjacencyList_HasParallelMap_noParallelArcs() {
+func ExampleAdjacencyList_AnyParallelMap_noParallelArcs() {
 	g := graph.AdjacencyList{
 		1: {0},
 	}
-	fmt.Println(g.HasParallelMap()) // result false -1 -1 means no parallel arc
+	fmt.Println(g.AnyParallelMap()) // result false -1 -1 means no parallel arc
 	// Output:
 	// false -1 -1
 }

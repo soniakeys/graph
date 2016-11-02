@@ -653,7 +653,7 @@ func (g LabeledUndirected) IsTree(root NI) (isTree, allTree bool) {
 
 // Size returns the number of edges in g.
 //
-// See also ArcSize and HasLoop.
+// See also ArcSize and AnyLoop.
 func (g LabeledUndirected) Size() int {
 	m2 := 0
 	for fr, to := range g.LabeledAdjacencyList {

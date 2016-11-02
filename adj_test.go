@@ -9,22 +9,22 @@ import (
 	"github.com/soniakeys/graph"
 )
 
-func ExampleAdjacencyList_HasParallelSort_parallelArcs() {
+func ExampleAdjacencyList_AnyParallelSort_parallelArcs() {
 	g := graph.AdjacencyList{
 		1: {0, 0},
 	}
 	// result true 1 0 means parallel arcs from node 1 to node 0
-	fmt.Println(g.HasParallelSort())
+	fmt.Println(g.AnyParallelSort())
 	// Output:
 	// true 1 0
 }
 
-func ExampleAdjacencyList_HasParallelSort_noParallelArcs() {
+func ExampleAdjacencyList_AnyParallelSort_noParallelArcs() {
 	g := graph.AdjacencyList{
 		1: {0},
 	}
 	// result false -1 -1 means no parallel arc
-	fmt.Println(g.HasParallelSort())
+	fmt.Println(g.AnyParallelSort())
 	// Output:
 	// false -1 -1
 }
@@ -116,22 +116,22 @@ func ExampleLabeledAdjacencyList_HasArcLabel() {
 	// false -1
 }
 
-func ExampleLabeledAdjacencyList_HasParallelSort_parallelArcs() {
+func ExampleLabeledAdjacencyList_AnyParallelSort_parallelArcs() {
 	g := graph.LabeledAdjacencyList{
 		1: {{0, 0}, {0, 0}},
 	}
 	// result true 1 0 means parallel arc from node 1 to node 0
-	fmt.Println(g.HasParallelSort())
+	fmt.Println(g.AnyParallelSort())
 	// Output:
 	// true 1 0
 }
 
-func ExampleLabeledAdjacencyList_HasParallelSort_noParallelArcs() {
+func ExampleLabeledAdjacencyList_AnyParallelSort_noParallelArcs() {
 	g := graph.LabeledAdjacencyList{
 		1: {{0, 0}},
 	}
 	// result false -1 -1 means no parallel arc
-	fmt.Println(g.HasParallelSort())
+	fmt.Println(g.AnyParallelSort())
 	// Output:
 	// false -1 -1
 }

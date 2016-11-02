@@ -270,16 +270,14 @@ func (g LabeledAdjacencyList) HasArc(fr, to NI) (bool, int) {
 	return false, -1
 }
 
-// HasLoop identifies if a graph contains a loop, an arc that leads from a
+// AnyLoop identifies if a graph contains a loop, an arc that leads from a
 // a node back to the same node.
-//
-// If the graph has a loop, the result is an example node that has a loop.
 //
 // If g contains a loop, the method returns true and an example of a node
 // with a loop.  If there are no loops in g, the method returns false, -1.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g LabeledAdjacencyList) HasLoop() (bool, NI) {
+func (g LabeledAdjacencyList) AnyLoop() (bool, NI) {
 	for fr, to := range g {
 		for _, to := range to {
 			if NI(fr) == to.To {
@@ -290,7 +288,7 @@ func (g LabeledAdjacencyList) HasLoop() (bool, NI) {
 	return false, -1
 }
 
-// HasParallelMap identifies if a graph contains parallel arcs, multiple arcs
+// AnyParallelMap identifies if a graph contains parallel arcs, multiple arcs
 // that lead from a node to the same node.
 //
 // If the graph has parallel arcs, the method returns true and
@@ -302,12 +300,12 @@ func (g LabeledAdjacencyList) HasLoop() (bool, NI) {
 // Multiple loops on a node count as parallel arcs.
 //
 // "Map" in the method name indicates that a Go map is used to detect parallel
-// arcs.  Compared to method HasParallelSort, this gives better asymtotic
+// arcs.  Compared to method AnyParallelSort, this gives better asymtotic
 // performance for large dense graphs but may have increased overhead for
 // small or sparse graphs.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g LabeledAdjacencyList) HasParallelMap() (has bool, fr, to NI) {
+func (g LabeledAdjacencyList) AnyParallelMap() (has bool, fr, to NI) {
 	for n, to := range g {
 		if len(to) == 0 {
 			continue
@@ -331,14 +329,14 @@ func (g LabeledAdjacencyList) HasParallelMap() (has bool, fr, to NI) {
 // found, simple returns false and a node that represents a counterexample
 // to the graph being simple.
 //
-// See also separate methods HasLoop and HasParallel.
+// See also separate methods AnyLoop and AnyParallel.
 //
 // There are equivalent labeled and unlabeled versions of this method.
 func (g LabeledAdjacencyList) IsSimple() (ok bool, n NI) {
-	if lp, n := g.HasLoop(); lp {
+	if lp, n := g.AnyLoop(); lp {
 		return false, n
 	}
-	if pa, n, _ := g.HasParallelSort(); pa {
+	if pa, n, _ := g.AnyParallelSort(); pa {
 		return false, n
 	}
 	return true, -1
