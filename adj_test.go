@@ -108,12 +108,14 @@ func ExampleLabeledAdjacencyList_HasArcLabel() {
 		2: {{0, 10}, {2, 20}, {0, 30}},
 	}
 	fmt.Println(g.HasArcLabel(2, 0, 30))
-	fmt.Println(g.HasArcLabel(0, 0, 30))
+	fmt.Println(g.HasArcLabel(1, 0, 30))
 	fmt.Println(g.HasArcLabel(2, 0, 100))
+	fmt.Println(g.HasArcLabel(2, 2, 20)) // test for loop
 	// Output:
 	// true 2
 	// false -1
 	// false -1
+	// true 1
 }
 
 func ExampleLabeledAdjacencyList_AnyParallelSort_parallelArcs() {
@@ -204,7 +206,7 @@ func ExampleLabeledAdjacencyList_ParallelArcsLabel() {
 	}
 	fmt.Println(g.ParallelArcsLabel(2, 0, 10))
 	fmt.Println(g.ParallelArcsLabel(2, 0, 30))
-	fmt.Println(g.ParallelArcsLabel(0, 0, 30))
+	fmt.Println(g.ParallelArcsLabel(0, 0, 30)) // returns loops on 0
 	fmt.Println(g.ParallelArcsLabel(2, 0, 100))
 	// Output:
 	// [0 2]
