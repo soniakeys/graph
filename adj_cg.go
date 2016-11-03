@@ -362,41 +362,6 @@ func (g LabeledAdjacencyList) IsolatedNodes() (i Bits) {
 	return
 }
 
-/*
-MaxmimalClique finds a maximal clique containing the node n.
-
-Not sure this is good for anything.  It produces a single maximal clique
-but there can be multiple maximal cliques containing a given node.
-This algorithm just returns one of them, not even necessarily the
-largest one.
-
-func (g LabeledAdjacencyList) MaximalClique(n int) []int {
-	c := []int{n}
-	var m bitset.BitSet
-	m.Set(uint(n))
-	for fr, to := range g {
-		if fr == n {
-			continue
-		}
-		if len(to) < len(c) {
-			continue
-		}
-		f := 0
-		for _, to := range to {
-			if m.Test(uint(to.To)) {
-				f++
-				if f == len(c) {
-					c = append(c, to.To)
-					m.Set(uint(to.To))
-					break
-				}
-			}
-		}
-	}
-	return c
-}
-*/
-
 // ParallelArcs identifies all arcs from node `fr` to node `to`.
 //
 // The returned slice contains an element for each arc from node `fr` to node `to`.
