@@ -510,16 +510,6 @@ func testSSSP(tc testCase, t *testing.T) {
 		t.Fatal("len(dr.Paths), len(br.Paths)",
 			len(dr.Paths), len(br.Paths))
 	}
-	/* this test not working, possibly not a valid test.
-	t.Log(dr.Paths)
-	t.Log(br.Paths)
-	for i, de := range dr.Paths {
-		t.Log(de, br.Paths[i])
-		if de != br.Paths[i] {
-			t.Fatal("dr.Paths ne br.Paths")
-		}
-	}
-	*/
 	// breadth first, compare to dijkstra with unit weights
 	w = func(graph.LI) float64 { return 1 }
 	ur, _, _ := tc.l.LabeledAdjacencyList.Dijkstra(tc.start, -1, w)
