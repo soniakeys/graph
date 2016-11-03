@@ -542,24 +542,39 @@ func (g LabeledDirected) UnlabeledTranspose() (t Directed, ma int) {
 // The frontier for a given node is a set of nodes, represented here as a map.
 type DominanceFrontiers []map[NI]struct{}
 
-// Closure computes the closure, or iterated dominance frontier for a node set
-// given computed dominance frontiers.
+// Frontier computes the dominance frontier for a node set.
+func (d DominanceFrontiers) Frontier(s map[NI]struct{}) map[NI]struct{} {
+	fs := map[NI]struct{}{}
+	for n := range s {
+		for f := range d[n] {
+			fs[f] = struct{}{}
+		}
+	}
+	return fs
+}
+
+// Closure computes the closure, or iterated dominance frontier for a node set.
 func (d DominanceFrontiers) Closure(s map[NI]struct{}) map[NI]struct{} {
 	c := map[NI]struct{}{}
+	e := map[NI]struct{}{}
 	w := map[NI]struct{}{}
 	var n NI
 	for n = range s {
-		c[n] = struct{}{}
+		e[n] = struct{}{}
 		w[n] = struct{}{}
 	}
 	for len(w) > 0 {
 		for n = range w {
 			break
 		}
+		delete(w, n)
 		for f := range d[n] {
 			if _, ok := c[f]; !ok {
 				c[f] = struct{}{}
-				w[f] = struct{}{}
+				if _, ok := e[f]; !ok {
+					e[f] = struct{}{}
+					w[f] = struct{}{}
+				}
 			}
 		}
 	}

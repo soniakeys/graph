@@ -29,9 +29,9 @@ developed, built, and tested.  It might be of interest if for example you
 plan to fork or contribute to the the repository.
 
 ###Test coverage
-30 Oct 2016
+3 Nov 2016
 ```
-graph          94.9%
+graph          95.4%
 graph/df       20.7%
 graph/dot      77.5%
 graph/treevis  79.4%

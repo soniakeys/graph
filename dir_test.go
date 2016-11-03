@@ -221,6 +221,139 @@ func ExampleDirected_Undirected_loopMultigraph() {
 	// 2 [1 1]
 }
 
+func ExampleDominanceFrontiers_Closure() {
+	//     0
+	//     |
+	//     1
+	//     |
+	// --->2
+	// |  / \
+	// --3   4
+	//      / \
+	//     5   6
+	//      \ /
+	//       7
+	g := graph.Directed{graph.AdjacencyList{
+		0: {1},
+		1: {2},
+		2: {3, 4},
+		3: {2},
+		4: {5, 6},
+		5: {7},
+		6: {7},
+		7: {},
+	}}
+	f := g.Dominators(0).Frontiers()
+	type ns map[graph.NI]struct{}
+	fmt.Println(f.Closure(ns{
+		0: struct{}{},
+		1: struct{}{},
+		3: struct{}{},
+	}))
+	// Output:
+	// map[2:{}]
+}
+
+func ExampleDominanceFrontiers_Frontier() {
+	//     0
+	//     |
+	//     1
+	//     |
+	// --->2
+	// |  / \
+	// --3   4
+	//      / \
+	//     5   6
+	//      \ /
+	//       7
+	g := graph.Directed{graph.AdjacencyList{
+		0: {1},
+		1: {2},
+		2: {3, 4},
+		3: {2},
+		4: {5, 6},
+		5: {7},
+		6: {7},
+		7: {},
+	}}
+	f := g.Dominators(0).Frontiers()
+	type ns map[graph.NI]struct{}
+	fmt.Println(f.Frontier(ns{
+		0: struct{}{},
+		1: struct{}{},
+		3: struct{}{},
+	}))
+	// Output:
+	// map[2:{}]
+}
+
+func ExampleDominators_Frontiers() {
+	//   0
+	//   |
+	//   1
+	//  / \
+	// 2   3
+	//  \ / \
+	//   4   5   6
+	g := graph.Directed{graph.AdjacencyList{
+		0: {1},
+		1: {2, 3},
+		2: {4},
+		3: {4, 5},
+		6: {},
+	}}
+	for n, f := range g.Dominators(0).Frontiers() {
+		fmt.Print(n, ":")
+		if f == nil {
+			fmt.Println(" nil")
+			continue
+		}
+		for n := range f {
+			fmt.Print(" ", n)
+		}
+		fmt.Println()
+	}
+	// Output:
+	// 0:
+	// 1:
+	// 2: 4
+	// 3: 4
+	// 4:
+	// 5:
+	// 6: nil
+}
+
+func ExampleDominators_Set() {
+	//   0
+	//   |
+	//   1
+	//  / \
+	// 2   3
+	//  \ / \
+	//   4   5   6
+	g := graph.Directed{graph.AdjacencyList{
+		0: {1},
+		1: {2, 3},
+		2: {4},
+		3: {4, 5},
+		6: {},
+	}}
+	d := g.Dominators(0)
+	for n := range g.AdjacencyList {
+		fmt.Println(n, d.Set(graph.NI(n)))
+	}
+	// Output:
+	// 0 [0]
+	// 1 [1 0]
+	// 2 [2 1 0]
+	// 3 [3 1 0]
+	// 4 [4 1 0]
+	// 5 [5 3 1 0]
+	// 6 []
+}
+
+// ------- Labeled examples -------
+
 func ExampleLabeledDirected_DAGMaxLenPath() {
 	// arcs directed right:
 	//            (M)
@@ -324,69 +457,4 @@ func ExampleLabeledDirected_UnlabeledTranspose() {
 	// 1 [2]
 	// 2 []
 	// 2 arcs
-}
-
-func ExampleDominators_Frontiers() {
-	//   0
-	//   |
-	//   1
-	//  / \
-	// 2   3
-	//  \ / \
-	//   4   5   6
-	g := graph.Directed{graph.AdjacencyList{
-		0: {1},
-		1: {2, 3},
-		2: {4},
-		3: {4, 5},
-		6: {},
-	}}
-	for n, f := range g.Dominators(0).Frontiers() {
-		fmt.Print(n, ":")
-		if f == nil {
-			fmt.Println(" nil")
-			continue
-		}
-		for n := range f {
-			fmt.Print(" ", n)
-		}
-		fmt.Println()
-	}
-	// Output:
-	// 0:
-	// 1:
-	// 2: 4
-	// 3: 4
-	// 4:
-	// 5:
-	// 6: nil
-}
-
-func ExampleDominators_Set() {
-	//   0
-	//   |
-	//   1
-	//  / \
-	// 2   3
-	//  \ / \
-	//   4   5   6
-	g := graph.Directed{graph.AdjacencyList{
-		0: {1},
-		1: {2, 3},
-		2: {4},
-		3: {4, 5},
-		6: {},
-	}}
-	d := g.Dominators(0)
-	for n := range g.AdjacencyList {
-		fmt.Println(n, d.Set(graph.NI(n)))
-	}
-	// Output:
-	// 0 [0]
-	// 1 [1 0]
-	// 2 [2 1 0]
-	// 3 [3 1 0]
-	// 4 [4 1 0]
-	// 5 [5 3 1 0]
-	// 6 []
 }
