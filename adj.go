@@ -269,21 +269,6 @@ func (g LabeledAdjacencyList) Unlabeled() AdjacencyList {
 	return a
 }
 
-/*
-// WeightedEdgeList constructs a WeightedEdgeList object from a
-// LabeledAdjacencyList.
-//
-// Internally it calls g.EdgeList() to obtain the Edges member.
-// See LabeledAdjacencyList.EdgeList().
-func (g LabeledAdjacencyList) WeightedEdgeList(w WeightFunc) *WeightedEdgeList {
-	return &WeightedEdgeList{
-		Order:      len(g),
-		WeightFunc: w,
-		Edges:      g.EdgeList(),
-	}
-}
-*/
-
 // WeightedInDegree computes the weighted in-degree of each node in g
 // for a given weight function w.
 //
