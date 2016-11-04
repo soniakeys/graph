@@ -145,6 +145,22 @@ func (g Undirected) EulerianCycleD(m int) ([]NI, error) {
 	return e.p, nil
 }
 
+// HasEdge returns true if g has any edge between nodes n1 and n2.
+//
+// Also returned are indexes x1 and x2 such that g[n1][x1] == n2
+// and g[n2][x2] == n1.  If no edge between n1 and n2 is present HasArc
+// returns `has` == false.
+//
+// See also HasArc.  If you are interested only in the boolean result and
+// g is a well formed (passes IsUndirected) then HasArc is an adequate test.
+func (g Undirected) HasEdge(n1, n2 NI) (has bool, x1, x2 int) {
+	if has, x1 = g.HasArc(n1, n2); !has {
+		return has, x1, x1
+	}
+	has, x2 = g.HasArc(n2, n1)
+	return
+}
+
 // SimpleEdges iterates over the edges of the simple subgraph of an undirected
 // graph.
 //
@@ -402,6 +418,36 @@ func (g LabeledUndirected) Edges(v LabeledEdgeVisitor) {
 			unpaired[fr] = append(unpaired[fr], to)
 		}
 	}
+}
+
+// HasEdge returns true if g has any edge between nodes n1 and n2.
+//
+// Also returned are indexes x1 and x2 such that g[n1][x1] == Half{n2, l}
+// and g[n2][x2] == {n1, l} for some label l.  If no edge between n1 and n2
+// exists, HasArc returns `has` == false.
+//
+// See also HasArc.  If you are only interested in the boolean result then
+// HasArc is an adequate test.
+func (g LabeledUndirected) HasEdge(n1, n2 NI) (has bool, x1, x2 int) {
+	if has, x1 = g.HasArc(n1, n2); !has {
+		return has, x1, x1
+	}
+	has, x2 = g.HasArcLabel(n2, n1, g.LabeledAdjacencyList[n1][x1].Label)
+	return
+}
+
+// HasEdgeLabel returns true if g has any edge between nodes n1 and n2 with
+// label l.
+//
+// Also returned are indexes x1 and x2 such that g[n1][x1] == Half{n2, l}
+// and g[n2][x2] == Half{n1, l}.  If no edge between n1 and n2 with label l
+// is present HasArc returns `has` == false.
+func (g LabeledUndirected) HasEdgeLabel(n1, n2 NI, l LI) (has bool, x1, x2 int) {
+	if has, x1 = g.HasArcLabel(n1, n2, l); !has {
+		return has, x1, x1
+	}
+	has, x2 = g.HasArcLabel(n2, n1, l)
+	return
 }
 
 // TarjanBiconnectedComponents decomposes a graph into maximal biconnected

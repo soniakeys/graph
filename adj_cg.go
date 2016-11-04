@@ -260,7 +260,8 @@ func (g LabeledAdjacencyList) DepthFirstRandom(start NI, bm *Bits, v OkNodeVisit
 //
 // There are equivalent labeled and unlabeled versions of this method.
 //
-// See also the method ParallelArcs, which finds all parallel arcs from `fr` to `to`.
+// See also the method ParallelArcs, which finds all parallel arcs from
+// `fr` to `to`.
 func (g LabeledAdjacencyList) HasArc(fr, to NI) (bool, int) {
 	for x, h := range g[fr] {
 		if h.To == to {

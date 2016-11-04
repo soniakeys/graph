@@ -60,6 +60,25 @@ func ExampleUndirected_EulerianCycleD() {
 	// [0 1 2 2 1 2 0] <nil>
 }
 
+func ExampleUndirected_HasEdge() {
+	var g graph.Undirected
+	g.AddEdge(7, 8)
+	g.AddEdge(8, 8)
+	g.AddEdge(5, 7)
+	g.AddEdge(5, 8)
+	g.AddEdge(5, 9)
+	fmt.Println(g.HasEdge(4, 7))
+	var n1, n2 graph.NI = 5, 8
+	has, x1, x2 := g.HasEdge(5, 8)
+	fmt.Println(has, x1, x2)
+	a := g.AdjacencyList
+	fmt.Println(a[n1][x1] == n2, a[n2][x2] == n1)
+	// Output:
+	// false -1 -1
+	// true 1 2
+	// true true
+}
+
 func ExampleUndirected_SimpleEdges() {
 	//    0
 	//   / \\
@@ -138,6 +157,42 @@ func ExampleLabeledUndirected_Edges() {
 	// {1 0} B
 	// {2 1} C
 	// {2 1} D
+}
+
+func ExampleLabeledUndirected_HasEdge() {
+	var g graph.LabeledUndirected
+	g.AddEdge(graph.Edge{7, 8}, 'A')
+	g.AddEdge(graph.Edge{8, 8}, 'B')
+	g.AddEdge(graph.Edge{5, 7}, 'C')
+	g.AddEdge(graph.Edge{5, 8}, 'D')
+	g.AddEdge(graph.Edge{5, 9}, 'E')
+	a := g.LabeledAdjacencyList
+	var n1, n2 graph.NI = 5, 8
+	has, x1, x2 := g.HasEdge(n1, n2)
+	fmt.Printf("%t %d %d %c %c\n",
+		has, x1, x2, a[n1][x1].Label, a[n2][x2].Label)
+	// Output:
+	// true 1 2 D D
+}
+
+func ExampleLabeledUndirected_HasEdgeLabel() {
+	var g graph.LabeledUndirected
+	g.AddEdge(graph.Edge{7, 8}, 'A')
+	g.AddEdge(graph.Edge{8, 8}, 'B')
+	g.AddEdge(graph.Edge{5, 7}, 'C')
+	g.AddEdge(graph.Edge{5, 8}, 'D')
+	g.AddEdge(graph.Edge{5, 9}, 'E')
+	fmt.Println(g.HasEdgeLabel(7, 8, 'D'))
+	var n1, n2 graph.NI = 5, 8
+	var l graph.LI = 'D'
+	has, x1, x2 := g.HasEdgeLabel(5, 8, l)
+	fmt.Println(has, x1, x2)
+	a := g.LabeledAdjacencyList
+	fmt.Println(a[n1][x1] == graph.Half{n2, l}, a[n2][x2] == graph.Half{n1, l})
+	// Output:
+	// false -1 -1
+	// true 1 2
+	// true true
 }
 
 func ExampleLabeledUndirected_TarjanBiconnectedComponents() {
