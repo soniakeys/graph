@@ -41,6 +41,33 @@ func (p *Undirected) AddEdge(n1, n2 NI) {
 	}
 }
 
+// RemoveEdge removes a single edge between nodes n1 and n2.
+//
+// It removes reciprocal arcs in the case of distinct n1 and n2 or removes
+// a single arc loop in the case of n1 == n2.
+//
+// Returns true if the specified edge is found and successfully removed,
+// false if the edge does not exist.
+func (g Undirected) RemoveEdge(n1, n2 NI) (ok bool) {
+	ok, x1, x2 := g.HasEdge(n1, n2)
+	if !ok {
+		return
+	}
+	a := g.AdjacencyList
+	to := a[n1]
+	last := len(to) - 1
+	to[x1] = to[last]
+	a[n1] = to[:last]
+	if n1 == n2 {
+		return
+	}
+	to = a[n2]
+	last = len(to) - 1
+	to[x2] = to[last]
+	a[n2] = to[:last]
+	return
+}
+
 // ArcDensity returns density for a simple directed graph.
 //
 // Parameter n is order, or number of nodes of a simple directed graph.
@@ -447,6 +474,62 @@ func (g LabeledUndirected) HasEdgeLabel(n1, n2 NI, l LI) (has bool, x1, x2 int) 
 		return has, x1, x1
 	}
 	has, x2 = g.HasArcLabel(n2, n1, l)
+	return
+}
+
+// RemoveEdge removes a single edge between nodes n1 and n2.
+//
+// It removes reciprocal arcs in the case of distinct n1 and n2 or removes
+// a single arc loop in the case of n1 == n2.
+//
+// If the specified edge is found and successfully removed, RemoveEdge returns
+// true and the label of the edge removed.  If no edge exists between n1 and n2,
+// RemoveEdge returns false, 0.
+func (g LabeledUndirected) RemoveEdge(n1, n2 NI) (ok bool, label LI) {
+	ok, x1, x2 := g.HasEdge(n1, n2)
+	if !ok {
+		return
+	}
+	a := g.LabeledAdjacencyList
+	to := a[n1]
+	label = to[x1].Label // return value
+	last := len(to) - 1
+	to[x1] = to[last]
+	a[n1] = to[:last]
+	if n1 == n2 {
+		return
+	}
+	to = a[n2]
+	last = len(to) - 1
+	to[x2] = to[last]
+	a[n2] = to[:last]
+	return
+}
+
+// RemoveEdgeLabel removes a single edge between nodes n1 and n2 with label l.
+//
+// It removes reciprocal arcs in the case of distinct n1 and n2 or removes
+// a single arc loop in the case of n1 == n2.
+//
+// Returns true if the specified edge is found and successfully removed,
+// false if the edge does not exist.
+func (g LabeledUndirected) RemoveEdgeLabel(n1, n2 NI, l LI) (ok bool) {
+	ok, x1, x2 := g.HasEdgeLabel(n1, n2, l)
+	if !ok {
+		return
+	}
+	a := g.LabeledAdjacencyList
+	to := a[n1]
+	last := len(to) - 1
+	to[x1] = to[last]
+	a[n1] = to[:last]
+	if n1 == n2 {
+		return
+	}
+	to = a[n2]
+	last = len(to) - 1
+	to[x2] = to[last]
+	a[n2] = to[:last]
 	return
 }
 
