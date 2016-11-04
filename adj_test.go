@@ -9,6 +9,17 @@ import (
 	"github.com/soniakeys/graph"
 )
 
+func ExampleAdjacencyList_construction() {
+	_ = make(graph.AdjacencyList, 10) // make a graph with 10 nodes
+	_ = graph.AdjacencyList{{1}, {0}} // a graph with 2 nodes and 2 arcs
+	// the same graph, with "keyed elements".  See the Go spec!
+	_ = graph.AdjacencyList{
+		0: {1},
+		1: {0},
+	}
+	_ = graph.AdjacencyList{9: nil} // graph with 10 nodes
+}
+
 func ExampleAdjacencyList_AnyParallelSort_parallelArcs() {
 	g := graph.AdjacencyList{
 		1: {0, 0},
