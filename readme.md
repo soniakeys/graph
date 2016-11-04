@@ -5,7 +5,7 @@ graph algorithms on graphs of zero-based integer node IDs.
 
 [![GoDoc](https://godoc.org/github.com/soniakeys/graph?status.svg)](https://godoc.org/github.com/soniakeys/graph) [![Go Walker](http://gowalker.org/api/v1/badge)](https://gowalker.org/github.com/soniakeys/graph) [![GoSearch](http://go-search.org/badge?id=github.com%2Fsoniakeys%2Fgraph)](http://go-search.org/view?id=github.com%2Fsoniakeys%2Fgraph)[![Build Status](https://travis-ci.org/soniakeys/graph.svg?branch=master)](https://travis-ci.org/soniakeys/graph)
 
-Status, 4 Nov 2016:  Outdoor activites drew me away over the summer.
+Status, 4 Nov 2016:  Outdoor activities drew me away over the summer.
 Development may pick up now.
 
 ###Non-source files of interest
@@ -27,9 +27,9 @@ developed, built, and tested.  It might be of interest if for example you
 plan to fork or contribute to the the repository.
 
 ###Test coverage
-3 Nov 2016
+4 Nov 2016
 ```
-graph          95.4%
+graph          93.9%
 graph/df       20.7%
 graph/dot      77.5%
 graph/treevis  79.4%
