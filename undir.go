@@ -18,6 +18,10 @@ import "errors"
 // The pointer receiver allows the method to expand the graph as needed
 // to include the values n1 and n2.  If n1 or n2 happen to be greater than
 // len(*p) the method does not panic, but simply expands the graph.
+//
+// If you know or can compute the final graph order however, consider
+// preallocating to avoid any overhead of expanding the graph.
+// See second example, "More".
 func (p *Undirected) AddEdge(n1, n2 NI) {
 	// Similar code in LabeledAdjacencyList.AddEdge.
 

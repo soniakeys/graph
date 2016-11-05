@@ -103,3 +103,16 @@ happens to have reciprocals for all arcs.
 To grow AdjacencyList g by one node, the next available node number will be
 `graph.NI(len(g))`.  Add it with `g = append(g, nil)`.  The implementation
 of append makes it efficient to do this repeatedly.
+
+## AddArc
+To add arc from `fr` to `to` in AdjacencyList g,
+
+1.  know that int(fr) < len(g).
+2.  `g[fr] = append(g[fr], to)`
+
+There's Undirected.AddEdge but no AdjacencyList.AddArc.  AddEdge exists with
+reservation.  The doc on it notes that it may have overhead of resizing and
+suggests preallocating.  Still, it's useful and the code is complex enough to
+seem justified.  A similar AddArc could be written but seems overkill.
+In the two steps above, you will often know the first without having to do
+any checks.  Then it's just append.

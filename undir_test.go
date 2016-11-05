@@ -21,6 +21,44 @@ func ExampleDensity() {
 	// 0.5
 }
 
+func ExampleUndirected_AddEdge_justOne() {
+	//    0
+	//   /
+	//  1
+	var g graph.Undirected // no need to pre-allocate
+	g.AddEdge(0, 1)        // AddEdge expands graph as needed
+	for fr, to := range g.AdjacencyList {
+		fmt.Println(fr, to)
+	}
+	// Output:
+	// 0 [1]
+	// 1 [0]
+}
+
+func ExampleUndirected_AddEdge_more() {
+	//    0
+	//   / \\
+	//  1---2--\
+	//       \-/
+	//
+	// preallocate graph with make for efficiency
+	g := graph.Undirected{make(graph.AdjacencyList, 3)} // 3 nodes altogether
+	// alternatively, use a literal
+	g = graph.Undirected{graph.AdjacencyList{2: nil}} // 2 is last node
+	g.AddEdge(0, 1)
+	g.AddEdge(1, 2)
+	g.AddEdge(2, 0)
+	g.AddEdge(2, 0) // parallel
+	g.AddEdge(2, 2) // loop
+	for fr, to := range g.AdjacencyList {
+		fmt.Println(fr, to)
+	}
+	// Output:
+	// 0 [1 2 2]
+	// 1 [0 2]
+	// 2 [1 0 0 2]
+}
+
 func ExampleUndirected_Edges() {
 	//    0
 	//   / \\
@@ -77,6 +115,34 @@ func ExampleUndirected_HasEdge() {
 	// false -1 -1
 	// true 1 2
 	// true true
+}
+
+func ExampleUndirected_RemoveEdge() {
+	//    0
+	//   / \\
+	//  1---2--\
+	//       \-/
+	var g graph.Undirected
+	g.AddEdge(0, 1)
+	g.AddEdge(1, 2)
+	g.AddEdge(2, 0)
+	g.AddEdge(2, 0) // parallel
+	g.AddEdge(2, 2) // loop
+
+	fmt.Println(g.RemoveEdge(2, 0)) // remove one of the parallel edges
+	fmt.Println(g.RemoveEdge(2, 2)) // remove the loop
+	fmt.Println(g.RemoveEdge(2, 2)) // false: there was only one loop
+
+	for fr, to := range g.AdjacencyList {
+		fmt.Println(fr, to)
+	}
+	// Output:
+	// true
+	// true
+	// false
+	// 0 [1 2]
+	// 1 [0 2]
+	// 2 [1 0]
 }
 
 func ExampleUndirected_SimpleEdges() {
@@ -143,6 +209,28 @@ func ExampleUndirected_TarjanBiconnectedComponents() {
 	// {1 7}
 }
 
+func ExampleLabeledUndirected_AddEdge() {
+	//       --0--
+	//      /     \\6001
+	// 5000/   6000\\
+	//    /         \\
+	//   1-----------2--\8000
+	//        5000    \-/
+	var g graph.LabeledUndirected
+	g.AddEdge(graph.Edge{0, 1}, 5000)
+	g.AddEdge(graph.Edge{1, 2}, 5000)
+	g.AddEdge(graph.Edge{2, 0}, 6000)
+	g.AddEdge(graph.Edge{2, 0}, 6001) // parallel
+	g.AddEdge(graph.Edge{2, 2}, 8000) // loop
+	for fr, to := range g.LabeledAdjacencyList {
+		fmt.Println(fr, to)
+	}
+	// Output:
+	// 0 [{1 5000} {2 6000} {2 6001}]
+	// 1 [{0 5000} {2 5000}]
+	// 2 [{1 5000} {0 6000} {0 6001} {2 8000}]
+}
+
 func ExampleLabeledUndirected_Edges() {
 	var g graph.LabeledUndirected
 	g.AddEdge(graph.Edge{0, 0}, 'A')
@@ -193,6 +281,62 @@ func ExampleLabeledUndirected_HasEdgeLabel() {
 	// false -1 -1
 	// true 1 2
 	// true true
+}
+
+func ExampleLabeledUndirected_RemoveEdge() {
+	//       --0--
+	//      /     \\6001
+	// 5000/   6000\\
+	//    /         \\
+	//   1-----------2--\8000
+	//        5000    \-/
+	var g graph.LabeledUndirected
+	g.AddEdge(graph.Edge{0, 1}, 5000)
+	g.AddEdge(graph.Edge{1, 2}, 5000)
+	g.AddEdge(graph.Edge{2, 0}, 6000)
+	g.AddEdge(graph.Edge{2, 0}, 6001) // parallel
+	g.AddEdge(graph.Edge{2, 2}, 8000) // loop
+
+	fmt.Println(g.RemoveEdge(0, 2)) // remove one of the parallel arcs
+	fmt.Println(g.RemoveEdge(0, 0)) // false: no loop on 0
+
+	for fr, to := range g.LabeledAdjacencyList {
+		fmt.Println(fr, to)
+	}
+	// Output:
+	// true 6000
+	// false 0
+	// 0 [{1 5000} {2 6001}]
+	// 1 [{0 5000} {2 5000}]
+	// 2 [{1 5000} {2 8000} {0 6001}]
+}
+
+func ExampleLabeledUndirected_RemoveEdgeLabel() {
+	//       --0--
+	//      /     \\6001
+	// 5000/   6000\\
+	//    /         \\
+	//   1-----------2--\8000
+	//        5000    \-/
+	var g graph.LabeledUndirected
+	g.AddEdge(graph.Edge{0, 1}, 5000)
+	g.AddEdge(graph.Edge{1, 2}, 5000)
+	g.AddEdge(graph.Edge{2, 0}, 6000)
+	g.AddEdge(graph.Edge{2, 0}, 6001) // parallel
+	g.AddEdge(graph.Edge{2, 2}, 8000) // loop
+
+	fmt.Println(g.RemoveEdgeLabel(2, 0, 6001))
+	fmt.Println(g.RemoveEdgeLabel(1, 2, 1000))
+
+	for fr, to := range g.LabeledAdjacencyList {
+		fmt.Println(fr, to)
+	}
+	// Output:
+	// true
+	// false
+	// 0 [{1 5000} {2 6000}]
+	// 1 [{0 5000} {2 5000}]
+	// 2 [{1 5000} {0 6000} {2 8000}]
 }
 
 func ExampleLabeledUndirected_TarjanBiconnectedComponents() {
