@@ -116,3 +116,29 @@ suggests preallocating.  Still, it's useful and the code is complex enough to
 seem justified.  A similar AddArc could be written but seems overkill.
 In the two steps above, you will often know the first without having to do
 any checks.  Then it's just append.
+
+## Arcs, to get all arcs, like Undirected.Edges
+The Adjacency list is compact and easy to traverse.  For example,
+
+```
+for fr, toList := range g {
+    for _, to := range toList {
+        fmt.Println("arc:", fr, to)
+        // or you know, collect the arcs in some other data structure
+    }
+}
+```
+Undirected.Edges is not quite so trivial because reciprocal arcs must be
+matched up so this method is provided.
+
+## Undirected.ParallelEdges, like AdjacencyList.ParallelArcs
+ParallelArcs will find parallel edges, it just doesn't find the neighbor
+indexes of the reciprocals, which wouldn't be needed in many cases.
+
+## LabeledUndirected.SimpleEdges
+It's not clear what would be done with parallel edges with different labels.
+The action would be specific to the use-case.
+
+## Undirected.ArcsAsEdges
+The labeled version of this method is kind of specialized helper for Kruskal.
+A use case for an unlabeled version is hard to imagine.

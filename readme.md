@@ -11,12 +11,13 @@ Development may pick up now.
 ###Non-source files of interest
 
 The directory [tutorials](tutorials) is a work in progress - there are only
-a couple of tutorials there yet - but the concept is to provide some topical
+a few tutorials there yet - but the concept is to provide some topical
 walk-throughs to supplement godoc.  The source-based godoc documentation
 remains the primary documentation.
 
 * [Dijkstra's algorithm](tutorials/dijkstra.md)
 * [AdjacencyList types](tutorials/adjacencylist.md)
+* [Missing methods](tutorials/missingmethods.md)
 
 The directory [bench](bench) is another work in progress.  The concept is
 to present some plots showing benchmark performance approaching some
