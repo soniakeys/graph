@@ -271,7 +271,7 @@ func ExampleLabeledDirected_PostDominators() {
 	// [0 0 1 1 1 3 -1]
 }
 
-func ExampleLabeledDirected_Tarjan() {
+func ExampleLabeledDirected_SCCPathBased() {
 	// /---0---\
 	// |   |\--/
 	// |   v
@@ -294,7 +294,41 @@ func ExampleLabeledDirected_Tarjan() {
 		1: {{To: 2}},
 		2: {{To: 3}},
 	}}
-	g.Tarjan(func(c []graph.NI) bool {
+	g.SCCPathBased(func(c []graph.NI) bool {
+		fmt.Println(c)
+		return true
+	})
+	// Output:
+	// [1 3 2]
+	// [7 6]
+	// [4 5]
+	// [0]
+}
+
+func ExampleLabeledDirected_SCCTarjan() {
+	// /---0---\
+	// |   |\--/
+	// |   v
+	// |   5<=>4---\
+	// |   |   |   |
+	// v   v   |   |
+	// 7<=>6   |   |
+	//     |   v   v
+	//     \-->3<--2
+	//         |   ^
+	//         |   |
+	//         \-->1
+	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
+		0: {{To: 0}, {To: 5}, {To: 7}},
+		5: {{To: 4}, {To: 6}},
+		4: {{To: 5}, {To: 2}, {To: 3}},
+		7: {{To: 6}},
+		6: {{To: 7}, {To: 3}},
+		3: {{To: 1}},
+		1: {{To: 2}},
+		2: {{To: 3}},
+	}}
+	g.SCCTarjan(func(c []graph.NI) bool {
 		fmt.Println(c)
 		return true
 	})

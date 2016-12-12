@@ -307,7 +307,50 @@ func (g LabeledDirected) IsTree(root NI) (isTree, allTree bool) {
 	return isTree, isTree && v.Zero()
 }
 
-// Tarjan identifies strongly connected components in a directed graph using
+func (g LabeledDirected) SCCPathBased(emit func([]NI) bool) {
+	a := g.LabeledAdjacencyList
+	var S []NI
+	var B []int
+	I := make([]int, len(a))
+	for i := range I {
+		I[i] = -1
+	}
+	c := len(a)
+	var df func(NI)
+	df = func(v NI) {
+		I[v] = len(S)
+		B = append(B, len(S))
+		S = append(S, v)
+		for _, w := range a[v] {
+			if I[w.To] < 0 {
+				df(w.To)
+			} else {
+				for last := len(B) - 1; I[w.To] < B[last]; last-- {
+					B = B[:last]
+				}
+			}
+		}
+		if last := len(B) - 1; I[v] == B[last] {
+			var scc []NI
+			B = B[:last]
+			for I[v] <= len(S) {
+				last := len(S) - 1
+				I[S[last]] = c
+				scc = append(scc, S[last])
+				S = S[:last]
+			}
+			c++
+			emit(scc)
+		}
+	}
+	for v := range a {
+		if I[v] < 0 {
+			df(NI(v))
+		}
+	}
+}
+
+// SCCTarjan identifies strongly connected components in a directed graph using
 // Tarjan's algorithm.
 //
 // The method calls the emit argument for each component identified.  Each
@@ -319,7 +362,7 @@ func (g LabeledDirected) IsTree(root NI) (isTree, allTree bool) {
 // There are equivalent labeled and unlabeled versions of this method.
 //
 // See also TarjanForward and TarjanCondensation.
-func (g LabeledDirected) Tarjan(emit func([]NI) bool) {
+func (g LabeledDirected) SCCTarjan(emit func([]NI) bool) {
 	// See "Depth-first search and linear graph algorithms", Robert Tarjan,
 	// SIAM J. Comput. Vol. 1, No. 2, June 1972.
 	//
@@ -384,7 +427,7 @@ func (g LabeledDirected) Tarjan(emit func([]NI) bool) {
 // where a forward topological ordering is easier.
 func (g LabeledDirected) TarjanForward() [][]NI {
 	var r [][]NI
-	g.Tarjan(func(c []NI) bool {
+	g.SCCTarjan(func(c []NI) bool {
 		r = append(r, c)
 		return true
 	})
