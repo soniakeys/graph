@@ -260,10 +260,50 @@ func BenchmarkPrim100(b *testing.B) {
 	r100 := r(100, 200, 62)
 	u100 := r100.l.Undirected()
 	w := func(l graph.LI) float64 { return r100.w[l] }
-	b.Run("P-100", func(b *testing.B) { benchPrim(u100, w, b) })
+	b.Run("Krus", func(b *testing.B) { benchKruskal(u100, w, b) })
+	b.Run("WKrus", func(b *testing.B) { benchWKrus(u100, w, b) })
+	b.Run("CCPrim", func(b *testing.B) { benchCCPrim(u100, w, b) })
+	b.Run("PrAll", func(b *testing.B) { benchPrimAll(u100, w, b) })
+	b.Run("PrMin", func(b *testing.B) { benchPrimMin(u100, w, b) })
 }
 
-func benchPrim(u graph.LabeledUndirected, w graph.WeightFunc, b *testing.B) {
+func benchKruskal(u graph.LabeledUndirected, w graph.WeightFunc, b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		u.Kruskal(w)
+	}
+}
+func benchWKrus(u graph.LabeledUndirected, w graph.WeightFunc, b *testing.B) {
+	wl := u.WeightedArcsAsEdges(w)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		wl.Kruskal()
+	}
+}
+func benchCCPrim(u graph.LabeledUndirected, w graph.WeightFunc, b *testing.B) {
+	f := graph.NewFromList(u.Order())
+	lab := make([]graph.LI, u.Order())
+	var lvs graph.Bits
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		reps, _ := u.ConnectedComponentReps()
+		for _, r := range reps {
+			u.Prim(r, w, &f, lab, &lvs)
+		}
+	}
+}
+func benchPrimAll(u graph.LabeledUndirected, w graph.WeightFunc, b *testing.B) {
+	reps, _ := u.ConnectedComponentReps()
+	f := graph.NewFromList(u.Order())
+	lab := make([]graph.LI, u.Order())
+	var lvs graph.Bits
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		for _, r := range reps {
+			u.Prim(r, w, &f, lab, &lvs)
+		}
+	}
+}
+func benchPrimMin(u graph.LabeledUndirected, w graph.WeightFunc, b *testing.B) {
 	reps, _ := u.ConnectedComponentReps()
 	f := graph.NewFromList(u.Order())
 	b.ResetTimer()
