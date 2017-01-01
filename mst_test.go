@@ -263,7 +263,7 @@ func BenchmarkPrim100(b *testing.B) {
 	w := func(l graph.LI) float64 { return r100.w[l] }
 	for i := 0; i < b.N; i++ {
 		for _, r := range reps {
-			u100.Prim(r, w, nil, nil, nil)
+			u100.Prim(r, w, &graph.FromList{}, nil, nil)
 		}
 	}
 }
