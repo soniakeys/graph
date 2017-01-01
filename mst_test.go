@@ -259,11 +259,17 @@ func TestPrim100(t *testing.T) {
 func BenchmarkPrim100(b *testing.B) {
 	r100 := r(100, 200, 62)
 	u100 := r100.l.Undirected()
-	reps, _ := u100.ConnectedComponentReps()
 	w := func(l graph.LI) float64 { return r100.w[l] }
+	b.Run("P-100", func(b *testing.B) { benchPrim(u100, w, b) })
+}
+
+func benchPrim(u graph.LabeledUndirected, w graph.WeightFunc, b *testing.B) {
+	reps, _ := u.ConnectedComponentReps()
+	f := graph.NewFromList(len(u.LabeledAdjacencyList))
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		for _, r := range reps {
-			u100.Prim(r, w, &graph.FromList{}, nil, nil)
+			u.Prim(r, w, &f, nil, nil)
 		}
 	}
 }
