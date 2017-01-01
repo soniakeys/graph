@@ -480,6 +480,7 @@ func ExampleLabeledAdjacencyList_Dijkstra_allPaths() {
 }
 
 func TestSSSP(t *testing.T) {
+	r100 := r(100, 200, 62)
 	testSSSP(r100, t)
 }
 
@@ -579,10 +580,8 @@ type testCase struct {
 	m          int
 }
 
-var s = rand.New(rand.NewSource(59))
-var r100 = r(100, 200, 62)
-
 func r(nNodes, nArcs int, seed int64) testCase {
+	s := rand.New(rand.NewSource(59))
 	s.Seed(seed)
 	l, coords, w, err := graph.LabeledEuclidean(nNodes, nArcs, 1, 1, s)
 	if err != nil {
