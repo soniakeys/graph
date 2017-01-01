@@ -275,6 +275,39 @@ func ExampleDirected_PostDominators() {
 	// [0 0 1 1 1 3 -1]
 }
 
+func ExampleDirected_SCCPearce() {
+	// /---0---\
+	// |   |\--/
+	// |   v
+	// |   5<=>4---\
+	// |   |   |   |
+	// v   v   |   |
+	// 7<=>6   |   |
+	//     |   v   v
+	//     \-->3<--2
+	//         |   ^
+	//         |   |
+	//         \-->1
+	g := graph.Directed{graph.AdjacencyList{
+		0: {0, 5, 7},
+		5: {4, 6},
+		4: {5, 2, 3},
+		7: {6},
+		6: {7, 3},
+		3: {1},
+		1: {2},
+		2: {3},
+	}}
+	g.SCCPearce(func(c []graph.NI) {
+		fmt.Println(c)
+	})
+	// Output:
+	// [3 1 2]
+	// [7 6]
+	// [4 5]
+	// [0]
+}
+
 func ExampleDirected_SCCPathBased() {
 	// /---0---\
 	// |   |\--/
