@@ -188,7 +188,7 @@ func ExampleLabeledUndirected_ConnectedComponentBits() {
 	fmt.Println("o  543210")
 	fmt.Println("-  ------")
 	for o, b := f(); o > 0; o, b = f() {
-		fmt.Printf("%d  %0*b\n", o, len(g.LabeledAdjacencyList), &b)
+		fmt.Printf("%d  %0*b\n", o, g.Order(), &b)
 	}
 	// Output:
 	// o  543210
@@ -243,8 +243,7 @@ func ExampleLabeledUndirected_ConnectedComponentReps_collectingBits() {
 	for i, r := range rep {
 		var bits graph.Bits
 		g.DepthFirst(r, &bits, nil)
-		fmt.Printf("%0*b   %d     %d\n",
-			len(g.LabeledAdjacencyList), &bits, r, order[i])
+		fmt.Printf("%0*b   %d     %d\n", g.Order(), &bits, r, order[i])
 	}
 	// Output:
 	// 543210  rep  order

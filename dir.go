@@ -68,7 +68,7 @@ func (g Directed) DAGMaxLenPath(ordering []NI) (path []NI) {
 	//
 	// Similar code in label.go
 	var n NI
-	mlp := make([][]NI, len(g.AdjacencyList)) // index by node number
+	mlp := make([][]NI, g.Order()) // index by node number
 	for i := len(ordering) - 1; i >= 0; i-- {
 		fr := ordering[i] // node number
 		to := g.AdjacencyList[fr]
@@ -123,7 +123,7 @@ func (g Directed) EulerianCycle() ([]NI, error) {
 //
 // * Otherwise, result is nil, error
 func (g Directed) EulerianCycleD(ma int) ([]NI, error) {
-	if len(g.AdjacencyList) == 0 {
+	if g.Order() == 0 {
 		return nil, nil
 	}
 	e := newEulerian(g.AdjacencyList, ma)
@@ -181,7 +181,7 @@ func (g Directed) EulerianPath() ([]NI, error) {
 //
 // * Otherwise, result is nil, error
 func (g Directed) EulerianPathD(ma int, start NI) ([]NI, error) {
-	if len(g.AdjacencyList) == 0 {
+	if g.Order() == 0 {
 		return nil, nil
 	}
 	e := newEulerian(g.AdjacencyList, ma)
@@ -304,7 +304,7 @@ func newEulerian(g AdjacencyList, m int) *eulerian {
 func (g Directed) MaximalNonBranchingPaths(emit func([]NI) bool) {
 	ind := g.InDegree()
 	var uv Bits
-	uv.SetAll(len(g.AdjacencyList))
+	uv.SetAll(g.Order())
 	for v, vTo := range g.AdjacencyList {
 		if !(ind[v] == 1 && len(vTo) == 1) {
 			for _, w := range vTo {
@@ -346,8 +346,8 @@ func (g Directed) MaximalNonBranchingPaths(emit func([]NI) bool) {
 
 // Undirected returns copy of g augmented as needed to make it undirected.
 func (g Directed) Undirected() Undirected {
-	c, _ := g.AdjacencyList.Copy()                  // start with a copy
-	rw := make(AdjacencyList, len(g.AdjacencyList)) // "reciprocals wanted"
+	c, _ := g.AdjacencyList.Copy()       // start with a copy
+	rw := make(AdjacencyList, g.Order()) // "reciprocals wanted"
 	for fr, to := range g.AdjacencyList {
 	arc: // for each arc in g
 		for _, to := range to {
@@ -432,7 +432,7 @@ func (g Directed) StronglyConnectedComponents() []int {
 // Transpose also counts arcs as it traverses and returns ma the number of arcs
 // in g (equal to the number of arcs in the result.)
 func (g Directed) Transpose() (t Directed, ma int) {
-	ta := make(AdjacencyList, len(g.AdjacencyList))
+	ta := make(AdjacencyList, g.Order())
 	for n, nbs := range g.AdjacencyList {
 		for _, nb := range nbs {
 			ta[nb] = append(ta[nb], NI(n))
@@ -456,7 +456,7 @@ func (g LabeledDirected) DAGMaxLenPath(ordering []NI) (n NI, path []Half) {
 	// Visits each arc once.  Time complexity O(m).
 	//
 	// Similar code in dir.go.
-	mlp := make([][]Half, len(g.LabeledAdjacencyList)) // index by node number
+	mlp := make([][]Half, g.Order()) // index by node number
 	for i := len(ordering) - 1; i >= 0; i-- {
 		fr := ordering[i] // node number
 		to := g.LabeledAdjacencyList[fr]
@@ -494,8 +494,8 @@ func (g LabeledDirected) DAGMaxLenPath(ordering []NI) (n NI, path []Half) {
 // Other members of the FromList are left as zero values.
 // Use FromList.RecalcLen and FromList.RecalcLeaves as needed.
 func (g LabeledDirected) FromListLabels() (*FromList, []LI, NI) {
-	labels := make([]LI, len(g.LabeledAdjacencyList))
-	paths := make([]PathEnd, len(g.LabeledAdjacencyList))
+	labels := make([]LI, g.Order())
+	paths := make([]PathEnd, g.Order())
 	for i := range paths {
 		paths[i].From = -1
 	}
@@ -517,7 +517,7 @@ func (g LabeledDirected) FromListLabels() (*FromList, []LI, NI) {
 // Transpose also counts arcs as it traverses and returns ma the number of
 // arcs in g (equal to the number of arcs in the result.)
 func (g LabeledDirected) Transpose() (t LabeledDirected, ma int) {
-	ta := make(LabeledAdjacencyList, len(g.LabeledAdjacencyList))
+	ta := make(LabeledAdjacencyList, g.Order())
 	for n, nbs := range g.LabeledAdjacencyList {
 		for _, nb := range nbs {
 			ta[nb.To] = append(ta[nb.To], Half{To: NI(n), Label: nb.Label})
@@ -532,7 +532,7 @@ func (g LabeledDirected) Transpose() (t LabeledDirected, ma int) {
 func (g LabeledDirected) Undirected() LabeledUndirected {
 	c, _ := g.LabeledAdjacencyList.Copy() // start with a copy
 	// "reciprocals wanted"
-	rw := make(LabeledAdjacencyList, len(g.LabeledAdjacencyList))
+	rw := make(LabeledAdjacencyList, g.Order())
 	for fr, to := range g.LabeledAdjacencyList {
 	arc: // for each arc in g
 		for _, to := range to {
@@ -575,7 +575,7 @@ func (g LabeledDirected) Unlabeled() Directed {
 // It is equivalent to g.Unlabeled().Transpose() but constructs the result
 // directly.
 func (g LabeledDirected) UnlabeledTranspose() (t Directed, ma int) {
-	ta := make(AdjacencyList, len(g.LabeledAdjacencyList))
+	ta := make(AdjacencyList, g.Order())
 	for n, nbs := range g.LabeledAdjacencyList {
 		for _, nb := range nbs {
 			ta[nb.To] = append(ta[nb.To], NI(n))

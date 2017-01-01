@@ -265,7 +265,7 @@ func BenchmarkPrim100(b *testing.B) {
 
 func benchPrim(u graph.LabeledUndirected, w graph.WeightFunc, b *testing.B) {
 	reps, _ := u.ConnectedComponentReps()
-	f := graph.NewFromList(len(u.LabeledAdjacencyList))
+	f := graph.NewFromList(u.Order())
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		for _, r := range reps {

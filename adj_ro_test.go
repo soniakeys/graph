@@ -446,6 +446,28 @@ func ExampleAdjacencyList_IsSimple_parallelArc() {
 	// false 2
 }
 
+func ExampleAdjacencyList_Order() {
+	g := graph.AdjacencyList{ // maybe you think of node 0 as "unused",
+		1: {2},
+		2: {1},
+	}
+	fmt.Println(g.Order())             // but graph still has 3 nodes.
+	g = make(graph.AdjacencyList, 300) // empty graph,
+	fmt.Println(g.Order())             // with 300 nodes.
+	fmt.Println(len(g))                // equivalent.
+
+	var u graph.Undirected
+	u.AddEdge(0, 99)
+	fmt.Println(len(u.AdjacencyList)) // explicit.
+	fmt.Println(u.Order())            // a little more concise.
+	// Output:
+	// 3
+	// 300
+	// 300
+	// 100
+	// 100
+}
+
 func ExampleAdjacencyList_ParallelArcs() {
 	g := graph.AdjacencyList{
 		2: {0, 2, 0, 1, 1},

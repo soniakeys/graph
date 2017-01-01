@@ -361,6 +361,17 @@ func (g LabeledAdjacencyList) IsolatedNodes() (i Bits) {
 	return
 }
 
+// Order is the number of nodes in receiver g.
+//
+// It is simply a wrapper method for the Go builtin len().
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g LabeledAdjacencyList) Order() int {
+	// Why a wrapper for len()?  Mostly for Directed and Undirected.
+	// u.Order() is a little nicer than len(u.LabeledAdjacencyList).
+	return len(g)
+}
+
 // ParallelArcs identifies all arcs from node `fr` to node `to`.
 //
 // The returned slice contains an element for each arc from node `fr` to node `to`.

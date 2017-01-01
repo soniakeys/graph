@@ -18,7 +18,7 @@ func ExampleEuclidean() {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println(len(g.AdjacencyList), "nodes")
+	fmt.Println(g.Order(), "nodes")
 	fmt.Println("n  position")
 	for n, p := range pos {
 		fmt.Printf("%d  (%.2f, %.2f)\n", n, p.X, p.Y)
@@ -44,7 +44,7 @@ func ExampleEuclidean() {
 func ExampleGeometric() {
 	r := rand.New(rand.NewSource(7))
 	g, pos, m := graph.Geometric(4, .6, r)
-	fmt.Println(len(g.AdjacencyList), "nodes")
+	fmt.Println(g.Order(), "nodes")
 	fmt.Println("n  position")
 	for n, p := range pos {
 		fmt.Printf("%d  (%.2f, %.2f)\n", n, p.X, p.Y)
@@ -114,7 +114,7 @@ func ExampleKroneckerUndirected() {
 func ExampleLabeledGeometric() {
 	r := rand.New(rand.NewSource(7))
 	g, pos, wt := graph.LabeledGeometric(4, .6, r)
-	fmt.Println(len(g.LabeledAdjacencyList), "nodes")
+	fmt.Println(g.Order(), "nodes")
 	fmt.Println("n  position")
 	for n, p := range pos {
 		fmt.Printf("%d  (%.2f, %.2f)\n", n, p.X, p.Y)
@@ -166,7 +166,7 @@ func ExampleLabeledEuclidean() {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println(len(g.LabeledAdjacencyList), "nodes")
+	fmt.Println(g.Order(), "nodes")
 	fmt.Println("n  position")
 	for n, p := range pos {
 		fmt.Printf("%d  (%.2f, %.2f)\n", n, p.X, p.Y)

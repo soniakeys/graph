@@ -537,7 +537,7 @@ func (g Undirected) Degree(n NI) int {
 //
 // There are equivalent labeled and unlabeled versions of this method.
 func (g Undirected) Density() float64 {
-	return Density(len(g.AdjacencyList), g.Size())
+	return Density(g.Order(), g.Size())
 }
 
 // FromList constructs a FromList representing the tree reachable from
@@ -560,7 +560,7 @@ func (g Undirected) Density() float64 {
 //
 // There are equivalent labeled and unlabeled versions of this method.
 func (g Undirected) FromList(root NI) (f FromList, cycle NI) {
-	p := make([]PathEnd, len(g.AdjacencyList))
+	p := make([]PathEnd, g.Order())
 	for i := range p {
 		p[i].From = -1
 	}

@@ -251,7 +251,7 @@ func (from Directed) domFrontiers(d Dominators) DominanceFrontiers {
 //
 // There are equivalent labeled and unlabeled versions of this method.
 func (g Directed) FromList() (*FromList, NI) {
-	paths := make([]PathEnd, len(g.AdjacencyList))
+	paths := make([]PathEnd, g.Order())
 	for i := range paths {
 		paths[i].From = -1
 	}
@@ -270,7 +270,7 @@ func (g Directed) FromList() (*FromList, NI) {
 //
 // There are equivalent labeled and unlabeled versions of this method.
 func (g Directed) InDegree() []int {
-	ind := make([]int, len(g.AdjacencyList))
+	ind := make([]int, g.Order())
 	for _, nbs := range g.AdjacencyList {
 		for _, nb := range nbs {
 			ind[nb]++
@@ -445,8 +445,8 @@ func (g Directed) TarjanForward() [][]NI {
 // Components are ordered in a forward topological ordering.
 func (g Directed) TarjanCondensation() (scc [][]NI, cd AdjacencyList) {
 	scc = g.TarjanForward()
-	cd = make(AdjacencyList, len(scc))       // return value
-	cond := make([]NI, len(g.AdjacencyList)) // mapping from g node to cd node
+	cd = make(AdjacencyList, len(scc)) // return value
+	cond := make([]NI, g.Order())      // mapping from g node to cd node
 	for cn := NI(len(scc) - 1); cn >= 0; cn-- {
 		c := scc[cn]
 		for _, n := range c {
@@ -480,7 +480,7 @@ func (g Directed) Topological() (ordering, cycle []NI) {
 	i := -1
 	return g.dfTopo(func() NI {
 		i++
-		if i < len(g.AdjacencyList) {
+		if i < g.Order() {
 			return NI(i)
 		}
 		return -1
@@ -558,7 +558,7 @@ func (g Directed) TopologicalKahn(tr Directed) (ordering, cycle []NI) {
 	var L, S []NI
 	// rem for "remaining edges," this function makes a local copy of the
 	// in-degrees and consumes that instead of consuming an input.
-	rem := make([]int, len(g.AdjacencyList))
+	rem := make([]int, g.Order())
 	for n, fr := range tr.AdjacencyList {
 		if len(fr) == 0 {
 			// accumulate "set of all nodes with no incoming edges"

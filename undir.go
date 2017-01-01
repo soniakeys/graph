@@ -158,7 +158,7 @@ func (g Undirected) Edges(v EdgeVisitor) {
 // complexity.  Probably still pretty fast in practice, but a different
 // graph representation might be better.
 func (g Undirected) EulerianCycleD(m int) ([]NI, error) {
-	if len(g.AdjacencyList) == 0 {
+	if g.Order() == 0 {
 		return nil, nil
 	}
 	e := newEulerian(g.AdjacencyList, m)
@@ -230,8 +230,8 @@ func (g Undirected) TarjanBiconnectedComponents(emit func([]Edge) bool) {
 	// Note Tarjan's "adjacency structure" is graph.AdjacencyList,
 	// His "adjacency list" is an element of a graph.AdjacencyList, also
 	// termed a "to-list", "neighbor list", or "child list."
-	number := make([]int, len(g.AdjacencyList))
-	lowpt := make([]int, len(g.AdjacencyList))
+	number := make([]int, g.Order())
+	lowpt := make([]int, g.Order())
 	var stack []Edge
 	var i int
 	var biconnect func(NI, NI) bool
@@ -556,8 +556,8 @@ func (g LabeledUndirected) TarjanBiconnectedComponents(emit func([]LabeledEdge) 
 	// termed a "to-list", "neighbor list", or "child list."
 	//
 	// Nearly identical code in undir.go.
-	number := make([]int, len(g.LabeledAdjacencyList))
-	lowpt := make([]int, len(g.LabeledAdjacencyList))
+	number := make([]int, g.Order())
+	lowpt := make([]int, g.Order())
 	var stack []LabeledEdge
 	var i int
 	var biconnect func(NI, NI) bool
@@ -611,7 +611,7 @@ func (g LabeledUndirected) TarjanBiconnectedComponents(emit func([]LabeledEdge) 
 // See LabeledUndirected.ArcsAsEdges().
 func (g LabeledUndirected) WeightedArcsAsEdges(w WeightFunc) *WeightedEdgeList {
 	return &WeightedEdgeList{
-		Order:      len(g.LabeledAdjacencyList),
+		Order:      g.Order(),
 		WeightFunc: w,
 		Edges:      g.ArcsAsEdges(),
 	}
