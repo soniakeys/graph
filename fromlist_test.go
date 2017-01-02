@@ -327,7 +327,7 @@ func ExampleFromList_Transpose() {
 		2: {From: 0},
 		3: {From: -1},
 	}}
-	g := t.Transpose()
+	g, _ := t.Transpose(nil)
 	fmt.Println("fr to")
 	for n, fr := range g.AdjacencyList {
 		fmt.Println(n, "", fr)
@@ -340,7 +340,7 @@ func ExampleFromList_Transpose() {
 	// 3  []
 }
 
-func ExampleFromList_TransposeRoots() {
+func ExampleFromList_Transpose_roots() {
 	//    0   3
 	//   / \
 	//  1   2
@@ -350,7 +350,8 @@ func ExampleFromList_TransposeRoots() {
 		2: {From: 0},
 		3: {From: -1},
 	}}
-	g, nr, roots := t.TransposeRoots()
+	var roots graph.Bits
+	g, nr := t.Transpose(&roots)
 	fmt.Println("fr to")
 	for n, fr := range g.AdjacencyList {
 		fmt.Println(n, "", fr)
@@ -381,7 +382,7 @@ func ExampleFromList_TransposeLabeled() {
 		2: {From: 0},
 		3: {From: 2},
 	}}
-	g := f.TransposeLabeled(nil)
+	g, _ := f.TransposeLabeled(nil, nil)
 	for fr, to := range g.LabeledAdjacencyList {
 		fmt.Println(fr, to)
 	}
@@ -409,7 +410,7 @@ func ExampleFromList_TransposeLabeled_indexed() {
 		2: 'B',
 		3: 'C',
 	}
-	g := f.TransposeLabeled(labels)
+	g, _ := f.TransposeLabeled(labels, nil)
 	for fr, to := range g.LabeledAdjacencyList {
 		fmt.Print(fr)
 		for _, to := range to {
@@ -424,7 +425,7 @@ func ExampleFromList_TransposeLabeled_indexed() {
 	// 3
 }
 
-func ExampleFromList_TransposeLabeledRoots() {
+func ExampleFromList_TransposeLabeled_roots() {
 	//      0        4
 	// 'A' / \ 'B'
 	//    1   2
@@ -442,7 +443,8 @@ func ExampleFromList_TransposeLabeledRoots() {
 		2: 'B',
 		3: 'C',
 	}
-	g, n, r := f.TransposeLabeledRoots(labels)
+	var roots graph.Bits
+	g, n := f.TransposeLabeled(labels, &roots)
 	for fr, to := range g.LabeledAdjacencyList {
 		fmt.Print(fr)
 		for _, to := range to {
@@ -450,7 +452,7 @@ func ExampleFromList_TransposeLabeledRoots() {
 		}
 		fmt.Println()
 	}
-	fmt.Println(n, "roots:", r.Slice())
+	fmt.Println(n, "roots:", roots.Slice())
 	// Output:
 	// 0 {1 A} {2 B}
 	// 1

@@ -212,7 +212,8 @@ func ExampleLabeledUndirected_Prim() {
 	}
 
 	// optionally, convert to undirected graph
-	u := f.TransposeLabeled(labels).Undirected()
+	d, _ := f.TransposeLabeled(labels, nil)
+	u := d.Undirected()
 	fmt.Println("Equivalent undirected graph:")
 	for fr, to := range u.LabeledAdjacencyList {
 		fmt.Printf("%d:  %#v\n", fr, to)
@@ -342,7 +343,8 @@ func benchPrimUnd(u graph.LabeledUndirected, w graph.WeightFunc, b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		for _, r := range reps {
 			u.Prim(r, w, &f, lab, nil)
-			f.TransposeLabeled(lab).Undirected()
+			d, _ := f.TransposeLabeled(lab, nil)
+			d.Undirected()
 		}
 	}
 }
