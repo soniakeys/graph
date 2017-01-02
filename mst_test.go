@@ -5,6 +5,7 @@ package graph_test
 
 import (
 	"fmt"
+	"sort"
 	"testing"
 
 	"github.com/soniakeys/graph"
@@ -256,15 +257,20 @@ func TestPrim100(t *testing.T) {
 	}
 }
 
-func BenchmarkPrim100(b *testing.B) {
+func BenchmarkMST100(b *testing.B) {
 	r100 := r(100, 200, 62)
 	u100 := r100.l.Undirected()
+	reps, _ := u100.ConnectedComponentReps()
+	b.Log(len(reps), "connected components")
 	w := func(l graph.LI) float64 { return r100.w[l] }
 	b.Run("Krus", func(b *testing.B) { benchKruskal(u100, w, b) })
 	b.Run("WKrus", func(b *testing.B) { benchWKrus(u100, w, b) })
+	b.Run("WKrusD", func(b *testing.B) { benchWKrusD(r100.l, w, b) })
+	b.Run("WKrusS", func(b *testing.B) { benchWKrusS(r100.l, w, b) })
 	b.Run("CCPrim", func(b *testing.B) { benchCCPrim(u100, w, b) })
 	b.Run("PrAll", func(b *testing.B) { benchPrimAll(u100, w, b) })
 	b.Run("PrMin", func(b *testing.B) { benchPrimMin(u100, w, b) })
+	b.Run("PrUnd", func(b *testing.B) { benchPrimUnd(u100, w, b) })
 }
 
 func benchKruskal(u graph.LabeledUndirected, w graph.WeightFunc, b *testing.B) {
@@ -277,6 +283,21 @@ func benchWKrus(u graph.LabeledUndirected, w graph.WeightFunc, b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		wl.Kruskal()
+	}
+}
+func benchWKrusD(d graph.LabeledDirected, w graph.WeightFunc, b *testing.B) {
+	wl := d.WeightedArcsAsEdges(w)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		wl.Kruskal()
+	}
+}
+func benchWKrusS(d graph.LabeledDirected, w graph.WeightFunc, b *testing.B) {
+	wl := d.WeightedArcsAsEdges(w)
+	sort.Sort(wl)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		wl.KruskalSorted()
 	}
 }
 func benchCCPrim(u graph.LabeledUndirected, w graph.WeightFunc, b *testing.B) {
@@ -310,6 +331,18 @@ func benchPrimMin(u graph.LabeledUndirected, w graph.WeightFunc, b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		for _, r := range reps {
 			u.Prim(r, w, &f, nil, nil)
+		}
+	}
+}
+func benchPrimUnd(u graph.LabeledUndirected, w graph.WeightFunc, b *testing.B) {
+	reps, _ := u.ConnectedComponentReps()
+	f := graph.NewFromList(u.Order())
+	lab := make([]graph.LI, u.Order())
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		for _, r := range reps {
+			u.Prim(r, w, &f, lab, nil)
+			f.TransposeLabeled(lab).Undirected()
 		}
 	}
 }
