@@ -18,18 +18,6 @@ An AdjacencyList is just a slice.  Use make.  To make a graph with 10 nodes
 use `make(AdjacenclyList, 10)`.  For a Directed,
 `graph.Directed{make(graph.AdjacenclyList, 10)}`.
 
-## Order, number of nodes
-Basic graph types lack `Order` methods because this is available with the Go
-built-in `len`.
-
-- Order of an AdjacencyList g is simply `len(g)`
-- Order of an Undirected g is simply `len(g.AdjacencyList)`
-- Order of a FromList f is `len(f.Paths)`
-
-The one representation that provides graph order explicitly is the rather
-special purpose `WeightedEdgeList`.  The number of nodes represented in an
-edge list would not otherwise be immediately available.
-
 ## HasNode
 The set of nodes in AdjacencyList g is simply the range of valid slice indexes
 for g.  For a non-negative NI n, check if the graph already includes it with
@@ -142,3 +130,6 @@ The action would be specific to the use-case.
 ## Undirected.ArcsAsEdges
 The labeled version of this method is kind of specialized helper for Kruskal.
 A use case for an unlabeled version is hard to imagine.
+
+## FromList.Order, number of nodes
+Order of a FromList f is `len(f.Paths)`.
