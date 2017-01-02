@@ -366,3 +366,76 @@ func (f FromList) TransposeLabeled(labels []LI, roots *Bits) (forest LabeledDire
 	}
 	return LabeledDirected{g}, nRoots
 }
+
+// Undirected constructs the undirected graph corresponding to FromList f.
+//
+// The resulting graph will be a tree or forest.
+//
+// If non-nil argrument roots is passed, Transpose populates it as roots of
+// the resulting forest and returns nRoots as a count of the roots.
+//
+// The method relies only on the From member of f.Paths.  Other members of
+// the FromList are not used.
+func (f FromList) Undirected(roots *Bits) (forest Undirected, nRoots int) {
+	p := f.Paths
+	g := make(AdjacencyList, len(p))
+	if roots != nil {
+		nRoots = len(p)
+		roots.SetAll(len(p))
+	}
+	for i, e := range p {
+		if e.From == -1 {
+			continue
+		}
+		n := NI(i)
+		g[n] = append(g[n], e.From)
+		g[e.From] = append(g[e.From], n)
+		if roots != nil && roots.Bit(n) == 1 {
+			roots.SetBit(n, 0)
+			nRoots--
+		}
+	}
+	return Undirected{g}, nRoots
+}
+
+// LabeledUndirected constructs the labeled undirected graph corresponding
+// to FromList f.
+//
+// The resulting graph will be a tree or forest.
+//
+// The argument labels can be nil.  In this case labels are generated matching
+// the path indexes.  This corresponds to the "to", or child node.
+//
+// If labels is non-nil, it must be the same length as t.Paths and is used
+// to look up label numbers by the path index.
+//
+// If non-nil argrument roots is passed, LabeledUndirected populates it as
+// roots of the resulting forest and returns nRoots as a count of the roots.
+//
+// The method relies only on the From member of f.Paths.  Other members of
+// the FromList are not used.
+func (f FromList) LabeledUndirected(labels []LI, roots *Bits) (forest LabeledUndirected, nRoots int) {
+	p := f.Paths
+	g := make(LabeledAdjacencyList, len(p))
+	if roots != nil {
+		nRoots = len(p)
+		roots.SetAll(len(p))
+	}
+	for i, p := range f.Paths {
+		if p.From == -1 {
+			continue
+		}
+		l := LI(i)
+		if labels != nil {
+			l = labels[i]
+		}
+		n := NI(i)
+		g[n] = append(g[n], Half{p.From, l})
+		g[p.From] = append(g[p.From], Half{n, l})
+		if roots != nil && roots.Bit(n) == 1 {
+			roots.SetBit(n, 0)
+			nRoots--
+		}
+	}
+	return LabeledUndirected{g}, nRoots
+}

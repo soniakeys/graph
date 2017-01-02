@@ -461,3 +461,148 @@ func ExampleFromList_TransposeLabeled_roots() {
 	// 4
 	// 2 roots: [0 4]
 }
+
+func ExampleFromList_Undirected() {
+	//    0   3
+	//   / \
+	//  1   2
+	t := graph.FromList{Paths: []graph.PathEnd{
+		0: {From: -1},
+		1: {From: 0},
+		2: {From: 0},
+		3: {From: -1},
+	}}
+	g, _ := t.Undirected(nil)
+	fmt.Println("fr to")
+	for n, fr := range g.AdjacencyList {
+		fmt.Println(n, "", fr)
+	}
+	// Output:
+	// fr to
+	// 0  [1 2]
+	// 1  [0]
+	// 2  [0]
+	// 3  []
+}
+
+func ExampleFromList_Undirected_roots() {
+	//    0   3
+	//   / \
+	//  1   2
+	t := graph.FromList{Paths: []graph.PathEnd{
+		0: {From: -1},
+		1: {From: 0},
+		2: {From: 0},
+		3: {From: -1},
+	}}
+	var roots graph.Bits
+	g, nr := t.Undirected(&roots)
+	fmt.Println("fr to")
+	for n, fr := range g.AdjacencyList {
+		fmt.Println(n, "", fr)
+	}
+	fmt.Println(nr, "roots:")
+	fmt.Println("3210")
+	fmt.Printf("%04b\n", &roots)
+	// Output:
+	// fr to
+	// 0  [1 2]
+	// 1  [0]
+	// 2  [0]
+	// 3  []
+	// 2 roots:
+	// 3210
+	// 1001
+}
+
+func ExampleFromList_LabeledUndirected() {
+	//   0
+	//  / \
+	// 1   2
+	//      \
+	//       3
+	f := graph.FromList{Paths: []graph.PathEnd{
+		0: {From: -1},
+		1: {From: 0},
+		2: {From: 0},
+		3: {From: 2},
+	}}
+	g, _ := f.LabeledUndirected(nil, nil)
+	for fr, to := range g.LabeledAdjacencyList {
+		fmt.Println(fr, to)
+	}
+	// Output:
+	// 0 [{1 1} {2 2}]
+	// 1 [{0 1}]
+	// 2 [{0 2} {3 3}]
+	// 3 [{2 3}]
+}
+
+func ExampleFromList_LabeledUndirected_indexed() {
+	//      0
+	// 'A' / \ 'B'
+	//    1   2
+	//         \ 'C'
+	//          3
+	f := graph.FromList{Paths: []graph.PathEnd{
+		0: {From: -1},
+		1: {From: 0},
+		2: {From: 0},
+		3: {From: 2},
+	}}
+	labels := []graph.LI{
+		1: 'A',
+		2: 'B',
+		3: 'C',
+	}
+	g, _ := f.LabeledUndirected(labels, nil)
+	for fr, to := range g.LabeledAdjacencyList {
+		fmt.Print(fr)
+		for _, to := range to {
+			fmt.Printf(" {%d %c}", to.To, to.Label)
+		}
+		fmt.Println()
+	}
+	// Output:
+	// 0 {1 A} {2 B}
+	// 1 {0 A}
+	// 2 {0 B} {3 C}
+	// 3 {2 C}
+}
+
+func ExampleFromList_LabeledUndirected_roots() {
+	//      0        4
+	// 'A' / \ 'B'
+	//    1   2
+	//         \ 'C'
+	//          3
+	f := graph.FromList{Paths: []graph.PathEnd{
+		0: {From: -1},
+		1: {From: 0},
+		2: {From: 0},
+		3: {From: 2},
+		4: {From: -1},
+	}}
+	labels := []graph.LI{
+		1: 'A',
+		2: 'B',
+		3: 'C',
+	}
+	var roots graph.Bits
+	g, n := f.LabeledUndirected(labels, &roots)
+	for fr, to := range g.LabeledAdjacencyList {
+		fmt.Print(fr)
+		for _, to := range to {
+			fmt.Printf(" {%d %c}", to.To, to.Label)
+		}
+		fmt.Println()
+	}
+	fmt.Println(n, "roots:", roots.Slice())
+	// Output:
+	// 0 {1 A} {2 B}
+	// 1 {0 A}
+	// 2 {0 B} {3 C}
+	// 3 {2 C}
+	// 4
+	// 2 roots: [0 4]
+}

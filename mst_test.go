@@ -343,8 +343,7 @@ func benchPrimUnd(u graph.LabeledUndirected, w graph.WeightFunc, b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		for _, r := range reps {
 			u.Prim(r, w, &f, lab, nil)
-			d, _ := f.TransposeLabeled(lab, nil)
-			d.Undirected()
+			f.LabeledUndirected(lab, nil)
 		}
 	}
 }
