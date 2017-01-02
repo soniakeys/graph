@@ -5,6 +5,7 @@ package graph_test
 
 import (
 	"fmt"
+	"math/rand"
 	"sort"
 	"testing"
 
@@ -259,19 +260,25 @@ func TestPrim100(t *testing.T) {
 }
 
 func BenchmarkMST100(b *testing.B) {
-	r100 := r(100, 200, 62)
-	u100 := r100.l.Undirected()
+	nNodes := 100
+	nArcs := 200
+	r := rand.New(rand.NewSource(62))
+	d100, _, w200, err := graph.LabeledEuclidean(nNodes, nArcs, 1, 1, r)
+	if err != nil {
+		panic(err)
+	}
+	u100 := d100.Undirected()
 	reps, _ := u100.ConnectedComponentReps()
 	b.Log(len(reps), "connected components")
-	w := func(l graph.LI) float64 { return r100.w[l] }
-	b.Run("Krus", func(b *testing.B) { benchKruskal(u100, w, b) })
-	b.Run("WKrus", func(b *testing.B) { benchWKrus(u100, w, b) })
-	b.Run("WKrusD", func(b *testing.B) { benchWKrusD(r100.l, w, b) })
-	b.Run("WKrusS", func(b *testing.B) { benchWKrusS(r100.l, w, b) })
-	b.Run("CCPrim", func(b *testing.B) { benchCCPrim(u100, w, b) })
-	b.Run("PrAll", func(b *testing.B) { benchPrimAll(u100, w, b) })
-	b.Run("PrMin", func(b *testing.B) { benchPrimMin(u100, w, b) })
-	b.Run("PrUnd", func(b *testing.B) { benchPrimUnd(u100, w, b) })
+	wf := func(l graph.LI) float64 { return w200[l] }
+	b.Run("Krus", func(b *testing.B) { benchKruskal(u100, wf, b) })
+	b.Run("WKrus", func(b *testing.B) { benchWKrus(u100, wf, b) })
+	b.Run("WKrusD", func(b *testing.B) { benchWKrusD(d100, wf, b) })
+	b.Run("WKrusS", func(b *testing.B) { benchWKrusS(d100, wf, b) })
+	b.Run("CCPrim", func(b *testing.B) { benchCCPrim(u100, wf, b) })
+	b.Run("PrAll", func(b *testing.B) { benchPrimAll(u100, wf, b) })
+	b.Run("PrMin", func(b *testing.B) { benchPrimMin(u100, wf, b) })
+	b.Run("PrUnd", func(b *testing.B) { benchPrimUnd(u100, wf, b) })
 }
 
 func benchKruskal(u graph.LabeledUndirected, w graph.WeightFunc, b *testing.B) {
