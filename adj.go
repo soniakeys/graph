@@ -86,6 +86,22 @@ func (g AdjacencyList) IsUndirected() (u bool, from, to NI) {
 
 // ------- Labeled methods below -------
 
+// ArcsAsEdges constructs an edge list with an edge for each arc, including
+// reciprocals.
+//
+// This is a simple way to construct an edge list for algorithms that allow
+// the duplication represented by the reciprocal arcs.  (e.g. Kruskal)
+//
+// See also LabeledUndirected.Edges for the edge list without this duplication.
+func (g LabeledAdjacencyList) ArcsAsEdges() (el []LabeledEdge) {
+	for fr, to := range g {
+		for _, to := range to {
+			el = append(el, LabeledEdge{Edge{NI(fr), to.To}, to.Label})
+		}
+	}
+	return
+}
+
 // FloydWarshall finds all pairs shortest distances for a simple weighted
 // graph without negative cycles.
 //
@@ -267,6 +283,18 @@ func (g LabeledAdjacencyList) Unlabeled() AdjacencyList {
 		a[n] = to
 	}
 	return a
+}
+
+// WeightedArcsAsEdges constructs a WeightedEdgeList object from the receiver.
+//
+// Internally it calls g.ArcsAsEdges() to obtain the Edges member.
+// See LabeledAdjacencyList.ArcsAsEdges().
+func (g LabeledAdjacencyList) WeightedArcsAsEdges(w WeightFunc) *WeightedEdgeList {
+	return &WeightedEdgeList{
+		Order:      g.Order(),
+		WeightFunc: w,
+		Edges:      g.ArcsAsEdges(),
+	}
 }
 
 // WeightedInDegree computes the weighted in-degree of each node in g

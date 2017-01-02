@@ -394,22 +394,6 @@ func (p *LabeledUndirected) AddEdge(e Edge, l LI) {
 	}
 }
 
-// ArcsAsEdges constructs an edge list with an edge for each arc, including
-// reciprocals.
-//
-// This is a simple way to construct an edge list for algorithms that allow
-// the duplication represented by the reciprocal arcs.  (e.g. Kruskal)
-//
-// See also LabeledUndirected.Edges for the edge list without this duplication.
-func (g LabeledUndirected) ArcsAsEdges() (el []LabeledEdge) {
-	for fr, to := range g.LabeledAdjacencyList {
-		for _, to := range to {
-			el = append(el, LabeledEdge{Edge{NI(fr), to.To}, to.Label})
-		}
-	}
-	return
-}
-
 // A LabeledEdgeVisitor is an argument to some traversal methods.
 //
 // Traversal methods call the visitor function for each edge visited.
@@ -422,7 +406,7 @@ type LabeledEdgeVisitor func(e LabeledEdge)
 // once for each reciprocal arc pair and once for each loop.
 //
 // See also Undirected.Edges for an unlabeled version.
-// See also the more simplistic LabeledUndirected.ArcsAsEdges.
+// See also the more simplistic LabeledAdjacencyList.ArcsAsEdges.
 func (g LabeledUndirected) Edges(v LabeledEdgeVisitor) {
 	// similar code in LabeledAdjacencyList.InUndirected
 	a := g.LabeledAdjacencyList
@@ -602,17 +586,5 @@ func (g LabeledUndirected) TarjanBiconnectedComponents(emit func([]LabeledEdge) 
 		if number[w] == 0 && !biconnect(NI(w), 0) {
 			return
 		}
-	}
-}
-
-// WeightedArcsAsEdges constructs a WeightedEdgeList object from the receiver.
-//
-// Internally it calls g.ArcsAsEdges() to obtain the Edges member.
-// See LabeledUndirected.ArcsAsEdges().
-func (g LabeledUndirected) WeightedArcsAsEdges(w WeightFunc) *WeightedEdgeList {
-	return &WeightedEdgeList{
-		Order:      g.Order(),
-		WeightFunc: w,
-		Edges:      g.ArcsAsEdges(),
 	}
 }
