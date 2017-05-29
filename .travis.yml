@@ -1,8 +1,9 @@
 sudo: false
 language: go
-# update travis.sh when changing version number here
-go:
- - 1.2.1
- - 1.8
-install: go get -t ./...
-script: ./travis.sh
+go: 1.x
+before_script:
+ - go tool vet -composites=false -printf=false -shift=false .
+ - go get github.com/client9/misspell/cmd/misspell
+ - go get github.com/soniakeys/vetc
+ - misspell -error * */* */*/*
+ - vetc
