@@ -238,17 +238,13 @@ func TestKroneckerUndir(t *testing.T) {
 }
 
 func TestGnp(t *testing.T) {
-	u := graph.Gnp(15, .2, nil)
+	u := graph.Gnp(15, .4, nil)
 	if ok, _, _ := u.IsUndirected(); !ok {
 		t.Fatal("Gnp returned directed graph")
 	}
 	if ok, _ := u.IsSimple(); !ok {
 		t.Fatal("Gnp returned non-simple graph")
 	}
-	//	for fr, to := range u.AdjacencyList {
-	//		t.Log(fr, to)
-	//	}
-	//	t.Log("density: ", u.Density())
 }
 
 func TestGnm(t *testing.T) {
@@ -259,10 +255,6 @@ func TestGnm(t *testing.T) {
 	if ok, _ := u.IsSimple(); !ok {
 		t.Fatal("Gnm returned non-simple graph")
 	}
-	//	for fr, to := range u.AdjacencyList {
-	//		t.Log(fr, to)
-	//	}
-	//	t.Log("density: ", u.Density())
 }
 
 func TestGnm3(t *testing.T) {
@@ -273,8 +265,4 @@ func TestGnm3(t *testing.T) {
 	if ok, _ := u.IsSimple(); !ok {
 		t.Fatal("Gnm3 returned non-simple graph")
 	}
-	//	for fr, to := range u.AdjacencyList {
-	//		t.Log(fr, to)
-	//	}
-	//	t.Log("density: ", u.Density())
 }

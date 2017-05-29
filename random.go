@@ -7,7 +7,6 @@ import (
 	"errors"
 	"math"
 	"math/rand"
-	"time"
 )
 
 // Euclidean generates a random simple graph on the Euclidean plane.
@@ -28,23 +27,24 @@ import (
 // combinations of nNodes and nArcs cannot be achieved with any amount of
 // patience given that the returned graph must be simple.
 //
-// If Rand r is nil, the method creates a new source and generator for
-// one-time use.
+// If Rand r is nil, the rand package default shared source is used.
 //
 // Returned is a directed simple graph and associated positions indexed by
-// node number.
+// node number.  In the arc list for each node, to-nodes are in random
+// order.
 //
 // See also LabeledEuclidean.
-func Euclidean(nNodes, nArcs int, affinity float64, patience int, r *rand.Rand) (g Directed, pos []struct{ X, Y float64 }, err error) {
+func Euclidean(nNodes, nArcs int, affinity float64, patience int, rr *rand.Rand) (g Directed, pos []struct{ X, Y float64 }, err error) {
 	a := make(AdjacencyList, nNodes) // graph
-	// generate random positions
-	if r == nil {
-		r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	ri, rf, re := rand.Intn, rand.Float64, rand.ExpFloat64
+	if rr != nil {
+		ri, rf, re = rr.Intn, rr.Float64, rr.ExpFloat64
 	}
+	// generate random positions
 	pos = make([]struct{ X, Y float64 }, nNodes)
 	for i := range pos {
-		pos[i].X = r.Float64()
-		pos[i].Y = r.Float64()
+		pos[i].X = rf()
+		pos[i].Y = rf()
 	}
 	// arcs
 	var tooFar, dup int
@@ -58,10 +58,10 @@ arc:
 			err = errors.New("overcrowding")
 			return
 		}
-		n1 := NI(r.Intn(nNodes))
+		n1 := NI(ri(nNodes))
 		var n2 NI
 		for {
-			n2 = NI(r.Intn(nNodes))
+			n2 = NI(ri(nNodes))
 			if n2 != n1 { // no graph loops
 				break
 			}
@@ -69,7 +69,7 @@ arc:
 		c1 := &pos[n1]
 		c2 := &pos[n2]
 		dist := math.Hypot(c2.X-c1.X, c2.Y-c1.Y)
-		if dist*affinity > r.ExpFloat64() { // favor near nodes
+		if dist*affinity > re() { // favor near nodes
 			tooFar++
 			continue
 		}
@@ -93,17 +93,18 @@ arc:
 //
 // Otherwise the function arguments and return values are the same as for
 // function Euclidean.  See Euclidean.
-func LabeledEuclidean(nNodes, nArcs int, affinity float64, patience int, r *rand.Rand) (g LabeledDirected, pos []struct{ X, Y float64 }, wt []float64, err error) {
+func LabeledEuclidean(nNodes, nArcs int, affinity float64, patience int, rr *rand.Rand) (g LabeledDirected, pos []struct{ X, Y float64 }, wt []float64, err error) {
 	a := make(LabeledAdjacencyList, nNodes) // graph
 	wt = make([]float64, nArcs)             // arc weights
-	// generate random positions
-	if r == nil {
-		r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	ri, rf, re := rand.Intn, rand.Float64, rand.ExpFloat64
+	if rr != nil {
+		ri, rf, re = rr.Intn, rr.Float64, rr.ExpFloat64
 	}
+	// generate random positions
 	pos = make([]struct{ X, Y float64 }, nNodes)
 	for i := range pos {
-		pos[i].X = r.Float64()
-		pos[i].Y = r.Float64()
+		pos[i].X = rf()
+		pos[i].Y = rf()
 	}
 	// arcs
 	var tooFar, dup int
@@ -117,10 +118,10 @@ arc:
 			err = errors.New("overcrowding")
 			return
 		}
-		n1 := NI(r.Intn(nNodes))
+		n1 := NI(ri(nNodes))
 		var n2 NI
 		for {
-			n2 = NI(r.Intn(nNodes))
+			n2 = NI(ri(nNodes))
 			if n2 != n1 { // no graph loops
 				break
 			}
@@ -128,7 +129,7 @@ arc:
 		c1 := &pos[n1]
 		c2 := &pos[n2]
 		dist := math.Hypot(c2.X-c1.X, c2.Y-c1.Y)
-		if dist*affinity > r.ExpFloat64() { // favor near nodes
+		if dist*affinity > re() { // favor near nodes
 			tooFar++
 			continue
 		}
@@ -154,22 +155,23 @@ arc:
 //
 // The resulting number of edges is somewhat random but asymptotically
 // approaches m = πr²n²/2.   The method accumulates and returns the actual
-// number of edges constructed.
+// number of edges constructed.  In the arc list for each node, to-nodes are
+// ordered.  Consider using ShuffleArcLists if random order is important.
 //
-// If Rand r is nil, the method creates a new source and generator for
-// one-time use.
+// If Rand r is nil, the rand package default shared source is used.
 //
 // See also LabeledGeometric.
-func Geometric(nNodes int, radius float64, r *rand.Rand) (g Undirected, pos []struct{ X, Y float64 }, m int) {
+func Geometric(nNodes int, radius float64, rr *rand.Rand) (g Undirected, pos []struct{ X, Y float64 }, m int) {
 	// Expected degree is approximately nπr².
 	a := make(AdjacencyList, nNodes)
-	if r == nil {
-		r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	rf := rand.Float64
+	if rr != nil {
+		rf = rr.Float64
 	}
 	pos = make([]struct{ X, Y float64 }, nNodes)
 	for i := range pos {
-		pos[i].X = r.Float64()
-		pos[i].Y = r.Float64()
+		pos[i].X = rf()
+		pos[i].Y = rf()
 	}
 	for u, up := range pos {
 		for v := u + 1; v < len(pos); v++ {
@@ -201,15 +203,16 @@ func Geometric(nNodes int, radius float64, r *rand.Rand) (g Undirected, pos []st
 // size m is len(wt).
 //
 // See Geometric for additional description.
-func LabeledGeometric(nNodes int, radius float64, r *rand.Rand) (g LabeledUndirected, pos []struct{ X, Y float64 }, wt []float64) {
+func LabeledGeometric(nNodes int, radius float64, rr *rand.Rand) (g LabeledUndirected, pos []struct{ X, Y float64 }, wt []float64) {
 	a := make(LabeledAdjacencyList, nNodes)
-	if r == nil {
-		r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	rf := rand.Float64
+	if rr != nil {
+		rf = rr.Float64
 	}
 	pos = make([]struct{ X, Y float64 }, nNodes)
 	for i := range pos {
-		pos[i].X = r.Float64()
-		pos[i].Y = r.Float64()
+		pos[i].X = rf()
+		pos[i].Y = rf()
 	}
 	for u, up := range pos {
 		for v := u + 1; v < len(pos); v++ {
@@ -231,14 +234,14 @@ func LabeledGeometric(nNodes int, radius float64, r *rand.Rand) (g LabeledUndire
 // necessarily fully connected.  The number of of nodes will be <= 2^scale,
 // and will be near 2^scale for typical values of arcFactor, >= 2.
 // ArcFactor * 2^scale arcs are generated, although loops and duplicate arcs
-// are rejected.
+// are rejected.  In the arc list for each node, to-nodes are in random
+// order.
 //
-// If Rand r is nil, the method creates a new source and generator for
-// one-time use.
+// If Rand r is nil, the rand package default shared source is used.
 //
 // Return value ma is the number of arcs retained in the result graph.
-func KroneckerDirected(scale uint, arcFactor float64, r *rand.Rand) (g Directed, ma int) {
-	a, m := kronecker(scale, arcFactor, true, r)
+func KroneckerDirected(scale uint, arcFactor float64, rr *rand.Rand) (g Directed, ma int) {
+	a, m := kronecker(scale, arcFactor, true, rr)
 	return Directed{a}, m
 }
 
@@ -248,15 +251,15 @@ func KroneckerDirected(scale uint, arcFactor float64, r *rand.Rand) (g Directed,
 // necessarily fully connected.  The number of of nodes will be <= 2^scale,
 // and will be near 2^scale for typical values of edgeFactor, >= 2.
 // EdgeFactor * 2^scale edges are generated, although loops and duplicate edges
-// are rejected.
+// are rejected.  In the arc list for each node, to-nodes are in random
+// order.
 //
-// If Rand r is nil, the method creates a new source and generator for
-// one-time use.
+// If Rand r is nil, the rand package default shared source is used.
 //
 // Return value m is the true number of edges--not arcs--retained in the result
 // graph.
-func KroneckerUndirected(scale uint, edgeFactor float64, r *rand.Rand) (g Undirected, m int) {
-	al, s := kronecker(scale, edgeFactor, false, r)
+func KroneckerUndirected(scale uint, edgeFactor float64, rr *rand.Rand) (g Undirected, m int) {
+	al, s := kronecker(scale, edgeFactor, false, rr)
 	return Undirected{al}, s
 }
 
@@ -265,9 +268,10 @@ func KroneckerUndirected(scale uint, edgeFactor float64, r *rand.Rand) (g Undire
 // here is meaningful or not.
 //
 // note mma returns arc size ma for dir=true, but returns size m for dir=false
-func kronecker(scale uint, edgeFactor float64, dir bool, r *rand.Rand) (g AdjacencyList, mma int) {
-	if r == nil {
-		r = rand.New(rand.NewSource(time.Now().UnixNano()))
+func kronecker(scale uint, edgeFactor float64, dir bool, rr *rand.Rand) (g AdjacencyList, mma int) {
+	rf, ri, rp := rand.Float64, rand.Intn, rand.Perm
+	if rr != nil {
+		rf, ri, rp = rr.Float64, rr.Intn, rr.Perm
 	}
 	N := NI(1 << scale)                  // node extent
 	M := int(edgeFactor*float64(N) + .5) // number of arcs/edges to generate
@@ -281,12 +285,12 @@ func kronecker(scale uint, edgeFactor float64, dir bool, r *rand.Rand) (g Adjace
 	for k := range ij {
 		var i, j NI
 		for b := NI(1); b < N; b <<= 1 {
-			if r.Float64() > ab {
+			if rf() > ab {
 				i |= b
-				if r.Float64() > cNorm {
+				if rf() > cNorm {
 					j |= b
 				}
-			} else if r.Float64() > aNorm {
+			} else if rf() > aNorm {
 				j |= b
 			}
 		}
@@ -298,11 +302,11 @@ func kronecker(scale uint, edgeFactor float64, dir bool, r *rand.Rand) (g Adjace
 			bm.SetBit(j, 1)
 			nNodes++
 		}
-		r := r.Intn(k + 1) // shuffle edges as they are generated
+		r := ri(k + 1) // shuffle edges as they are generated
 		ij[k] = ij[r]
 		ij[r] = [2]NI{i, j}
 	}
-	p := r.Perm(nNodes) // mapping to shuffle IDs of non-isolated nodes
+	p := rp(nNodes) // mapping to shuffle IDs of non-isolated nodes
 	px := 0
 	rn := make([]NI, N)
 	for i := range rn {
@@ -339,19 +343,22 @@ ij:
 //
 // Argument n is number of nodes, m is number of edges and must be <= n(n-1)/2.
 //
-// If Rand r is nil, the method creates a new source and generator for
-// one-time use.
+// If Rand r is nil, the rand package default shared source is used.
+//
+// In the generated arc list for each node, to-nodes are ordered.
+// Consider using ShuffleArcLists if random order is important.
 //
 // See also Gnm3, a method producing a statistically equivalent result, but by
 // an algorithm with somewhat different performance properties.  Performance
 // of the two methods is expected to be similar in most cases but it may be
 // worth trying both with your data to see if one has a clear advantage.
-func Gnm(n, m int, r *rand.Rand) Undirected {
+func Gnm(n, m int, rr *rand.Rand) Undirected {
 	// based on Alg. 2 from "Efficient Generation of Large Random Networks",
 	// Vladimir Batagelj and Ulrik Brandes.
 	// accessed at http://algo.uni-konstanz.de/publications/bb-eglrn-05.pdf
-	if r == nil {
-		r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	ri := rand.Intn
+	if rr != nil {
+		ri = rr.Intn
 	}
 	re := n * (n - 1) / 2
 	ml := m
@@ -360,7 +367,7 @@ func Gnm(n, m int, r *rand.Rand) Undirected {
 	}
 	e := map[int]struct{}{}
 	for len(e) < ml {
-		e[r.Intn(re)] = struct{}{}
+		e[ri(re)] = struct{}{}
 	}
 	a := make(AdjacencyList, n)
 	if m*2 > re {
@@ -392,25 +399,28 @@ func Gnm(n, m int, r *rand.Rand) Undirected {
 //
 // Argument n is number of nodes, m is number of edges and must be <= n(n-1)/2.
 //
-// If Rand r is nil, the method creates a new source and generator for
-// one-time use.
+// If Rand r is nil, the rand package default shared source is used.
+//
+// In the generated arc list for each node, to-nodes are ordered.
+// Consider using ShuffleArcLists if random order is important.
 //
 // See also Gnm, a method producing a statistically equivalent result, but by
 // an algorithm with somewhat different performance properties.  Performance
 // of the two methods is expected to be similar in most cases but it may be
 // worth trying both with your data to see if one has a clear advantage.
-func Gnm3(n, m int, r *rand.Rand) Undirected {
+func Gnm3(n, m int, rr *rand.Rand) Undirected {
 	// based on Alg. 3 from "Efficient Generation of Large Random Networks",
 	// Vladimir Batagelj and Ulrik Brandes.
 	// accessed at http://algo.uni-konstanz.de/publications/bb-eglrn-05.pdf
-	if r == nil {
-		r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	ri := rand.Intn
+	if rr != nil {
+		ri = rr.Intn
 	}
 	a := make(AdjacencyList, n)
 	re := n * (n - 1) / 2
 	rm := map[int]int{}
 	for i := 0; i < m; i++ {
-		er := i + r.Intn(re-i)
+		er := i + ri(re-i)
 		eNew := er
 		if rp, ok := rm[er]; ok {
 			eNew = rp
@@ -436,53 +446,37 @@ func Gnm3(n, m int, r *rand.Rand) Undirected {
 //
 // Argument n is number of nodes, p is probability for selecting an edge.
 //
-// If Rand r is nil, the method creates a new source and generator for
-// one-time use.
-func Gnp(n int, p float64, r *rand.Rand) Undirected {
-	if r == nil {
-		r = rand.New(rand.NewSource(time.Now().UnixNano()))
+// If Rand r is nil, the rand package default shared source is used.
+//
+// In the generated arc list for each node, to-nodes are ordered.
+// Consider using ShuffleArcLists if random order is important.
+func Gnp(n int, p float64, rr *rand.Rand) Undirected {
+	a := make(AdjacencyList, n)
+	if n < 2 {
+		return Undirected{a}
+	}
+	rf := rand.Float64
+	if rr != nil {
+		rf = rr.Float64
 	}
 	// based on Alg. 1 from "Efficient Generation of Large Random Networks",
 	// Vladimir Batagelj and Ulrik Brandes.
 	// accessed at http://algo.uni-konstanz.de/publications/bb-eglrn-05.pdf
-	e := make([]map[NI]struct{}, n)
-	c := 1. / math.Log(1-p)
 	var v, w NI = 1, -1
-	for v < NI(n) {
-		w += 1 + NI(c*math.Log(1-r.Float64()))
+g:
+	for c := 1 / math.Log(1-p); ; {
+		w += 1 + NI(c*math.Log(1-rf()))
 		for {
 			if w < v {
-				if e[v] == nil {
-					e[v] = map[NI]struct{}{}
-				}
-				e[v][w] = struct{}{}
+				a[v] = append(a[v], w)
+				a[w] = append(a[w], v)
 				break
 			}
 			w -= v
 			v++
 			if v == NI(n) {
-				break
+				break g
 			}
-		}
-	}
-	// e now contains a graph of sorts, convert it to an undirected adj list
-	a := make(AdjacencyList, n)
-	for v, ws := range e {
-		to := make([]NI, len(ws))
-		x := 0
-		for w := range ws {
-			to[x] = NI(w)
-			x++
-			a[w] = append(a[w], NI(v))
-		}
-		a[v] = to
-	}
-	// shuffle arc lists
-	for _, to := range a {
-		for i := len(to); i > 1; {
-			j := r.Intn(i)
-			i--
-			to[i], to[j] = to[j], to[i]
 		}
 	}
 	return Undirected{a}
