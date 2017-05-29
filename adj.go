@@ -28,7 +28,7 @@ type NI int32
 // the public API anywhere.  It's narrowly useful, only sorting in one way,
 // and there's currently no labeled counterpart, so it's un-exported now to
 // simplify the API surface.  I vaguely remember considering using it more
-// widely, in the AdjacencyList type defintion for example, but seeing some
+// widely, in the AdjacencyList type definition for example, but seeing some
 // way it would be awkward.  maybe it could be reconsidered at some point.
 //
 // Meanwhile the only use currently is here in AnyParallelSort.
