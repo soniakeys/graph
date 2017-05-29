@@ -331,3 +331,159 @@ ij:
 	}
 	return
 }
+
+// Gnm constructs a random simple undirected graph.
+//
+// Construction is by the Erdős–Rényi model where the specified number of
+// distinct edges is selected from all possible edges with equal probability.
+//
+// Argument n is number of nodes, m is number of edges and must be <= n(n-1)/2.
+//
+// If Rand r is nil, the method creates a new source and generator for
+// one-time use.
+//
+// See also Gnm3, a method producing a statistically equivalent result, but by
+// an algorithm with somewhat different performance properties.  Performance
+// of the two methods is expected to be similar in most cases but it may be
+// worth trying both with your data to see if one has a clear advantage.
+func Gnm(n, m int, r *rand.Rand) Undirected {
+	// based on Alg. 2 from "Efficient Generation of Large Random Networks",
+	// Vladimir Batagelj and Ulrik Brandes.
+	// accessed at http://algo.uni-konstanz.de/publications/bb-eglrn-05.pdf
+	if r == nil {
+		r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	}
+	re := n * (n - 1) / 2
+	ml := m
+	if m*2 > re {
+		ml = re - m
+	}
+	e := map[int]struct{}{}
+	for len(e) < ml {
+		e[r.Intn(re)] = struct{}{}
+	}
+	a := make(AdjacencyList, n)
+	if m*2 > re {
+		i := 0
+		for v := 1; v < n; v++ {
+			for w := 0; w < v; w++ {
+				if _, ok := e[i]; !ok {
+					a[v] = append(a[v], NI(w))
+					a[w] = append(a[w], NI(v))
+				}
+				i++
+			}
+		}
+	} else {
+		for i := range e {
+			v := 1 + int(math.Sqrt(.25+float64(2*i))-.5)
+			w := i - (v * (v - 1) / 2)
+			a[v] = append(a[v], NI(w))
+			a[w] = append(a[w], NI(v))
+		}
+	}
+	return Undirected{a}
+}
+
+// Gnm3 constructs a random simple undirected graph.
+//
+// Construction is by the Erdős–Rényi model where the specified number of
+// distinct edges is selected from all possible edges with equal probability.
+//
+// Argument n is number of nodes, m is number of edges and must be <= n(n-1)/2.
+//
+// If Rand r is nil, the method creates a new source and generator for
+// one-time use.
+//
+// See also Gnm, a method producing a statistically equivalent result, but by
+// an algorithm with somewhat different performance properties.  Performance
+// of the two methods is expected to be similar in most cases but it may be
+// worth trying both with your data to see if one has a clear advantage.
+func Gnm3(n, m int, r *rand.Rand) Undirected {
+	// based on Alg. 3 from "Efficient Generation of Large Random Networks",
+	// Vladimir Batagelj and Ulrik Brandes.
+	// accessed at http://algo.uni-konstanz.de/publications/bb-eglrn-05.pdf
+	if r == nil {
+		r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	}
+	a := make(AdjacencyList, n)
+	re := n * (n - 1) / 2
+	rm := map[int]int{}
+	for i := 0; i < m; i++ {
+		er := i + r.Intn(re-i)
+		eNew := er
+		if rp, ok := rm[er]; ok {
+			eNew = rp
+		}
+		if rp, ok := rm[i]; !ok {
+			rm[er] = i
+		} else {
+			rm[er] = rp
+		}
+		v := 1 + int(math.Sqrt(.25+float64(2*eNew))-.5)
+		w := eNew - (v * (v - 1) / 2)
+		a[v] = append(a[v], NI(w))
+		a[w] = append(a[w], NI(v))
+	}
+	return Undirected{a}
+}
+
+// Gnp constructs a random simple undirected graph.
+//
+// Construction is by the Gilbert model, an Erdős–Rényi like model where
+// distinct edges are independently selected from all possible edges with
+// the specified probability.
+//
+// Argument n is number of nodes, p is probability for selecting an edge.
+//
+// If Rand r is nil, the method creates a new source and generator for
+// one-time use.
+func Gnp(n int, p float64, r *rand.Rand) Undirected {
+	if r == nil {
+		r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	}
+	// based on Alg. 1 from "Efficient Generation of Large Random Networks",
+	// Vladimir Batagelj and Ulrik Brandes.
+	// accessed at http://algo.uni-konstanz.de/publications/bb-eglrn-05.pdf
+	e := make([]map[NI]struct{}, n)
+	c := 1. / math.Log(1-p)
+	var v, w NI = 1, -1
+	for v < NI(n) {
+		w += 1 + NI(c*math.Log(1-r.Float64()))
+		for {
+			if w < v {
+				if e[v] == nil {
+					e[v] = map[NI]struct{}{}
+				}
+				e[v][w] = struct{}{}
+				break
+			}
+			w -= v
+			v++
+			if v == NI(n) {
+				break
+			}
+		}
+	}
+	// e now contains a graph of sorts, convert it to an undirected adj list
+	a := make(AdjacencyList, n)
+	for v, ws := range e {
+		to := make([]NI, len(ws))
+		x := 0
+		for w := range ws {
+			to[x] = NI(w)
+			x++
+			a[w] = append(a[w], NI(v))
+		}
+		a[v] = to
+	}
+	// shuffle arc lists
+	for _, to := range a {
+		for i := len(to); i > 1; {
+			j := r.Intn(i)
+			i--
+			to[i], to[j] = to[j], to[i]
+		}
+	}
+	return Undirected{a}
+}

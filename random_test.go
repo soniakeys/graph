@@ -236,3 +236,45 @@ func TestKroneckerUndir(t *testing.T) {
 			"Arc %d->%d has no reciprocal.", from, to)
 	}
 }
+
+func TestGnp(t *testing.T) {
+	u := graph.Gnp(15, .2, nil)
+	if ok, _, _ := u.IsUndirected(); !ok {
+		t.Fatal("Gnp returned directed graph")
+	}
+	if ok, _ := u.IsSimple(); !ok {
+		t.Fatal("Gnp returned non-simple graph")
+	}
+	//	for fr, to := range u.AdjacencyList {
+	//		t.Log(fr, to)
+	//	}
+	//	t.Log("density: ", u.Density())
+}
+
+func TestGnm(t *testing.T) {
+	u := graph.Gnm(15, 21, nil)
+	if ok, _, _ := u.IsUndirected(); !ok {
+		t.Fatal("Gnm returned directed graph")
+	}
+	if ok, _ := u.IsSimple(); !ok {
+		t.Fatal("Gnm returned non-simple graph")
+	}
+	//	for fr, to := range u.AdjacencyList {
+	//		t.Log(fr, to)
+	//	}
+	//	t.Log("density: ", u.Density())
+}
+
+func TestGnm3(t *testing.T) {
+	u := graph.Gnm3(15, 21, nil)
+	if ok, _, _ := u.IsUndirected(); !ok {
+		t.Fatal("Gnm3 returned directed graph")
+	}
+	if ok, _ := u.IsSimple(); !ok {
+		t.Fatal("Gnm3 returned non-simple graph")
+	}
+	//	for fr, to := range u.AdjacencyList {
+	//		t.Log(fr, to)
+	//	}
+	//	t.Log("density: ", u.Density())
+}
