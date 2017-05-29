@@ -9,7 +9,6 @@ package graph
 // For readability, the types are defined in a dependency order:
 //
 //  NI
-//  NodeList
 //  AdjacencyList
 //  Directed
 //  Undirected
@@ -39,20 +38,6 @@ package graph
 //go:generate gofmt -r "LabeledAdjacencyList -> AdjacencyList" -w undir_RO.go
 //go:generate gofmt -r "n.To -> n" -w undir_RO.go
 //go:generate gofmt -r "Half -> NI" -w undir_RO.go
-
-// NI is a "node int"
-//
-// It is a node number or node ID.  NIs are used extensively as slice indexes.
-// NIs typically account for a significant fraction of the memory footprint of
-// a graph.
-type NI int32
-
-// NodeList satisfies sort.Interface.
-type NodeList []NI
-
-func (l NodeList) Len() int           { return len(l) }
-func (l NodeList) Less(i, j int) bool { return l[i] < l[j] }
-func (l NodeList) Swap(i, j int)      { l[i], l[j] = l[j], l[i] }
 
 // An AdjacencyList represents a graph as a list of neighbors for each node.
 // The "node ID" of a node is simply it's slice index in the AdjacencyList.
