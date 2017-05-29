@@ -13,6 +13,8 @@ package graph_test
 import (
 	"fmt"
 	"math/rand"
+	"reflect"
+	"sort"
 	"testing"
 
 	"github.com/soniakeys/graph"
@@ -477,4 +479,31 @@ func ExampleLabeledAdjacencyList_ParallelArcs() {
 	// [0 2]
 	// [3 4]
 	// [1]
+}
+
+// not much of a test.  doesn't actually test that shuffle did anything,
+// does a bunch of unrelated stuff.  It at least tests that shuffle doesn't
+// corrupt the graph.
+func TestShuffleArcListsLabeled(t *testing.T) {
+	testCase := func(rad float64, r *rand.Rand) {
+		g, _, _ := graph.LabeledGeometric(10, rad, r)
+		c, _ := g.LabeledAdjacencyList.Copy()
+		c.ShuffleArcLists(r)
+		for fr, to := range g.LabeledAdjacencyList {
+			sort.Slice(to, func(i, j int) bool {
+				return to[i].To < to[j].To ||
+					to[i].To == to[j].To && to[i].Label < to[j].Label
+			})
+			sh := c[fr]
+			sort.Slice(sh, func(i, j int) bool {
+				return sh[i].To < sh[j].To ||
+					sh[i].To == sh[j].To && sh[i].Label < sh[j].Label
+			})
+			if (len(to) > 0 || len(sh) > 0) && !reflect.DeepEqual(to, sh) {
+				t.Fatal(rad, r, fr, to, sh)
+			}
+		}
+	}
+	testCase(.2, nil)
+	testCase(.6, rand.New(rand.NewSource(3)))
 }

@@ -388,3 +388,29 @@ func (g AdjacencyList) ParallelArcs(fr, to NI) (p []int) {
 	}
 	return
 }
+
+// ShuffleArcLists shuffles the arc lists of each node of receiver g.
+//
+// For example a node with arcs leading to nodes 3 and 7 might have an
+// arc list of either [3 7] or [7 3] after calling this method.  The
+// connectivity of the graph is not changed.  The resulting graph stays
+// equivalent but a traversal will encounter arcs in a different
+// order.
+//
+// If Rand r is nil, the rand package default shared source is used.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g AdjacencyList) ShuffleArcLists(r *rand.Rand) {
+	ri := rand.Intn
+	if r != nil {
+		ri = r.Intn
+	}
+	// Knuth-Fisher-Yates
+	for _, to := range g {
+		for i := len(to); i > 1; {
+			j := ri(i)
+			i--
+			to[i], to[j] = to[j], to[i]
+		}
+	}
+}
