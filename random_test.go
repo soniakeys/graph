@@ -237,32 +237,73 @@ func TestKroneckerUndir(t *testing.T) {
 	}
 }
 
-func TestGnp(t *testing.T) {
-	u := graph.Gnp(15, .4, nil)
+func TestGnmUndirected(t *testing.T) {
+	u := graph.GnmUndirected(15, 21, nil)
 	if ok, _, _ := u.IsUndirected(); !ok {
-		t.Fatal("Gnp returned directed graph")
+		t.Fatal("GnmUndirected returned directed graph")
 	}
 	if ok, _ := u.IsSimple(); !ok {
-		t.Fatal("Gnp returned non-simple graph")
+		t.Fatal("GnmUndirected returned non-simple graph")
+	}
+
+	u = graph.GnmUndirected(15, 84, nil)
+	/*
+		rand.New(rand.NewSource(time.Now().UnixNano())))
+		for fr, to := range u.AdjacencyList {
+			t.Log(fr, to)
+		}
+		t.Log("order, size: ", u.Order(), u.Size())
+		t.Log("density: ", u.Density())
+	*/
+	if ok, _, _ := u.IsUndirected(); !ok {
+		t.Fatal("GnmUndirected returned directed graph")
+	}
+	if ok, _ := u.IsSimple(); !ok {
+		t.Fatal("GnmUndirected returned non-simple graph")
 	}
 }
 
-func TestGnm(t *testing.T) {
-	u := graph.Gnm(15, 21, nil)
-	if ok, _, _ := u.IsUndirected(); !ok {
-		t.Fatal("Gnm returned directed graph")
+func TestGnmDirected(t *testing.T) {
+	d := graph.GnmDirected(15, 189, nil)
+	if ok, _ := d.IsSimple(); !ok {
+		t.Fatal("GnmDirected returned non-simple graph")
 	}
-	if ok, _ := u.IsSimple(); !ok {
-		t.Fatal("Gnm returned non-simple graph")
+	d = graph.GnmDirected(15, 21, nil)
+	if ok, _ := d.IsSimple(); !ok {
+		t.Fatal("GnmDirected returned non-simple graph")
 	}
 }
 
-func TestGnm3(t *testing.T) {
-	u := graph.Gnm3(15, 21, nil)
+func TestGnm3Directed(t *testing.T) {
+	d := graph.Gnm3Directed(15, 42, nil)
+	if ok, _ := d.IsSimple(); !ok {
+		t.Fatal("Gnm3Directed returned non-simple graph")
+	}
+}
+
+func TestGnm3Undirected(t *testing.T) {
+	u := graph.Gnm3Undirected(15, 21, nil)
 	if ok, _, _ := u.IsUndirected(); !ok {
-		t.Fatal("Gnm3 returned directed graph")
+		t.Fatal("Gnm3Undirected returned directed graph")
 	}
 	if ok, _ := u.IsSimple(); !ok {
-		t.Fatal("Gnm3 returned non-simple graph")
+		t.Fatal("Gnm3Undirected returned non-simple graph")
+	}
+}
+
+func TestGnpUndirected(t *testing.T) {
+	u := graph.GnpUndirected(15, .4, nil)
+	if ok, _, _ := u.IsUndirected(); !ok {
+		t.Fatal("GnpUndirected returned directed graph")
+	}
+	if ok, _ := u.IsSimple(); !ok {
+		t.Fatal("GnpUndirected returned non-simple graph")
+	}
+}
+
+func TestGnpDirected(t *testing.T) {
+	u := graph.GnpDirected(15, .4, nil)
+	if ok, _ := u.IsSimple(); !ok {
+		t.Fatal("GnpDirected returned non-simple graph")
 	}
 }

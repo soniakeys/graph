@@ -336,7 +336,7 @@ ij:
 	return
 }
 
-// Gnm constructs a random simple undirected graph.
+// GnmUndirected constructs a random simple undirected graph.
 //
 // Construction is by the Erdős–Rényi model where the specified number of
 // distinct edges is selected from all possible edges with equal probability.
@@ -348,11 +348,12 @@ ij:
 // In the generated arc list for each node, to-nodes are ordered.
 // Consider using ShuffleArcLists if random order is important.
 //
-// See also Gnm3, a method producing a statistically equivalent result, but by
-// an algorithm with somewhat different performance properties.  Performance
-// of the two methods is expected to be similar in most cases but it may be
-// worth trying both with your data to see if one has a clear advantage.
-func Gnm(n, m int, rr *rand.Rand) Undirected {
+// See also Gnm3Undirected, a method producing a statistically equivalent
+// result, but by an algorithm with somewhat different performance properties.
+// Performance of the two methods is expected to be similar in most cases but
+// it may be worth trying both with your data to see if one has a clear
+// advantage.
+func GnmUndirected(n, m int, rr *rand.Rand) Undirected {
 	// based on Alg. 2 from "Efficient Generation of Large Random Networks",
 	// Vladimir Batagelj and Ulrik Brandes.
 	// accessed at http://algo.uni-konstanz.de/publications/bb-eglrn-05.pdf
@@ -392,7 +393,68 @@ func Gnm(n, m int, rr *rand.Rand) Undirected {
 	return Undirected{a}
 }
 
-// Gnm3 constructs a random simple undirected graph.
+// GnmDirected constructs a random simple directed graph.
+//
+// Construction is by the Erdős–Rényi model where the specified number of
+// distinct arcs is selected from all possible arcs with equal probability.
+//
+// Argument n is number of nodes, ma is number of arcs and must be <= n(n-1).
+//
+// If Rand r is nil, the rand package default shared source is used.
+//
+// In the generated arc list for each node, to-nodes are ordered.
+// Consider using ShuffleArcLists if random order is important.
+//
+// See also Gnm3Directed, a method producing a statistically equivalent
+// result, but by
+// an algorithm with somewhat different performance properties.  Performance
+// of the two methods is expected to be similar in most cases but it may be
+// worth trying both with your data to see if one has a clear advantage.
+func GnmDirected(n, ma int, rr *rand.Rand) Directed {
+	// based on Alg. 2 from "Efficient Generation of Large Random Networks",
+	// Vladimir Batagelj and Ulrik Brandes.
+	// accessed at http://algo.uni-konstanz.de/publications/bb-eglrn-05.pdf
+	ri := rand.Intn
+	if rr != nil {
+		ri = rr.Intn
+	}
+	re := n * (n - 1)
+	ml := ma
+	if ma*2 > re {
+		ml = re - ma
+	}
+	e := map[int]struct{}{}
+	for len(e) < ml {
+		e[ri(re)] = struct{}{}
+	}
+	a := make(AdjacencyList, n)
+	if ma*2 > re {
+		i := 0
+		for v := 0; v < n; v++ {
+			for w := 0; w < n; w++ {
+				if w == v {
+					continue
+				}
+				if _, ok := e[i]; !ok {
+					a[v] = append(a[v], NI(w))
+				}
+				i++
+			}
+		}
+	} else {
+		for i := range e {
+			v := i / (n - 1)
+			w := i % (n - 1)
+			if w >= v {
+				w++
+			}
+			a[v] = append(a[v], NI(w))
+		}
+	}
+	return Directed{a}
+}
+
+// Gnm3Undirected constructs a random simple undirected graph.
 //
 // Construction is by the Erdős–Rényi model where the specified number of
 // distinct edges is selected from all possible edges with equal probability.
@@ -404,11 +466,12 @@ func Gnm(n, m int, rr *rand.Rand) Undirected {
 // In the generated arc list for each node, to-nodes are ordered.
 // Consider using ShuffleArcLists if random order is important.
 //
-// See also Gnm, a method producing a statistically equivalent result, but by
-// an algorithm with somewhat different performance properties.  Performance
-// of the two methods is expected to be similar in most cases but it may be
-// worth trying both with your data to see if one has a clear advantage.
-func Gnm3(n, m int, rr *rand.Rand) Undirected {
+// See also GnmUndirected, a method producing a statistically equivalent
+// result, but by an algorithm with somewhat different performance properties.
+// Performance of the two methods is expected to be similar in most cases but
+// it may be worth trying both with your data to see if one has a clear
+// advantage.
+func Gnm3Undirected(n, m int, rr *rand.Rand) Undirected {
 	// based on Alg. 3 from "Efficient Generation of Large Random Networks",
 	// Vladimir Batagelj and Ulrik Brandes.
 	// accessed at http://algo.uni-konstanz.de/publications/bb-eglrn-05.pdf
@@ -438,7 +501,56 @@ func Gnm3(n, m int, rr *rand.Rand) Undirected {
 	return Undirected{a}
 }
 
-// Gnp constructs a random simple undirected graph.
+// Gnm3Directed constructs a random simple directed graph.
+//
+// Construction is by the Erdős–Rényi model where the specified number of
+// distinct arcs is selected from all possible arcs with equal probability.
+//
+// Argument n is number of nodes, ma is number of arcs and must be <= n(n-1).
+//
+// If Rand r is nil, the rand package default shared source is used.
+//
+// In the generated arc list for each node, to-nodes are ordered.
+// Consider using ShuffleArcLists if random order is important.
+//
+// See also GnmDirected, a method producing a statistically equivalent result,
+// but by an algorithm with somewhat different performance properties.
+// Performance of the two methods is expected to be similar in most cases
+// but it may be worth trying both with your data to see if one has a clear
+// advantage.
+func Gnm3Directed(n, ma int, rr *rand.Rand) Directed {
+	// based on Alg. 3 from "Efficient Generation of Large Random Networks",
+	// Vladimir Batagelj and Ulrik Brandes.
+	// accessed at http://algo.uni-konstanz.de/publications/bb-eglrn-05.pdf
+	ri := rand.Intn
+	if rr != nil {
+		ri = rr.Intn
+	}
+	a := make(AdjacencyList, n)
+	re := n * (n - 1)
+	rm := map[int]int{}
+	for i := 0; i < ma; i++ {
+		er := i + ri(re-i)
+		eNew := er
+		if rp, ok := rm[er]; ok {
+			eNew = rp
+		}
+		if rp, ok := rm[i]; !ok {
+			rm[er] = i
+		} else {
+			rm[er] = rp
+		}
+		v := eNew / (n - 1)
+		w := eNew % (n - 1)
+		if w >= v {
+			w++
+		}
+		a[v] = append(a[v], NI(w))
+	}
+	return Directed{a}
+}
+
+// GnpUndirected constructs a random simple undirected graph.
 //
 // Construction is by the Gilbert model, an Erdős–Rényi like model where
 // distinct edges are independently selected from all possible edges with
@@ -450,7 +562,7 @@ func Gnm3(n, m int, rr *rand.Rand) Undirected {
 //
 // In the generated arc list for each node, to-nodes are ordered.
 // Consider using ShuffleArcLists if random order is important.
-func Gnp(n int, p float64, rr *rand.Rand) Undirected {
+func GnpUndirected(n int, p float64, rr *rand.Rand) Undirected {
 	a := make(AdjacencyList, n)
 	if n < 2 {
 		return Undirected{a}
@@ -470,7 +582,7 @@ g:
 			if w < v {
 				a[v] = append(a[v], w)
 				a[w] = append(a[w], v)
-				break
+				continue g
 			}
 			w -= v
 			v++
@@ -480,4 +592,49 @@ g:
 		}
 	}
 	return Undirected{a}
+}
+
+// GnpDirected constructs a random simple directed graph.
+//
+// Construction is by the Gilbert model, an Erdős–Rényi like model where
+// distinct arcs are independently selected from all possible arcs with
+// the specified probability.
+//
+// Argument n is number of nodes, p is probability for selecting an arc.
+//
+// If Rand r is nil, the rand package default shared source is used.
+//
+// In the generated arc list for each node, to-nodes are ordered.
+// Consider using ShuffleArcLists if random order is important.
+func GnpDirected(n int, p float64, rr *rand.Rand) Directed {
+	a := make(AdjacencyList, n)
+	if n < 2 {
+		return Directed{a}
+	}
+	rf := rand.Float64
+	if rr != nil {
+		rf = rr.Float64
+	}
+	// based on Alg. 1 from "Efficient Generation of Large Random Networks",
+	// Vladimir Batagelj and Ulrik Brandes.
+	// accessed at http://algo.uni-konstanz.de/publications/bb-eglrn-05.pdf
+	var v, w NI = 0, -1
+g:
+	for c := 1 / math.Log(1-p); ; {
+		w += 1 + NI(c*math.Log(1-rf()))
+		for ; ; w -= NI(n) {
+			if w == v {
+				w++
+			}
+			if w < NI(n) {
+				a[v] = append(a[v], w)
+				continue g
+			}
+			v++
+			if v == NI(n) {
+				break g
+			}
+		}
+	}
+	return Directed{a}
 }
