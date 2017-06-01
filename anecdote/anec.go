@@ -1,3 +1,6 @@
+// Copyright 2014 Sonia Keys
+// License MIT: http://opensource.org/licenses/MIT
+
 package main
 
 import (
