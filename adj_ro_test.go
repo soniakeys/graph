@@ -485,6 +485,25 @@ func ExampleAdjacencyList_ParallelArcs() {
 	// [1]
 }
 
+func ExampleAdjacencyList_Permute() {
+	//    0                             2
+	//   / \   Permute([2 0 1]) gives  / \
+	//  1-->2                         0-->1
+	g := graph.AdjacencyList{
+		0: {1, 2},
+		1: {2},
+		2: {},
+	}
+	g.Permute([]int{2, 0, 1})
+	for fr, to := range g {
+		fmt.Println(fr, to)
+	}
+	// Output:
+	// 0 [1]
+	// 1 []
+	// 2 [0 1]
+}
+
 // not much of a test.  doesn't actually test that shuffle did anything,
 // does a bunch of unrelated stuff.  It at least tests that shuffle doesn't
 // corrupt the graph.

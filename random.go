@@ -641,8 +641,12 @@ g:
 
 // ChungLu constructs a random simple undirected graph.
 //
-// Argument w is a "weight" or expected degree for each node.  The values
-// of w must be in decreasing order.
+// Argument w is a "weight," an expected or approximate degree for each node.
+// The values of w must be in decreasing order.
+//
+// The constructed graph will have node 0 with expected degree w[0] and so on
+// so degree will decrease with node number.  To randomize degree across
+// node numbers, consider using the Permute method with a rand.Perm.
 //
 // If Rand r is nil, the rand package default shared source is used.
 func ChungLu(w []float64, rr *rand.Rand) Undirected {

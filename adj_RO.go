@@ -389,6 +389,28 @@ func (g AdjacencyList) ParallelArcs(fr, to NI) (p []int) {
 	return
 }
 
+// Permute permutes the node labeling of receiver g.
+//
+// Argument p must be a permutation of the node numbers of the graph,
+// 0 through len(g)-1.  A permutation returned by rand.Perm(len(g)) for
+// example is acceptable.
+//
+// The graph is permuted in place.  The graph keeps the same underlying
+// memory but values of the graph representation are permuted to produce
+// an isomorphic graph.  The node previously labeled 0 becomes p[0] and so on.
+// See example (or the code) for clarification.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g AdjacencyList) Permute(p []int) {
+	old := append(AdjacencyList{}, g...) // shallow copy
+	for fr, arcs := range old {
+		for i, to := range arcs {
+			arcs[i] = NI(p[to])
+		}
+		g[p[fr]] = arcs
+	}
+}
+
 // ShuffleArcLists shuffles the arc lists of each node of receiver g.
 //
 // For example a node with arcs leading to nodes 3 and 7 might have an
