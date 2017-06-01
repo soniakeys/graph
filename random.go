@@ -638,3 +638,49 @@ g:
 	}
 	return Directed{a}
 }
+
+// ChungLu constructs a random simple undirected graph.
+//
+// Argument w is a "weight" or expected degree for each node.  The values
+// of w must be in decreasing order.
+//
+// If Rand r is nil, the rand package default shared source is used.
+func ChungLu(w []float64, rr *rand.Rand) Undirected {
+	// Ref: "Efficient Generation of Networks with Given Expected Degrees"
+	// Joel C. Miller and Aric Hagberg
+	// accessed at http://aric.hagberg.org/papers/miller-2011-efficient.pdf
+	rf := rand.Float64
+	if rr != nil {
+		rf = rr.Float64
+	}
+	a := make(AdjacencyList, len(w))
+	S := 0.
+	for i := len(w) - 1; i >= 0; i-- {
+		S += w[i]
+	}
+	for u := 0; u < len(w)-1; u++ {
+		v := u + 1
+		p := w[u] * w[v] / S
+		if p > 1 {
+			p = 1
+		}
+		for v < len(w) && p > 0 {
+			if p != 1 {
+				v += int(math.Log(rf()) / math.Log(1-p))
+			}
+			if v < len(w) {
+				q := w[u] * w[v] / S
+				if q > 1 {
+					q = 1
+				}
+				if rf() < q/p {
+					a[u] = append(a[u], NI(v))
+					a[v] = append(a[v], NI(u))
+				}
+				p = q
+				v++
+			}
+		}
+	}
+	return Undirected{a}
+}

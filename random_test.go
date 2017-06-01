@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/soniakeys/graph"
 )
@@ -305,5 +306,16 @@ func TestGnpDirected(t *testing.T) {
 	u := graph.GnpDirected(15, .4, nil)
 	if ok, _ := u.IsSimple(); !ok {
 		t.Fatal("GnpDirected returned non-simple graph")
+	}
+}
+
+func TestChungLu(t *testing.T) {
+	w := make([]float64, 15)
+	for i := range w {
+		w[i] = (15 - float64(i)) * .8
+	}
+	u := graph.ChungLu(w, rand.New(rand.NewSource(time.Now().UnixNano())))
+	if ok, _ := u.IsSimple(); !ok {
+		t.Fatal("ChungLu returned non-simple graph")
 	}
 }

@@ -15,12 +15,11 @@ func main() {
 	fmt.Println("(arcs/edges lists arcs for directed graphs, edges for undirected)")
 	fmt.Println("Graph type           nodes  arcs/edges           time")
 	for _, tc := range []func() (string, int, int){
+		ChungLuSmall, ChungLuLarge,
 		EucSmall, EucLarge,
 		GeoSmall, GeoLarge,
-		GnpDSmall, GnpDLarge,
-		GnpUSmall, GnpULarge,
-		GnmDSmall, GnmDLarge,
-		GnmUSmall, GnmULarge,
+		GnpDSmall, GnpDLarge, GnpUSmall, GnpULarge,
+		GnmDSmall, GnmDLarge, GnmUSmall, GnmULarge,
 		KronDSmall, KronDLarge, KronUSmall, KronULarge,
 	} {
 		t := time.Now()
@@ -229,4 +228,32 @@ func GeoLarge() (string, int, int) {
 	geoLarge, _, m = graph.Geometric(n, .01, nil)
 	geoLargeTag = fmt.Sprint("Geom ", n, "nds")
 	return "Geometric", n, m
+}
+
+var chungLuSmall graph.Undirected
+var chungLuSmallTag string
+
+func ChungLuSmall() (string, int, int) {
+	const n = 1e4
+	w := make([]float64, n)
+	for i := range w {
+		w[i] = 5 + 10*float64(n-i)/float64(n)
+	}
+	chungLuSmall = graph.ChungLu(w, nil)
+	chungLuSmallTag = fmt.Sprint("ChungLu ", n, "nds")
+	return "ChungLu", n, chungLuSmall.ArcSize() / 2
+}
+
+var chungLuLarge graph.Undirected
+var chungLuLargeTag string
+
+func ChungLuLarge() (string, int, int) {
+	const n = 2e5
+	w := make([]float64, n)
+	for i := range w {
+		w[i] = 2 + 50*n/float64(i+1)
+	}
+	chungLuSmall = graph.ChungLu(w, nil)
+	chungLuSmallTag = fmt.Sprint("ChungLu ", n, "nds")
+	return "ChungLu", n, chungLuSmall.ArcSize() / 2
 }
