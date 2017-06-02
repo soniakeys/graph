@@ -317,23 +317,24 @@ func (g LabeledUndirected) BronKerbosch3(pivot func(P, X *Bits) NI, emit func([]
 // ConnectedComponentBits returns a function that iterates over connected
 // components of g, returning a member bitmap for each.
 //
-// Each call of the returned function returns the order (number of nodes)
+// Each call of the returned function returns the order, arc size,
 // and bits of a connected component.  The returned function returns zeros
 // after returning all connected components.
 //
 // There are equivalent labeled and unlabeled versions of this method.
 //
 // See also ConnectedComponentReps, which has lighter weight return values.
-func (g LabeledUndirected) ConnectedComponentBits() func() (order int, bits Bits) {
+func (g LabeledUndirected) ConnectedComponentBits() func() (order, arcSize int, bits Bits) {
 	a := g.LabeledAdjacencyList
 	var vg Bits  // nodes visited in graph
 	var vc *Bits // nodes visited in current component
-	var nc int
+	var order, arcSize int
 	var df func(NI)
 	df = func(n NI) {
 		vg.SetBit(n, 1)
 		vc.SetBit(n, 1)
-		nc++
+		order++
+		arcSize += len(a[n])
 		for _, nb := range a[n] {
 			if vg.Bit(nb.To) == 0 {
 				df(nb.To)
@@ -342,16 +343,16 @@ func (g LabeledUndirected) ConnectedComponentBits() func() (order int, bits Bits
 		return
 	}
 	var n NI
-	return func() (o int, bits Bits) {
+	return func() (o, s int, bits Bits) {
 		for ; n < NI(len(a)); n++ {
 			if vg.Bit(n) == 0 {
 				vc = &bits
-				nc = 0
+				order, arcSize = 0, 0
 				df(n)
-				return nc, bits
+				return order, arcSize, bits
 			}
 		}
-		return
+		return // return zeros signalling no more components
 	}
 }
 
@@ -359,20 +360,22 @@ func (g LabeledUndirected) ConnectedComponentBits() func() (order int, bits Bits
 // components of g, returning the member list of each.
 //
 // Each call of the returned function returns a node list of a connected
-// component.  The returned function returns nil after returning all connected
-// components.
+// component and the arc size of the component.  The returned function returns
+// nil, 0 after returning all connected components.
 //
 // There are equivalent labeled and unlabeled versions of this method.
 //
 // See also ConnectedComponentReps, which has lighter weight return values.
-func (g LabeledUndirected) ConnectedComponentLists() func() []NI {
+func (g LabeledUndirected) ConnectedComponentLists() func() (nodes []NI, arcSize int) {
 	a := g.LabeledAdjacencyList
 	var vg Bits // nodes visited in graph
-	var m []NI  // members of current component
+	var l []NI  // accumulated node list of current component
+	var ma int  // accumulated arc size of current component
 	var df func(NI)
 	df = func(n NI) {
 		vg.SetBit(n, 1)
-		m = append(m, n)
+		l = append(l, n)
+		ma += len(a[n])
 		for _, nb := range a[n] {
 			if vg.Bit(nb.To) == 0 {
 				df(nb.To)
@@ -381,15 +384,15 @@ func (g LabeledUndirected) ConnectedComponentLists() func() []NI {
 		return
 	}
 	var n NI
-	return func() []NI {
+	return func() ([]NI, int) {
 		for ; n < NI(len(a)); n++ {
 			if vg.Bit(n) == 0 {
-				m = nil
+				l, ma = nil, 0
 				df(n)
-				return m
+				return l, ma
 			}
 		}
-		return nil
+		return nil, 0
 	}
 }
 
@@ -397,8 +400,8 @@ func (g LabeledUndirected) ConnectedComponentLists() func() []NI {
 // component of g.
 //
 // Returned is a slice with a single representative node from each connected
-// component and also a parallel slice with the order, or number of nodes,
-// in the corresponding component.
+// component and also parallel slices with the orders and arc sizes
+// in the corresponding components.
 //
 // This is fairly minimal information describing connected components.
 // From a representative node, other nodes in the component can be reached
@@ -409,14 +412,15 @@ func (g LabeledUndirected) ConnectedComponentLists() func() []NI {
 // See also ConnectedComponentBits and ConnectedComponentLists which can
 // collect component members in a single traversal, and IsConnected which
 // is an even simpler boolean test.
-func (g LabeledUndirected) ConnectedComponentReps() (reps []NI, orders []int) {
+func (g LabeledUndirected) ConnectedComponentReps() (reps []NI, orders, arcSizes []int) {
 	a := g.LabeledAdjacencyList
 	var c Bits
-	var o int
+	var o, ma int
 	var df func(NI)
 	df = func(n NI) {
 		c.SetBit(n, 1)
 		o++
+		ma += len(a[n])
 		for _, nb := range a[n] {
 			if c.Bit(nb.To) == 0 {
 				df(nb.To)
@@ -426,10 +430,11 @@ func (g LabeledUndirected) ConnectedComponentReps() (reps []NI, orders []int) {
 	}
 	for n := range a {
 		if c.Bit(NI(n)) == 0 {
-			reps = append(reps, NI(n))
-			o = 0
+			o, ma = 0, 0
 			df(NI(n))
+			reps = append(reps, NI(n))
 			orders = append(orders, o)
+			arcSizes = append(arcSizes, ma)
 		}
 	}
 	return

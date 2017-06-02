@@ -182,7 +182,7 @@ func ExampleLabeledUndirected_Prim() {
 	w := func(arcLabel graph.LI) float64 { return float64(arcLabel) }
 
 	// get connected components
-	reps, orders := g.ConnectedComponentReps()
+	reps, orders, _ := g.ConnectedComponentReps()
 	fmt.Println(len(reps), "connected components:")
 	fmt.Println("Representative node  Order (number of nodes in component)")
 	for i, r := range reps {
@@ -245,7 +245,7 @@ func ExampleLabeledUndirected_Prim() {
 func TestPrim100(t *testing.T) {
 	r100 := r(100, 200, 62)
 	u100 := r100.l.Undirected()
-	reps, orders := u100.ConnectedComponentReps()
+	reps, orders, _ := u100.ConnectedComponentReps()
 	w := func(l graph.LI) float64 { return r100.w[l] }
 	var f graph.FromList
 	// construct spanning tree for each component

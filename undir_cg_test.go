@@ -185,17 +185,21 @@ func ExampleLabeledUndirected_ConnectedComponentBits() {
 	g.AddEdge(graph.Edge{3, 4}, 0)
 	g.AddEdge(graph.Edge{1, 5}, 0)
 	f := g.ConnectedComponentBits()
-	fmt.Println("o  543210")
-	fmt.Println("-  ------")
-	for o, b := f(); o > 0; o, b = f() {
-		fmt.Printf("%d  %0*b\n", o, g.Order(), &b)
+	fmt.Println("n  ma  543210")
+	fmt.Println("-  --  ------")
+	for {
+		n, ma, b := f()
+		if n == 0 {
+			break
+		}
+		fmt.Printf("%d  %2d  %0*b\n", n, ma, g.Order(), &b)
 	}
 	// Output:
-	// o  543210
-	// -  ------
-	// 3  011001
-	// 2  100010
-	// 1  000100
+	// n  ma  543210
+	// -  --  ------
+	// 3   6  011001
+	// 2   2  100010
+	// 1   0  000100
 }
 
 func ExampleLabeledUndirected_ConnectedComponentLists() {
@@ -208,13 +212,17 @@ func ExampleLabeledUndirected_ConnectedComponentLists() {
 	g.AddEdge(graph.Edge{3, 4}, 0)
 	g.AddEdge(graph.Edge{1, 5}, 0)
 	f := g.ConnectedComponentLists()
-	for l := f(); l != nil; l = f() {
-		fmt.Println(l)
+	for {
+		l, ma := f()
+		if l == nil {
+			break
+		}
+		fmt.Println(l, ma)
 	}
 	// Output:
-	// [0 3 4]
-	// [1 5]
-	// [2]
+	// [0 3 4] 6
+	// [1 5] 2
+	// [2] 0
 }
 
 func ExampleLabeledUndirected_ConnectedComponentReps() {
@@ -226,52 +234,14 @@ func ExampleLabeledUndirected_ConnectedComponentReps() {
 	g.AddEdge(graph.Edge{0, 4}, 0)
 	g.AddEdge(graph.Edge{3, 4}, 0)
 	g.AddEdge(graph.Edge{1, 5}, 0)
-	fmt.Println(g.ConnectedComponentReps())
+	reps, orders, arcSizes := g.ConnectedComponentReps()
+	fmt.Println("reps:    ", reps)
+	fmt.Println("orders:  ", orders)
+	fmt.Println("arcSizes:", arcSizes)
 	// Output:
-	// [0 1 2] [3 2 1]
-}
-
-func ExampleLabeledUndirected_ConnectedComponentReps_collectingBits() {
-	var g graph.LabeledUndirected
-	g.AddEdge(graph.Edge{0, 3}, 0)
-	g.AddEdge(graph.Edge{0, 4}, 0)
-	g.AddEdge(graph.Edge{3, 4}, 0)
-	g.AddEdge(graph.Edge{1, 5}, 0)
-	rep, order := g.ConnectedComponentReps()
-	fmt.Println("543210  rep  order")
-	fmt.Println("------  ---  -----")
-	for i, r := range rep {
-		var bits graph.Bits
-		g.DepthFirst(r, &bits, nil)
-		fmt.Printf("%0*b   %d     %d\n", g.Order(), &bits, r, order[i])
-	}
-	// Output:
-	// 543210  rep  order
-	// ------  ---  -----
-	// 011001   0     3
-	// 100010   1     2
-	// 000100   2     1
-}
-
-func ExampleLabeledUndirected_ConnectedComponentReps_collectingLists() {
-	var g graph.LabeledUndirected
-	g.AddEdge(graph.Edge{0, 3}, 0)
-	g.AddEdge(graph.Edge{0, 4}, 0)
-	g.AddEdge(graph.Edge{3, 4}, 0)
-	g.AddEdge(graph.Edge{1, 5}, 0)
-	rep, _ := g.ConnectedComponentReps()
-	for _, r := range rep {
-		var m []graph.NI
-		g.DepthFirst(r, nil, func(n graph.NI) bool {
-			m = append(m, n)
-			return true
-		})
-		fmt.Println(m)
-	}
-	// Output:
-	// [0 3 4]
-	// [1 5]
-	// [2]
+	// reps:     [0 1 2]
+	// orders:   [3 2 1]
+	// arcSizes: [6 2 0]
 }
 
 func ExampleLabeledUndirected_Degeneracy() {
