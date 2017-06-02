@@ -9,6 +9,60 @@ import (
 	"github.com/soniakeys/graph"
 )
 
+var chungLuSmall graph.Undirected
+var chungLuSmallTag string
+
+func ChungLuSmall() (string, int, int) {
+	const n = 1e4
+	w := make([]float64, n)
+	for i := range w {
+		w[i] = 5 + 10*float64(n-i)/float64(n)
+	}
+	chungLuSmall = graph.ChungLu(w, nil)
+	chungLuSmallTag = "ChungLu " + h(n) + " nds"
+	return "Chung Lu (undirected)", n, chungLuSmall.ArcSize() / 2
+}
+
+var chungLuLarge graph.Undirected
+var chungLuLargeTag string
+
+func ChungLuLarge() (string, int, int) {
+	const n = 2e5
+	w := make([]float64, n)
+	for i := range w {
+		w[i] = 2 + 50*n/float64(i+1)
+	}
+	chungLuLarge = graph.ChungLu(w, nil)
+	chungLuLargeTag = "ChungLu " + h(n) + " nds"
+	return "Chung Lu (undirected)", n, chungLuLarge.ArcSize() / 2
+}
+
+var geoSmall graph.LabeledUndirected
+var geoSmallPos []struct{ X, Y float64 }
+var geoSmallWt []float64
+var geoSmallWtFunc = func(n graph.LI) float64 { return geoSmallWt[n] }
+var geoSmallTag string
+
+func GeoSmall() (string, int, int) {
+	const n = 1000
+	geoSmall, geoSmallPos, geoSmallWt = graph.LabeledGeometric(n, .1, nil)
+	geoSmallTag = "Geometric " + h(n) + " nds"
+	return "Geometric (undirected)", n, len(geoSmallWt)
+}
+
+var geoLarge graph.LabeledUndirected
+var geoLargePos []struct{ X, Y float64 }
+var geoLargeWt []float64
+var geoLargeWtFunc = func(n graph.LI) float64 { return geoLargeWt[n] }
+var geoLargeTag string
+
+func GeoLarge() (string, int, int) {
+	const n = 3e4
+	geoLarge, geoLargePos, geoLargeWt = graph.LabeledGeometric(n, .01, nil)
+	geoLargeTag = "Geometric " + h(n) + " nds"
+	return "Geometric (undirected)", n, len(geoLargeWt)
+}
+
 var gnpUSmall graph.Undirected
 var gnpUSmallTag string
 
@@ -51,14 +105,14 @@ func GnmULarge() (string, int, int) {
 	return "Gnm undirected", n, m
 }
 
-func Gnm3Small() (string, int, int) {
+func Gnm3USmall() (string, int, int) {
 	const n = 1000
 	const m = 100e3
 	graph.Gnm3Undirected(n, m, nil)
 	return "Gnm3 undirected", n, m
 }
 
-func Gnm3Large() (string, int, int) {
+func Gnm3ULarge() (string, int, int) {
 	const n = 20e3
 	const m = 20e6
 	graph.Gnm3Undirected(n, m, nil)
@@ -118,8 +172,8 @@ func EucSmall() (string, int, int) {
 	if err != nil {
 		return "nope", n, ma
 	}
-	eucSmallTag = "Euclidean "+h(n)+" nds"
-	return "Euclidean", n, ma
+	eucSmallTag = "Euclidean " + h(n) + " nds"
+	return "Euclidean (directed)", n, ma
 }
 
 var eucLarge graph.Directed
@@ -133,8 +187,8 @@ func EucLarge() (string, int, int) {
 	if err != nil {
 		return "nope", n, ma
 	}
-	eucLargeTag = "Euclidean "+h(n)+" nds"
-	return "Euclidean", n, ma
+	eucLargeTag = "Euclidean " + h(n) + " nds"
+	return "Euclidean (directed)", n, ma
 }
 
 var kronDSmall graph.Directed
@@ -171,54 +225,4 @@ func KronULarge() (string, int, int) {
 	kronULarge, m := graph.KroneckerUndirected(17, 21, nil)
 	kronULargeTag = fmt.Sprint("Kron ", kronULarge.Order(), "nds")
 	return "Kronecker undirected", kronULarge.Order(), m
-}
-
-var geoSmall graph.Undirected
-var geoSmallTag string
-
-func GeoSmall() (string, int, int) {
-	const n = 1000
-	var m int
-	geoSmall, _, m = graph.Geometric(n, .1, nil)
-	geoSmallTag = fmt.Sprint("Geom ", n, "nds")
-	return "Geometric", n, m
-}
-
-var geoLarge graph.Undirected
-var geoLargeTag string
-
-func GeoLarge() (string, int, int) {
-	const n = 3e4
-	var m int
-	geoLarge, _, m = graph.Geometric(n, .01, nil)
-	geoLargeTag = fmt.Sprint("Geom ", n, "nds")
-	return "Geometric", n, m
-}
-
-var chungLuSmall graph.Undirected
-var chungLuSmallTag string
-
-func ChungLuSmall() (string, int, int) {
-	const n = 1e4
-	w := make([]float64, n)
-	for i := range w {
-		w[i] = 5 + 10*float64(n-i)/float64(n)
-	}
-	chungLuSmall = graph.ChungLu(w, nil)
-	chungLuSmallTag = "ChungLu " + h(n) + " nds"
-	return "ChungLu", n, chungLuSmall.ArcSize() / 2
-}
-
-var chungLuLarge graph.Undirected
-var chungLuLargeTag string
-
-func ChungLuLarge() (string, int, int) {
-	const n = 2e5
-	w := make([]float64, n)
-	for i := range w {
-		w[i] = 2 + 50*n/float64(i+1)
-	}
-	chungLuLarge = graph.ChungLu(w, nil)
-	chungLuLargeTag = "ChungLu " + h(n) + " nds"
-	return "ChungLu", n, chungLuLarge.ArcSize() / 2
 }

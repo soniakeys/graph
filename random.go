@@ -9,6 +9,60 @@ import (
 	"math/rand"
 )
 
+// ChungLu constructs a random simple undirected graph.
+//
+// The Chung Lu model is similar to a "configuration model" where each
+// node has a specified degree.  In the Chung Lu model the degree specified
+// for each node is taken as an expected degree, not an exact degree.
+//
+// Argument w is "weight," the expected degree for each node.
+// The values of w must be given in decreasing order.
+//
+// The constructed graph will have node 0 with expected degree w[0] and so on
+// so degree will decrease with node number.  To randomize degree across
+// node numbers, consider using the Permute method with a rand.Perm.
+//
+// If Rand r is nil, the rand package default shared source is used.
+func ChungLu(w []float64, rr *rand.Rand) Undirected {
+	// Ref: "Efficient Generation of Networks with Given Expected Degrees"
+	// Joel C. Miller and Aric Hagberg
+	// accessed at http://aric.hagberg.org/papers/miller-2011-efficient.pdf
+	rf := rand.Float64
+	if rr != nil {
+		rf = rr.Float64
+	}
+	a := make(AdjacencyList, len(w))
+	S := 0.
+	for i := len(w) - 1; i >= 0; i-- {
+		S += w[i]
+	}
+	for u := 0; u < len(w)-1; u++ {
+		v := u + 1
+		p := w[u] * w[v] / S
+		if p > 1 {
+			p = 1
+		}
+		for v < len(w) && p > 0 {
+			if p != 1 {
+				v += int(math.Log(rf()) / math.Log(1-p))
+			}
+			if v < len(w) {
+				q := w[u] * w[v] / S
+				if q > 1 {
+					q = 1
+				}
+				if rf() < q/p {
+					a[u] = append(a[u], NI(v))
+					a[v] = append(a[v], NI(u))
+				}
+				p = q
+				v++
+			}
+		}
+	}
+	return Undirected{a}
+}
+
 // Euclidean generates a random simple graph on the Euclidean plane.
 //
 // Nodes are associated with coordinates uniformly distributed on a unit
@@ -228,114 +282,6 @@ func LabeledGeometric(nNodes int, radius float64, rr *rand.Rand) (g LabeledUndir
 	return
 }
 
-// KroneckerDirected generates a Kronecker-like random directed graph.
-//
-// The returned graph g is simple and has no isolated nodes but is not
-// necessarily fully connected.  The number of of nodes will be <= 2^scale,
-// and will be near 2^scale for typical values of arcFactor, >= 2.
-// ArcFactor * 2^scale arcs are generated, although loops and duplicate arcs
-// are rejected.  In the arc list for each node, to-nodes are in random
-// order.
-//
-// If Rand r is nil, the rand package default shared source is used.
-//
-// Return value ma is the number of arcs retained in the result graph.
-func KroneckerDirected(scale uint, arcFactor float64, rr *rand.Rand) (g Directed, ma int) {
-	a, m := kronecker(scale, arcFactor, true, rr)
-	return Directed{a}, m
-}
-
-// KroneckerUndirected generates a Kronecker-like random undirected graph.
-//
-// The returned graph g is simple and has no isolated nodes but is not
-// necessarily fully connected.  The number of of nodes will be <= 2^scale,
-// and will be near 2^scale for typical values of edgeFactor, >= 2.
-// EdgeFactor * 2^scale edges are generated, although loops and duplicate edges
-// are rejected.  In the arc list for each node, to-nodes are in random
-// order.
-//
-// If Rand r is nil, the rand package default shared source is used.
-//
-// Return value m is the true number of edges--not arcs--retained in the result
-// graph.
-func KroneckerUndirected(scale uint, edgeFactor float64, rr *rand.Rand) (g Undirected, m int) {
-	al, s := kronecker(scale, edgeFactor, false, rr)
-	return Undirected{al}, s
-}
-
-// Styled after the Graph500 example code.  Not well tested currently.
-// Graph500 example generates undirected only.  No idea if the directed variant
-// here is meaningful or not.
-//
-// note mma returns arc size ma for dir=true, but returns size m for dir=false
-func kronecker(scale uint, edgeFactor float64, dir bool, rr *rand.Rand) (g AdjacencyList, mma int) {
-	rf, ri, rp := rand.Float64, rand.Intn, rand.Perm
-	if rr != nil {
-		rf, ri, rp = rr.Float64, rr.Intn, rr.Perm
-	}
-	N := NI(1 << scale)                  // node extent
-	M := int(edgeFactor*float64(N) + .5) // number of arcs/edges to generate
-	a, b, c := 0.57, 0.19, 0.19          // initiator probabilities
-	ab := a + b
-	cNorm := c / (1 - ab)
-	aNorm := a / ab
-	ij := make([][2]NI, M)
-	var bm Bits
-	var nNodes int
-	for k := range ij {
-		var i, j NI
-		for b := NI(1); b < N; b <<= 1 {
-			if rf() > ab {
-				i |= b
-				if rf() > cNorm {
-					j |= b
-				}
-			} else if rf() > aNorm {
-				j |= b
-			}
-		}
-		if bm.Bit(i) == 0 {
-			bm.SetBit(i, 1)
-			nNodes++
-		}
-		if bm.Bit(j) == 0 {
-			bm.SetBit(j, 1)
-			nNodes++
-		}
-		r := ri(k + 1) // shuffle edges as they are generated
-		ij[k] = ij[r]
-		ij[r] = [2]NI{i, j}
-	}
-	p := rp(nNodes) // mapping to shuffle IDs of non-isolated nodes
-	px := 0
-	rn := make([]NI, N)
-	for i := range rn {
-		if bm.Bit(NI(i)) == 1 {
-			rn[i] = NI(p[px]) // fill lookup table
-			px++
-		}
-	}
-	g = make(AdjacencyList, nNodes)
-ij:
-	for _, e := range ij {
-		if e[0] == e[1] {
-			continue // skip loops
-		}
-		ri, rj := rn[e[0]], rn[e[1]]
-		for _, nb := range g[ri] {
-			if nb == rj {
-				continue ij // skip parallel edges
-			}
-		}
-		g[ri] = append(g[ri], rj)
-		mma++
-		if !dir {
-			g[rj] = append(g[rj], ri)
-		}
-	}
-	return
-}
-
 // GnmUndirected constructs a random simple undirected graph.
 //
 // Construction is by the Erdős–Rényi model where the specified number of
@@ -475,6 +421,9 @@ func Gnm3Undirected(n, m int, rr *rand.Rand) Undirected {
 	// based on Alg. 3 from "Efficient Generation of Large Random Networks",
 	// Vladimir Batagelj and Ulrik Brandes.
 	// accessed at http://algo.uni-konstanz.de/publications/bb-eglrn-05.pdf
+	//
+	// I like this algorithm for its elegance.  Pitty it tends to run a
+	// a little slower than the retry algorithm of Gnm.
 	ri := rand.Intn
 	if rr != nil {
 		ri = rr.Intn
@@ -639,52 +588,110 @@ g:
 	return Directed{a}
 }
 
-// ChungLu constructs a random simple undirected graph.
+// KroneckerDirected generates a Kronecker-like random directed graph.
 //
-// Argument w is a "weight," an expected or approximate degree for each node.
-// The values of w must be in decreasing order.
-//
-// The constructed graph will have node 0 with expected degree w[0] and so on
-// so degree will decrease with node number.  To randomize degree across
-// node numbers, consider using the Permute method with a rand.Perm.
+// The returned graph g is simple and has no isolated nodes but is not
+// necessarily fully connected.  The number of of nodes will be <= 2^scale,
+// and will be near 2^scale for typical values of arcFactor, >= 2.
+// ArcFactor * 2^scale arcs are generated, although loops and duplicate arcs
+// are rejected.  In the arc list for each node, to-nodes are in random
+// order.
 //
 // If Rand r is nil, the rand package default shared source is used.
-func ChungLu(w []float64, rr *rand.Rand) Undirected {
-	// Ref: "Efficient Generation of Networks with Given Expected Degrees"
-	// Joel C. Miller and Aric Hagberg
-	// accessed at http://aric.hagberg.org/papers/miller-2011-efficient.pdf
-	rf := rand.Float64
+//
+// Return value ma is the number of arcs retained in the result graph.
+func KroneckerDirected(scale uint, arcFactor float64, rr *rand.Rand) (g Directed, ma int) {
+	a, m := kronecker(scale, arcFactor, true, rr)
+	return Directed{a}, m
+}
+
+// KroneckerUndirected generates a Kronecker-like random undirected graph.
+//
+// The returned graph g is simple and has no isolated nodes but is not
+// necessarily fully connected.  The number of of nodes will be <= 2^scale,
+// and will be near 2^scale for typical values of edgeFactor, >= 2.
+// EdgeFactor * 2^scale edges are generated, although loops and duplicate edges
+// are rejected.  In the arc list for each node, to-nodes are in random
+// order.
+//
+// If Rand r is nil, the rand package default shared source is used.
+//
+// Return value m is the true number of edges--not arcs--retained in the result
+// graph.
+func KroneckerUndirected(scale uint, edgeFactor float64, rr *rand.Rand) (g Undirected, m int) {
+	al, s := kronecker(scale, edgeFactor, false, rr)
+	return Undirected{al}, s
+}
+
+// Styled after the Graph500 example code.  Not well tested currently.
+// Graph500 example generates undirected only.  No idea if the directed variant
+// here is meaningful or not.
+//
+// note mma returns arc size ma for dir=true, but returns size m for dir=false
+func kronecker(scale uint, edgeFactor float64, dir bool, rr *rand.Rand) (g AdjacencyList, mma int) {
+	rf, ri, rp := rand.Float64, rand.Intn, rand.Perm
 	if rr != nil {
-		rf = rr.Float64
+		rf, ri, rp = rr.Float64, rr.Intn, rr.Perm
 	}
-	a := make(AdjacencyList, len(w))
-	S := 0.
-	for i := len(w) - 1; i >= 0; i-- {
-		S += w[i]
-	}
-	for u := 0; u < len(w)-1; u++ {
-		v := u + 1
-		p := w[u] * w[v] / S
-		if p > 1 {
-			p = 1
-		}
-		for v < len(w) && p > 0 {
-			if p != 1 {
-				v += int(math.Log(rf()) / math.Log(1-p))
-			}
-			if v < len(w) {
-				q := w[u] * w[v] / S
-				if q > 1 {
-					q = 1
+	N := NI(1 << scale)                  // node extent
+	M := int(edgeFactor*float64(N) + .5) // number of arcs/edges to generate
+	a, b, c := 0.57, 0.19, 0.19          // initiator probabilities
+	ab := a + b
+	cNorm := c / (1 - ab)
+	aNorm := a / ab
+	ij := make([][2]NI, M)
+	var bm Bits
+	var nNodes int
+	for k := range ij {
+		var i, j NI
+		for b := NI(1); b < N; b <<= 1 {
+			if rf() > ab {
+				i |= b
+				if rf() > cNorm {
+					j |= b
 				}
-				if rf() < q/p {
-					a[u] = append(a[u], NI(v))
-					a[v] = append(a[v], NI(u))
-				}
-				p = q
-				v++
+			} else if rf() > aNorm {
+				j |= b
 			}
 		}
+		if bm.Bit(i) == 0 {
+			bm.SetBit(i, 1)
+			nNodes++
+		}
+		if bm.Bit(j) == 0 {
+			bm.SetBit(j, 1)
+			nNodes++
+		}
+		r := ri(k + 1) // shuffle edges as they are generated
+		ij[k] = ij[r]
+		ij[r] = [2]NI{i, j}
 	}
-	return Undirected{a}
+	p := rp(nNodes) // mapping to shuffle IDs of non-isolated nodes
+	px := 0
+	rn := make([]NI, N)
+	for i := range rn {
+		if bm.Bit(NI(i)) == 1 {
+			rn[i] = NI(p[px]) // fill lookup table
+			px++
+		}
+	}
+	g = make(AdjacencyList, nNodes)
+ij:
+	for _, e := range ij {
+		if e[0] == e[1] {
+			continue // skip loops
+		}
+		ri, rj := rn[e[0]], rn[e[1]]
+		for _, nb := range g[ri] {
+			if nb == rj {
+				continue ij // skip parallel edges
+			}
+		}
+		g[ri] = append(g[ri], rj)
+		mma++
+		if !dir {
+			g[rj] = append(g[rj], ri)
+		}
+	}
+	return
 }
