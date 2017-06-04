@@ -11,53 +11,6 @@ package graph
 
 import "errors"
 
-func (g Directed) SCCPearce(emit func([]NI)) {
-	a := g.AdjacencyList
-	rindex := make([]int, len(a))
-	var S []NI
-	index := 1
-	c := len(a) - 1
-	var visit func(NI)
-	visit = func(v NI) {
-		root := true
-		rindex[v] = index
-		index++
-		for _, w := range a[v] {
-			if rindex[w] == 0 {
-				visit(w)
-			}
-			if rindex[w] < rindex[v] {
-				rindex[v] = rindex[w]
-				root = false
-			}
-		}
-		if !root {
-			S = append(S, v)
-			return
-		}
-		var scc []NI
-		index--
-		for last := len(S) - 1; last >= 0; last-- {
-			w := S[last]
-			if rindex[v] > rindex[w] {
-				break
-			}
-			S = S[:last]
-			rindex[w] = c
-			scc = append(scc, w)
-			index--
-		}
-		rindex[v] = c
-		c--
-		emit(append(scc, v))
-	}
-	for v := range a {
-		if rindex[v] == 0 {
-			visit(NI(v))
-		}
-	}
-}
-
 // DAGMaxLenPath finds a maximum length path in a directed acyclic graph.
 //
 // Argument ordering must be a topological ordering of g.

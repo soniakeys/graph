@@ -307,6 +307,15 @@ func (g Directed) IsTree(root NI) (isTree, allTree bool) {
 	return isTree, isTree && v.Zero()
 }
 
+// SCCPathBased identifies strongly connected components in a directed graph
+// using a path-based algorithm.
+//
+// The method calls the emit argument for each component identified.  Each
+// component is a list of nodes.  The emit function must return true for the
+// method to continue identifying components.  If emit returns false, the
+// method returns immediately.
+//
+// There are equivalent labeled and unlabeled versions of this method.
 func (g Directed) SCCPathBased(emit func([]NI) bool) {
 	a := g.AdjacencyList
 	var S []NI
@@ -350,12 +359,77 @@ func (g Directed) SCCPathBased(emit func([]NI) bool) {
 	}
 }
 
+// SCCPearce identifies strongly connected components in a directed graph
+// using an algorithm by David Pearce.
+//
+// The method calls the emit argument for each component identified.  Each
+// component is a list of nodes.  The emit function must return true for the
+// method to continue identifying components.  If emit returns false, the
+// method returns immediately.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g Directed) SCCPearce(emit func([]NI) bool) {
+	// See Algorithm 3 PEA FIND SCC2(V,E) in "An Improved Algorithm for
+	// Finding the Strongly Connected Components of a Directed Graph"
+	// by David J. Pearce.
+	a := g.AdjacencyList
+	rindex := make([]int, len(a))
+	var S []NI
+	index := 1
+	c := len(a) - 1
+	var visit func(NI) bool
+	visit = func(v NI) bool {
+		root := true
+		rindex[v] = index
+		index++
+		for _, w := range a[v] {
+			if rindex[w] == 0 {
+				if !visit(w) {
+					return false
+				}
+			}
+			if rindex[w] < rindex[v] {
+				rindex[v] = rindex[w]
+				root = false
+			}
+		}
+		if !root {
+			S = append(S, v)
+			return true
+		}
+		var scc []NI
+		index--
+		for last := len(S) - 1; last >= 0; last-- {
+			w := S[last]
+			if rindex[v] > rindex[w] {
+				break
+			}
+			S = S[:last]
+			rindex[w] = c
+			scc = append(scc, w)
+			index--
+		}
+		rindex[v] = c
+		c--
+		return emit(append(scc, v))
+	}
+	for v := range a {
+		if rindex[v] == 0 && !visit(NI(v)) {
+			break
+		}
+	}
+}
+
 // SCCTarjan identifies strongly connected components in a directed graph using
 // Tarjan's algorithm.
 //
 // The method calls the emit argument for each component identified.  Each
-// component is a list of nodes.  A property of the algorithm is that
-// components are emitted in reverse topological order of the condensation.
+// component is a list of nodes.  The emit function must return true for the
+// method to continue identifying components.  If emit returns false, the
+// method returns immediately.
+//
+// A property of the algorithm is that components are emitted in reverse
+// topological order of the condensation.
 // (See https://en.wikipedia.org/wiki/Strongly_connected_component#Definitions
 // for description of condensation.)
 //
@@ -424,7 +498,7 @@ func (g Directed) SCCTarjan(emit func([]NI) bool) {
 // TarjanForward returns strongly connected components.
 //
 // It returns components in the reverse order of Tarjan, for situations
-// where a forward topological ordering is easier.
+// where a forward topological ordering is more convenient.
 func (g Directed) TarjanForward() [][]NI {
 	var r [][]NI
 	g.SCCTarjan(func(c []NI) bool {

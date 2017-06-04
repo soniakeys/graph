@@ -298,8 +298,9 @@ func ExampleDirected_SCCPearce() {
 		1: {2},
 		2: {3},
 	}}
-	g.SCCPearce(func(c []graph.NI) {
+	g.SCCPearce(func(c []graph.NI) bool {
 		fmt.Println(c)
+		return true
 	})
 	// Output:
 	// [3 1 2]
