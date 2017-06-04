@@ -3,7 +3,20 @@
 
 package main
 
-import "github.com/soniakeys/graph"
+func FloydEuc() (string, string) {
+	eucSmall.FloydWarshall(eucSmallWtFunc)
+	return "Floyd-Warshall", eucSmallTag
+}
+
+func FloydGeo() (string, string) {
+	geoSmall.FloydWarshall(geoSmallWtFunc)
+	return "Floyd-Warshall", geoSmallTag
+}
+
+func BellmanSmall() (string, string) {
+	eucSmall.BellmanFord(eucSmallWtFunc, eucSmallSCCRep)
+	return "Bellman-Ford", eucSmallSCCTag
+}
 
 func DijkstraAllSmall() (string, string) {
 	geoSmall.Dijkstra(0, -1, geoSmallWtFunc)
@@ -43,15 +56,4 @@ func AStarMSmall() (string, string) {
 func AStarMLarge() (string, string) {
 	geoLarge.AStarM(geoLargeWtFunc, 0, geoLargeEnd, geoLargeHeuristic)
 	return "AStarM", geoLargeTag
-}
-
-func FloydSmall() (string, string) {
-	geoSmall.FloydWarshall(geoSmallWtFunc)
-	return "Floyd-Warshall", geoSmallTag
-}
-
-func BellmanSmall() (string, string) {
-	d := graph.LabeledDirected{geoSmall.LabeledAdjacencyList}
-	d.BellmanFord(geoSmallWtFunc, 0)
-	return "Bellman-Ford", geoSmallTag
 }

@@ -18,7 +18,9 @@ func main() {
 	random()
 	prop()
 	trav()
+	allpairs()
 	sssp()
+	shortestone()
 }
 
 func h(n int) string {
@@ -39,15 +41,15 @@ func h(n int) string {
 func random() {
 	fmt.Println("\nRandom graph generation")
 	fmt.Println("(arcs/edges lists arcs for directed graphs, edges for undirected)")
-	fmt.Println("Graph type                nodes  arcs/edges           time")
+	fmt.Println("Graph type                Nodes  Arcs/edges           Time")
 	for _, tc := range []func() (string, int, int){
 		ChungLuSmall, ChungLuLarge,
 		EucSmall, EucLarge,
 		GeoSmall, GeoLarge,
-		GnpDSmall, GnpDLarge, GnpUSmall, GnpULarge,
-		GnmDSmall, GnmDLarge, GnmUSmall, GnmULarge,
-		Gnm3USmall, Gnm3ULarge,
-		KronDSmall, KronDLarge, KronUSmall, KronULarge,
+		//GnpDSmall, GnpDLarge, GnpUSmall, GnpULarge,
+		//GnmDSmall, GnmDLarge, GnmUSmall, GnmULarge,
+		//Gnm3USmall, Gnm3ULarge,
+		//KronDSmall, KronDLarge, KronUSmall, KronULarge,
 	} {
 		t := time.Now()
 		g, n, a := tc()
@@ -58,27 +60,30 @@ func random() {
 
 func prop() {
 	fmt.Println("\nProperties")
-	fmt.Println("Method                Graph                      time")
+	fmt.Println("Method                 Graph                          Time")
 	for _, tc := range []func() (string, string){
 		CCSmall, CCLarge,
+		SCCPathSmall, SCCPathLarge,
+		SCCPearceSmall, SCCPearceLarge,
+		SCCTarjanSmall, SCCTarjanLarge,
 	} {
 		t := time.Now()
 		m, g := tc()
 		d := time.Now().Sub(t)
-		fmt.Printf("%-21s %-16s %14s\n", m, g, d)
+		fmt.Printf("%-22s %-22s %12s\n", m, g, d)
 	}
 }
 
 func trav() {
 	fmt.Println("\nTraversal")
-	fmt.Println("Method                Graph                                 time")
+	fmt.Println("Method                 Graph                                          Time")
 	for _, tc := range []func() (string, string){
 		DFSmall, DFLarge, BFSmall, BFLarge, BF2Small, BF2Large,
 	} {
 		t := time.Now()
 		m, g := tc()
 		d := time.Now().Sub(t)
-		fmt.Printf("%-21s %-33s %14s\n", m, g, d)
+		fmt.Printf("%-22s %-38s %12s\n", m, g, d)
 	}
 
 }
@@ -88,9 +93,37 @@ var geoLargeEnd graph.NI
 var geoSmallHeuristic func(graph.NI) float64
 var geoLargeHeuristic func(graph.NI) float64
 
+func allpairs() {
+	fmt.Println("\nShortest path all pairs")
+	fmt.Println("Method                 Graph                                          Time")
+	for _, tc := range []func() (string, string){
+		FloydEuc, FloydGeo,
+	} {
+		t := time.Now()
+		m, g := tc()
+		d := time.Now().Sub(t)
+		fmt.Printf("%-22s %-38s %12s\n", m, g, d)
+	}
+}
+
 func sssp() {
-	fmt.Println("\nShortest path search")
-	fmt.Println("Method                Graph                                 time")
+	fmt.Println("\nSingle source shortest path")
+	fmt.Println("Method                 Graph                                          Time")
+	for _, tc := range []func() (string, string){
+		BellmanSmall,
+		DijkstraAllSmall, DijkstraAllLarge,
+	} {
+		t := time.Now()
+		m, g := tc()
+		d := time.Now().Sub(t)
+		fmt.Printf("%-22s %-38s %12s\n", m, g, d)
+	}
+
+}
+
+func shortestone() {
+	fmt.Println("\nSingle shortest path")
+	fmt.Println("Method                 Graph                                          Time")
 	// pick end nodes about .7 distant from node 0
 	p1 := geoSmallPos[0]
 	nearestSmall, nearestLarge := 2., 2.
@@ -122,14 +155,13 @@ func sssp() {
 		return math.Hypot(geoLargeEndPos.X-p.X, geoLargeEndPos.Y-p.Y)
 	}
 	for _, tc := range []func() (string, string){
-		BellmanSmall, FloydSmall,
-		DijkstraAllSmall, DijkstraAllLarge, Dijkstra1Small, Dijkstra1Large,
+		Dijkstra1Small, Dijkstra1Large,
 		AStarASmall, AStarALarge, AStarMSmall, AStarMLarge,
 	} {
 		t := time.Now()
 		m, g := tc()
 		d := time.Now().Sub(t)
-		fmt.Printf("%-21s %-33s %14s\n", m, g, d)
+		fmt.Printf("%-22s %-38s %12s\n", m, g, d)
 	}
 
 }

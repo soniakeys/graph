@@ -5,9 +5,13 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
+	"time"
 
 	"github.com/soniakeys/graph"
 )
+
+var r = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 var chungLuSmall graph.Undirected
 var chungLuSmallTag string
@@ -18,7 +22,7 @@ func ChungLuSmall() (string, int, int) {
 	for i := range w {
 		w[i] = 5 + 10*float64(n-i)/float64(n)
 	}
-	chungLuSmall = graph.ChungLu(w, nil)
+	chungLuSmall = graph.ChungLu(w, r)
 	chungLuSmallTag = "ChungLu " + h(n) + " nds"
 	return "Chung Lu (undirected)", n, chungLuSmall.ArcSize() / 2
 }
@@ -32,9 +36,41 @@ func ChungLuLarge() (string, int, int) {
 	for i := range w {
 		w[i] = 2 + 50*n/float64(i+1)
 	}
-	chungLuLarge = graph.ChungLu(w, nil)
+	chungLuLarge = graph.ChungLu(w, r)
 	chungLuLargeTag = "ChungLu " + h(n) + " nds"
 	return "Chung Lu (undirected)", n, chungLuLarge.ArcSize() / 2
+}
+
+var eucSmall graph.LabeledDirected
+var eucSmallTag string
+var eucSmallWt []float64
+var eucSmallWtFunc = func(n graph.LI) float64 { return eucSmallWt[n] }
+
+func EucSmall() (string, int, int) {
+	const n = 1024
+	const ma = 5e3
+	var err error
+	eucSmall, _, eucSmallWt, err = graph.LabeledEuclidean(n, ma, 1, 1, r)
+	if err != nil {
+		return "nope", n, ma
+	}
+	eucSmallTag = "Euclidean " + h(n) + " nds"
+	return "Euclidean (directed)", n, ma
+}
+
+var eucLarge graph.Directed
+var eucLargeTag string
+
+func EucLarge() (string, int, int) {
+	const n = 1048576
+	const ma = 5e6
+	var err error
+	eucLarge, _, err = graph.Euclidean(n, ma, 1, 1, r)
+	if err != nil {
+		return "nope", n, ma
+	}
+	eucLargeTag = "Euclidean " + h(n) + " nds"
+	return "Euclidean (directed)", n, ma
 }
 
 var geoSmall graph.LabeledUndirected
@@ -45,7 +81,7 @@ var geoSmallTag string
 
 func GeoSmall() (string, int, int) {
 	const n = 1000
-	geoSmall, geoSmallPos, geoSmallWt = graph.LabeledGeometric(n, .1, nil)
+	geoSmall, geoSmallPos, geoSmallWt = graph.LabeledGeometric(n, .1, r)
 	geoSmallTag = "Geometric " + h(n) + " nds"
 	return "Geometric (undirected)", n, len(geoSmallWt)
 }
@@ -58,7 +94,7 @@ var geoLargeTag string
 
 func GeoLarge() (string, int, int) {
 	const n = 3e4
-	geoLarge, geoLargePos, geoLargeWt = graph.LabeledGeometric(n, .01, nil)
+	geoLarge, geoLargePos, geoLargeWt = graph.LabeledGeometric(n, .01, r)
 	geoLargeTag = "Geometric " + h(n) + " nds"
 	return "Geometric (undirected)", n, len(geoLargeWt)
 }
@@ -69,7 +105,7 @@ var gnpUSmallTag string
 func GnpUSmall() (string, int, int) {
 	const n = 1000
 	gnpUSmallTag = fmt.Sprint("Gnp ", n, " nds")
-	gnpUSmall = graph.GnpUndirected(n, .2, nil)
+	gnpUSmall = graph.GnpUndirected(n, .2, r)
 	return "Gnp undirected", n, gnpUSmall.ArcSize() / 2
 }
 
@@ -79,7 +115,7 @@ var gnpULargeTag string
 func GnpULarge() (string, int, int) {
 	const n = 2e4
 	gnpULargeTag = fmt.Sprint("Gnp ", n, " nds")
-	gnpULarge = graph.GnpUndirected(n, .105, nil)
+	gnpULarge = graph.GnpUndirected(n, .105, r)
 	return "Gnp undirected", n, gnpULarge.ArcSize() / 2
 }
 
@@ -90,7 +126,7 @@ func GnmUSmall() (string, int, int) {
 	const n = 1000
 	const m = 100e3
 	gnmUSmallTag = fmt.Sprint("Gnm ", n, " nds")
-	gnmUSmall = graph.GnmUndirected(n, m, nil)
+	gnmUSmall = graph.GnmUndirected(n, m, r)
 	return "Gnm undirected", n, m
 }
 
@@ -101,21 +137,21 @@ func GnmULarge() (string, int, int) {
 	const n = 20e3
 	const m = 20e6
 	gnmULargeTag = fmt.Sprint("Gnm ", n, " nds")
-	gnmULarge = graph.GnmUndirected(n, m, nil)
+	gnmULarge = graph.GnmUndirected(n, m, r)
 	return "Gnm undirected", n, m
 }
 
 func Gnm3USmall() (string, int, int) {
 	const n = 1000
 	const m = 100e3
-	graph.Gnm3Undirected(n, m, nil)
+	graph.Gnm3Undirected(n, m, r)
 	return "Gnm3 undirected", n, m
 }
 
 func Gnm3ULarge() (string, int, int) {
 	const n = 20e3
 	const m = 20e6
-	graph.Gnm3Undirected(n, m, nil)
+	graph.Gnm3Undirected(n, m, r)
 	return "Gnm3 undirected", n, m
 }
 
@@ -125,7 +161,7 @@ var gnpDSmallTag string
 func GnpDSmall() (string, int, int) {
 	const n = 1000
 	gnpDSmallTag = fmt.Sprint("Gnp ", n, " nds")
-	gnpDSmall = graph.GnpDirected(n, .101, nil)
+	gnpDSmall = graph.GnpDirected(n, .101, r)
 	return "Gnp directed", n, gnpDSmall.ArcSize()
 }
 
@@ -135,7 +171,7 @@ var gnpDLargeTag string
 func GnpDLarge() (string, int, int) {
 	const n = 2e4
 	gnpDLargeTag = fmt.Sprint("Gnp ", n, " nds")
-	gnpDLarge = graph.GnpDirected(n, .05, nil)
+	gnpDLarge = graph.GnpDirected(n, .05, r)
 	return "Gnp directed", n, gnpDLarge.ArcSize()
 }
 
@@ -146,7 +182,7 @@ func GnmDSmall() (string, int, int) {
 	const n = 1000
 	const ma = 100e3
 	gnmDSmallTag = fmt.Sprint("Gnm ", n, " nds")
-	gnmDSmall = graph.GnmDirected(n, ma, nil)
+	gnmDSmall = graph.GnmDirected(n, ma, r)
 	return "Gnm directed", n, ma
 }
 
@@ -157,45 +193,15 @@ func GnmDLarge() (string, int, int) {
 	const n = 20e3
 	const ma = 20e6
 	gnmDLargeTag = fmt.Sprint("Gnm ", n, " nds")
-	gnmDLarge = graph.GnmDirected(n, ma, nil)
+	gnmDLarge = graph.GnmDirected(n, ma, r)
 	return "Gnm directed", n, ma
-}
-
-var eucSmall graph.Directed
-var eucSmallTag string
-
-func EucSmall() (string, int, int) {
-	const n = 1e3
-	const ma = 5e3
-	var err error
-	eucSmall, _, err = graph.Euclidean(n, ma, 1, 1, nil)
-	if err != nil {
-		return "nope", n, ma
-	}
-	eucSmallTag = "Euclidean " + h(n) + " nds"
-	return "Euclidean (directed)", n, ma
-}
-
-var eucLarge graph.Directed
-var eucLargeTag string
-
-func EucLarge() (string, int, int) {
-	const n = 1e6
-	const ma = 5e6
-	var err error
-	eucLarge, _, err = graph.Euclidean(n, ma, 1, 1, nil)
-	if err != nil {
-		return "nope", n, ma
-	}
-	eucLargeTag = "Euclidean " + h(n) + " nds"
-	return "Euclidean (directed)", n, ma
 }
 
 var kronDSmall graph.Directed
 var kronDSmallTag string
 
 func KronDSmall() (string, int, int) {
-	kronDSmall, ma := graph.KroneckerDirected(11, 7, nil)
+	kronDSmall, ma := graph.KroneckerDirected(11, 7, r)
 	kronDSmallTag = fmt.Sprint("Kron ", kronDSmall.Order(), "nds")
 	return "Kronecker directed", kronDSmall.Order(), ma
 }
@@ -204,7 +210,7 @@ var kronDLarge graph.Directed
 var kronDLargeTag string
 
 func KronDLarge() (string, int, int) {
-	kronDLarge, ma := graph.KroneckerDirected(17, 21, nil)
+	kronDLarge, ma := graph.KroneckerDirected(17, 21, r)
 	kronDLargeTag = fmt.Sprint("Kron ", kronDLarge.Order(), "nds")
 	return "Kronecker directed", kronDLarge.Order(), ma
 }
@@ -213,7 +219,7 @@ var kronUSmall graph.Undirected
 var kronUSmallTag string
 
 func KronUSmall() (string, int, int) {
-	kronUSmall, m := graph.KroneckerUndirected(11, 7, nil)
+	kronUSmall, m := graph.KroneckerUndirected(11, 7, r)
 	kronUSmallTag = fmt.Sprint("Kron ", kronUSmall.Order(), "nds")
 	return "Kronecker undirected", kronUSmall.Order(), m
 }
@@ -222,7 +228,7 @@ var kronULarge graph.Undirected
 var kronULargeTag string
 
 func KronULarge() (string, int, int) {
-	kronULarge, m := graph.KroneckerUndirected(17, 21, nil)
+	kronULarge, m := graph.KroneckerUndirected(17, 21, r)
 	kronULargeTag = fmt.Sprint("Kron ", kronULarge.Order(), "nds")
 	return "Kronecker undirected", kronULarge.Order(), m
 }
