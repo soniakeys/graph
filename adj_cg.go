@@ -10,6 +10,8 @@ package graph
 import (
 	"math/rand"
 	"time"
+
+	"github.com/soniakeys/bits"
 )
 
 // ArcDensity returns density for an simple directed graph.
@@ -188,19 +190,22 @@ func (g LabeledAdjacencyList) Copy() (c LabeledAdjacencyList, ma int) {
 // returns false immediately.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g LabeledAdjacencyList) DepthFirst(start NI, bm *Bits, v OkNodeVisitor) (ok bool) {
+func (g LabeledAdjacencyList) DepthFirst(start NI, bm *bits.Bits, v OkNodeVisitor) (ok bool) {
 	if bm == nil {
 		if v == nil {
 			return false
 		}
-		bm = &Bits{}
+		bm = &bits.Bits{}
+	}
+	if bm.Num != len(g) {
+		*bm = bits.New(len(g))
 	}
 	var df func(n NI) bool
 	df = func(n NI) bool {
-		if bm.Bit(n) == 1 {
+		if bm.Bit(int(n)) == 1 {
 			return true
 		}
-		bm.SetBit(n, 1)
+		bm.SetBit(int(n), 1)
 		if v != nil && !v(n) {
 			return false
 		}
@@ -223,22 +228,25 @@ func (g LabeledAdjacencyList) DepthFirst(start NI, bm *Bits, v OkNodeVisitor) (o
 // Usage is otherwise like the DepthFirst method.  See DepthFirst.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g LabeledAdjacencyList) DepthFirstRandom(start NI, bm *Bits, v OkNodeVisitor, r *rand.Rand) (ok bool) {
+func (g LabeledAdjacencyList) DepthFirstRandom(start NI, bm *bits.Bits, v OkNodeVisitor, r *rand.Rand) (ok bool) {
 	if bm == nil {
 		if v == nil {
 			return false
 		}
-		bm = &Bits{}
+		bm = &bits.Bits{}
+	}
+	if bm.Num != len(g) {
+		*bm = bits.New(len(g))
 	}
 	if r == nil {
 		r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	}
 	var df func(n NI) bool
 	df = func(n NI) bool {
-		if bm.Bit(n) == 1 {
+		if bm.Bit(int(n)) == 1 {
 			return true
 		}
-		bm.SetBit(n, 1)
+		bm.SetBit(int(n), 1)
 		if v != nil && !v(n) {
 			return false
 		}
@@ -348,13 +356,14 @@ func (g LabeledAdjacencyList) IsSimple() (ok bool, n NI) {
 // An isolated node is one with no arcs going to or from it.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g LabeledAdjacencyList) IsolatedNodes() (i Bits) {
-	i.SetAll(len(g))
+func (g LabeledAdjacencyList) IsolatedNodes() (i bits.Bits) {
+	i = bits.New(len(g))
+	i.SetAll()
 	for fr, to := range g {
 		if len(to) > 0 {
-			i.SetBit(NI(fr), 0)
+			i.SetBit(fr, 0)
 			for _, to := range to {
-				i.SetBit(to.To, 0)
+				i.SetBit(int(to.To), 0)
 			}
 		}
 	}

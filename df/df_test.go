@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/soniakeys/bits"
 	"github.com/soniakeys/graph"
 	"github.com/soniakeys/graph/df"
 )
@@ -25,11 +26,11 @@ func ExampleVisited() {
 		2: {3},
 		3: {1},
 	}
-	var b graph.Bits
+	var b bits.Bits
 	fmt.Println("3210")
 	fmt.Println("----")
 	df.Search(g, 0, df.Visited(&b), df.OkNodeVisitor(func(graph.NI) bool {
-		fmt.Printf("%04b\n", &b)
+		fmt.Println(b)
 		return true
 	}))
 	// Output:
@@ -102,7 +103,7 @@ func ExampleOkArcVisitor_cyclic() {
         2: {3},
         3: {1},
     }
-	var p graph.Bits
+	var p bits.Bits
 	v := func(n graph.NI, x int) bool {
 		to := g[n][x]
 		fmt.Println("arc", n, "->", to)
@@ -121,9 +122,9 @@ func init() {
 }
 
 func TestK10(t *testing.T) {
-	var b graph.Bits
+	var b bits.Bits
 	k10.DepthFirst(0, &b, nil)
-	r := b.PopCount()
+	r := b.OnesCount()
 	t.Log("K10 reached =", r)
 	if r < 500 {
 		t.Fatal(r) // bump seed in init function if this fails.
@@ -132,14 +133,14 @@ func TestK10(t *testing.T) {
 
 func BenchmarkADF(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		var bm graph.Bits
+		var bm bits.Bits
 		k10.DepthFirst(0, &bm, nil)
 	}
 }
 
 func BenchmarkDFA(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		var bm graph.Bits
+		var bm bits.Bits
 		df.Search(k10.AdjacencyList, 0, df.Visited(&bm))
 	}
 }

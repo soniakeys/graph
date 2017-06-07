@@ -6,7 +6,11 @@ package graph
 // undir.go has methods specific to undirected graphs, Undirected and
 // LabeledUndirected.
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/soniakeys/bits"
+)
 
 // AddEdge adds an edge to a graph.
 //
@@ -202,10 +206,10 @@ func (g Undirected) HasEdge(n1, n2 NI) (has bool, x1, x2 int) {
 // See also Undirected.Edges for a version that emits all edges.
 func (g Undirected) SimpleEdges(v EdgeVisitor) {
 	for fr, to := range g.AdjacencyList {
-		var e Bits
+		e := bits.New(len(g.AdjacencyList))
 		for _, to := range to {
-			if to > NI(fr) && e.Bit(to) == 0 {
-				e.SetBit(to, 1)
+			if to > NI(fr) && e.Bit(int(to)) == 0 {
+				e.SetBit(int(to), 1)
 				v(Edge{NI(fr), to})
 			}
 		}

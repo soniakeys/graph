@@ -37,6 +37,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/soniakeys/bits"
 	"github.com/soniakeys/graph"
 )
 
@@ -164,7 +165,7 @@ func writeAL(g graph.AdjacencyList, w io.Writer, cf *Config) (err error) {
 			}
 		}
 	}
-	var iso graph.Bits
+	var iso bits.Bits
 	if cf.Isolated {
 		iso = g.IsolatedNodes()
 		if iso.Zero() {
@@ -205,7 +206,7 @@ func writeTail(b *bufio.Writer) error {
 	return b.Flush()
 }
 
-func writeALDirected(g graph.AdjacencyList, cf *Config, iso graph.Bits, b *bufio.Writer) error {
+func writeALDirected(g graph.AdjacencyList, cf *Config, iso bits.Bits, b *bufio.Writer) error {
 	for fr, to := range g {
 		err := writeALEdgeStmt(graph.NI(fr), to, "->", cf, iso, b)
 		if err != nil {
@@ -215,11 +216,10 @@ func writeALDirected(g graph.AdjacencyList, cf *Config, iso graph.Bits, b *bufio
 	return nil
 }
 
-func writeALEdgeStmt(fr graph.NI, to []graph.NI, op string, cf *Config, iso graph.Bits, b *bufio.Writer) (err error) {
+func writeALEdgeStmt(fr graph.NI, to []graph.NI, op string, cf *Config, iso bits.Bits, b *bufio.Writer) (err error) {
 	if len(to) == 0 { // fast path
-		if cf.Isolated && iso.Bit(fr) == 1 {
-			_, err = fmt.Fprintf(b, "%s%s\n",
-				cf.Indent, cf.NodeID(fr))
+		if cf.Isolated && iso.Bit(int(fr)) == 1 {
+			_, err = fmt.Fprintf(b, "%s%s\n", cf.Indent, cf.NodeID(fr))
 		}
 		return
 	}
@@ -236,17 +236,17 @@ func writeALEdgeStmt(fr graph.NI, to []graph.NI, op string, cf *Config, iso grap
 	if err != nil {
 		return
 	}
-	var s1 graph.Bits
+	s1 := map[graph.NI]bool{}
 	m := map[graph.NI]int{} // multiset of defered duplicates
 	c := "{"
 	// first pass is over the to-list, the slice
 	for _, to := range to {
-		if s1.Bit(to) == 0 {
+		if !s1[to] {
 			if _, err = b.WriteString(c + cf.NodeID(to)); err != nil {
 				return
 			}
 			c = " "
-			s1.SetBit(to, 1)
+			s1[to] = true
 		} else {
 			m[to]++
 		}
@@ -280,7 +280,7 @@ func writeALEdgeStmt(fr graph.NI, to []graph.NI, op string, cf *Config, iso grap
 	return
 }
 
-func writeALUndirected(g graph.AdjacencyList, cf *Config, iso graph.Bits, b *bufio.Writer) error {
+func writeALUndirected(g graph.AdjacencyList, cf *Config, iso bits.Bits, b *bufio.Writer) error {
 	// Similar code in undir.go at IsUndirected
 	unpaired := make(graph.AdjacencyList, len(g))
 	for fr, to := range g {
@@ -351,7 +351,7 @@ func writeLAL(g graph.LabeledAdjacencyList, w io.Writer, cf *Config) (err error)
 			}
 		}
 	}
-	var iso graph.Bits
+	var iso bits.Bits
 	if cf.Isolated {
 		iso = g.IsolatedNodes()
 		if iso.Zero() {
@@ -368,7 +368,7 @@ func writeLAL(g graph.LabeledAdjacencyList, w io.Writer, cf *Config) (err error)
 	return writeTail(b)
 }
 
-func writeLALDirected(g graph.LabeledAdjacencyList, cf *Config, iso graph.Bits, b *bufio.Writer) error {
+func writeLALDirected(g graph.LabeledAdjacencyList, cf *Config, iso bits.Bits, b *bufio.Writer) error {
 	for fr, to := range g {
 		err := writeLALEdgeStmt(graph.NI(fr), to, "->", cf, iso, b)
 		if err != nil {
@@ -378,9 +378,9 @@ func writeLALDirected(g graph.LabeledAdjacencyList, cf *Config, iso graph.Bits, 
 	return nil
 }
 
-func writeLALEdgeStmt(fr graph.NI, to []graph.Half, op string, cf *Config, iso graph.Bits, b *bufio.Writer) (err error) {
+func writeLALEdgeStmt(fr graph.NI, to []graph.Half, op string, cf *Config, iso bits.Bits, b *bufio.Writer) (err error) {
 	if len(to) == 0 {
-		if cf.Isolated && iso.Bit(fr) == 1 {
+		if cf.Isolated && iso.Bit(int(fr)) == 1 {
 			_, err = fmt.Fprintf(b, "%s%s\n",
 				cf.Indent, cf.NodeID(fr))
 		}
@@ -397,7 +397,7 @@ func writeLALEdgeStmt(fr graph.NI, to []graph.Half, op string, cf *Config, iso g
 	return
 }
 
-func writeLALUndirected(g graph.LabeledAdjacencyList, cf *Config, iso graph.Bits, b *bufio.Writer) error {
+func writeLALUndirected(g graph.LabeledAdjacencyList, cf *Config, iso bits.Bits, b *bufio.Writer) error {
 	// Similar code in undir.go at IsUndirected
 	unpaired := make(graph.LabeledAdjacencyList, len(g))
 	for fr, to := range g {
@@ -446,15 +446,15 @@ func writeFromList(f graph.FromList, w io.Writer, options []func(*Config)) error
 	if err := writeHead(&cf, b); err != nil {
 		return err
 	}
-	var iso graph.Bits
-	if cf.Isolated {
-		iso = f.IsolatedNodes()
-	}
+	//var iso bits.Bits
+	//if cf.Isolated {
+	iso := f.IsolatedNodes()
+	//}
 	for i, e := range f.Paths {
 		n := graph.NI(i)
 		fr := e.From
 		if fr < 0 {
-			if cf.Isolated && iso.Bit(n) != 0 {
+			if cf.Isolated && iso.Bit(int(n)) != 0 {
 				_, err := fmt.Fprintln(b, cf.Indent+cf.NodeID(graph.NI(fr)))
 				if err != nil {
 					return err
@@ -476,7 +476,7 @@ func writeFromList(f graph.FromList, w io.Writer, options []func(*Config)) error
 		if _, err := b.WriteString(cf.Indent + "{rank = same"); err != nil {
 			return err
 		}
-		for n := iso.From(0); n >= 0; n = iso.From(n + 1) {
+		for n := iso.OneFrom(0); n >= 0; n = iso.OneFrom(n + 1) {
 			if _, err := b.WriteString(" "); err != nil {
 				return err
 			}

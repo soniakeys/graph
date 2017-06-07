@@ -7,6 +7,8 @@ import (
 	"container/heap"
 	"fmt"
 	"math"
+
+	"github.com/soniakeys/bits"
 )
 
 // rNode holds data for a "reached" node
@@ -402,14 +404,14 @@ func (g LabeledDirected) BellmanFord(w WeightFunc, start NI) (f FromList, dist [
 // Receiver f and argument end must be results returned from BellmanFord.
 func (f FromList) BellmanFordCycle(end NI) (c []NI) {
 	p := f.Paths
-	var b Bits
-	for b.Bit(end) == 0 {
-		b.SetBit(end, 1)
+	b := bits.New(len(p))
+	for b.Bit(int(end)) == 0 {
+		b.SetBit(int(end), 1)
 		end = p[end].From
 	}
-	for b.Bit(end) == 1 {
+	for b.Bit(int(end)) == 1 {
 		c = append(c, end)
-		b.SetBit(end, 0)
+		b.SetBit(int(end), 0)
 		end = p[end].From
 	}
 	for i, j := 0, len(c)-1; i < j; i, j = i+1, j-1 {
@@ -491,26 +493,26 @@ func (g LabeledDirected) NegativeCycle(w WeightFunc) (c []NI) {
 			return nil
 		}
 	}
-	var vis Bits
+	vis := bits.New(len(a))
 a:
 	for n := range a {
-		end := NI(n)
-		var b Bits
+		end := n
+		b := bits.New(len(a))
 		for b.Bit(end) == 0 {
 			if vis.Bit(end) == 1 {
 				continue a
 			}
 			vis.SetBit(end, 1)
 			b.SetBit(end, 1)
-			end = p[end].From
+			end = int(p[end].From)
 			if end < 0 {
 				continue a
 			}
 		}
 		for b.Bit(end) == 1 {
-			c = append(c, end)
+			c = append(c, NI(end))
 			b.SetBit(end, 0)
-			end = p[end].From
+			end = int(p[end].From)
 		}
 		for i, j := 0, len(c)-1; i < j; i, j = i+1, j-1 {
 			c[i], c[j] = c[j], c[i]
@@ -717,6 +719,7 @@ func (g LabeledDirected) dagPath(start, end NI, w WeightFunc, longest bool) ([]N
 func (g LabeledDirected) DAGOptimalPaths(start, end NI, ordering []NI, w WeightFunc, longest bool) (f FromList, dist []float64, nReached int) {
 	a := g.LabeledAdjacencyList
 	f = NewFromList(len(a))
+	f.Leaves = bits.New(len(a))
 	dist = make([]float64, len(a))
 	if ordering == nil {
 		ordering, _ = g.Topological()
@@ -739,14 +742,14 @@ func (g LabeledDirected) DAGOptimalPaths(start, end NI, ordering []NI, w WeightF
 	p[start] = PathEnd{From: -1, Len: 1}
 	f.MaxLen = 1
 	leaves := &f.Leaves
-	leaves.SetBit(start, 1)
+	leaves.SetBit(int(start), 1)
 	nReached = 1
 	for n := start; n != end; n = ordering[o] {
 		if p[n].Len > 0 && len(a[n]) > 0 {
 			nDist := dist[n]
 			candLen := p[n].Len + 1 // len for any candidate arc followed from n
 			for _, to := range a[n] {
-				leaves.SetBit(to.To, 1)
+				leaves.SetBit(int(to.To), 1)
 				candDist := nDist + w(to.Label)
 				switch {
 				case p[to.To].Len == 0: // first path to node to.To
@@ -762,7 +765,7 @@ func (g LabeledDirected) DAGOptimalPaths(start, end NI, ordering []NI, w WeightF
 					f.MaxLen = candLen
 				}
 			}
-			leaves.SetBit(n, 0)
+			leaves.SetBit(int(n), 0)
 		}
 		o++
 		if o == len(ordering) {

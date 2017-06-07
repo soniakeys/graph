@@ -320,7 +320,7 @@ func ExampleLabeledDirected_DAGOptimalPaths_allShortestPaths() {
 	fmt.Println("node  path dist  path len  leaf")
 	for n, pd := range dist {
 		fmt.Printf("%d  %9.0f  %9d %7d\n",
-			n, pd, f.Paths[n].Len, f.Leaves.Bit(graph.NI(n)))
+			n, pd, f.Paths[n].Len, f.Leaves.Bit(n))
 	}
 	fmt.Println()
 	fmt.Println("Nodes reached:       ", reached)

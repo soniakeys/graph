@@ -6,6 +6,7 @@ package graph_test
 import (
 	"fmt"
 
+	"github.com/soniakeys/bits"
 	"github.com/soniakeys/graph"
 )
 
@@ -138,18 +139,15 @@ func ExampleFromList_PathTo() {
 			0: {From: 1, Len: 3},
 			2: {From: 1, Len: 3},
 		},
-		MaxLen: 3,
 	}
-	lv := &t.Leaves
-	lv.SetBit(0, 1)
-	lv.SetBit(2, 1)
-	lv.SetBit(3, 1)
+	t.RecalcLeaves()
+	t.RecalcLen()
 	// end at non-leaf, let PathEnd allocate result
 	fmt.Println(t.PathTo(1, nil))
 	fmt.Println()
 	// preallocate buffer, enumerate paths to all leaves
 	p := make([]graph.NI, t.MaxLen)
-	lv.Iterate(func(n graph.NI) bool {
+	t.Leaves.IterateOnes(func(n int) bool {
 		fmt.Println(t.PathTo(graph.NI(n), p))
 		return true
 	})
@@ -230,7 +228,7 @@ func ExampleFromList_RecalcLeaves() {
 	f.RecalcLeaves()
 	fmt.Println("Node  Leaf")
 	for n := range f.Paths {
-		fmt.Println(n, "      ", f.Leaves.Bit(graph.NI(n)))
+		fmt.Println(n, "      ", f.Leaves.Bit(n))
 	}
 	// Output:
 	// Node  Leaf
@@ -350,7 +348,7 @@ func ExampleFromList_Transpose_roots() {
 		2: {From: 0},
 		3: {From: -1},
 	}}
-	var roots graph.Bits
+	var roots bits.Bits
 	g, nr := t.Transpose(&roots)
 	fmt.Println("fr to")
 	for n, fr := range g.AdjacencyList {
@@ -358,7 +356,7 @@ func ExampleFromList_Transpose_roots() {
 	}
 	fmt.Println(nr, "roots:")
 	fmt.Println("3210")
-	fmt.Printf("%04b\n", &roots)
+	fmt.Println(roots)
 	// Output:
 	// fr to
 	// 0  [1 2]
@@ -443,7 +441,7 @@ func ExampleFromList_TransposeLabeled_roots() {
 		2: 'B',
 		3: 'C',
 	}
-	var roots graph.Bits
+	var roots bits.Bits
 	g, n := f.TransposeLabeled(labels, &roots)
 	for fr, to := range g.LabeledAdjacencyList {
 		fmt.Print(fr)
@@ -495,7 +493,7 @@ func ExampleFromList_Undirected_roots() {
 		2: {From: 0},
 		3: {From: -1},
 	}}
-	var roots graph.Bits
+	var roots bits.Bits
 	g, nr := t.Undirected(&roots)
 	fmt.Println("fr to")
 	for n, fr := range g.AdjacencyList {
@@ -503,7 +501,7 @@ func ExampleFromList_Undirected_roots() {
 	}
 	fmt.Println(nr, "roots:")
 	fmt.Println("3210")
-	fmt.Printf("%04b\n", &roots)
+	fmt.Println(roots)
 	// Output:
 	// fr to
 	// 0  [1 2]
@@ -588,7 +586,7 @@ func ExampleFromList_LabeledUndirected_roots() {
 		2: 'B',
 		3: 'C',
 	}
-	var roots graph.Bits
+	var roots bits.Bits
 	g, n := f.LabeledUndirected(labels, &roots)
 	for fr, to := range g.LabeledAdjacencyList {
 		fmt.Print(fr)

@@ -10,6 +10,7 @@ import (
 	"errors"
 	"math/rand"
 
+	"github.com/soniakeys/bits"
 	"github.com/soniakeys/graph"
 )
 
@@ -33,16 +34,22 @@ func Search(g interface{}, start graph.NI, options ...func(*config)) error {
 		return errors.New("ArcVisitor and OkArcVisitor cannot both be specified")
 	}
 	if cf.visited == nil { // for now, visited required internally
-		cf.visited = &graph.Bits{}
+		cf.visited = &bits.Bits{}
 	}
 	var f func(start graph.NI)
+	n := 0
 	switch t := g.(type) {
 	case graph.AdjacencyList:
+		n = len(t)
 		f = cf.adjFunc(t)
 	case graph.LabeledAdjacencyList:
+		n = len(t)
 		f = cf.labFunc(t)
 	default:
 		return errors.New("invalid graph type")
+	}
+	if cf.visited.Num != n {
+		*cf.visited = bits.New(n)
 	}
 	f(start)
 	return nil
@@ -95,10 +102,10 @@ func (cf *config) visitedFunc() func(graph.NI) bool {
 	// only option for now is to use bits
 	b := cf.visited
 	return func(n graph.NI) (t bool) {
-		if b.Bit(n) != 0 {
+		if b.Bit(int(n)) != 0 {
 			return true
 		}
-		b.SetBit(n, 1)
+		b.SetBit(int(n), 1)
 		return false
 	}
 }

@@ -3,6 +3,8 @@
 
 package graph
 
+import "github.com/soniakeys/bits"
+
 // FromList represents a rooted tree (or forest) where each node is associated
 // with a half arc identifying an arc "from" another node.
 //
@@ -34,7 +36,7 @@ package graph
 // useful to validate the acyclic property.
 type FromList struct {
 	Paths  []PathEnd // tree representation
-	Leaves Bits      // leaves of tree
+	Leaves bits.Bits // leaves of tree
 	MaxLen int       // length of longest path, max of all PathEnd.Len values
 }
 
@@ -46,10 +48,17 @@ type PathEnd struct {
 	Len  int // number of nodes in path from start
 }
 
+/* NewFromList could be confusing now with bits also needing allocation.
+maybe best to not have this function.  Maybe a more useful new would be
+one that took a PathEnd slice and intitialized everything including roots
+and max len.  Maybe its time for a separate []PathEnd type when that's
+all that's needed.  (and reconsider the name PathEnd)
+*/
+
 // NewFromList creates a FromList object of given order.
 //
-// The Paths member is allocated to length n but there is no other
-// initialization.
+// The Paths member is allocated to the specified order n but other members
+// are left as zero values.
 func NewFromList(n int) FromList {
 	return FromList{Paths: make([]PathEnd, n)}
 }
@@ -106,18 +115,18 @@ func (f FromList) CommonStart(a, b NI) NI {
 // Note that the bool is not an "ok" return.  A cyclic FromList is usually
 // not okay.
 func (f FromList) Cyclic() (cyclic bool, n NI) {
-	var vis Bits
 	p := f.Paths
+	vis := bits.New(len(p))
 	for i := range p {
-		var path Bits
-		for n := NI(i); vis.Bit(n) == 0; {
+		path := bits.New(len(p))
+		for n := i; vis.Bit(n) == 0; {
 			vis.SetBit(n, 1)
 			path.SetBit(n, 1)
-			if n = p[n].From; n < 0 {
+			if n = int(p[n].From); n < 0 {
 				break
 			}
 			if path.Bit(n) == 1 {
-				return true, n
+				return true, NI(n)
 			}
 		}
 	}
@@ -127,13 +136,14 @@ func (f FromList) Cyclic() (cyclic bool, n NI) {
 // IsolatedNodeBits returns a bitmap of isolated nodes in receiver graph f.
 //
 // An isolated node is one with no arcs going to or from it.
-func (f FromList) IsolatedNodes() (iso Bits) {
+func (f FromList) IsolatedNodes() (iso bits.Bits) {
 	p := f.Paths
-	iso.SetAll(len(p))
+	iso = bits.New(len(p))
+	iso.SetAll()
 	for n, e := range p {
 		if e.From >= 0 {
-			iso.SetBit(NI(n), 0)
-			iso.SetBit(e.From, 0)
+			iso.SetBit(n, 0)
+			iso.SetBit(int(e.From), 0)
 		}
 	}
 	return
@@ -203,11 +213,11 @@ func PathTo(paths []PathEnd, end NI, p []NI) []NI {
 // returns false if traversal is terminated by v returning false.
 func (f FromList) Preorder(v OkNodeVisitor) bool {
 	p := f.Paths
-	var done Bits
+	done := bits.New(len(p))
 	var df func(NI) bool
 	df = func(n NI) bool {
-		done.SetBit(n, 1)
-		if fr := p[n].From; fr >= 0 && done.Bit(fr) == 0 {
+		done.SetBit(int(n), 1)
+		if fr := p[n].From; fr >= 0 && done.Bit(int(fr)) == 0 {
 			df(fr)
 		}
 		return v(n)
@@ -215,8 +225,8 @@ func (f FromList) Preorder(v OkNodeVisitor) bool {
 	for n := range f.Paths {
 		p[n].Len = 0
 	}
-	return f.Leaves.Iterate(func(n NI) bool {
-		return df(n)
+	return f.Leaves.IterateOnes(func(n int) bool {
+		return df(NI(n))
 	})
 }
 
@@ -224,10 +234,13 @@ func (f FromList) Preorder(v OkNodeVisitor) bool {
 func (f *FromList) RecalcLeaves() {
 	p := f.Paths
 	lv := &f.Leaves
-	lv.SetAll(len(p))
+	if lv.Num != len(p) {
+		*lv = bits.New(len(p))
+	}
+	lv.SetAll()
 	for n := range f.Paths {
 		if fr := p[n].From; fr >= 0 {
-			lv.SetBit(fr, 0)
+			lv.SetBit(int(fr), 0)
 		}
 	}
 }
@@ -255,7 +268,7 @@ func (f *FromList) RecalcLen() {
 		p[n].Len = 0
 	}
 	f.MaxLen = 0
-	f.Leaves.Iterate(func(n NI) bool {
+	f.Leaves.IterateOnes(func(n int) bool {
 		if l := setLen(NI(n)); l > f.MaxLen {
 			f.MaxLen = l
 		}
@@ -306,21 +319,23 @@ func (f FromList) Root(n NI) NI {
 //
 // The method relies only on the From member of f.Paths.  Other members of
 // the FromList are not used.
-func (f FromList) Transpose(roots *Bits) (forest Directed, nRoots int) {
+func (f FromList) Transpose(roots *bits.Bits) (forest Directed, nRoots int) {
 	p := f.Paths
 	g := make(AdjacencyList, len(p))
 	if roots != nil {
 		nRoots = len(p)
-		roots.SetAll(len(p))
+		if roots.Num != nRoots {
+			*roots = bits.New(nRoots)
+		}
+		roots.SetAll()
 	}
 	for i, e := range p {
 		if e.From == -1 {
 			continue
 		}
-		n := NI(i)
-		g[e.From] = append(g[e.From], n)
-		if roots != nil && roots.Bit(n) == 1 {
-			roots.SetBit(n, 0)
+		g[e.From] = append(g[e.From], NI(i))
+		if roots != nil && roots.Bit(i) == 1 {
+			roots.SetBit(i, 0)
 			nRoots--
 		}
 	}
@@ -342,12 +357,15 @@ func (f FromList) Transpose(roots *Bits) (forest Directed, nRoots int) {
 //
 // The method relies only on the From member of f.Paths.  Other members of
 // the FromList are not used.
-func (f FromList) TransposeLabeled(labels []LI, roots *Bits) (forest LabeledDirected, nRoots int) {
+func (f FromList) TransposeLabeled(labels []LI, roots *bits.Bits) (forest LabeledDirected, nRoots int) {
 	p := f.Paths
 	g := make(LabeledAdjacencyList, len(p))
 	if roots != nil {
 		nRoots = len(p)
-		roots.SetAll(len(p))
+		if roots.Num != nRoots {
+			*roots = bits.New(nRoots)
+		}
+		roots.SetAll()
 	}
 	for i, p := range f.Paths {
 		if p.From == -1 {
@@ -357,10 +375,9 @@ func (f FromList) TransposeLabeled(labels []LI, roots *Bits) (forest LabeledDire
 		if labels != nil {
 			l = labels[i]
 		}
-		n := NI(i)
-		g[p.From] = append(g[p.From], Half{n, l})
-		if roots != nil && roots.Bit(n) == 1 {
-			roots.SetBit(n, 0)
+		g[p.From] = append(g[p.From], Half{NI(i), l})
+		if roots != nil && roots.Bit(i) == 1 {
+			roots.SetBit(i, 0)
 			nRoots--
 		}
 	}
@@ -376,22 +393,24 @@ func (f FromList) TransposeLabeled(labels []LI, roots *Bits) (forest LabeledDire
 //
 // The method relies only on the From member of f.Paths.  Other members of
 // the FromList are not used.
-func (f FromList) Undirected(roots *Bits) (forest Undirected, nRoots int) {
+func (f FromList) Undirected(roots *bits.Bits) (forest Undirected, nRoots int) {
 	p := f.Paths
 	g := make(AdjacencyList, len(p))
 	if roots != nil {
 		nRoots = len(p)
-		roots.SetAll(len(p))
+		if roots.Num != nRoots {
+			*roots = bits.New(nRoots)
+		}
+		roots.SetAll()
 	}
 	for i, e := range p {
 		if e.From == -1 {
 			continue
 		}
-		n := NI(i)
-		g[n] = append(g[n], e.From)
-		g[e.From] = append(g[e.From], n)
-		if roots != nil && roots.Bit(n) == 1 {
-			roots.SetBit(n, 0)
+		g[i] = append(g[i], e.From)
+		g[e.From] = append(g[e.From], NI(i))
+		if roots != nil && roots.Bit(i) == 1 {
+			roots.SetBit(i, 0)
 			nRoots--
 		}
 	}
@@ -414,12 +433,15 @@ func (f FromList) Undirected(roots *Bits) (forest Undirected, nRoots int) {
 //
 // The method relies only on the From member of f.Paths.  Other members of
 // the FromList are not used.
-func (f FromList) LabeledUndirected(labels []LI, roots *Bits) (forest LabeledUndirected, nRoots int) {
+func (f FromList) LabeledUndirected(labels []LI, roots *bits.Bits) (forest LabeledUndirected, nRoots int) {
 	p := f.Paths
 	g := make(LabeledAdjacencyList, len(p))
 	if roots != nil {
 		nRoots = len(p)
-		roots.SetAll(len(p))
+		if roots.Num != nRoots {
+			*roots = bits.New(nRoots)
+		}
+		roots.SetAll()
 	}
 	for i, p := range f.Paths {
 		if p.From == -1 {
@@ -429,11 +451,10 @@ func (f FromList) LabeledUndirected(labels []LI, roots *Bits) (forest LabeledUnd
 		if labels != nil {
 			l = labels[i]
 		}
-		n := NI(i)
-		g[n] = append(g[n], Half{p.From, l})
-		g[p.From] = append(g[p.From], Half{n, l})
-		if roots != nil && roots.Bit(n) == 1 {
-			roots.SetBit(n, 0)
+		g[i] = append(g[i], Half{p.From, l})
+		g[p.From] = append(g[p.From], Half{NI(i), l})
+		if roots != nil && roots.Bit(i) == 1 {
+			roots.SetBit(i, 0)
 			nRoots--
 		}
 	}

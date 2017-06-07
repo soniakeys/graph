@@ -3,6 +3,8 @@
 
 package graph
 
+import "github.com/soniakeys/bits"
+
 // dir_RO.go is code generated from dir_cg.go by directives in graph.go.
 // Editing dir_cg.go is okay.  It is the code generation source.
 // DO NOT EDIT dir_RO.go.
@@ -43,9 +45,10 @@ func (g LabeledDirected) Copy() (c LabeledDirected, ma int) {
 func (g LabeledDirected) Cyclic() (cyclic bool, fr NI, to Half) {
 	a := g.LabeledAdjacencyList
 	fr, to.To = -1, -1
-	var temp, perm Bits
-	var df func(NI)
-	df = func(n NI) {
+	temp := bits.New(len(a))
+	perm := bits.New(len(a))
+	var df func(int)
+	df = func(n int) {
 		switch {
 		case temp.Bit(n) == 1:
 			cyclic = true
@@ -55,10 +58,10 @@ func (g LabeledDirected) Cyclic() (cyclic bool, fr NI, to Half) {
 		}
 		temp.SetBit(n, 1)
 		for _, nb := range a[n] {
-			df(nb.To)
+			df(int(nb.To))
 			if cyclic {
 				if fr < 0 {
-					fr, to = n, nb
+					fr, to = NI(n), nb
 				}
 				return
 			}
@@ -67,10 +70,10 @@ func (g LabeledDirected) Cyclic() (cyclic bool, fr NI, to Half) {
 		perm.SetBit(n, 1)
 	}
 	for n := range a {
-		if perm.Bit(NI(n)) == 1 {
+		if perm.Bit(n) == 1 {
 			continue
 		}
-		if df(NI(n)); cyclic { // short circuit as soon as a cycle is found
+		if df(n); cyclic { // short circuit as soon as a cycle is found
 			break
 		}
 	}
@@ -288,14 +291,14 @@ func (g LabeledDirected) InDegree() []int {
 // There are equivalent labeled and unlabeled versions of this method.
 func (g LabeledDirected) IsTree(root NI) (isTree, allTree bool) {
 	a := g.LabeledAdjacencyList
-	var v Bits
-	v.SetAll(len(a))
+	v := bits.New(len(a))
+	v.SetAll()
 	var df func(NI) bool
 	df = func(n NI) bool {
-		if v.Bit(n) == 0 {
+		if v.Bit(int(n)) == 0 {
 			return false
 		}
-		v.SetBit(n, 0)
+		v.SetBit(int(n), 0)
 		for _, to := range a[n] {
 			if !df(to.To) {
 				return false
@@ -442,8 +445,9 @@ func (g LabeledDirected) SCCTarjan(emit func([]NI) bool) {
 	//
 	// Implementation here from Wikipedia pseudocode,
 	// http://en.wikipedia.org/w/index.php?title=Tarjan%27s_strongly_connected_components_algorithm&direction=prev&oldid=647184742
-	var indexed, stacked Bits
 	a := g.LabeledAdjacencyList
+	indexed := bits.New(len(a))
+	stacked := bits.New(len(a))
 	index := make([]int, len(a))
 	lowlink := make([]int, len(a))
 	x := 0
@@ -451,20 +455,20 @@ func (g LabeledDirected) SCCTarjan(emit func([]NI) bool) {
 	var sc func(NI) bool
 	sc = func(n NI) bool {
 		index[n] = x
-		indexed.SetBit(n, 1)
+		indexed.SetBit(int(n), 1)
 		lowlink[n] = x
 		x++
 		S = append(S, n)
-		stacked.SetBit(n, 1)
+		stacked.SetBit(int(n), 1)
 		for _, nb := range a[n] {
-			if indexed.Bit(nb.To) == 0 {
+			if indexed.Bit(int(nb.To)) == 0 {
 				if !sc(nb.To) {
 					return false
 				}
 				if lowlink[nb.To] < lowlink[n] {
 					lowlink[n] = lowlink[nb.To]
 				}
-			} else if stacked.Bit(nb.To) == 1 {
+			} else if stacked.Bit(int(nb.To)) == 1 {
 				if index[nb.To] < lowlink[n] {
 					lowlink[n] = index[nb.To]
 				}
@@ -476,7 +480,7 @@ func (g LabeledDirected) SCCTarjan(emit func([]NI) bool) {
 				last := len(S) - 1
 				w := S[last]
 				S = S[:last]
-				stacked.SetBit(w, 0)
+				stacked.SetBit(int(w), 0)
 				c = append(c, w)
 				if w == n {
 					if !emit(c) {
@@ -489,7 +493,7 @@ func (g LabeledDirected) SCCTarjan(emit func([]NI) bool) {
 		return true
 	}
 	for n := range a {
-		if indexed.Bit(NI(n)) == 0 && !sc(NI(n)) {
+		if indexed.Bit(n) == 0 && !sc(NI(n)) {
 			return
 		}
 	}
@@ -521,18 +525,18 @@ func (g LabeledDirected) TarjanCondensation() (scc [][]NI, cd AdjacencyList) {
 	scc = g.TarjanForward()
 	cd = make(AdjacencyList, len(scc)) // return value
 	cond := make([]NI, g.Order())      // mapping from g node to cd node
-	for cn := NI(len(scc) - 1); cn >= 0; cn-- {
+	for cn := len(cd) - 1; cn >= 0; cn-- {
 		c := scc[cn]
 		for _, n := range c {
 			cond[n] = NI(cn) // map g node to cd node
 		}
-		var tos []NI // list of 'to' nodes
-		var m Bits   // tos map
+		var tos []NI           // list of 'to' nodes
+		m := bits.New(len(cd)) // tos map
 		m.SetBit(cn, 1)
 		for _, n := range c {
 			for _, to := range g.LabeledAdjacencyList[n] {
-				if ct := cond[to.To]; m.Bit(ct) == 0 {
-					m.SetBit(ct, 1)
+				if ct := cond[to.To]; m.Bit(int(ct)) == 0 {
+					m.SetBit(int(ct), 1)
 					tos = append(tos, ct)
 				}
 			}
@@ -565,20 +569,21 @@ func (g LabeledDirected) dfTopo(f func() NI) (ordering, cycle []NI) {
 	a := g.LabeledAdjacencyList
 	ordering = make([]NI, len(a))
 	i := len(ordering)
-	var temp, perm Bits
+	temp := bits.New(len(a))
+	perm := bits.New(len(a))
 	var cycleFound bool
 	var cycleStart NI
 	var df func(NI)
 	df = func(n NI) {
 		switch {
-		case temp.Bit(n) == 1:
+		case temp.Bit(int(n)) == 1:
 			cycleFound = true
 			cycleStart = n
 			return
-		case perm.Bit(n) == 1:
+		case perm.Bit(int(n)) == 1:
 			return
 		}
-		temp.SetBit(n, 1)
+		temp.SetBit(int(n), 1)
 		for _, nb := range a[n] {
 			df(nb.To)
 			if cycleFound {
@@ -596,8 +601,8 @@ func (g LabeledDirected) dfTopo(f func() NI) (ordering, cycle []NI) {
 				return
 			}
 		}
-		temp.SetBit(n, 0)
-		perm.SetBit(n, 1)
+		temp.SetBit(int(n), 0)
+		perm.SetBit(int(n), 1)
 		i--
 		ordering[i] = n
 	}
@@ -606,7 +611,7 @@ func (g LabeledDirected) dfTopo(f func() NI) (ordering, cycle []NI) {
 		if n < 0 {
 			return ordering[i:], nil
 		}
-		if perm.Bit(NI(n)) == 1 {
+		if perm.Bit(int(n)) == 1 {
 			continue
 		}
 		df(n)

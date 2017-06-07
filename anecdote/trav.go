@@ -4,16 +4,17 @@
 package main
 
 import (
+	"github.com/soniakeys/bits"
 	"github.com/soniakeys/graph"
 )
 
 func DFSmall() (string, string) {
-	chungLuSmall.DepthFirst(chungLuSmallCCRep, &graph.Bits{}, nil)
+	chungLuSmall.DepthFirst(chungLuSmallCCRep, &bits.Bits{}, nil)
 	return "DepthFirst", chungLuSmallCCTag
 }
 
 func DFLarge() (string, string) {
-	chungLuLarge.DepthFirst(chungLuLargeCCRep, &graph.Bits{}, nil)
+	chungLuLarge.DepthFirst(chungLuLargeCCRep, &bits.Bits{}, nil)
 	return "DepthFirst", chungLuLargeCCTag
 }
 

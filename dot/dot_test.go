@@ -117,8 +117,7 @@ func ExampleWrite_fromList() {
 		2: {From: 0},
 		3: {From: 2},
 	}}
-	f.Leaves.SetBit(1, 1)
-	f.Leaves.SetBit(3, 1)
+	f.RecalcLeaves()
 	dot.Write(f, os.Stdout)
 	// Output:
 	// digraph {

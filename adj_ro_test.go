@@ -21,6 +21,7 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/soniakeys/bits"
 	"github.com/soniakeys/graph"
 )
 
@@ -285,11 +286,11 @@ func ExampleAdjacencyList_DepthFirst_bitmap() {
 		2: {3},
 		3: {1},
 	}
-	var vis graph.Bits
+	var vis bits.Bits
 	fmt.Println("3210")
 	fmt.Println("----")
 	g.DepthFirst(0, &vis, func(graph.NI) bool {
-		fmt.Printf("%04b\n", &vis)
+		fmt.Println(vis)
 		return true
 	})
 	// Output:

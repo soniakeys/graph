@@ -17,6 +17,7 @@ package graph_test
 import (
 	"fmt"
 
+	"github.com/soniakeys/bits"
 	"github.com/soniakeys/graph"
 )
 
@@ -32,8 +33,8 @@ func ExampleUndirected_Bipartite() {
 	b, c1, c2, _ := g.Bipartite(0)
 	if b {
 		fmt.Println("n:  43210")
-		fmt.Printf("c1: %05b\n", c1)
-		fmt.Printf("c2: %05b\n", c2)
+		fmt.Println("c1:", c1)
+		fmt.Println("c2:", c2)
 	}
 	// Output:
 	// n:  43210
@@ -71,8 +72,8 @@ func ExampleUndirected_BronKerbosch1() {
 	g.AddEdge(5, 2)
 	g.AddEdge(5, 1)
 	g.AddEdge(2, 1)
-	g.BronKerbosch1(func(c []graph.NI) bool {
-		fmt.Println(c)
+	g.BronKerbosch1(func(c bits.Bits) bool {
+		fmt.Println(c.Slice())
 		return true
 	})
 	// Output:
@@ -95,8 +96,8 @@ func ExampleUndirected_BKPivotMaxDegree() {
 	g.AddEdge(5, 2)
 	g.AddEdge(5, 1)
 	g.AddEdge(2, 1)
-	g.BronKerbosch2(g.BKPivotMaxDegree, func(c []graph.NI) bool {
-		fmt.Println(c)
+	g.BronKerbosch2(g.BKPivotMaxDegree, func(c bits.Bits) bool {
+		fmt.Println(c.Slice())
 		return true
 	})
 	// Output:
@@ -119,8 +120,8 @@ func ExampleUndirected_BKPivotMinP() {
 	g.AddEdge(5, 2)
 	g.AddEdge(5, 1)
 	g.AddEdge(2, 1)
-	g.BronKerbosch2(g.BKPivotMinP, func(c []graph.NI) bool {
-		fmt.Println(c)
+	g.BronKerbosch2(g.BKPivotMinP, func(c bits.Bits) bool {
+		fmt.Println(c.Slice())
 		return true
 	})
 	// Output:
@@ -143,8 +144,8 @@ func ExampleUndirected_BronKerbosch2() {
 	g.AddEdge(5, 2)
 	g.AddEdge(5, 1)
 	g.AddEdge(2, 1)
-	g.BronKerbosch2(g.BKPivotMaxDegree, func(c []graph.NI) bool {
-		fmt.Println(c)
+	g.BronKerbosch2(g.BKPivotMaxDegree, func(c bits.Bits) bool {
+		fmt.Println(c.Slice())
 		return true
 	})
 	// Output:
@@ -167,8 +168,8 @@ func ExampleUndirected_BronKerbosch3() {
 	g.AddEdge(5, 2)
 	g.AddEdge(5, 1)
 	g.AddEdge(2, 1)
-	g.BronKerbosch3(g.BKPivotMaxDegree, func(c []graph.NI) bool {
-		fmt.Println(c)
+	g.BronKerbosch3(g.BKPivotMaxDegree, func(c bits.Bits) bool {
+		fmt.Println(c.Slice())
 		return true
 	})
 	// Output:
@@ -196,7 +197,7 @@ func ExampleUndirected_ConnectedComponentBits() {
 		if n == 0 {
 			break
 		}
-		fmt.Printf("%d  %2d  %0*b\n", n, ma, g.Order(), &b)
+		fmt.Printf("%d  %2d  %s\n", n, ma, b)
 	}
 	// Output:
 	// o  ma  543210

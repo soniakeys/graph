@@ -7,6 +7,8 @@ import (
 	"errors"
 	"math"
 	"math/rand"
+
+	"github.com/soniakeys/bits"
 )
 
 // ChungLu constructs a random simple undirected graph.
@@ -633,18 +635,18 @@ func kronecker(scale uint, edgeFactor float64, dir bool, rr *rand.Rand) (g Adjac
 	if rr != nil {
 		rf, ri, rp = rr.Float64, rr.Intn, rr.Perm
 	}
-	N := NI(1 << scale)                  // node extent
+	N := 1 << scale                      // node extent
 	M := int(edgeFactor*float64(N) + .5) // number of arcs/edges to generate
 	a, b, c := 0.57, 0.19, 0.19          // initiator probabilities
 	ab := a + b
 	cNorm := c / (1 - ab)
 	aNorm := a / ab
 	ij := make([][2]NI, M)
-	var bm Bits
+	bm := bits.New(N)
 	var nNodes int
 	for k := range ij {
-		var i, j NI
-		for b := NI(1); b < N; b <<= 1 {
+		var i, j int
+		for b := 1; b < N; b <<= 1 {
 			if rf() > ab {
 				i |= b
 				if rf() > cNorm {
@@ -664,13 +666,13 @@ func kronecker(scale uint, edgeFactor float64, dir bool, rr *rand.Rand) (g Adjac
 		}
 		r := ri(k + 1) // shuffle edges as they are generated
 		ij[k] = ij[r]
-		ij[r] = [2]NI{i, j}
+		ij[r] = [2]NI{NI(i), NI(j)}
 	}
 	p := rp(nNodes) // mapping to shuffle IDs of non-isolated nodes
 	px := 0
 	rn := make([]NI, N)
 	for i := range rn {
-		if bm.Bit(NI(i)) == 1 {
+		if bm.Bit(i) == 1 {
 			rn[i] = NI(p[px]) // fill lookup table
 			px++
 		}
