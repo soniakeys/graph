@@ -510,7 +510,7 @@ func ExampleAdjacencyList_Permute() {
 // corrupt the graph.
 func TestShuffleArcLists(t *testing.T) {
 	testCase := func(p float64, r *rand.Rand) {
-		g := graph.GnpUndirected(10, p, r)
+		g, _ := graph.GnpUndirected(10, p, r)
 		c, _ := g.AdjacencyList.Copy()
 		c.ShuffleArcLists(r)
 		for fr, to := range g.AdjacencyList {

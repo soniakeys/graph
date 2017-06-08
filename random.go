@@ -24,8 +24,10 @@ import (
 // so degree will decrease with node number.  To randomize degree across
 // node numbers, consider using the Permute method with a rand.Perm.
 //
+// Also returned is the actual size m of constructed graph g.
+//
 // If Rand r is nil, the rand package default shared source is used.
-func ChungLu(w []float64, rr *rand.Rand) Undirected {
+func ChungLu(w []float64, rr *rand.Rand) (g Undirected, m int) {
 	// Ref: "Efficient Generation of Networks with Given Expected Degrees"
 	// Joel C. Miller and Aric Hagberg
 	// accessed at http://aric.hagberg.org/papers/miller-2011-efficient.pdf
@@ -56,13 +58,14 @@ func ChungLu(w []float64, rr *rand.Rand) Undirected {
 				if rf() < q/p {
 					a[u] = append(a[u], NI(v))
 					a[v] = append(a[v], NI(u))
+					m++
 				}
 				p = q
 				v++
 			}
 		}
 	}
-	return Undirected{a}
+	return Undirected{a}, m
 }
 
 // Euclidean generates a random simple graph on the Euclidean plane.
@@ -513,10 +516,12 @@ func Gnm3Directed(n, ma int, rr *rand.Rand) Directed {
 //
 // In the generated arc list for each node, to-nodes are ordered.
 // Consider using ShuffleArcLists if random order is important.
-func GnpUndirected(n int, p float64, rr *rand.Rand) Undirected {
+//
+// Also returned is the actual size m of constructed graph g.
+func GnpUndirected(n int, p float64, rr *rand.Rand) (g Undirected, m int) {
 	a := make(AdjacencyList, n)
 	if n < 2 {
-		return Undirected{a}
+		return Undirected{a}, 0
 	}
 	rf := rand.Float64
 	if rr != nil {
@@ -533,6 +538,7 @@ g:
 			if w < v {
 				a[v] = append(a[v], w)
 				a[w] = append(a[w], v)
+				m++
 				continue g
 			}
 			w -= v
@@ -542,7 +548,7 @@ g:
 			}
 		}
 	}
-	return Undirected{a}
+	return Undirected{a}, m
 }
 
 // GnpDirected constructs a random simple directed graph.
@@ -557,10 +563,12 @@ g:
 //
 // In the generated arc list for each node, to-nodes are ordered.
 // Consider using ShuffleArcLists if random order is important.
-func GnpDirected(n int, p float64, rr *rand.Rand) Directed {
+//
+// Also returned is the actual arc size m of constructed graph g.
+func GnpDirected(n int, p float64, rr *rand.Rand) (g Directed, ma int) {
 	a := make(AdjacencyList, n)
 	if n < 2 {
-		return Directed{a}
+		return Directed{a}, 0
 	}
 	rf := rand.Float64
 	if rr != nil {
@@ -579,6 +587,7 @@ g:
 			}
 			if w < NI(n) {
 				a[v] = append(a[v], w)
+				ma++
 				continue g
 			}
 			v++
@@ -587,7 +596,7 @@ g:
 			}
 		}
 	}
-	return Directed{a}
+	return Directed{a}, ma
 }
 
 // KroneckerDirected generates a Kronecker-like random directed graph.

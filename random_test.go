@@ -293,7 +293,7 @@ func TestGnm3Undirected(t *testing.T) {
 }
 
 func TestGnpUndirected(t *testing.T) {
-	u := graph.GnpUndirected(15, .4, nil)
+	u, _ := graph.GnpUndirected(15, .4, nil)
 	if ok, _, _ := u.IsUndirected(); !ok {
 		t.Fatal("GnpUndirected returned directed graph")
 	}
@@ -303,7 +303,7 @@ func TestGnpUndirected(t *testing.T) {
 }
 
 func TestGnpDirected(t *testing.T) {
-	u := graph.GnpDirected(15, .4, nil)
+	u, _ := graph.GnpDirected(15, .4, nil)
 	if ok, _ := u.IsSimple(); !ok {
 		t.Fatal("GnpDirected returned non-simple graph")
 	}
@@ -314,7 +314,7 @@ func TestChungLu(t *testing.T) {
 	for i := range w {
 		w[i] = (15 - float64(i)) * .8
 	}
-	u := graph.ChungLu(w, rand.New(rand.NewSource(time.Now().UnixNano())))
+	u, _ := graph.ChungLu(w, rand.New(rand.NewSource(time.Now().UnixNano())))
 	if ok, _ := u.IsSimple(); !ok {
 		t.Fatal("ChungLu returned non-simple graph")
 	}
