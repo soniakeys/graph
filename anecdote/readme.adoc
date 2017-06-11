@@ -1,3 +1,17 @@
+= Anecote
+
+Here are some timings, termed "anecdotal" because they are single runs of
+methods over single random data sets.  More convincing would be to use the
+benchmark capabilities of the testing library and to test over a greater
+number of graphs.  But that is tedious.  This is quick and dirty.
+
+This is (yet another) work in progress.  It covers only a few methods.
+It has already proven valuable though in showing some basic capacities
+(and also illuminating some problems!)
+
+Below is output from a sample run:
+
+....
 Anecdotal timings
 linux amd64
 
@@ -64,3 +78,4 @@ AStarA                 Geometric 1.0K nds                         22.919µs
 AStarA                 Geometric 30K nds                         307.947µs
 AStarM                 Geometric 1.0K nds                         19.834µs
 AStarM                 Geometric 30K nds                         309.677µs
+....
