@@ -1,0 +1,7 @@
+= Anecote
+
+Test
+
+....
+include::a.out
+....

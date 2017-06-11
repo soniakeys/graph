@@ -46,10 +46,10 @@ func random() {
 		ChungLuSmall, ChungLuLarge,
 		EucSmall, EucLarge,
 		GeoSmall, GeoLarge,
-		//GnpDSmall, GnpDLarge, GnpUSmall, GnpULarge,
-		//GnmDSmall, GnmDLarge, GnmUSmall, GnmULarge,
-		//Gnm3USmall, Gnm3ULarge,
-		//KronDSmall, KronDLarge, KronUSmall, KronULarge,
+		GnpDSmall, GnpDLarge, GnpUSmall, GnpULarge,
+		GnmDSmall, GnmDLarge, GnmUSmall, GnmULarge,
+		Gnm3USmall, Gnm3ULarge,
+		KronDSmall, KronDLarge, KronUSmall, KronULarge,
 	} {
 		t := time.Now()
 		g, n, a := tc()

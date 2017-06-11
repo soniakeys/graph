@@ -22,9 +22,10 @@ func ChungLuSmall() (string, int, int) {
 	for i := range w {
 		w[i] = 5 + 10*float64(n-i)/float64(n)
 	}
-	chungLuSmall = graph.ChungLu(w, r)
+	var m int
+	chungLuSmall, m = graph.ChungLu(w, r)
 	chungLuSmallTag = "ChungLu " + h(n) + " nds"
-	return "Chung Lu (undirected)", n, chungLuSmall.ArcSize() / 2
+	return "Chung Lu (undirected)", n, m
 }
 
 var chungLuLarge graph.Undirected
@@ -36,9 +37,10 @@ func ChungLuLarge() (string, int, int) {
 	for i := range w {
 		w[i] = 2 + 50*n/float64(i+1)
 	}
-	chungLuLarge = graph.ChungLu(w, r)
+	var m int
+	chungLuLarge, m = graph.ChungLu(w, r)
 	chungLuLargeTag = "ChungLu " + h(n) + " nds"
-	return "Chung Lu (undirected)", n, chungLuLarge.ArcSize() / 2
+	return "Chung Lu (undirected)", n, m
 }
 
 var eucSmall graph.LabeledDirected
@@ -105,8 +107,9 @@ var gnpUSmallTag string
 func GnpUSmall() (string, int, int) {
 	const n = 1000
 	gnpUSmallTag = fmt.Sprint("Gnp ", n, " nds")
-	gnpUSmall = graph.GnpUndirected(n, .2, r)
-	return "Gnp undirected", n, gnpUSmall.ArcSize() / 2
+	var m int
+	gnpUSmall, m = graph.GnpUndirected(n, .2, r)
+	return "Gnp undirected", n, m
 }
 
 var gnpULarge graph.Undirected
@@ -115,8 +118,9 @@ var gnpULargeTag string
 func GnpULarge() (string, int, int) {
 	const n = 2e4
 	gnpULargeTag = fmt.Sprint("Gnp ", n, " nds")
-	gnpULarge = graph.GnpUndirected(n, .105, r)
-	return "Gnp undirected", n, gnpULarge.ArcSize() / 2
+	var m int
+	gnpULarge, m = graph.GnpUndirected(n, .105, r)
+	return "Gnp undirected", n, m
 }
 
 var gnmUSmall graph.Undirected
@@ -161,8 +165,9 @@ var gnpDSmallTag string
 func GnpDSmall() (string, int, int) {
 	const n = 1000
 	gnpDSmallTag = fmt.Sprint("Gnp ", n, " nds")
-	gnpDSmall = graph.GnpDirected(n, .101, r)
-	return "Gnp directed", n, gnpDSmall.ArcSize()
+	var ma int
+	gnpDSmall, ma = graph.GnpDirected(n, .101, r)
+	return "Gnp directed", n, ma
 }
 
 var gnpDLarge graph.Directed
@@ -171,8 +176,9 @@ var gnpDLargeTag string
 func GnpDLarge() (string, int, int) {
 	const n = 2e4
 	gnpDLargeTag = fmt.Sprint("Gnp ", n, " nds")
-	gnpDLarge = graph.GnpDirected(n, .05, r)
-	return "Gnp directed", n, gnpDLarge.ArcSize()
+	var ma int
+	gnpDLarge, ma = graph.GnpDirected(n, .05, r)
+	return "Gnp directed", n, ma
 }
 
 var gnmDSmall graph.Directed
