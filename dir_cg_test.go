@@ -271,7 +271,7 @@ func ExampleLabeledDirected_PostDominators() {
 	// [0 0 1 1 1 3 -1]
 }
 
-func ExampleLabeledDirected_SCCPathBased() {
+func ExampleLabeledDirected_StronglyConnectedComponents() {
 	// /---0---\
 	// |   |\--/
 	// |   v
@@ -294,41 +294,7 @@ func ExampleLabeledDirected_SCCPathBased() {
 		1: {{To: 2}},
 		2: {{To: 3}},
 	}}
-	g.SCCPathBased(func(c []graph.NI) bool {
-		fmt.Println(c)
-		return true
-	})
-	// Output:
-	// [1 3 2]
-	// [7 6]
-	// [4 5]
-	// [0]
-}
-
-func ExampleLabeledDirected_SCCPearce() {
-	// /---0---\
-	// |   |\--/
-	// |   v
-	// |   5<=>4---\
-	// |   |   |   |
-	// v   v   |   |
-	// 7<=>6   |   |
-	//     |   v   v
-	//     \-->3<--2
-	//         |   ^
-	//         |   |
-	//         \-->1
-	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
-		0: {{To: 0}, {To: 5}, {To: 7}},
-		5: {{To: 4}, {To: 6}},
-		4: {{To: 5}, {To: 2}, {To: 3}},
-		7: {{To: 6}},
-		6: {{To: 7}, {To: 3}},
-		3: {{To: 1}},
-		1: {{To: 2}},
-		2: {{To: 3}},
-	}}
-	g.SCCPearce(func(c []graph.NI) bool {
+	g.StronglyConnectedComponents(func(c []graph.NI) bool {
 		fmt.Println(c)
 		return true
 	})
@@ -339,74 +305,7 @@ func ExampleLabeledDirected_SCCPearce() {
 	// [0]
 }
 
-func ExampleLabeledDirected_SCCTarjan() {
-	// /---0---\
-	// |   |\--/
-	// |   v
-	// |   5<=>4---\
-	// |   |   |   |
-	// v   v   |   |
-	// 7<=>6   |   |
-	//     |   v   v
-	//     \-->3<--2
-	//         |   ^
-	//         |   |
-	//         \-->1
-	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
-		0: {{To: 0}, {To: 5}, {To: 7}},
-		5: {{To: 4}, {To: 6}},
-		4: {{To: 5}, {To: 2}, {To: 3}},
-		7: {{To: 6}},
-		6: {{To: 7}, {To: 3}},
-		3: {{To: 1}},
-		1: {{To: 2}},
-		2: {{To: 3}},
-	}}
-	g.SCCTarjan(func(c []graph.NI) bool {
-		fmt.Println(c)
-		return true
-	})
-	// Output:
-	// [1 3 2]
-	// [7 6]
-	// [4 5]
-	// [0]
-}
-
-func ExampleLabeledDirected_TarjanForward() {
-	// /---0---\
-	// |   |\--/
-	// |   v
-	// |   5<=>4---\
-	// |   |   |   |
-	// v   v   |   |
-	// 7<=>6   |   |
-	//     |   v   v
-	//     \-->3<--2
-	//         |   ^
-	//         |   |
-	//         \-->1
-	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
-		0: {{To: 0}, {To: 5}, {To: 7}},
-		5: {{To: 4}, {To: 6}},
-		4: {{To: 5}, {To: 2}, {To: 3}},
-		7: {{To: 6}},
-		6: {{To: 7}, {To: 3}},
-		3: {{To: 1}},
-		1: {{To: 2}},
-		2: {{To: 3}},
-	}}
-	for _, c := range g.TarjanForward() {
-		fmt.Println(c)
-	}
-	// Output:
-	// [0]
-	// [4 5]
-	// [7 6]
-	// [1 3 2]
-}
-
-func ExampleLabeledDirected_TarjanCondensation() {
+func ExampleLabeledDirected_Condensation() {
 	// input:          condensation:
 	// /---0---\      <->  /---0
 	// |   |\--/           |   |
@@ -430,7 +329,7 @@ func ExampleLabeledDirected_TarjanCondensation() {
 		1: {{To: 2}},
 		2: {{To: 3}},
 	}}
-	scc, cd := g.TarjanCondensation()
+	scc, cd := g.Condensation()
 	fmt.Println(len(scc), "components:")
 	for cn, c := range scc {
 		fmt.Println(cn, c)
@@ -444,7 +343,7 @@ func ExampleLabeledDirected_TarjanCondensation() {
 	// 0 [0]
 	// 1 [4 5]
 	// 2 [7 6]
-	// 3 [1 3 2]
+	// 3 [3 1 2]
 	// condensation:
 	// 0 [1 2]
 	// 1 [3 2]

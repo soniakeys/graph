@@ -87,6 +87,8 @@ func (g LabeledAdjacencyList) BoundsOk() (ok bool, fr NI, to Half) {
 // function returning false.
 //
 // There are equivalent labeled and unlabeled versions of this method.
+//
+// See also alt.BreadthFirst, a direction optimizing algorithm.
 func (g LabeledAdjacencyList) BreadthFirst(start NI, r *rand.Rand, f *FromList, v OkNodeVisitor) (visited int, ok bool) {
 	switch {
 	case f == nil:

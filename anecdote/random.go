@@ -208,7 +208,7 @@ var kronDSmallTag string
 
 func KronDSmall() (string, int, int) {
 	kronDSmall, ma := graph.KroneckerDirected(11, 7, r)
-	kronDSmallTag = fmt.Sprint("Kron ", kronDSmall.Order(), "nds")
+	kronDSmallTag = "Kronecker " + h(kronDSmall.Order()) + "nds"
 	return "Kronecker directed", kronDSmall.Order(), ma
 }
 
@@ -217,7 +217,7 @@ var kronDLargeTag string
 
 func KronDLarge() (string, int, int) {
 	kronDLarge, ma := graph.KroneckerDirected(17, 21, r)
-	kronDLargeTag = fmt.Sprint("Kron ", kronDLarge.Order(), "nds")
+	kronDLargeTag = "Kronecker " + h(kronDLarge.Order()) + "nds"
 	return "Kronecker directed", kronDLarge.Order(), ma
 }
 
@@ -226,7 +226,7 @@ var kronUSmallTag string
 
 func KronUSmall() (string, int, int) {
 	kronUSmall, m := graph.KroneckerUndirected(11, 7, r)
-	kronUSmallTag = fmt.Sprint("Kron ", kronUSmall.Order(), "nds")
+	kronUSmallTag = "Kronecker " + h(kronUSmall.Order()) + "nds"
 	return "Kronecker undirected", kronUSmall.Order(), m
 }
 
@@ -235,6 +235,6 @@ var kronULargeTag string
 
 func KronULarge() (string, int, int) {
 	kronULarge, m := graph.KroneckerUndirected(17, 21, r)
-	kronULargeTag = fmt.Sprint("Kron ", kronULarge.Order(), "nds")
+	kronULargeTag = "Kronecker " + h(kronULarge.Order()) + " nds"
 	return "Kronecker undirected", kronULarge.Order(), m
 }

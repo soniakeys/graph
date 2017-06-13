@@ -64,8 +64,9 @@ func prop() {
 	for _, tc := range []func() (string, string){
 		CCSmall, CCLarge,
 		SCCPathSmall, SCCPathLarge,
-		SCCPearceSmall, SCCPearceLarge,
 		SCCTarjanSmall, SCCTarjanLarge,
+		SCCPearceSmall, SCCPearceLarge,
+		SCCEucSmall, SCCEucLarge,
 	} {
 		t := time.Now()
 		m, g := tc()

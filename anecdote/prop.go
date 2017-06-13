@@ -5,6 +5,7 @@ package main
 
 import (
 	"github.com/soniakeys/graph"
+	"github.com/soniakeys/graph/alt"
 )
 
 var chungLuSmallCCRep graph.NI
@@ -46,9 +47,9 @@ func CCLarge() (string, string) {
 var eucSmallSCCRep graph.NI
 var eucSmallSCCTag string
 
-func SCCPathSmall() (string, string) {
+func SCCEucSmall() (string, string) {
 	max := 0
-	eucSmall.SCCPathBased(func(c []graph.NI) bool {
+	eucSmall.StronglyConnectedComponents(func(c []graph.NI) bool {
 		if len(c) > max {
 			max = len(c)
 			eucSmallSCCRep = c[0]
@@ -56,15 +57,15 @@ func SCCPathSmall() (string, string) {
 		return true
 	})
 	eucSmallSCCTag = "Euclidean giant component " + h(max) + " nds"
-	return "SCC path based", eucSmallTag
+	return "SCC (Pearce)", eucSmallTag
 }
 
 var eucLargeSCCRep graph.NI
 var eucLargeSCCTag string
 
-func SCCPathLarge() (string, string) {
+func SCCEucLarge() (string, string) {
 	max := 0
-	eucLarge.SCCPathBased(func(c []graph.NI) bool {
+	eucLarge.StronglyConnectedComponents(func(c []graph.NI) bool {
 		if len(c) > max {
 			max = len(c)
 			eucLargeSCCRep = c[0]
@@ -72,57 +73,89 @@ func SCCPathLarge() (string, string) {
 		return true
 	})
 	eucLargeSCCTag = "Euclidean giant component " + h(max) + " nds"
-	return "SCC path based", eucLargeTag
+	return "SCC (Pearce)", eucLargeTag
 }
+
+var kronDSmallSCCRep graph.NI
+var kronDSmallSCCTag string
 
 func SCCPearceSmall() (string, string) {
 	max := 0
-	eucSmall.SCCPearce(func(c []graph.NI) bool {
+	kronDSmall.StronglyConnectedComponents(func(c []graph.NI) bool {
 		if len(c) > max {
 			max = len(c)
-			eucSmallSCCRep = c[0]
+			kronDSmallSCCRep = c[0]
 		}
 		return true
 	})
-	eucSmallSCCTag = "Euclidean giant component " + h(max) + " nds"
-	return "SCC Pearce", eucSmallTag
+	kronDSmallSCCTag = "Kronecker giant component " + h(max) + " nds"
+	return "SCC (Pearce)", kronDSmallTag
 }
 
 func SCCPearceLarge() (string, string) {
 	max := 0
-	eucLarge.SCCPearce(func(c []graph.NI) bool {
+	kronDLarge.StronglyConnectedComponents(func(c []graph.NI) bool {
 		if len(c) > max {
 			max = len(c)
-			eucLargeSCCRep = c[0]
+			kronDLargeSCCRep = c[0]
 		}
 		return true
 	})
-	eucLargeSCCTag = "Euclidean giant component " + h(max) + " nds"
-	return "SCC Pearce", eucLargeTag
+	kronDLargeSCCTag = "Kronecker giant component " + h(max) + " nds"
+	return "SCC (Pearce)", kronDLargeTag
+}
+
+func SCCPathSmall() (string, string) {
+	max := 0
+	alt.SCCPathBased(kronDSmall, func(c []graph.NI) bool {
+		if len(c) > max {
+			max = len(c)
+			kronDSmallSCCRep = c[0]
+		}
+		return true
+	})
+	kronDSmallSCCTag = "Kronecker giant component " + h(max) + " nds"
+	return "SCC path based", kronDSmallTag
+}
+
+var kronDLargeSCCRep graph.NI
+var kronDLargeSCCTag string
+
+func SCCPathLarge() (string, string) {
+	max := 0
+	alt.SCCPathBased(kronDLarge, func(c []graph.NI) bool {
+		if len(c) > max {
+			max = len(c)
+			kronDLargeSCCRep = c[0]
+		}
+		return true
+	})
+	kronDLargeSCCTag = "Kronecker giant component " + h(max) + " nds"
+	return "SCC path based", kronDLargeTag
 }
 
 func SCCTarjanSmall() (string, string) {
 	max := 0
-	eucSmall.SCCTarjan(func(c []graph.NI) bool {
+	alt.SCCTarjan(kronDSmall, func(c []graph.NI) bool {
 		if len(c) > max {
 			max = len(c)
-			eucSmallSCCRep = c[0]
+			kronDSmallSCCRep = c[0]
 		}
 		return true
 	})
-	eucSmallSCCTag = "Euclidean giant component " + h(max) + " nds"
-	return "SCC Tarjan", eucSmallTag
+	kronDSmallSCCTag = "Kronecker giant component " + h(max) + " nds"
+	return "SCC Tarjan", kronDSmallTag
 }
 
 func SCCTarjanLarge() (string, string) {
 	max := 0
-	eucLarge.SCCTarjan(func(c []graph.NI) bool {
+	alt.SCCTarjan(kronDLarge, func(c []graph.NI) bool {
 		if len(c) > max {
 			max = len(c)
-			eucLargeSCCRep = c[0]
+			kronDLargeSCCRep = c[0]
 		}
 		return true
 	})
-	eucLargeSCCTag = "Euclidean giant component " + h(max) + " nds"
-	return "SCC Tarjan", eucLargeTag
+	kronDLargeSCCTag = "Kronecker giant component " + h(max) + " nds"
+	return "SCC Tarjan", kronDLargeTag
 }

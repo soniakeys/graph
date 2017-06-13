@@ -275,7 +275,7 @@ func ExampleDirected_PostDominators() {
 	// [0 0 1 1 1 3 -1]
 }
 
-func ExampleDirected_SCCPearce() {
+func ExampleDirected_StronglyConnectedComponents() {
 	// /---0---\
 	// |   |\--/
 	// |   v
@@ -298,7 +298,7 @@ func ExampleDirected_SCCPearce() {
 		1: {2},
 		2: {3},
 	}}
-	g.SCCPearce(func(c []graph.NI) bool {
+	g.StronglyConnectedComponents(func(c []graph.NI) bool {
 		fmt.Println(c)
 		return true
 	})
@@ -309,108 +309,7 @@ func ExampleDirected_SCCPearce() {
 	// [0]
 }
 
-func ExampleDirected_SCCPathBased() {
-	// /---0---\
-	// |   |\--/
-	// |   v
-	// |   5<=>4---\
-	// |   |   |   |
-	// v   v   |   |
-	// 7<=>6   |   |
-	//     |   v   v
-	//     \-->3<--2
-	//         |   ^
-	//         |   |
-	//         \-->1
-	g := graph.Directed{graph.AdjacencyList{
-		0: {0, 5, 7},
-		5: {4, 6},
-		4: {5, 2, 3},
-		7: {6},
-		6: {7, 3},
-		3: {1},
-		1: {2},
-		2: {3},
-	}}
-	g.SCCPathBased(func(c []graph.NI) bool {
-		fmt.Println(c)
-		return true
-	})
-	// Output:
-	// [1 3 2]
-	// [7 6]
-	// [4 5]
-	// [0]
-}
-
-func ExampleDirected_SCCTarjan() {
-	// /---0---\
-	// |   |\--/
-	// |   v
-	// |   5<=>4---\
-	// |   |   |   |
-	// v   v   |   |
-	// 7<=>6   |   |
-	//     |   v   v
-	//     \-->3<--2
-	//         |   ^
-	//         |   |
-	//         \-->1
-	g := graph.Directed{graph.AdjacencyList{
-		0: {0, 5, 7},
-		5: {4, 6},
-		4: {5, 2, 3},
-		7: {6},
-		6: {7, 3},
-		3: {1},
-		1: {2},
-		2: {3},
-	}}
-	g.SCCTarjan(func(c []graph.NI) bool {
-		fmt.Println(c)
-		return true
-	})
-	// Output:
-	// [1 3 2]
-	// [7 6]
-	// [4 5]
-	// [0]
-}
-
-func ExampleDirected_TarjanForward() {
-	// /---0---\
-	// |   |\--/
-	// |   v
-	// |   5<=>4---\
-	// |   |   |   |
-	// v   v   |   |
-	// 7<=>6   |   |
-	//     |   v   v
-	//     \-->3<--2
-	//         |   ^
-	//         |   |
-	//         \-->1
-	g := graph.Directed{graph.AdjacencyList{
-		0: {0, 5, 7},
-		5: {4, 6},
-		4: {5, 2, 3},
-		7: {6},
-		6: {7, 3},
-		3: {1},
-		1: {2},
-		2: {3},
-	}}
-	for _, c := range g.TarjanForward() {
-		fmt.Println(c)
-	}
-	// Output:
-	// [0]
-	// [4 5]
-	// [7 6]
-	// [1 3 2]
-}
-
-func ExampleDirected_TarjanCondensation() {
+func ExampleDirected_Condensation() {
 	// input:          condensation:
 	// /---0---\      <->  /---0
 	// |   |\--/           |   |
@@ -434,7 +333,7 @@ func ExampleDirected_TarjanCondensation() {
 		1: {2},
 		2: {3},
 	}}
-	scc, cd := g.TarjanCondensation()
+	scc, cd := g.Condensation()
 	fmt.Println(len(scc), "components:")
 	for cn, c := range scc {
 		fmt.Println(cn, c)
@@ -448,7 +347,7 @@ func ExampleDirected_TarjanCondensation() {
 	// 0 [0]
 	// 1 [4 5]
 	// 2 [7 6]
-	// 3 [1 3 2]
+	// 3 [3 1 2]
 	// condensation:
 	// 0 [1 2]
 	// 1 [3 2]

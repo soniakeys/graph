@@ -3,7 +3,9 @@
 
 package graph
 
-import "github.com/soniakeys/bits"
+import (
+	"github.com/soniakeys/bits"
+)
 
 // dir_RO.go is code generated from dir_cg.go by directives in graph.go.
 // Editing dir_cg.go is okay.  It is the code generation source.
@@ -310,8 +312,8 @@ func (g Directed) IsTree(root NI) (isTree, allTree bool) {
 	return isTree, isTree && v.Zero()
 }
 
-// SCCPathBased identifies strongly connected components in a directed graph
-// using a path-based algorithm.
+// StronglyConnectedComponents identifies strongly connected components in
+// a directed graph.
 //
 // The method calls the emit argument for each component identified.  Each
 // component is a list of nodes.  The emit function must return true for the
@@ -319,59 +321,10 @@ func (g Directed) IsTree(root NI) (isTree, allTree bool) {
 // method returns immediately.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g Directed) SCCPathBased(emit func([]NI) bool) {
-	a := g.AdjacencyList
-	var S []NI
-	var B []int
-	I := make([]int, len(a))
-	for i := range I {
-		I[i] = -1
-	}
-	c := len(a)
-	var df func(NI)
-	df = func(v NI) {
-		I[v] = len(S)
-		B = append(B, len(S))
-		S = append(S, v)
-		for _, w := range a[v] {
-			if I[w] < 0 {
-				df(w)
-			} else {
-				for last := len(B) - 1; I[w] < B[last]; last-- {
-					B = B[:last]
-				}
-			}
-		}
-		if last := len(B) - 1; I[v] == B[last] {
-			var scc []NI
-			B = B[:last]
-			for I[v] <= len(S) {
-				last := len(S) - 1
-				I[S[last]] = c
-				scc = append(scc, S[last])
-				S = S[:last]
-			}
-			c++
-			emit(scc)
-		}
-	}
-	for v := range a {
-		if I[v] < 0 {
-			df(NI(v))
-		}
-	}
-}
-
-// SCCPearce identifies strongly connected components in a directed graph
-// using an algorithm by David Pearce.
 //
-// The method calls the emit argument for each component identified.  Each
-// component is a list of nodes.  The emit function must return true for the
-// method to continue identifying components.  If emit returns false, the
-// method returns immediately.
-//
-// There are equivalent labeled and unlabeled versions of this method.
-func (g Directed) SCCPearce(emit func([]NI) bool) {
+// The algorithm here is by David Pearce.  See also alt.SCCPathBased and
+// alt.SCCTarjan.
+func (g Directed) StronglyConnectedComponents(emit func([]NI) bool) {
 	// See Algorithm 3 PEA FIND SCC2(V,E) in "An Improved Algorithm for
 	// Finding the Strongly Connected Components of a Directed Graph"
 	// by David J. Pearce.
@@ -423,106 +376,24 @@ func (g Directed) SCCPearce(emit func([]NI) bool) {
 	}
 }
 
-// SCCTarjan identifies strongly connected components in a directed graph using
-// Tarjan's algorithm.
+// Condensation returns strongly connected components and their
+// condensation graph.
 //
-// The method calls the emit argument for each component identified.  Each
-// component is a list of nodes.  The emit function must return true for the
-// method to continue identifying components.  If emit returns false, the
-// method returns immediately.
-//
-// A property of the algorithm is that components are emitted in reverse
-// topological order of the condensation.
-// (See https://en.wikipedia.org/wiki/Strongly_connected_component#Definitions
-// for description of condensation.)
-//
-// There are equivalent labeled and unlabeled versions of this method.
-//
-// See also TarjanForward and TarjanCondensation.
-func (g Directed) SCCTarjan(emit func([]NI) bool) {
-	// See "Depth-first search and linear graph algorithms", Robert Tarjan,
-	// SIAM J. Comput. Vol. 1, No. 2, June 1972.
-	//
-	// Implementation here from Wikipedia pseudocode,
-	// http://en.wikipedia.org/w/index.php?title=Tarjan%27s_strongly_connected_components_algorithm&direction=prev&oldid=647184742
-	a := g.AdjacencyList
-	indexed := bits.New(len(a))
-	stacked := bits.New(len(a))
-	index := make([]int, len(a))
-	lowlink := make([]int, len(a))
-	x := 0
-	var S []NI
-	var sc func(NI) bool
-	sc = func(n NI) bool {
-		index[n] = x
-		indexed.SetBit(int(n), 1)
-		lowlink[n] = x
-		x++
-		S = append(S, n)
-		stacked.SetBit(int(n), 1)
-		for _, nb := range a[n] {
-			if indexed.Bit(int(nb)) == 0 {
-				if !sc(nb) {
-					return false
-				}
-				if lowlink[nb] < lowlink[n] {
-					lowlink[n] = lowlink[nb]
-				}
-			} else if stacked.Bit(int(nb)) == 1 {
-				if index[nb] < lowlink[n] {
-					lowlink[n] = index[nb]
-				}
-			}
-		}
-		if lowlink[n] == index[n] {
-			var c []NI
-			for {
-				last := len(S) - 1
-				w := S[last]
-				S = S[:last]
-				stacked.SetBit(int(w), 0)
-				c = append(c, w)
-				if w == n {
-					if !emit(c) {
-						return false
-					}
-					break
-				}
-			}
-		}
-		return true
-	}
-	for n := range a {
-		if indexed.Bit(n) == 0 && !sc(NI(n)) {
-			return
-		}
-	}
-}
-
-// TarjanForward returns strongly connected components.
-//
-// It returns components in the reverse order of Tarjan, for situations
-// where a forward topological ordering is more convenient.
-func (g Directed) TarjanForward() [][]NI {
+// Components are ordered in a forward topological ordering.
+func (g Directed) Condensation() (scc [][]NI, cd AdjacencyList) {
 	var r [][]NI
-	g.SCCTarjan(func(c []NI) bool {
+	// problems:  1. need to prove that Pearce returns a reverse topological
+	// ordering like Tarjan.  2.  Why the reversing?  why not just collect
+	// the components and use them as they are?
+	g.StronglyConnectedComponents(func(c []NI) bool {
 		r = append(r, c)
 		return true
 	})
-	scc := make([][]NI, len(r))
+	scc = make([][]NI, len(r))
 	last := len(r) - 1
 	for i, ci := range r {
 		scc[last-i] = ci
 	}
-	return scc
-}
-
-// TarjanCondensation returns strongly connected components and their
-// condensation graph.
-//
-// Components are ordered in a forward topological ordering.
-func (g Directed) TarjanCondensation() (scc [][]NI, cd AdjacencyList) {
-	scc = g.TarjanForward()
 	cd = make(AdjacencyList, len(scc)) // return value
 	cond := make([]NI, g.Order())      // mapping from g node to cd node
 	for cn := len(cd) - 1; cn >= 0; cn-- {
