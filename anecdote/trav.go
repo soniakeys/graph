@@ -6,6 +6,7 @@ package main
 import (
 	"github.com/soniakeys/bits"
 	"github.com/soniakeys/graph"
+	"github.com/soniakeys/graph/alt"
 )
 
 func DFSmall() (string, string) {
@@ -30,16 +31,16 @@ func BFLarge() (string, string) {
 	return "BreadthFirst", chungLuLargeCCTag
 }
 
-func BF2Small() (string, string) {
+func AltBFSmall() (string, string) {
 	g := chungLuSmall.AdjacencyList
-	graph.BreadthFirst2(g, g, chungLuSmallCCma, chungLuSmallCCRep, nil,
+	alt.BreadthFirst(g, g, chungLuSmallCCma, chungLuSmallCCRep, nil,
 		func(graph.NI) bool { return true })
-	return "BreadthFirst2", chungLuSmallCCTag
+	return "DO BreadthFirst", chungLuSmallCCTag
 }
 
-func BF2Large() (string, string) {
+func AltBFLarge() (string, string) {
 	g := chungLuLarge.AdjacencyList
-	graph.BreadthFirst2(g, g, chungLuLargeCCma, chungLuLargeCCRep, nil,
+	alt.BreadthFirst(g, g, chungLuLargeCCma, chungLuLargeCCRep, nil,
 		func(graph.NI) bool { return true })
-	return "BreadthFirst2", chungLuLargeCCTag
+	return "DO BreadthFirst", chungLuLargeCCTag
 }

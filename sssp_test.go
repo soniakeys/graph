@@ -257,39 +257,6 @@ func ExampleLabeledDirected_NegativeCycle() {
 	// [9 4 5]
 }
 
-func ExampleBreadthFirst2_allPaths() {
-	// arcs are directed right:
-	//    1   3---5
-	//   / \ /   /
-	//  2   4---6--\
-	//           \-/
-	g := graph.AdjacencyList{
-		2: {1},
-		1: {4},
-		4: {3, 6},
-		3: {5},
-		6: {5, 6},
-	}
-	var f graph.FromList
-	graph.BreadthFirst2(g, nil, 0, 1, &f, func(n graph.NI) bool {
-		return true
-	})
-	fmt.Println("Max path length:", f.MaxLen)
-	p := make([]graph.NI, f.MaxLen)
-	for n := range g {
-		fmt.Println(n, f.PathTo(graph.NI(n), p))
-	}
-	// Output:
-	// Max path length: 4
-	// 0 []
-	// 1 [1]
-	// 2 []
-	// 3 [1 4 3]
-	// 4 [1 4]
-	// 5 [1 4 3 5]
-	// 6 [1 4 6]
-}
-
 func ExampleLabeledDirected_DAGOptimalPaths_allShortestPaths() {
 	// arcs are directed right:
 	//   (11)
@@ -535,35 +502,6 @@ func testSSSP(tc testCase, t *testing.T) {
 	}
 	if npf != np {
 		t.Fatal("bfs all paths returned", np, "recount:", npf)
-	}
-	// breadth first 2
-	var bfs2r graph.FromList
-	np2 := graph.BreadthFirst2(tc.g.AdjacencyList, tc.t.AdjacencyList, tc.m,
-		tc.start, &bfs2r, func(n graph.NI) bool { return true })
-	var ml2, npf2 int
-	for i, e := range bfsr.Paths {
-		bl2 := bfs2r.Paths[i].Len
-		if bl2 != e.Len {
-			t.Fatal("bfsr.Paths[i].Len, bfs2r", e.Len, bl2)
-		}
-		if bl2 > ml2 {
-			ml2 = bl2
-		}
-		if bl2 > 0 {
-			npf2++
-		}
-	}
-	if ml2 != bfs2r.MaxLen {
-		t.Fatal("bfs2r.MaxLen, recomputed", bfs2r.MaxLen, ml)
-	}
-	if npf2 != np2 {
-		t.Fatal("bfs2 all paths returned", np2, "recount:", npf2)
-	}
-	if ml2 != ml {
-		t.Fatal("bfs max len, bfs2", ml, ml2)
-	}
-	if npf2 != npf {
-		t.Fatal("bfs return, bfs2", npf, npf2)
 	}
 }
 

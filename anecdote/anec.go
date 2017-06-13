@@ -78,7 +78,8 @@ func trav() {
 	fmt.Println("\nTraversal")
 	fmt.Println("Method                 Graph                                          Time")
 	for _, tc := range []func() (string, string){
-		DFSmall, DFLarge, BFSmall, BFLarge, BF2Small, BF2Large,
+		DFSmall, DFLarge, BFSmall, BFLarge,
+		AltBFSmall, AltBFLarge,
 	} {
 		t := time.Now()
 		m, g := tc()
