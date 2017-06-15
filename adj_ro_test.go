@@ -21,7 +21,6 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/soniakeys/bits"
 	"github.com/soniakeys/graph"
 )
 
@@ -224,125 +223,6 @@ func ExampleAdjacencyList_BreadthFirst_traverseRandom() {
 	// visit 6 level 3
 	// visit 4 level 3
 	// visit 7 level 3
-}
-
-func ExampleAdjacencyList_DepthFirst() {
-	//   0
-	//  / \
-	// 1-->2
-	// ^   |
-	// |   v
-	// \---3
-	g := graph.AdjacencyList{
-		0: {1, 2},
-		1: {2},
-		2: {3},
-		3: {1},
-	}
-	ok := g.DepthFirst(0, nil, func(n graph.NI) (ok bool) {
-		fmt.Println("visit", n)
-		return true
-	})
-	fmt.Println(ok)
-	// Output:
-	// visit 0
-	// visit 1
-	// visit 2
-	// visit 3
-	// true
-}
-
-func ExampleAdjacencyList_DepthFirst_earlyTermination() {
-	//   0-->3
-	//  / \
-	// 1-->2
-	g := graph.Directed{graph.AdjacencyList{
-		0: {1, 2, 3},
-		1: {2},
-		3: {},
-	}}
-	ok := g.DepthFirst(0, nil, func(n graph.NI) bool {
-		fmt.Println("visit", n)
-		return n != 2
-	})
-	fmt.Println(ok)
-	// Output:
-	// visit 0
-	// visit 1
-	// visit 2
-	// false
-}
-
-func ExampleAdjacencyList_DepthFirst_bitmap() {
-	//   0
-	//  / \
-	// 1-->2
-	// ^   |
-	// |   v
-	// \---3
-	g := graph.AdjacencyList{
-		0: {1, 2},
-		1: {2},
-		2: {3},
-		3: {1},
-	}
-	var vis bits.Bits
-	fmt.Println("3210")
-	fmt.Println("----")
-	g.DepthFirst(0, &vis, func(graph.NI) bool {
-		fmt.Println(vis)
-		return true
-	})
-	// Output:
-	// 3210
-	// ----
-	// 0001
-	// 0011
-	// 0111
-	// 1111
-}
-
-func TestAdjacencyList_DepthFirst_bothNil(t *testing.T) {
-	// for coverage
-	var g graph.AdjacencyList
-	if g.DepthFirst(0, nil, nil) {
-		t.Fatal("DepthFirst both nil must return false")
-	}
-}
-
-func ExampleAdjacencyList_DepthFirstRandom() {
-	//     ----0-----
-	//    /    |     \
-	//   1     2      3
-	//  /|\   /|\   / | \
-	// 4 5 6 7 8 9 10 11 12
-	g := graph.AdjacencyList{
-		0:  {1, 2, 3},
-		1:  {4, 5, 6},
-		2:  {7, 8, 9},
-		3:  {10, 11, 12},
-		12: {},
-	}
-	r := rand.New(rand.NewSource(12))
-	f := func(n graph.NI) (ok bool) {
-		fmt.Println("visit", n)
-		return true
-	}
-	g.DepthFirstRandom(0, nil, f, r)
-	// Output:
-	// visit 0
-	// visit 1
-	// visit 6
-	// visit 4
-	// visit 5
-	// visit 3
-	// visit 12
-	// visit 11
-	// visit 10
-	// visit 2
-	// visit 9
-	// visit 7
-	// visit 8
 }
 
 func ExampleAdjacencyList_HasArc() {

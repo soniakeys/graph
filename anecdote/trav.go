@@ -7,15 +7,26 @@ import (
 	"github.com/soniakeys/bits"
 	"github.com/soniakeys/graph"
 	"github.com/soniakeys/graph/alt"
+	"github.com/soniakeys/graph/search"
 )
 
 func DFSmall() (string, string) {
-	chungLuSmall.DepthFirst(chungLuSmallCCRep, &bits.Bits{}, nil)
+	b := bits.New(chungLuSmall.Order())
+	err := search.DepthFirst(chungLuSmall, chungLuSmallCCRep,
+		search.Visited(&b))
+	if err != nil {
+		return "DepthFirst", err.Error()
+	}
 	return "DepthFirst", chungLuSmallCCTag
 }
 
 func DFLarge() (string, string) {
-	chungLuLarge.DepthFirst(chungLuLargeCCRep, &bits.Bits{}, nil)
+	b := bits.New(chungLuLarge.Order())
+	err := search.DepthFirst(chungLuLarge, chungLuLargeCCRep,
+		search.Visited(&b))
+	if err != nil {
+		return "DepthFirst", err.Error()
+	}
 	return "DepthFirst", chungLuLargeCCTag
 }
 

@@ -27,8 +27,16 @@ func DepthFirst(g interface{}, start graph.NI, options ...func(*config)) error {
 	switch t := g.(type) {
 	case graph.AdjacencyList:
 		cf.adjFunc(t)
+	case graph.Directed:
+		cf.adjFunc(t.AdjacencyList)
+	case graph.Undirected:
+		cf.adjFunc(t.AdjacencyList)
 	case graph.LabeledAdjacencyList:
 		cf.labFunc(t)
+	case graph.LabeledDirected:
+		cf.labFunc(t.LabeledAdjacencyList)
+	case graph.LabeledUndirected:
+		cf.labFunc(t.LabeledAdjacencyList)
 	default:
 		return errors.New("invalid graph type for DepthFirst")
 	}

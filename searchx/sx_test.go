@@ -5,8 +5,6 @@ package searchx_test
 
 import (
 	"fmt"
-	"math/rand"
-	"testing"
 
 	"github.com/soniakeys/bits"
 	"github.com/soniakeys/graph"
@@ -112,7 +110,6 @@ func ExampleOkArcVisitor_cyclic() {
 	searchx.DepthFirst(g, 0, searchx.PathBits(&p), searchx.OkArcVisitor(v))
 	// Output:
 }
-*/
 
 var k10 graph.Directed
 
@@ -144,3 +141,4 @@ func BenchmarkDFA(b *testing.B) {
 		searchx.DepthFirst(k10.AdjacencyList, 0, searchx.Visited(&bm))
 	}
 }
+*/

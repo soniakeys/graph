@@ -9,7 +9,6 @@ package graph
 
 import (
 	"math/rand"
-	"time"
 
 	"github.com/soniakeys/bits"
 )
@@ -168,99 +167,6 @@ func (g LabeledAdjacencyList) Copy() (c LabeledAdjacencyList, ma int) {
 		ma += len(to)
 	}
 	return
-}
-
-// DepthFirst traverses a graph depth first.
-//
-// As it traverses it calls visitor function v for each node.  If v returns
-// false at any point, the traversal is terminated immediately and DepthFirst
-// returns false.  Otherwise DepthFirst returns true.
-//
-// DepthFirst uses argument bm is used as a bitmap to guide the traversal.
-// For a complete traversal, bm should be 0 initially.  During the
-// traversal, bits are set corresponding to each node visited.
-// The bit is set before calling the visitor function.
-//
-// Argument bm can be nil if you have no need for it.
-// In this case a bitmap is created internally for one-time use.
-//
-// Alternatively v can be nil.  In this case traversal still proceeds and
-// updates the bitmap, which can be a useful result.
-// DepthFirst always returns true in this case.
-//
-// It makes no sense for both bm and v to be nil.  In this case DepthFirst
-// returns false immediately.
-//
-// There are equivalent labeled and unlabeled versions of this method.
-func (g LabeledAdjacencyList) DepthFirst(start NI, bm *bits.Bits, v OkNodeVisitor) (ok bool) {
-	if bm == nil {
-		if v == nil {
-			return false
-		}
-		bm = &bits.Bits{}
-	}
-	if bm.Num != len(g) {
-		*bm = bits.New(len(g))
-	}
-	var df func(n NI) bool
-	df = func(n NI) bool {
-		if bm.Bit(int(n)) == 1 {
-			return true
-		}
-		bm.SetBit(int(n), 1)
-		if v != nil && !v(n) {
-			return false
-		}
-		for _, nb := range g[n] {
-			if !df(nb.To) {
-				return false
-			}
-		}
-		return true
-	}
-	return df(start)
-}
-
-// DepthFirstRandom traverses a graph depth first, but following arcs in
-// random order among arcs from a single node.
-//
-// If Rand r is nil, the method creates a new source and generator for
-// one-time use.
-//
-// Usage is otherwise like the DepthFirst method.  See DepthFirst.
-//
-// There are equivalent labeled and unlabeled versions of this method.
-func (g LabeledAdjacencyList) DepthFirstRandom(start NI, bm *bits.Bits, v OkNodeVisitor, r *rand.Rand) (ok bool) {
-	if bm == nil {
-		if v == nil {
-			return false
-		}
-		bm = &bits.Bits{}
-	}
-	if bm.Num != len(g) {
-		*bm = bits.New(len(g))
-	}
-	if r == nil {
-		r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	}
-	var df func(n NI) bool
-	df = func(n NI) bool {
-		if bm.Bit(int(n)) == 1 {
-			return true
-		}
-		bm.SetBit(int(n), 1)
-		if v != nil && !v(n) {
-			return false
-		}
-		to := g[n]
-		for _, i := range r.Perm(len(to)) {
-			if !df(to[i].To) {
-				return false
-			}
-		}
-		return true
-	}
-	return df(start)
 }
 
 // HasArc returns true if g has any arc from node `fr` to node `to`.
