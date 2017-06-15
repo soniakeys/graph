@@ -1,7 +1,7 @@
 // Copyright 2016 Sonia Keys
 // License MIT: https://opensource.org/licenses/MIT
 
-package df
+package searchx
 
 import (
 	"math/rand"
