@@ -22,10 +22,12 @@ type config struct {
 	visited       *bits.Bits
 }
 
+type Option func(*config)
+
 // ArcVisitor specifies a visitor function to call at each arc.
 //
 // See also OkArcVisitor.
-func ArcVisitor(v func(n graph.NI, x int)) func(*config) {
+func ArcVisitor(v func(n graph.NI, x int)) Option {
 	return func(c *config) {
 		c.arcVisitor = v
 	}
@@ -34,7 +36,7 @@ func ArcVisitor(v func(n graph.NI, x int)) func(*config) {
 // NodeVisitor specifies a visitor function to call at each node.
 //
 // See also OkNodeVisitor.
-func NodeVisitor(v graph.NodeVisitor) func(*config) {
+func NodeVisitor(v graph.NodeVisitor) Option {
 	return func(c *config) {
 		c.nodeVisitor = v
 	}
@@ -49,7 +51,7 @@ func NodeVisitor(v graph.NodeVisitor) func(*config) {
 // If v returns false, the search terminates immediately.
 //
 // See also ArcVisitor.
-func OkArcVisitor(v func(n graph.NI, x int) bool) func(*config) {
+func OkArcVisitor(v func(n graph.NI, x int) bool) Option {
 	return func(c *config) {
 		c.okArcVisitor = v
 	}
@@ -64,7 +66,7 @@ func OkArcVisitor(v func(n graph.NI, x int) bool) func(*config) {
 // If v returns false, the search terminates immediately.
 //
 // See also NodeVisitor.
-func OkNodeVisitor(v graph.OkNodeVisitor) func(*config) {
+func OkNodeVisitor(v graph.OkNodeVisitor) Option {
 	return func(c *config) {
 		c.okNodeVisitor = v
 	}
@@ -76,12 +78,12 @@ func OkNodeVisitor(v graph.OkNodeVisitor) func(*config) {
 // A use for PathBits is identifying back arcs in a search.
 //
 // Unlike Visited, PathBits are zeroed at the start of a search.
-func PathBits(b *bits.Bits) func(*config) {
+func PathBits(b *bits.Bits) Option {
 	return func(c *config) { c.pathBits = b }
 }
 
 // Rand specifies to traverse edges from each visited node in random order.
-func Rand(r *rand.Rand) func(*config) {
+func Rand(r *rand.Rand) Option {
 	return func(c *config) { c.rand = r }
 }
 
@@ -95,6 +97,6 @@ func Rand(r *rand.Rand) func(*config) {
 //
 // Bits are not zeroed at the start of a search, so the initial Bits value
 // passed in should generally be zero.  Non-zero bits will limit the search.
-func Visited(b *bits.Bits) func(*config) {
+func Visited(b *bits.Bits) Option {
 	return func(c *config) { c.visited = b }
 }

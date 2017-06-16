@@ -11,14 +11,10 @@ import (
 	"github.com/soniakeys/graph/search"
 )
 
-// Cyclic reimplements AdjacencyList.Cyclic using search.DepthFirst
 func cyclic(g graph.AdjacencyList) (cyclic bool, fr, to graph.NI) {
 	vis := bits.New(len(g))
 	path := bits.New(len(g))
-	for n := range g {
-		if vis.Bit(n) == 1 {
-			continue
-		}
+	for n := vis.ZeroFrom(0); n >= 0; n = vis.ZeroFrom(n + 1) {
 		search.DepthFirst(g, graph.NI(n),
 			search.Visited(&vis), search.PathBits(&path),
 			search.OkArcVisitor(func(n graph.NI, x int) bool {
@@ -33,7 +29,8 @@ func cyclic(g graph.AdjacencyList) (cyclic bool, fr, to graph.NI) {
 	return false, -1, -1
 }
 
-// The example here repeats the example from AdjacencyList.Cyclic.
+// Function cyclic reimplements AdjacencyList.Cyclic using search.DepthFirst.
+// The exaample repeats the example from AdjacencyList.Cyclic.
 func Example_cyclic() {
 	//   0
 	//  / \
@@ -55,7 +52,6 @@ func Example_cyclic() {
 	// \---3
 	g[3] = []graph.NI{1}
 	fmt.Println(cyclic(g))
-
 	// Output:
 	// false
 	// true 3 1

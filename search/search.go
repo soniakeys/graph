@@ -1,7 +1,7 @@
 // Copyright 2016 Sonia Keys
 // License MIT: https://opensource.org/licenses/MIT
 
-// A single variadic function, DepthFirst, takes options in the form of configuration functions.
+// Package search currently implements just a depth first search.
 package search
 
 import (
@@ -19,7 +19,7 @@ import (
 //
 // A non-nil error indicates some problem initializing the search, such as
 // an invalid graph type or options.
-func DepthFirst(g interface{}, start graph.NI, options ...func(*config)) error {
+func DepthFirst(g interface{}, start graph.NI, options ...Option) error {
 	cf := &config{start: start}
 	for _, o := range options {
 		o(cf)
@@ -107,4 +107,64 @@ func (cf *config) adjFunc(g graph.AdjacencyList) {
 }
 
 func (cf *config) labFunc(g graph.LabeledAdjacencyList) {
+	b := cf.visited
+	if b == nil {
+		n := bits.New(len(g))
+		b = &n
+	}
+	var df func(graph.NI) bool
+	df = func(n graph.NI) bool {
+		if b.Bit(int(n)) != 0 {
+			return true
+		}
+		b.SetBit(int(n), 1)
+		if cf.pathBits != nil {
+			cf.pathBits.SetBit(int(n), 1)
+		}
+
+		if cf.nodeVisitor != nil {
+			cf.nodeVisitor(n)
+		}
+		if cf.okNodeVisitor != nil {
+			if !cf.okNodeVisitor(n) {
+				return false
+			}
+		}
+
+		if cf.rand == nil {
+			for x, to := range g[n] {
+				if cf.arcVisitor != nil {
+					cf.arcVisitor(n, x)
+				}
+				if cf.okArcVisitor != nil {
+					if !cf.okArcVisitor(n, x) {
+						return false
+					}
+				}
+				if !df(to.To) {
+					return false
+				}
+			}
+		} else {
+			to := g[n]
+			for _, x := range cf.rand.Perm(len(to)) {
+				if cf.arcVisitor != nil {
+					cf.arcVisitor(n, x)
+				}
+				if cf.okArcVisitor != nil {
+					if !cf.okArcVisitor(n, x) {
+						return false
+					}
+				}
+				if !df(to[x].To) {
+					return false
+				}
+			}
+		}
+		if cf.pathBits != nil {
+			cf.pathBits.SetBit(int(n), 0)
+		}
+		return true
+	}
+	df(cf.start)
 }
