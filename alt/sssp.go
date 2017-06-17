@@ -13,7 +13,7 @@ import (
 //
 // The algorithm is supposed to be faster than the conventional breadth first
 // algorithm but I haven't seen it yet.
-func BreadthFirst(g, tr graph.AdjacencyList, ma int, start graph.NI, f *graph.FromList, v graph.OkNodeVisitor) int {
+func BreadthFirst(g, tr graph.AdjacencyList, ma int, start graph.NI, f *graph.FromList, v func(graph.NI) bool) int {
 	if tr == nil {
 		var d graph.Directed
 		d, ma = graph.Directed{g}.Transpose()

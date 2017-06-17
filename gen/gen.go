@@ -1,6 +1,7 @@
 // Copyright 2016 Sonia Keys
 // License MIT: https://opensource.org/licenses/MIT
 
+// Alternative search implementation, using code generation.
 package gen
 
 import (

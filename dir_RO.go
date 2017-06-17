@@ -100,7 +100,7 @@ func (g Directed) Dominators(start NI) Dominators {
 	// depth-first and may allow Doms to run a little faster by presenting
 	// a shallower tree.
 	post := make([]NI, l)
-	a.BreadthFirst(start, nil, nil, func(n NI) bool {
+	a.breadthFirst(start, nil, nil, func(n NI) bool {
 		l--
 		post[l] = n
 		return true
@@ -203,7 +203,7 @@ func (g Directed) PostDominators(end NI) Dominators {
 	a := tr.AdjacencyList
 	l := len(a)
 	post := make([]NI, l)
-	a.BreadthFirst(end, nil, nil, func(n NI) bool {
+	a.breadthFirst(end, nil, nil, func(n NI) bool {
 		l--
 		post[l] = n
 		return true

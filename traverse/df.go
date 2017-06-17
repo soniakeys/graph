@@ -1,8 +1,8 @@
 // Copyright 2016 Sonia Keys
 // License MIT: https://opensource.org/licenses/MIT
 
-// Package search currently implements just a depth first search.
-package search
+// Package traverse implements depth first and breadth first traversals.
+package traverse
 
 import (
 	"errors"
@@ -11,13 +11,16 @@ import (
 	"github.com/soniakeys/graph"
 )
 
-// DepthFirst performs a depth-first search or traversal of graph g starting at
+// DepthFirst performs a depth-first traversal of graph g starting at
 // node start.
 //
-// Options controlling the search are specified with configuration functions
+// g must be one of AdjacencyList, Directed, Undirected, LabeledAdjacencyList,
+// LabeledDirected, or LabeledUndirected.
+//
+// Options controlling the traverse are specified with configuration functions
 // defined in this package.
 //
-// A non-nil error indicates some problem initializing the search, such as
+// A non-nil error indicates some problem initializing the traverse, such as
 // an invalid graph type or options.
 func DepthFirst(g interface{}, start graph.NI, options ...Option) error {
 	cf := &config{start: start}
@@ -44,7 +47,7 @@ func DepthFirst(g interface{}, start graph.NI, options ...Option) error {
 }
 
 func (cf *config) adjFunc(g graph.AdjacencyList) {
-	b := cf.visited
+	b := cf.visBits
 	if b == nil {
 		n := bits.New(len(g))
 		b = &n
@@ -107,7 +110,7 @@ func (cf *config) adjFunc(g graph.AdjacencyList) {
 }
 
 func (cf *config) labFunc(g graph.LabeledAdjacencyList) {
-	b := cf.visited
+	b := cf.visBits
 	if b == nil {
 		n := bits.New(len(g))
 		b = &n

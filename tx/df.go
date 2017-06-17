@@ -1,8 +1,8 @@
 // Copyright 2016 Sonia Keys
 // License MIT: https://opensource.org/licenses/MIT
 
-// A single variadic function, DepthFirst, takes options in the form of configuration functions.
-package searchx
+// Alternative traversal implementations.
+package tx
 
 import (
 	"errors"

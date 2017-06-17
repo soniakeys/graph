@@ -1,6 +1,7 @@
 // Copyright 2017 Sonia Keys
 // License MIT: http://opensource.org/licenses/MIT
 
+// Anecdotal timings
 package main
 
 import (

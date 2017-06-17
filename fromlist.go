@@ -197,7 +197,7 @@ func PathTo(paths []PathEnd, end NI, p []NI) []NI {
 	}
 }
 
-// Preorder traverses f calling Visitor v in preorder.
+// Preorder traverses a FromList in preorder.
 //
 // Nodes are visited in order such that for any node n with from node fr,
 // fr is visited before n.  Where f represents a tree, the visit ordering
@@ -208,10 +208,11 @@ func PathTo(paths []PathEnd, end NI, p []NI) []NI {
 // Leaves must be set correctly first.  Use RecalcLeaves if leaves are not
 // known to be set correctly.  FromList f cannot be cyclic.
 //
-// Traversal continues while v returns true.  It terminates if v returns false.
-// Preorder returns true if it completes without v returning false.  Preorder
-// returns false if traversal is terminated by v returning false.
-func (f FromList) Preorder(v OkNodeVisitor) bool {
+// Traversal continues while visitor function v returns true.  It terminates
+// if v returns false.  Preorder returns true if it completes without v
+// returning false.  Preorder returns false if traversal is terminated by v
+// returning false.
+func (f FromList) Preorder(v func(NI) bool) bool {
 	p := f.Paths
 	done := bits.New(len(p))
 	var df func(NI) bool

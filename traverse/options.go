@@ -1,7 +1,7 @@
 // Copyright 2016 Sonia Keys
 // License MIT: https://opensource.org/licenses/MIT
 
-package search
+package traverse
 
 import (
 	"math/rand"
@@ -14,12 +14,13 @@ type config struct {
 	start         graph.NI
 	arcVisitor    func(n graph.NI, x int)
 	iterateFrom   func(n graph.NI)
-	nodeVisitor   graph.NodeVisitor
+	nodeVisitor   func(n graph.NI)
 	okArcVisitor  func(n graph.NI, x int) bool
-	okNodeVisitor graph.OkNodeVisitor
-	pathBits      *bits.Bits
+	okNodeVisitor func(n graph.NI) bool
 	rand          *rand.Rand
-	visited       *bits.Bits
+	visBits       *bits.Bits
+	pathBits      *bits.Bits
+	fromList      *graph.FromList
 }
 
 type Option func(*config)
@@ -33,10 +34,17 @@ func ArcVisitor(v func(n graph.NI, x int)) Option {
 	}
 }
 
+// FromList specifies a graph.FromList to populate.
+func FromList(f *graph.FromList) Option {
+	return func(c *config) {
+		c.fromList = f
+	}
+}
+
 // NodeVisitor specifies a visitor function to call at each node.
 //
 // See also OkNodeVisitor.
-func NodeVisitor(v graph.NodeVisitor) Option {
+func NodeVisitor(v func(graph.NI)) Option {
 	return func(c *config) {
 		c.nodeVisitor = v
 	}
@@ -45,10 +53,10 @@ func NodeVisitor(v graph.NodeVisitor) Option {
 // OkArcVisitor specifies a visitor function to perform some test at each arc
 // and return a boolean result.
 //
-// As long as v return a result of true, the search progresses to traverse all
+// As long as v return a result of true, the traverse progresses to traverse all
 // arcs.
 //
-// If v returns false, the search terminates immediately.
+// If v returns false, the traverse terminates immediately.
 //
 // See also ArcVisitor.
 func OkArcVisitor(v func(n graph.NI, x int) bool) Option {
@@ -60,13 +68,13 @@ func OkArcVisitor(v func(n graph.NI, x int) bool) Option {
 // OkNodeVisitor specifies a visitor function to perform some test at each node
 // and return a boolean result.
 //
-// As long as v return a result of true, the search progresses to traverse all
+// As long as v return a result of true, the traverse progresses to traverse all
 // nodes.
 //
-// If v returns false, the search terminates immediately.
+// If v returns false, the traverse terminates immediately.
 //
 // See also NodeVisitor.
-func OkNodeVisitor(v graph.OkNodeVisitor) Option {
+func OkNodeVisitor(v func(graph.NI) bool) Option {
 	return func(c *config) {
 		c.okNodeVisitor = v
 	}
@@ -75,9 +83,9 @@ func OkNodeVisitor(v graph.OkNodeVisitor) Option {
 // PathBits specifies a bits.Bits value for nodes of the path to the
 // currently visited node.
 //
-// A use for PathBits is identifying back arcs in a search.
+// A use for PathBits is identifying back arcs in a traverse.
 //
-// Unlike Visited, PathBits are zeroed at the start of a search.
+// Unlike Visited, PathBits are zeroed at the start of a traverse.
 func PathBits(b *bits.Bits) Option {
 	return func(c *config) { c.pathBits = b }
 }
@@ -92,11 +100,11 @@ func Rand(r *rand.Rand) Option {
 // For each node visited, the corresponding bit is set to 1.  Other bits
 // are not modified.
 //
-// The search algorithm controls the search using a bits.Bits.  If this
+// The traverse algorithm controls the traverse using a bits.Bits.  If this
 // function is used, argument b will be used as the controlling value.
 //
-// Bits are not zeroed at the start of a search, so the initial Bits value
-// passed in should generally be zero.  Non-zero bits will limit the search.
+// Bits are not zeroed at the start of a traverse, so the initial Bits value
+// passed in should generally be zero.  Non-zero bits will limit the traverse.
 func Visited(b *bits.Bits) Option {
-	return func(c *config) { c.visited = b }
+	return func(c *config) { c.visBits = b }
 }

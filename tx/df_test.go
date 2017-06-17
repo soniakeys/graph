@@ -1,14 +1,14 @@
 // Copyright 2016 Sonia Keys
 // License MIT: https://opensource.org/licenses/MIT
 
-package searchx_test
+package tx_test
 
 import (
 	"fmt"
 
 	"github.com/soniakeys/bits"
 	"github.com/soniakeys/graph"
-	"github.com/soniakeys/graph/searchx"
+	"github.com/soniakeys/graph/tx"
 )
 
 func ExampleVisited() {
@@ -27,7 +27,7 @@ func ExampleVisited() {
 	var b bits.Bits
 	fmt.Println("3210")
 	fmt.Println("----")
-	searchx.DepthFirst(g, 0, searchx.Visited(&b), searchx.OkNodeVisitor(func(graph.NI) bool {
+	tx.DepthFirst(g, 0, tx.Visited(&b), tx.OkNodeVisitor(func(graph.NI) bool {
 		fmt.Println(b)
 		return true
 	}))
@@ -53,7 +53,7 @@ func ExampleOkNodeVisitor() {
 		2: {3},
 		3: {1},
 	}
-	searchx.DepthFirst(g, 0, searchx.OkNodeVisitor(func(n graph.NI) bool {
+	tx.DepthFirst(g, 0, tx.OkNodeVisitor(func(n graph.NI) bool {
 		fmt.Println("visit", n)
 		return true
 	}))
@@ -74,7 +74,7 @@ func ExampleOkNodeVisitor_earlyTermination() {
 		3: {},
 	}
 	var found bool
-	searchx.DepthFirst(g, 0, searchx.OkNodeVisitor(func(n graph.NI) bool {
+	tx.DepthFirst(g, 0, tx.OkNodeVisitor(func(n graph.NI) bool {
 		fmt.Println("visit", n)
 		found = n == 2
 		return !found
@@ -107,7 +107,7 @@ func ExampleOkArcVisitor_cyclic() {
 		fmt.Println("arc", n, "->", to)
 		return p.Bit(to) == 0
 	}
-	searchx.DepthFirst(g, 0, searchx.PathBits(&p), searchx.OkArcVisitor(v))
+	tx.DepthFirst(g, 0, tx.PathBits(&p), tx.OkArcVisitor(v))
 	// Output:
 }
 
@@ -138,7 +138,7 @@ func BenchmarkADF(b *testing.B) {
 func BenchmarkDFA(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		var bm bits.Bits
-		searchx.DepthFirst(k10.AdjacencyList, 0, searchx.Visited(&bm))
+		tx.DepthFirst(k10.AdjacencyList, 0, tx.Visited(&bm))
 	}
 }
 */

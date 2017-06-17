@@ -59,8 +59,7 @@
 // simply by ignoring the label.  In these cases code generation provides
 // methods on both types from a single source implementation. These methods
 // are documented with the sentence "There are equivalent labeled and unlabeled
-// versions of this method" and examples are provided only for the unlabeled
-// version.
+// versions of this method."
 //
 // Terminology
 //
@@ -115,7 +114,6 @@
 // any of them.
 //
 //  Type name      Description, methods
-//  BreadthFirst   Unweigted arcs, traversal, single path search or all paths.
 //  Dijkstra       Non-negative arc weights, single or all paths.
 //  AStar          Non-negative arc weights, heuristic guided, single path.
 //  BellmanFord    Negative arc weights allowed, no negative cycles, all paths.

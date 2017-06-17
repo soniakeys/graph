@@ -522,20 +522,6 @@ a:
 	return nil // no negative cycle
 }
 
-// A NodeVisitor is an argument to some graph traversal methods.
-//
-// Graph traversal methods call the visitor function for each node visited.
-// Argument n is the node being visited.
-type NodeVisitor func(n NI)
-
-// An OkNodeVisitor function is an argument to some graph traversal methods.
-//
-// Graph traversal methods call the visitor function for each node visited.
-// The argument n is the node being visited.  If the visitor function
-// returns true, the traversal will continue.  If the visitor function
-// returns false, the traversal will terminate immediately.
-type OkNodeVisitor func(n NI) (ok bool)
-
 // DAGMinDistPath finds a single shortest path.
 //
 // Shortest means minimum sum of arc weights.

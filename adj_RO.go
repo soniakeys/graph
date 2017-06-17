@@ -60,6 +60,10 @@ func (g AdjacencyList) BoundsOk() (ok bool, fr NI, to NI) {
 	return true, -1, to
 }
 
+// unexported.  a little weird for the moment.  BF moved to traverse subdir
+// and can't be called because import cycle.  We need it for Dominators though
+// so it's left here unexported.
+//
 // BreadthFirst traverses a directed or undirected graph in breadth first order.
 //
 // Argument start is the start node for the traversal.  If r is nil, nodes are
@@ -88,7 +92,7 @@ func (g AdjacencyList) BoundsOk() (ok bool, fr NI, to NI) {
 // There are equivalent labeled and unlabeled versions of this method.
 //
 // See also alt.BreadthFirst, a direction optimizing algorithm.
-func (g AdjacencyList) BreadthFirst(start NI, r *rand.Rand, f *FromList, v OkNodeVisitor) (visited int, ok bool) {
+func (g AdjacencyList) breadthFirst(start NI, r *rand.Rand, f *FromList, v func(n NI) bool) (visited int, ok bool) {
 	switch {
 	case f == nil:
 		e := NewFromList(len(g))
@@ -141,19 +145,6 @@ func (g AdjacencyList) BreadthFirst(start NI, r *rand.Rand, f *FromList, v OkNod
 		frontier = next
 	}
 	return visited, true
-}
-
-// BreadthFirstPath finds a single path from start to end with a minimum
-// number of nodes.
-//
-// Returned is the path as list of nodes.
-// The result is nil if no path was found.
-//
-// There are equivalent labeled and unlabeled versions of this method.
-func (g AdjacencyList) BreadthFirstPath(start, end NI) []NI {
-	var f FromList
-	g.BreadthFirst(start, nil, &f, func(n NI) bool { return n != end })
-	return f.PathTo(end, nil)
 }
 
 // Copy makes a deep copy of g.

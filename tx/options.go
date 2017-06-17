@@ -1,7 +1,7 @@
 // Copyright 2016 Sonia Keys
 // License MIT: https://opensource.org/licenses/MIT
 
-package searchx
+package tx
 
 import (
 	"math/rand"
@@ -13,9 +13,9 @@ import (
 type config struct {
 	arcVisitor    func(n graph.NI, x int)
 	iterateFrom   func(n graph.NI)
-	nodeVisitor   graph.NodeVisitor
+	nodeVisitor   func(n graph.NI)
 	okArcVisitor  func(n graph.NI, x int) bool
-	okNodeVisitor graph.OkNodeVisitor
+	okNodeVisitor func(n graph.NI) bool
 	pathBits      *bits.Bits
 	rand          *rand.Rand
 	visited       *bits.Bits
@@ -33,7 +33,7 @@ func ArcVisitor(v func(n graph.NI, x int)) func(*config) {
 // NodeVisitor specifies a visitor function to call at each node.
 //
 // See also OkNodeVisitor.
-func NodeVisitor(v graph.NodeVisitor) func(*config) {
+func NodeVisitor(v func(graph.NI)) func(*config) {
 	return func(c *config) {
 		c.nodeVisitor = v
 	}
@@ -63,7 +63,7 @@ func OkArcVisitor(v func(n graph.NI, x int) bool) func(*config) {
 // If v returns false, the search terminates immediately.
 //
 // See also NodeVisitor.
-func OkNodeVisitor(v graph.OkNodeVisitor) func(*config) {
+func OkNodeVisitor(v func(graph.NI) bool) func(*config) {
 	return func(c *config) {
 		c.okNodeVisitor = v
 	}
