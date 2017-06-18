@@ -7,36 +7,27 @@ import (
 	"github.com/soniakeys/bits"
 	"github.com/soniakeys/graph"
 	"github.com/soniakeys/graph/alt"
-	"github.com/soniakeys/graph/traverse"
 )
 
 func DFSmall() (string, string) {
 	b := bits.New(chungLuSmall.Order())
-	err := traverse.DepthFirst(chungLuSmall, chungLuSmallCCRep,
-		traverse.Visited(&b))
-	if err != nil {
-		return "DepthFirst", err.Error()
-	}
+	chungLuSmall.DepthFirst(chungLuSmallCCRep, graph.Visited(&b))
 	return "DepthFirst", chungLuSmallCCTag
 }
 
 func DFLarge() (string, string) {
 	b := bits.New(chungLuLarge.Order())
-	err := traverse.DepthFirst(chungLuLarge, chungLuLargeCCRep,
-		traverse.Visited(&b))
-	if err != nil {
-		return "DepthFirst", err.Error()
-	}
+	chungLuLarge.DepthFirst(chungLuLargeCCRep, graph.Visited(&b))
 	return "DepthFirst", chungLuLargeCCTag
 }
 
 func BFSmall() (string, string) {
-	traverse.BreadthFirst(chungLuSmall, chungLuSmallCCRep)
+	chungLuSmall.BreadthFirst(chungLuSmallCCRep)
 	return "BreadthFirst", chungLuSmallCCTag
 }
 
 func BFLarge() (string, string) {
-	traverse.BreadthFirst(chungLuLarge, chungLuLargeCCRep)
+	chungLuLarge.BreadthFirst(chungLuLargeCCRep)
 	return "BreadthFirst", chungLuLargeCCTag
 }
 

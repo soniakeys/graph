@@ -1,7 +1,7 @@
 // Copyright 2016 Sonia Keys
 // License MIT: https://opensource.org/licenses/MIT
 
-package traverse_test
+package graph_test
 
 import (
 	"fmt"
@@ -9,7 +9,6 @@ import (
 
 	"github.com/soniakeys/bits"
 	"github.com/soniakeys/graph"
-	"github.com/soniakeys/graph/traverse"
 )
 
 func ExampleArcVisitor() {
@@ -25,7 +24,7 @@ func ExampleArcVisitor() {
 		2: {3},
 		3: {1},
 	}
-	traverse.DepthFirst(g, 0, traverse.ArcVisitor(func(n graph.NI, x int) {
+	g.DepthFirst(0, graph.ArcVisitor(func(n graph.NI, x int) {
 		fmt.Println(n, "->", g[n][x])
 	}))
 	// Output:
@@ -49,7 +48,7 @@ func ExampleNodeVisitor() {
 		2: {3},
 		3: {1},
 	}
-	traverse.DepthFirst(g, 0, traverse.NodeVisitor(func(n graph.NI) {
+	g.DepthFirst(0, graph.NodeVisitor(func(n graph.NI) {
 		fmt.Println(n)
 	}))
 	// Output:
@@ -72,7 +71,7 @@ func ExampleOkArcVisitor() {
 		2: {3},
 		3: {1},
 	}
-	traverse.DepthFirst(g, 0, traverse.OkArcVisitor(func(n graph.NI, x int) bool {
+	g.DepthFirst(0, graph.OkArcVisitor(func(n graph.NI, x int) bool {
 		fmt.Println(n, "->", g[n][x])
 		return n < g[n][x]
 	}))
@@ -96,7 +95,7 @@ func ExampleOkNodeVisitor() {
 		2: {3},
 		3: {1},
 	}
-	traverse.DepthFirst(g, 0, traverse.OkNodeVisitor(func(n graph.NI) bool {
+	g.DepthFirst(0, graph.OkNodeVisitor(func(n graph.NI) bool {
 		fmt.Println(n)
 		return n != 2
 	}))
@@ -122,9 +121,10 @@ func ExamplePathBits() {
 	fmt.Println("node  path bits")
 	fmt.Println("      (3210)")
 	fmt.Println("----   ----")
-	traverse.DepthFirst(g, 0, traverse.PathBits(&b), traverse.NodeVisitor(func(n graph.NI) {
-		fmt.Printf("%4d   %s\n", n, &b)
-	}))
+	g.DepthFirst(0, graph.PathBits(&b),
+		graph.NodeVisitor(func(n graph.NI) {
+			fmt.Printf("%4d   %s\n", n, &b)
+		}))
 	// Output:
 	// node  path bits
 	//       (3210)
@@ -151,8 +151,8 @@ func ExampleVisited() {
 	b := bits.New(len(g))
 	fmt.Println("3210")
 	fmt.Println("----")
-	traverse.DepthFirst(g, 0, traverse.Visited(&b),
-		traverse.NodeVisitor(func(graph.NI) {
+	g.DepthFirst(0, graph.Visited(&b),
+		graph.NodeVisitor(func(graph.NI) {
 			fmt.Println(b)
 		}))
 	// Output:
@@ -174,9 +174,8 @@ func ExampleRand() {
 		0:  {1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
 		10: nil,
 	}
-	traverse.DepthFirst(g, 0,
-		traverse.Rand(rand.New(rand.NewSource(7))),
-		traverse.NodeVisitor(func(n graph.NI) {
+	g.DepthFirst(0, graph.Rand(rand.New(rand.NewSource(7))),
+		graph.NodeVisitor(func(n graph.NI) {
 			fmt.Println(n)
 		}))
 	// Output:

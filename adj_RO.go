@@ -60,39 +60,20 @@ func (g AdjacencyList) BoundsOk() (ok bool, fr NI, to NI) {
 	return true, -1, to
 }
 
-// unexported.  a little weird for the moment.  BF moved to traverse subdir
-// and can't be called because import cycle.  We need it for Dominators though
-// so it's left here unexported.
-//
 // BreadthFirst traverses a directed or undirected graph in breadth first order.
 //
-// Argument start is the start node for the traversal.  If r is nil, nodes are
-// visited in deterministic order.  If a random number generator is supplied,
-// nodes at each level are visited in random order.
-//
-// Argument f can be nil if you have no interest in the FromList path result.
-// If FromList f is non-nil, the method populates f.Paths and sets f.MaxLen.
-// It does not set f.Leaves.  For convenience argument f can be a zero value
-// FromList.  If f.Paths is nil, the FromList is initialized first.  If f.Paths
-// is non-nil however, the FromList is  used as is.  The method uses a value of
-// PathEnd.Len == 0 to indentify unvisited nodes.  Existing non-zero values
-// will limit the traversal.
-//
-// Traversal calls the visitor function v for each node starting with node
-// start.  If v returns true, traversal continues.  If v returns false, the
-// traversal terminates immediately.  PathEnd Len and From values are updated
-// before calling the visitor function.
-//
-// On return f.Paths and f.MaxLen are set but not f.Leaves.
-//
-// Returned is the number of nodes visited and ok = true if the traversal
-// ran to completion or ok = false if it was terminated by the visitor
-// function returning false.
+// Argument start is the start node for the traversal.  Argument opt can be
+// any number of values returned by a TraverseOption function.
 //
 // There are equivalent labeled and unlabeled versions of this method.
 //
-// See also alt.BreadthFirst, a direction optimizing algorithm.
-func (g AdjacencyList) breadthFirst(start NI, r *rand.Rand, f *FromList, v func(n NI) bool) (visited int, ok bool) {
+// See also alt.BreadthFirst, a direction optimizing breadth first algorithm.
+func (g AdjacencyList) BreadthFirst(start NI, opt ...TraverseOption) {
+	cf := &config{start: start}
+	for _, o := range opt {
+		o(cf)
+	}
+	f := cf.fromList
 	switch {
 	case f == nil:
 		e := NewFromList(len(g))
@@ -102,19 +83,24 @@ func (g AdjacencyList) breadthFirst(start NI, r *rand.Rand, f *FromList, v func(
 	}
 	rp := f.Paths
 	// the frontier consists of nodes all at the same level
-	frontier := []NI{start}
+	frontier := []NI{cf.start}
 	level := 1
 	// assign path when node is put on frontier,
-	rp[start] = PathEnd{Len: level, From: -1}
+	rp[cf.start] = PathEnd{Len: level, From: -1}
 	for {
 		f.MaxLen = level
 		level++
 		var next []NI
-		if r == nil {
+		if cf.rand == nil {
 			for _, n := range frontier {
-				visited++
-				if !v(n) { // visit nodes as they come off frontier
-					return
+				// visit nodes as they come off frontier
+				if cf.nodeVisitor != nil {
+					cf.nodeVisitor(n)
+				}
+				if cf.okNodeVisitor != nil {
+					if !cf.okNodeVisitor(n) {
+						return
+					}
 				}
 				for _, nb := range g[n] {
 					if rp[nb].Len == 0 {
@@ -124,12 +110,16 @@ func (g AdjacencyList) breadthFirst(start NI, r *rand.Rand, f *FromList, v func(
 				}
 			}
 		} else { // take nodes off frontier at random
-			for _, i := range r.Perm(len(frontier)) {
+			for _, i := range cf.rand.Perm(len(frontier)) {
 				n := frontier[i]
 				// remainder of block same as above
-				visited++
-				if !v(n) {
-					return
+				if cf.nodeVisitor != nil {
+					cf.nodeVisitor(n)
+				}
+				if cf.okNodeVisitor != nil {
+					if !cf.okNodeVisitor(n) {
+						return
+					}
 				}
 				for _, nb := range g[n] {
 					if rp[nb].Len == 0 {
@@ -144,7 +134,6 @@ func (g AdjacencyList) breadthFirst(start NI, r *rand.Rand, f *FromList, v func(
 		}
 		frontier = next
 	}
-	return visited, true
 }
 
 // Copy makes a deep copy of g.
@@ -158,6 +147,84 @@ func (g AdjacencyList) Copy() (c AdjacencyList, ma int) {
 		ma += len(to)
 	}
 	return
+}
+
+// DepthFirst traverses a directed or undirected graph in depth first order.
+//
+// Argument start is the start node for the traversal.  Argument opt can be
+// any number of values returned by a TraverseOption function.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g AdjacencyList) DepthFirst(start NI, options ...TraverseOption) {
+	cf := &config{start: start}
+	for _, o := range options {
+		o(cf)
+	}
+	b := cf.visBits
+	if b == nil {
+		n := bits.New(len(g))
+		b = &n
+	} else if b.Bit(int(cf.start)) != 0 {
+		return
+	}
+	var df func(NI) bool
+	df = func(n NI) bool {
+		b.SetBit(int(n), 1)
+		if cf.pathBits != nil {
+			cf.pathBits.SetBit(int(n), 1)
+		}
+
+		if cf.nodeVisitor != nil {
+			cf.nodeVisitor(n)
+		}
+		if cf.okNodeVisitor != nil {
+			if !cf.okNodeVisitor(n) {
+				return false
+			}
+		}
+
+		if cf.rand == nil {
+			for x, to := range g[n] {
+				if cf.arcVisitor != nil {
+					cf.arcVisitor(n, x)
+				}
+				if cf.okArcVisitor != nil {
+					if !cf.okArcVisitor(n, x) {
+						return false
+					}
+				}
+				if b.Bit(int(to)) != 0 {
+					continue
+				}
+				if !df(to) {
+					return false
+				}
+			}
+		} else {
+			to := g[n]
+			for _, x := range cf.rand.Perm(len(to)) {
+				if cf.arcVisitor != nil {
+					cf.arcVisitor(n, x)
+				}
+				if cf.okArcVisitor != nil {
+					if !cf.okArcVisitor(n, x) {
+						return false
+					}
+				}
+				if b.Bit(int(to[x])) != 0 {
+					continue
+				}
+				if !df(to[x]) {
+					return false
+				}
+			}
+		}
+		if cf.pathBits != nil {
+			cf.pathBits.SetBit(int(n), 0)
+		}
+		return true
+	}
+	df(cf.start)
 }
 
 // HasArc returns true if g has any arc from node `fr` to node `to`.

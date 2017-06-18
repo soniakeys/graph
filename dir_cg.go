@@ -100,11 +100,10 @@ func (g LabeledDirected) Dominators(start NI) Dominators {
 	// depth-first and may allow Doms to run a little faster by presenting
 	// a shallower tree.
 	post := make([]NI, l)
-	a.breadthFirst(start, nil, nil, func(n NI) bool {
+	a.BreadthFirst(start, NodeVisitor(func(n NI) {
 		l--
 		post[l] = n
-		return true
-	})
+	}))
 	tr, _ := g.Transpose()
 	return g.Doms(tr, post[l:])
 }
@@ -203,11 +202,10 @@ func (g LabeledDirected) PostDominators(end NI) Dominators {
 	a := tr.LabeledAdjacencyList
 	l := len(a)
 	post := make([]NI, l)
-	a.breadthFirst(end, nil, nil, func(n NI) bool {
+	a.BreadthFirst(end, NodeVisitor(func(n NI) {
 		l--
 		post[l] = n
-		return true
-	})
+	}))
 	return tr.Doms(g, post[l:])
 }
 

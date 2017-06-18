@@ -84,6 +84,130 @@ func ExampleAdjacencyList_BoundsOk() {
 	// false 0 9
 }
 
+func ExampleAdjacencyList_BreadthFirst_singlePath() {
+	// arcs are directed right:
+	//    1   3---5
+	//   / \ /   /
+	//  2   4---6--\
+	//           \-/
+	g := graph.AdjacencyList{
+		2: {1},
+		1: {4},
+		4: {3, 6},
+		3: {5},
+		6: {5, 6},
+	}
+	var start, end graph.NI = 1, 6
+	var f graph.FromList
+	var visited int
+	g.BreadthFirst(start, graph.From(&f),
+		graph.OkNodeVisitor(func(n graph.NI) bool {
+			visited++
+			return n != end
+		}))
+	fmt.Println(visited, "nodes visited")
+	fmt.Println("path:", f.PathTo(end, nil))
+	// Output:
+	// 4 nodes visited
+	// path: [1 4 6]
+}
+
+func ExampleAdjacencyList_BreadthFirst_allPaths() {
+	// arcs are directed right:
+	//    1   3---5
+	//   / \ /   /
+	//  2   4---6--\
+	//           \-/
+	g := graph.AdjacencyList{
+		2: {1},
+		1: {4},
+		4: {3, 6},
+		3: {5},
+		6: {5, 6},
+	}
+	start := graph.NI(1)
+	var f graph.FromList
+	g.BreadthFirst(start, graph.From(&f))
+	fmt.Println("Max path length:", f.MaxLen)
+	p := make([]graph.NI, f.MaxLen)
+	for n := range g {
+		fmt.Println(n, f.PathTo(graph.NI(n), p))
+	}
+	// Output:
+	// Max path length: 4
+	// 0 []
+	// 1 [1]
+	// 2 []
+	// 3 [1 4 3]
+	// 4 [1 4]
+	// 5 [1 4 3 5]
+	// 6 [1 4 6]
+}
+
+func ExampleAdjacencyList_BreadthFirst_traverse() {
+	// arcs directed down
+	//    0--
+	//   /|  \
+	//  1 2   3
+	//   /|\  |\
+	//  4 5 6 7 8
+	g := graph.AdjacencyList{
+		0: {1, 2, 3},
+		2: {4, 5, 6},
+		3: {7, 8},
+		8: {},
+	}
+	var f graph.FromList
+	g.BreadthFirst(0, graph.From(&f),
+		graph.NodeVisitor(func(n graph.NI) {
+			fmt.Println("visit", n, "level", f.Paths[n].Len)
+		}))
+	// Output:
+	// visit 0 level 1
+	// visit 1 level 2
+	// visit 2 level 2
+	// visit 3 level 2
+	// visit 4 level 3
+	// visit 5 level 3
+	// visit 6 level 3
+	// visit 7 level 3
+	// visit 8 level 3
+}
+
+func ExampleAdjacencyList_BreadthFirst_traverseRandom() {
+	// arcs directed down
+	//    0--
+	//   /|  \
+	//  1 2   3
+	//   /|\  |\
+	//  4 5 6 7 8
+	g := graph.AdjacencyList{
+		0: {1, 2, 3},
+		2: {4, 5, 6},
+		3: {7, 8},
+		8: {},
+	}
+
+	// only difference from non-random example
+	r := rand.New(rand.NewSource(8))
+
+	var f graph.FromList
+	g.BreadthFirst(0, graph.Rand(r), graph.From(&f),
+		graph.NodeVisitor(func(n graph.NI) {
+			fmt.Println("visit", n, "level", f.Paths[n].Len)
+		}))
+	// Output:
+	// visit 0 level 1
+	// visit 1 level 2
+	// visit 3 level 2
+	// visit 2 level 2
+	// visit 8 level 3
+	// visit 5 level 3
+	// visit 6 level 3
+	// visit 4 level 3
+	// visit 7 level 3
+}
+
 func ExampleAdjacencyList_HasArc() {
 	g := graph.AdjacencyList{
 		2: {0, 2, 0, 1, 1},
