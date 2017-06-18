@@ -51,17 +51,15 @@ func (cf *config) adjFunc(g graph.AdjacencyList) {
 	if b == nil {
 		n := bits.New(len(g))
 		b = &n
+	} else if b.Bit(int(cf.start)) != 0 {
+		return
 	}
 	var df func(graph.NI) bool
 	df = func(n graph.NI) bool {
-		if b.Bit(int(n)) != 0 {
-			return true
-		}
 		b.SetBit(int(n), 1)
 		if cf.pathBits != nil {
 			cf.pathBits.SetBit(int(n), 1)
 		}
-
 		if cf.nodeVisitor != nil {
 			cf.nodeVisitor(n)
 		}
@@ -81,6 +79,9 @@ func (cf *config) adjFunc(g graph.AdjacencyList) {
 						return false
 					}
 				}
+				if b.Bit(int(to)) != 0 {
+					continue
+				}
 				if !df(to) {
 					return false
 				}
@@ -95,6 +96,9 @@ func (cf *config) adjFunc(g graph.AdjacencyList) {
 					if !cf.okArcVisitor(n, x) {
 						return false
 					}
+				}
+				if b.Bit(int(to[x])) != 0 {
+					continue
 				}
 				if !df(to[x]) {
 					return false
@@ -114,12 +118,11 @@ func (cf *config) labFunc(g graph.LabeledAdjacencyList) {
 	if b == nil {
 		n := bits.New(len(g))
 		b = &n
+	} else if b.Bit(int(cf.start)) != 0 {
+		return
 	}
 	var df func(graph.NI) bool
 	df = func(n graph.NI) bool {
-		if b.Bit(int(n)) != 0 {
-			return true
-		}
 		b.SetBit(int(n), 1)
 		if cf.pathBits != nil {
 			cf.pathBits.SetBit(int(n), 1)
@@ -144,6 +147,9 @@ func (cf *config) labFunc(g graph.LabeledAdjacencyList) {
 						return false
 					}
 				}
+				if b.Bit(int(to.To)) != 0 {
+					continue
+				}
 				if !df(to.To) {
 					return false
 				}
@@ -158,6 +164,9 @@ func (cf *config) labFunc(g graph.LabeledAdjacencyList) {
 					if !cf.okArcVisitor(n, x) {
 						return false
 					}
+				}
+				if b.Bit(int(to[x].To)) != 0 {
+					continue
 				}
 				if !df(to[x].To) {
 					return false
