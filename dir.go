@@ -93,7 +93,7 @@ func (g Directed) EulerianCycleD(ma int) ([]NI, error) {
 		}
 		e.keep()
 	}
-	if !e.uv.Zero() {
+	if !e.uv.AllZeros() {
 		return nil, errors.New("not strongly connected")
 	}
 	return e.p, nil
@@ -156,7 +156,7 @@ func (g Directed) EulerianPathD(ma int, start NI) ([]NI, error) {
 		}
 		e.keep()
 	}
-	if !e.uv.Zero() {
+	if !e.uv.AllZeros() {
 		return nil, errors.New("no Eulerian path")
 	}
 	return e.p, nil

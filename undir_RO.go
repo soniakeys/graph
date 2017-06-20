@@ -86,7 +86,7 @@ func (g Undirected) BronKerbosch1(emit func(bits.Bits) bool) {
 	var f func(R, P, X bits.Bits) bool
 	f = func(R, P, X bits.Bits) bool {
 		switch {
-		case !P.Zero():
+		case !P.AllZeros():
 			r2 := bits.New(len(a))
 			p2 := bits.New(len(a))
 			x2 := bits.New(len(a))
@@ -113,7 +113,7 @@ func (g Undirected) BronKerbosch1(emit func(bits.Bits) bool) {
 			if !P.IterateOnes(pf) {
 				return false
 			}
-		case X.Zero():
+		case X.AllZeros():
 			return emit(R)
 		}
 		return true
@@ -196,7 +196,7 @@ func (g Undirected) BronKerbosch2(pivot func(P, X bits.Bits) NI, emit func(bits.
 	var f func(R, P, X bits.Bits) bool
 	f = func(R, P, X bits.Bits) bool {
 		switch {
-		case !P.Zero():
+		case !P.AllZeros():
 			r2 := bits.New(len(a))
 			p2 := bits.New(len(a))
 			x2 := bits.New(len(a))
@@ -230,7 +230,7 @@ func (g Undirected) BronKerbosch2(pivot func(P, X bits.Bits) NI, emit func(bits.
 			if !pnu.IterateOnes(pf) {
 				return false
 			}
-		case X.Zero():
+		case X.AllZeros():
 			return emit(R)
 		}
 		return true
@@ -268,7 +268,7 @@ func (g Undirected) BronKerbosch3(pivot func(P, X bits.Bits) NI, emit func(bits.
 	var f func(R, P, X bits.Bits) bool
 	f = func(R, P, X bits.Bits) bool {
 		switch {
-		case !P.Zero():
+		case !P.AllZeros():
 			r2 := bits.New(len(a))
 			p2 := bits.New(len(a))
 			x2 := bits.New(len(a))
@@ -302,7 +302,7 @@ func (g Undirected) BronKerbosch3(pivot func(P, X bits.Bits) NI, emit func(bits.
 			if !pnu.IterateOnes(pf) {
 				return false
 			}
-		case X.Zero():
+		case X.AllZeros():
 			return emit(R)
 		}
 		return true
@@ -645,7 +645,7 @@ func (g Undirected) IsConnected() bool {
 		}
 	}
 	df(0)
-	return b.Zero()
+	return b.AllZeros()
 }
 
 // IsTree identifies trees in undirected graphs.
@@ -678,7 +678,7 @@ func (g Undirected) IsTree(root NI) (isTree, allTree bool) {
 			return false, false
 		}
 	}
-	return true, v.Zero()
+	return true, v.AllZeros()
 }
 
 // Size returns the number of edges in g.

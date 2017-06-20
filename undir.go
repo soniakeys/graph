@@ -174,7 +174,7 @@ func (g Undirected) EulerianCycleD(m int) ([]NI, error) {
 		}
 		e.keep()
 	}
-	if !e.uv.Zero() {
+	if !e.uv.AllZeros() {
 		return nil, errors.New("not strongly connected")
 	}
 	return e.p, nil

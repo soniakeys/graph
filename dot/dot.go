@@ -168,7 +168,7 @@ func writeAL(g graph.AdjacencyList, w io.Writer, cf *Config) (err error) {
 	var iso bits.Bits
 	if cf.Isolated {
 		iso = g.IsolatedNodes()
-		if iso.Zero() {
+		if iso.AllZeros() {
 			cf.Isolated = false // optimization. turn off checking
 		}
 	}
@@ -354,7 +354,7 @@ func writeLAL(g graph.LabeledAdjacencyList, w io.Writer, cf *Config) (err error)
 	var iso bits.Bits
 	if cf.Isolated {
 		iso = g.IsolatedNodes()
-		if iso.Zero() {
+		if iso.AllZeros() {
 			cf.Isolated = false // optimization. turn off checking
 		}
 	}
@@ -472,7 +472,7 @@ func writeFromList(f graph.FromList, w io.Writer, options []func(*Config)) error
 	// leaves are ranked same if they not isolated nodes and there are
 	// at least two of them.
 	iso.AndNot(f.Leaves, iso)
-	if !iso.Zero() && !iso.Single() { // rank:
+	if !iso.AllZeros() && !iso.Single() { // rank:
 		if _, err := b.WriteString(cf.Indent + "{rank = same"); err != nil {
 			return err
 		}

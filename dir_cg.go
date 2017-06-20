@@ -45,38 +45,23 @@ func (g LabeledDirected) Copy() (c LabeledDirected, ma int) {
 //
 // There are equivalent labeled and unlabeled versions of this method.
 func (g LabeledDirected) Cyclic() (cyclic bool, fr NI, to Half) {
+	// A graph is cyclic if it has a "back arc."  That is, if DF search
+	// reaches a node that is already on the path currently being explored.
 	a := g.LabeledAdjacencyList
-	fr, to.To = -1, -1
-	temp := bits.New(len(a))
-	perm := bits.New(len(a))
-	var df func(int)
-	df = func(n int) {
-		switch {
-		case temp.Bit(n) == 1:
-			cyclic = true
-			return
-		case perm.Bit(n) == 1:
-			return
-		}
-		temp.SetBit(n, 1)
-		for _, nb := range a[n] {
-			df(int(nb.To))
-			if cyclic {
-				if fr < 0 {
-					fr, to = NI(n), nb
+	vis := bits.New(len(a))
+	path := bits.New(len(a))
+	for n := vis.ZeroFrom(0); n >= 0; n = vis.ZeroFrom(n + 1) {
+		a.DepthFirst(NI(n), Visited(&vis), PathBits(&path),
+			OkArcVisitor(func(n NI, x int) (ok bool) {
+				to = a[n][x]
+				if ok = path.Bit(int(to.To)) == 0; !ok {
+					cyclic = true
+					fr = n
 				}
 				return
-			}
-		}
-		temp.SetBit(n, 0)
-		perm.SetBit(n, 1)
-	}
-	for n := range a {
-		if perm.Bit(n) == 1 {
-			continue
-		}
-		if df(n); cyclic { // short circuit as soon as a cycle is found
-			break
+			}))
+		if cyclic {
+			return
 		}
 	}
 	return
@@ -290,6 +275,17 @@ func (g LabeledDirected) InDegree() []int {
 //
 // There are equivalent labeled and unlabeled versions of this method.
 func (g LabeledDirected) IsTree(root NI) (isTree, allTree bool) {
+	// A graph is a tree if DF search never encounters a node already visited.
+	a := g.LabeledAdjacencyList
+	v := bits.New(len(a))
+	a.DepthFirst(root, Visited(&v), OkArcVisitor(func(n NI, x int) bool {
+		isTree = v.Bit(int(a[n][x].To)) == 0
+		return isTree
+	}))
+	return isTree, isTree && v.AllOnes()
+}
+
+/*
 	a := g.LabeledAdjacencyList
 	v := bits.New(len(a))
 	v.SetAll()
@@ -308,7 +304,7 @@ func (g LabeledDirected) IsTree(root NI) (isTree, allTree bool) {
 	}
 	isTree = df(root)
 	return isTree, isTree && v.Zero()
-}
+}*/
 
 // StronglyConnectedComponents identifies strongly connected components in
 // a directed graph.
