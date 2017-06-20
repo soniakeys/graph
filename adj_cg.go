@@ -63,7 +63,21 @@ func (g LabeledAdjacencyList) BoundsOk() (ok bool, fr NI, to Half) {
 // BreadthFirst traverses a directed or undirected graph in breadth first order.
 //
 // Argument start is the start node for the traversal.  Argument opt can be
-// any number of values returned by a TraverseOption function.
+// any number of values returned by a supported TraverseOption function.
+//
+// Supported:
+//
+//   From
+//   NodeVisitor
+//   OkNodeVisitor
+//   Rand
+//
+// Unsupported:
+//
+//   ArcVisitor
+//   OkArcVisitor
+//   Visited
+//   PathBits
 //
 // There are equivalent labeled and unlabeled versions of this method.
 //
@@ -85,7 +99,7 @@ func (g LabeledAdjacencyList) BreadthFirst(start NI, opt ...TraverseOption) {
 	// the frontier consists of nodes all at the same level
 	frontier := []NI{cf.start}
 	level := 1
-	// assign path when node is put on frontier,
+	// assign path when node is put on frontier
 	rp[cf.start] = PathEnd{Len: level, From: -1}
 	for {
 		f.MaxLen = level
@@ -152,7 +166,21 @@ func (g LabeledAdjacencyList) Copy() (c LabeledAdjacencyList, ma int) {
 // DepthFirst traverses a directed or undirected graph in depth first order.
 //
 // Argument start is the start node for the traversal.  Argument opt can be
-// any number of values returned by a TraverseOption function.
+// any number of values returned by a supported TraverseOption function.
+//
+// Supported:
+//
+//   NodeVisitor
+//   OkNodeVisitor
+//   ArcVisitor
+//   OkArcVisitor
+//   Visited
+//   PathBits
+//   Rand
+//
+// Unsupported:
+//
+//   From
 //
 // There are equivalent labeled and unlabeled versions of this method.
 func (g LabeledAdjacencyList) DepthFirst(start NI, options ...TraverseOption) {
@@ -166,6 +194,9 @@ func (g LabeledAdjacencyList) DepthFirst(start NI, options ...TraverseOption) {
 		b = &n
 	} else if b.Bit(int(cf.start)) != 0 {
 		return
+	}
+	if cf.pathBits != nil {
+		cf.pathBits.ClearAll()
 	}
 	var df func(NI) bool
 	df = func(n NI) bool {
