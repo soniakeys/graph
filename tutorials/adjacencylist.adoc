@@ -6,10 +6,10 @@ graphs, and how labeled graphs support weighted graph algorithms.
 
 ## Memory representation
 
-Here is the graph used in the godoc example for AdjacencyList.BreadthFirstPath.
-The example program contains comments with the graph crudely rendered with
-ASCII symbols but here is a more attractive version rendered with the
-http://www.graphviz.org/[Graphviz] dot program.
+Here is the graph used in the godoc "single path" example for
+AdjacencyList.BreadthFirst.  The example program contains comments with the
+graph crudely rendered with ASCII symbols but here is a more attractive
+version rendered with the http://www.graphviz.org/[Graphviz] dot program.
 
 image::https://cdn.rawgit.com/soniakeys/graph/svg-v0/tutorials/img/al.svg[]
 
