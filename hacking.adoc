@@ -1,18 +1,13 @@
 = Hacking
 
+== Get, install
 Basic use of the package is just go get, or git clone; go install.  There are
 no dependencies outside the standard library.
 
-The primary to-do list is the issue tracker on Github.  I maintained a
-journal on google drive for a while but at some point filed issues for all
-remaining ideas in that document that still seemed relevant.  So currently
-there is no other roadmap or planning document.
-
+== Build
 CI is currently on travis-ci.org.
 
-Im not big on making go vet happy just for a badge but I really like the
-example check that I believe appeared with go 1.6.  (I think it will be a
-standard check with 1.7, so the test script will have to change then.)
+The build runs go vet with a few exceptions for things I'm not a big fan of.
 
 https://github.com/client9/misspell has been valuable.
 
@@ -25,3 +20,29 @@ something but for now I’ll try just running it manually now and then.
 
 Go fmt is not in the ci script, but I have at least one editor set up to run
 it on save, so code should stay formatted pretty well.
+
+== Plans
+The primary to-do list is the issue tracker on Github.
+
+== Direction, focus, features
+The project started with no real goal or purpose, just as a place for some code that might be useful.
+Here are some elements that characterize the direction.
+
+* The focus has been on algorithms on adjacency lists.  That is, adjacency list is the fundamental representation
+for most implemented algorithms.  There are many other interesting representations, many reasons to use them,
+but adjacency list is common in literature and practice.  It has been usefule to focus on this data representation,
+at first anyway.
+
+* The API is rather low level.
+
+* Slices instead of maps.  Maps are pretty efficient, and the property of unique keys can be useful, But slices are still faster and more efficient, and the unique key property is not always needed or wanted.  The Adjacency list implementation of this library is all done in slices.  Slices are used in algorithms where possible, in preference to maps.  Maps are still used in some cases where uniqueness is needed.  (But also bits are used.)
+
+* Interfaces not generally used.  Algorithms are implemented directly on concrete data types and not on interfaces describing the capabilites of the data types.
+
+* Code generation is used to provide methods that work on both labeled and unlabeled graphs.  Code is written to labeled types, then transformations generate the unlabled equivalents.
+
+* The focus has been on single threaded algorithms.  Again, there is much new and interesting work being done with
+concurrent, parallel, and distributed graph algorithms, and Go might be an ideal language to implement some of these
+algorithms.  But as a preliminary step, more traditional single-threaded algorithms are implemented.
+
+* Algorithms selected for implementation are generally ones commonly appearing in beginning graph theory discussions and in general purpose graph libraries in other programming languages.
