@@ -11,12 +11,18 @@ image:https://travis-ci.org/soniakeys/graph.svg?branch=master[https://travis-ci.
 Status, 7 Jun 2017:  Go 1.9 is bringing features I want.  Until it comes out,
 building latest commit requires Go tip.
 
-== Non-source files of interest
+== Ancillary material of interest
 
 The directory link:tutorials[tutorials] is a work in progress - there are only
 a few tutorials there yet - but the concept is to provide some topical
 walk-throughs to supplement godoc.  The source-based godoc documentation
 remains the primary documentation.
+
+The directory link:anecdote[anecdote] contains a stand-alone program that
+performs single runs of a number of methods, collecting one-off or "anecdotal"
+timings.  It currently runs only a small fraction of the library methods but
+may still be of interest for giving a general idea of how fast some methods
+run.
 
 The directory link:bench[bench] is another work in progress.  The concept is
 to present some plots showing benchmark performance approaching some
