@@ -22,11 +22,11 @@ remains the primary documentation.
 * link:tutorials/adjacencylist.md[AdjacencyList types]
 * link:tutorials/missingmethods.md[Missing methods]
 
-The directory link:bench is another work in progress.  The concept is
+The directory link:bench[bench] is another work in progress.  The concept is
 to present some plots showing benchmark performance approaching some
 theoretical asymptote.
 
-link:hacking.md has some information about how the library is
+link:hacking.md[hacking.md] has some information about how the library is
 developed, built, and tested.  It might be of interest if for example you
 plan to fork or contribute to the the repository.
 
