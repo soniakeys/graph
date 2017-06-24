@@ -41,7 +41,7 @@ For Undirected u, "neighbors" or nodes at edges from n are
 `u.AdjacencyList[n]`.
 
 == Unique neighbors
-You might consider "neighbors" to be _unique_ neighbor nodes distinct from n.
+You might consider "neighbors" to be _unique_ neighbor nodes _distinct from n_.
 In more complex cases where loops or parallel edges can be present, you'll
 have to handle these as approriate in your code.  If you wanted to collect this
 set of unique neighbors for example you might use a map and write
