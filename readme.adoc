@@ -13,7 +13,7 @@ building latest commit requires Go tip.
 
 == Non-source files of interest
 
-The directory [tutorials](tutorials) is a work in progress - there are only
+The directory link:tutorials[tutorials] is a work in progress - there are only
 a few tutorials there yet - but the concept is to provide some topical
 walk-throughs to supplement godoc.  The source-based godoc documentation
 remains the primary documentation.
