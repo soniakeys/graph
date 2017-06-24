@@ -41,7 +41,7 @@ For Undirected u, "neighbors" or nodes at edges from n are
 `u.AdjacencyList[n]`.
 
 == Unique neighbors
-You might consider "neighbors" to be *unique* neighbor nodes *distinct from n*.
+You might consider "neighbors" to be _unique_ neighbor nodes distinct from n.
 In more complex cases where loops or parallel edges can be present, you'll
 have to handle these as approriate in your code.  If you wanted to collect this
 set of unique neighbors for example you might use a map and write
@@ -54,7 +54,7 @@ for _, to := range g[n] {
 		nb[to] = true
 	}
 }
----
+----
 
 This is pretty basic logic for collecting a set and this library presumes you
 can write code like this as you need it.  Before you cut and paste this code
