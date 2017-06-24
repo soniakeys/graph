@@ -18,10 +18,6 @@ a few tutorials there yet - but the concept is to provide some topical
 walk-throughs to supplement godoc.  The source-based godoc documentation
 remains the primary documentation.
 
-* link:tutorials/dijkstra.md[Dijkstra's algorithm]
-* link:tutorials/adjacencylist.md[AdjacencyList types]
-* link:tutorials/missingmethods.md[Missing methods]
-
 The directory link:bench[bench] is another work in progress.  The concept is
 to present some plots showing benchmark performance approaching some
 theoretical asymptote.

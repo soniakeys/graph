@@ -7,6 +7,6 @@ remains the Go doc format documentation within the Go source files.
 They can be read in any order.  A suggested order might be
 
 * link:tutorials/dijkstra.md[Dijkstra's algorithm] (a quick start)
-* link:tutorials/adjacencylist.md[AdjacencyList types] (more explaination
+* link:tutorials/adjacencylist.md[AdjacencyList types] (more explanation
   about this library's most fundamental data type.
 * link:tutorials/missingmethods.md[Missing methods] (looking for something?)
