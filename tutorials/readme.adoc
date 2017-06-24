@@ -1,0 +1,11 @@
+= Tutorials
+
+Documents in this directory show usage patterns and explain concepts in more
+detail than the primary documentation.  The primary documentation remains
+the Go doc format documentation within the Go source files.
+
+They can be read in any order.  A suggested order might be
+
+* link:tutorials/dijkstra.md[Dijkstra's algorithm] (a quick intro)
+* link:tutorials/adjacencylist.md[AdjacencyList types]
+* link:tutorials/missingmethods.md[Missing methods]
