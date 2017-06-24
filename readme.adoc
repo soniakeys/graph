@@ -1,4 +1,4 @@
-#Graph
+= Graph
 
 A graph library with goals of speed and simplicity, Graph implements
 graph algorithms on graphs of zero-based integer node IDs.
