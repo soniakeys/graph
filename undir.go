@@ -150,17 +150,144 @@ func (g Undirected) Edges(v EdgeVisitor) {
 	// undefined behavior is that unpaired arcs are silently ignored.
 }
 
-// EulerianCycleD for undirected graphs is a bit of an experiment.
+// EulerianCycle finds an Eulerian cycle in a directed multigraph.
 //
-// It is about the same as the directed version, but modified for an undirected
-// multigraph.
+// * If g has no nodes, result is nil, nil.
 //
-// Parameter m in this case must be the size of the undirected graph -- the
+// * If g is Eulerian, result is an Eulerian cycle with err = nil.
+// The cycle result is a list of nodes, where the first and last
+// nodes are the same.
+//
+// * Otherwise, result is nil, error
+//
+// See also EulerianCycleD, a destructive variant that is simpler but
+// suffers worse asymptotic time complexity.
+func (g Undirected) EulerianCycle() ([]NI, error) {
+	if g.Order() == 0 {
+		return nil, nil
+	}
+	u := newUlerian(g)
+	for u.s >= 0 {
+		v := u.top()
+		u.push()
+		if u.top() != v {
+			return nil, errors.New("not balanced")
+		}
+		u.keep()
+	}
+	if !u.uv.AllZeros() {
+		return nil, errors.New("not strongly connected")
+	}
+	return u.p, nil
+}
+
+// undirected variant of similar class in dir.go
+type ulerian struct {
+	g  []map[NI]int // map (multiset) based copy of graph
+	m  int          // number of arcs in g, updated as g is consumed
+	uv bits.Bits    // unvisited
+	// low end of p is stack of unfinished nodes
+	// high end is finished path
+	p []NI // stack + path
+	s int  // stack pointer
+}
+
+func (u *ulerian) top() NI {
+	return u.p[u.s]
+}
+
+// starting with the node on top of the stack, move nodes with no arcs.
+func (u *ulerian) keep() {
+	for u.s >= 0 {
+		n := u.top()
+		if len(u.g[n]) > 0 {
+			break
+		}
+		u.p[u.m] = n
+		u.s--
+		u.m--
+	}
+}
+
+func (e *ulerian) push() {
+	for u := e.top(); ; {
+		e.uv.SetBit(int(u), 0)
+		arcs := e.g[u]
+		if len(arcs) == 0 {
+			return
+		}
+		// pick an arc
+		var w NI
+		{
+			var c int
+			for w, c = range arcs {
+				break
+			}
+			// consume arc
+			if c > 1 {
+				arcs[w]--
+			} else {
+				delete(arcs, w)
+			}
+			// consume reciprocal arc as well
+			r := e.g[w]
+			if r[u] > 1 {
+				r[u]--
+			} else {
+				delete(r, u)
+			}
+		}
+		e.s++
+		e.p[e.s] = w
+		u = w
+	}
+}
+
+func newUlerian(g Undirected) *ulerian {
+	a := g.AdjacencyList
+	u := &ulerian{
+		g:  make([]map[NI]int, len(a)),
+		uv: bits.New(len(a)),
+	}
+	// convert representation, this maintains time complexity for
+	// the undirected case.
+	m2 := 0
+	for n, to := range a {
+		m2 += len(to)
+		s := map[NI]int{} // a multiset for each node
+		for _, to := range to {
+			s[to]++
+			if to == NI(n) {
+				m2++
+			}
+		}
+		u.g[n] = s
+	}
+	u.m = m2 / 2
+	u.p = make([]NI, u.m+1)
+	u.uv.SetAll()
+	return u
+}
+
+// EulerianCycleD finds an Eulerian cycle in a directed multigraph.
+//
+// EulerianCycleD is destructive on its receiver g.  See EulerianCycle for
+// a non-destructive version.
+//
+// For undirected graphs, there is further difference between the destructive
+// and non-destructive versions.  The destructive version is simpler but
+// suffers worse asymptotic time complexity.
+//
+// Parameter m must be the size of the undirected graph -- the
 // number of edges.  Use Undirected.Size if the size is unknown.
 //
-// It works, but contains an extra loop that I think spoils the time
-// complexity.  Probably still pretty fast in practice, but a different
-// graph representation might be better.
+// * If g has no nodes, result is nil, nil.
+//
+// * If g is Eulerian, result is an Eulerian cycle with err = nil.
+// The cycle result is a list of nodes, where the first and last
+// nodes are the same.
+//
+// * Otherwise, result is nil, error
 func (g Undirected) EulerianCycleD(m int) ([]NI, error) {
 	if g.Order() == 0 {
 		return nil, nil

@@ -5,6 +5,7 @@ package graph_test
 
 import (
 	"fmt"
+	"testing"
 
 	"github.com/soniakeys/graph"
 )
@@ -79,6 +80,20 @@ func ExampleUndirected_Edges() {
 	// {2 0}
 	// {2 0}
 	// {2 2}
+}
+
+func TestUndirectedEulerianCycle(t *testing.T) {
+	var g graph.Undirected
+	g.AddEdge(0, 1)
+	g.AddEdge(0, 2)
+	g.AddEdge(1, 2)
+	g.AddEdge(1, 2)
+	g.AddEdge(1, 2)
+	g.AddEdge(2, 2)
+	c, err := g.EulerianCycle()
+	if len(c) != 7 || err != nil {
+		t.Fatal()
+	}
 }
 
 func ExampleUndirected_EulerianCycleD() {
