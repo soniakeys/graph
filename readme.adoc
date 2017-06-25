@@ -28,7 +28,7 @@ The directory link:bench[bench] is another work in progress.  The concept is
 to present some plots showing benchmark performance approaching some
 theoretical asymptote.
 
-link:hacking.md[hacking.md] has some information about how the library is
+link:hacking.adoc[hacking.adoc] has some information about how the library is
 developed, built, and tested.  It might be of interest if for example you
 plan to fork or contribute to the the repository.
 
