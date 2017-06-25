@@ -107,6 +107,15 @@ func (g AdjacencyList) IsUndirected() (u bool, from, to NI) {
 	return true, -1, -1
 }
 
+// SortArcLists sorts the arc lists of each node of receiver g.
+//
+// Nodes are not relabeled and the graph remains equivalent.
+func (g AdjacencyList) SortArcLists() {
+	for _, to := range g {
+		sort.Sort(nodeList(to))
+	}
+}
+
 // ------- Labeled methods below -------
 
 // ArcsAsEdges constructs an edge list with an edge for each arc, including

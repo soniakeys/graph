@@ -5,6 +5,7 @@ package graph_test
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/soniakeys/graph"
@@ -91,7 +92,20 @@ func TestUndirectedEulerianCycle(t *testing.T) {
 	g.AddEdge(1, 2)
 	g.AddEdge(2, 2)
 	c, err := g.EulerianCycle()
-	if len(c) != 7 || err != nil {
+	if err != nil {
+		t.Fatal(err)
+	}
+	// reconstruct from node list c
+	var r graph.Undirected
+	n1 := c[0]
+	for _, n2 := range c[1:] {
+		r.AddEdge(n1, n2)
+		n1 = n2
+	}
+	// compare
+	g.SortArcLists()
+	r.SortArcLists()
+	if !reflect.DeepEqual(r, g) {
 		t.Fatal()
 	}
 }
