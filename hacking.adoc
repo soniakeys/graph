@@ -25,24 +25,38 @@ it on save, so code should stay formatted pretty well.
 The primary to-do list is the issue tracker on Github.
 
 == Direction, focus, features
-The project started with no real goal or purpose, just as a place for some code that might be useful.
-Here are some elements that characterize the direction.
+The project started with no real goal or purpose, just as a place for some code
+that might be useful.  Here are some elements that characterize the direction.
 
-* The focus has been on algorithms on adjacency lists.  That is, adjacency list is the fundamental representation
-for most implemented algorithms.  There are many other interesting representations, many reasons to use them,
-but adjacency list is common in literature and practice.  It has been usefule to focus on this data representation,
-at first anyway.
+* The focus has been on algorithms on adjacency lists.  That is, adjacency list
+  is the fundamental representation for most implemented algorithms.  There are
+  many other interesting representations, many reasons to use them, but
+  adjacency list is common in literature and practice.  It has been useful to
+  focus on this data representation, at first anyway.
 
 * The API is rather low level.
 
-* Slices instead of maps.  Maps are pretty efficient, and the property of unique keys can be useful, But slices are still faster and more efficient, and the unique key property is not always needed or wanted.  The Adjacency list implementation of this library is all done in slices.  Slices are used in algorithms where possible, in preference to maps.  Maps are still used in some cases where uniqueness is needed.  (But also bits are used.)
+* Slices instead of maps.  Maps are pretty efficient, and the property of
+  unique keys can be useful, But slices are still faster and more efficient,
+  and the unique key property is not always needed or wanted.  The Adjacency
+  list implementation of this library is all done in slices.  Slices are used
+  in algorithms where possible, in preference to maps.  Maps are still used in
+  some cases where uniqueness is needed.  (But also bits are used.)
 
-* Interfaces not generally used.  Algorithms are implemented directly on concrete data types and not on interfaces describing the capabilites of the data types.
+* Interfaces not generally used.  Algorithms are implemented directly on
+  concrete data types and not on interfaces describing the capabilities of
+  the data types.
 
-* Code generation is used to provide methods that work on both labeled and unlabeled graphs.  Code is written to labeled types, then transformations generate the unlabled equivalents.
+* Code generation is used to provide methods that work on both labeled and
+  unlabeled graphs.  Code is written to labeled types, then transformations
+  generate the unlabled equivalents.
 
-* The focus has been on single threaded algorithms.  Again, there is much new and interesting work being done with
-concurrent, parallel, and distributed graph algorithms, and Go might be an ideal language to implement some of these
-algorithms.  But as a preliminary step, more traditional single-threaded algorithms are implemented.
+* The focus has been on single threaded algorithms.  Again, there is much new
+  and interesting work being done with concurrent, parallel, and distributed
+  graph algorithms, and Go might be an ideal language to implement some of
+  these algorithms.  But as a preliminary step, more traditional
+  single-threaded algorithms are implemented.
 
-* Algorithms selected for implementation are generally ones commonly appearing in beginning graph theory discussions and in general purpose graph libraries in other programming languages.
+* Algorithms selected for implementation are generally ones commonly appearing
+  in beginning graph theory discussions and in general purpose graph libraries
+  in other programming languages.

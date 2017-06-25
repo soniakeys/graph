@@ -333,57 +333,6 @@ func (g Directed) Undirected() Undirected {
 	return Undirected{c}
 }
 
-// StronglyConnectedComponents identifies strongly connected components
-// in a directed graph.
-//
-// Algorithm by David J. Pearce, from "An Improved Algorithm for Finding the
-// Strongly Connected Components of a Directed Graph".  It is algorithm 3,
-// PEA_FIND_SCC2 in
-// http://homepages.mcs.vuw.ac.nz/~djp/files/P05.pdf, accessed 22 Feb 2015.
-//
-// Returned is a list of components, each component is a list of nodes.
-/*
-func (g Directed) StronglyConnectedComponents() []int {
-	rindex := make([]int, len(g))
-	S := []int{}
-	index := 1
-	c := len(g) - 1
-	visit := func(v int) {
-		root := true
-		rindex[v] = index
-		index++
-		for _, w := range g[v] {
-			if rindex[w] == 0 {
-				visit(w)
-			}
-			if rindex[w] < rindex[v] {
-				rindex[v] = rindex[w]
-				root = false
-			}
-		}
-		if root {
-			index--
-			for top := len(S) - 1; top >= 0 && rindex[v] <= rindex[top]; top-- {
-				w = rindex[top]
-				S = S[:top]
-				rindex[w] = c
-				index--
-			}
-			rindex[v] = c
-			c--
-		} else {
-			S = append(S, v)
-		}
-	}
-	for v := range g {
-		if rindex[v] == 0 {
-			visit(v)
-		}
-	}
-	return rindex
-}
-*/
-
 // Transpose constructs a new adjacency list with all arcs reversed.
 //
 // For every arc from->to of g, the result will have an arc to->from.
