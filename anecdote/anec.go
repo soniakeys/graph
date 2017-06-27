@@ -22,6 +22,7 @@ func main() {
 	allpairs()
 	sssp()
 	shortestone()
+	eulerian()
 }
 
 func h(n int) string {
@@ -166,5 +167,24 @@ func shortestone() {
 		d := time.Now().Sub(t)
 		fmt.Printf("%-22s %-38s %12s\n", m, g, d)
 	}
+}
 
+func eulerian() {
+	fmt.Println("\nEulerian cycles")
+	dirEuSmall := dirEu(1e3)
+	dirEuLarge := dirEu(1e5)
+	uEuSmall := uEu(1e3)
+	uEuLarge := uEu(1e5)
+	for _, r := range []euResult{
+		dirEuTest(dirEuSmall),  // non-destructive first
+		dirEuDTest(dirEuSmall), // this consumes dirEuSmall
+		dirEuTest(dirEuLarge),
+		dirEuDTest(dirEuLarge),
+		uEuTest(uEuSmall),
+		uEuDTest(uEuSmall),
+		uEuTest(uEuLarge),
+		uEuDTest(uEuLarge),
+	} {
+		fmt.Printf("%-22s %-38s %12s\n", r.method, r.tag, r.d)
+	}
 }
