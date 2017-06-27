@@ -39,15 +39,17 @@ var Defaults = Config{
 	},
 }
 
-func NodeLabel(f func(graph.NI) string) func(*Config) {
+type Option func(*Config)
+
+func NodeLabel(f func(graph.NI) string) Option {
 	return func(c *Config) { c.NodeLabel = f }
 }
 
-func Glyphs(g G) func(*Config) {
+func Glyphs(g G) Option {
 	return func(c *Config) { c.Glyphs = g }
 }
 
-func Write(g graph.Directed, root graph.NI, w io.Writer, options ...func(*Config)) (err error) {
+func Write(g graph.Directed, root graph.NI, w io.Writer, options ...Option) (err error) {
 	cf := Defaults
 	for _, o := range options {
 		o(&cf)
