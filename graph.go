@@ -37,12 +37,16 @@ import (
 //go:generate cp dir_cg.go dir_RO.go
 //go:generate gofmt -r "LabeledDirected -> Directed" -w dir_RO.go
 //go:generate gofmt -r "LabeledAdjacencyList -> AdjacencyList" -w dir_RO.go
+//go:generate gofmt -r "labEulerian -> eulerian" -w dir_RO.go
+//go:generate gofmt -r "newLabEulerian -> newEulerian" -w dir_RO.go
+//go:generate gofmt -r "Half{n, -1} -> n" -w dir_RO.go
 //go:generate gofmt -r "n.To -> n" -w dir_RO.go
 //go:generate gofmt -r "Half -> NI" -w dir_RO.go
 
 //go:generate cp undir_cg.go undir_RO.go
 //go:generate gofmt -r "LabeledUndirected -> Undirected" -w undir_RO.go
 //go:generate gofmt -r "LabeledAdjacencyList -> AdjacencyList" -w undir_RO.go
+//go:generate gofmt -r "newLabEulerian -> newEulerian" -w undir_RO.go
 //go:generate gofmt -r "n.To -> n" -w undir_RO.go
 //go:generate gofmt -r "Half -> NI" -w undir_RO.go
 

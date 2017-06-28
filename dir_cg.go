@@ -4,6 +4,8 @@
 package graph
 
 import (
+	"errors"
+
 	"github.com/soniakeys/bits"
 )
 
@@ -215,6 +217,271 @@ func (from LabeledDirected) domFrontiers(d Dominators) DominanceFrontiers {
 		}
 	}
 	return f
+}
+
+// EulerianCycle finds an Eulerian cycle in a directed multigraph.
+//
+// * If g has no nodes, result is nil, nil.
+//
+// * If g is Eulerian, result is an Eulerian cycle with err = nil.
+// The cycle result is a list of nodes, where the first and last
+// nodes are the same.
+//
+// * Otherwise, result is nil, error
+//
+// Internally, EulerianCycle copies the entire graph g.
+// See EulerianCycleD for a more space efficient version.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g LabeledDirected) EulerianCycle() ([]Half, error) {
+	c, m := g.Copy()
+	return c.EulerianCycleD(m)
+}
+
+// EulerianCycleD finds an Eulerian cycle in a directed multigraph.
+//
+// EulerianCycleD is destructive on its receiver g.  See EulerianCycle for
+// a non-destructive version.
+//
+// Argument ma must be the correct arc size, or number of arcs in g.
+//
+// * If g has no nodes, result is nil, nil.
+//
+// * If g is Eulerian, result is an Eulerian cycle with err = nil.
+// The cycle result is a list of nodes, where the first and last
+// nodes are the same.
+//
+// * Otherwise, result is nil, error
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g LabeledDirected) EulerianCycleD(ma int) ([]Half, error) {
+	if g.Order() == 0 {
+		return nil, nil
+	}
+	e := newLabEulerian(g.LabeledAdjacencyList, ma)
+	for e.s >= 0 {
+		v := e.top() // v is node that starts cycle
+		e.push()
+		// if Eulerian, we'll always come back to starting node
+		if e.top() != v {
+			return nil, errors.New("not balanced")
+		}
+		e.keep()
+	}
+	if !e.uv.AllZeros() {
+		return nil, errors.New("not strongly connected")
+	}
+	return e.p, nil
+}
+
+// EulerianPath finds an Eulerian path in a directed multigraph.
+//
+// * If g has no nodes, result is nil, nil.
+//
+// * If g has an Eulerian path, result is an Eulerian path with err = nil.
+// The path result is a list of nodes, where the first node is start.
+//
+// * Otherwise, result is nil, error
+//
+// Internally, EulerianPath copies the entire graph g.
+// See EulerianPathD for a more space efficient version.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g LabeledDirected) EulerianPath() ([]Half, error) {
+	ind := g.InDegree()
+	var start NI
+	for n, to := range g.LabeledAdjacencyList {
+		if len(to) > ind[n] {
+			start = NI(n)
+			break
+		}
+	}
+	c, m := g.Copy()
+	return c.EulerianPathD(m, start)
+}
+
+// EulerianPathD finds an Eulerian path in a directed multigraph.
+//
+// EulerianPathD is destructive on its receiver g.  See EulerianPath for
+// a non-destructive version.
+//
+// Argument ma must be the correct arc size, or number of arcs in g.
+// Argument start must be a valid start node for the path.
+//
+// * If g has no nodes, result is nil, nil.
+//
+// * If g has an Eulerian path, result is an Eulerian path with err = nil.
+// The path result is a list of nodes, where the first node is start.
+//
+// * Otherwise, result is nil, error
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g LabeledDirected) EulerianPathD(ma int, start NI) ([]Half, error) {
+	if g.Order() == 0 {
+		return nil, nil
+	}
+	e := newLabEulerian(g.LabeledAdjacencyList, ma)
+	e.p[0] = Half{start, -1}
+	// unlike EulerianCycle, the first path doesn't have be a cycle.
+	e.push()
+	e.keep()
+	for e.s >= 0 {
+		start = e.top().To
+		e.push()
+		// paths after the first must be cycles though
+		// (as long as there are nodes on the stack)
+		if e.top().To != start {
+			return nil, errors.New("no Eulerian path")
+		}
+		e.keep()
+	}
+	if !e.uv.AllZeros() {
+		return nil, errors.New("no Eulerian path")
+	}
+	return e.p, nil
+}
+
+// starting at the node on the top of the stack, follow arcs until stuck.
+// mark nodes visited, push nodes on stack, remove arcs from g.
+func (e *labEulerian) push() {
+	for u := e.top().To; ; {
+		e.uv.SetBit(int(u), 0) // reset unvisited bit
+		arcs := e.g[u]
+		if len(arcs) == 0 {
+			return // stuck
+		}
+		w := arcs[0] // follow first arc
+		e.s++        // push followed node on stack
+		e.p[e.s] = w
+		e.g[u] = arcs[1:] // consume arc
+		u = w.To
+	}
+}
+
+// like push, but for for undirected graphs.
+func (e *labEulerian) pushUndir() {
+	for u := e.top(); ; {
+		e.uv.SetBit(int(u.To), 0)
+		arcs := e.g[u.To]
+		if len(arcs) == 0 {
+			return
+		}
+		w := arcs[0]
+		e.s++
+		e.p[e.s] = w
+		e.g[u.To] = arcs[1:] // consume arc
+		// here is the only difference, consume reciprocal arc as well:
+		a2 := e.g[w.To]
+		for x, rx := range a2 {
+			if rx == u { // here it is
+				last := len(a2) - 1
+				a2[x] = a2[last]      // someone else gets the seat
+				e.g[w.To] = a2[:last] // and it's gone.
+				break
+			}
+		}
+		u = w
+	}
+}
+
+// starting with the node on top of the stack, move nodes with no arcs.
+func (e *labEulerian) keep() {
+	for e.s >= 0 {
+		n := e.top()
+		if len(e.g[n.To]) > 0 {
+			break
+		}
+		e.p[e.m] = n
+		e.s--
+		e.m--
+	}
+}
+
+type labEulerian struct {
+	g  LabeledAdjacencyList // working copy of graph, it gets consumed
+	m  int                  // number of arcs in g, updated as g is consumed
+	uv bits.Bits            // unvisited
+	// low end of p is stack of unfinished nodes
+	// high end is finished path
+	p []Half // stack + path
+	s int    // stack pointer
+}
+
+func (e *labEulerian) top() Half {
+	return e.p[e.s]
+}
+
+func newLabEulerian(g LabeledAdjacencyList, m int) *labEulerian {
+	e := &labEulerian{
+		g:  g,
+		m:  m,
+		uv: bits.New(len(g)),
+		p:  make([]Half, m+1),
+	}
+	e.uv.SetAll()
+	return e
+}
+
+// MaximalNonBranchingPaths finds all paths in a directed graph that are
+// "maximal" and "non-branching".
+//
+// A non-branching path is one where path nodes other than the first and last
+// have exactly one arc leading to the node and one arc leading from the node,
+// thus there is no possibility to branch away to a different path.
+//
+// A maximal non-branching path cannot be extended to a longer non-branching
+// path by including another node at either end.
+//
+// In the case of a cyclic non-branching path, the first and last elements
+// of the path will be the same node, indicating an isolated cycle.
+//
+// The method calls the emit argument for each path or isolated cycle in g,
+// as long as emit returns true.  If emit returns false,
+// MaximalNonBranchingPaths returns immediately.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g LabeledDirected) MaximalNonBranchingPaths(emit func([]Half) bool) {
+	a := g.LabeledAdjacencyList
+	ind := g.InDegree()
+	uv := bits.New(g.Order())
+	uv.SetAll()
+	for v, vTo := range a {
+		if !(ind[v] == 1 && len(vTo) == 1) {
+			for _, w := range vTo {
+				n := []Half{Half{NI(v), -1}, w}
+				uv.SetBit(v, 0)
+				uv.SetBit(int(w.To), 0)
+				wTo := a[w.To]
+				for ind[w.To] == 1 && len(wTo) == 1 {
+					u := wTo[0]
+					n = append(n, u)
+					uv.SetBit(int(u.To), 0)
+					w = u
+					wTo = a[w.To]
+				}
+				if !emit(n) { // n is a path
+					return
+				}
+			}
+		}
+	}
+	// use uv.From rather than uv.Iterate.
+	// Iterate doesn't work here because we're modifying uv
+	for b := uv.OneFrom(0); b >= 0; b = uv.OneFrom(b + 1) {
+		v := Half{NI(b), -1}
+		n := []Half{v}
+		for w := v; ; {
+			w = a[w.To][0]
+			uv.SetBit(int(w.To), 0)
+			n = append(n, w)
+			if w == v {
+				break
+			}
+		}
+		if !emit(n) { // n is an isolated cycle
+			return
+		}
+	}
 }
 
 // FromList transposes a labeled graph into a FromList.

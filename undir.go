@@ -7,8 +7,6 @@ package graph
 // LabeledUndirected.
 
 import (
-	"errors"
-
 	"github.com/soniakeys/bits"
 )
 
@@ -148,40 +146,6 @@ func (g Undirected) Edges(v EdgeVisitor) {
 		}
 	}
 	// undefined behavior is that unpaired arcs are silently ignored.
-}
-
-// EulerianCycleD finds an Eulerian cycle in a directed multigraph.
-//
-// EulerianCycleD is destructive on its receiver g.  See EulerianCycle for
-// a non-destructive version.
-//
-// Parameter m must be the size of the undirected graph -- the
-// number of edges.  Use Undirected.Size if the size is unknown.
-//
-// * If g has no nodes, result is nil, nil.
-//
-// * If g is Eulerian, result is an Eulerian cycle with err = nil.
-// The cycle result is a list of nodes, where the first and last
-// nodes are the same.
-//
-// * Otherwise, result is nil, error
-func (g Undirected) EulerianCycleD(m int) ([]NI, error) {
-	if g.Order() == 0 {
-		return nil, nil
-	}
-	e := newEulerian(g.AdjacencyList, m)
-	for e.s >= 0 {
-		v := e.top()
-		e.pushUndir() // call modified method
-		if e.top() != v {
-			return nil, errors.New("not balanced")
-		}
-		e.keep()
-	}
-	if !e.uv.AllZeros() {
-		return nil, errors.New("not strongly connected")
-	}
-	return e.p, nil
 }
 
 // HasEdge returns true if g has any edge between nodes n1 and n2.
