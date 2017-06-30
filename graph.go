@@ -47,6 +47,7 @@ import (
 //go:generate gofmt -r "LabeledUndirected -> Undirected" -w undir_RO.go
 //go:generate gofmt -r "LabeledAdjacencyList -> AdjacencyList" -w undir_RO.go
 //go:generate gofmt -r "newLabEulerian -> newEulerian" -w undir_RO.go
+//go:generate gofmt -r "Half{n, -1} -> n" -w undir_RO.go
 //go:generate gofmt -r "n.To -> n" -w undir_RO.go
 //go:generate gofmt -r "Half -> NI" -w undir_RO.go
 

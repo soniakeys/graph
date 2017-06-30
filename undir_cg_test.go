@@ -12,6 +12,7 @@ package graph_test
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/soniakeys/bits"
 	"github.com/soniakeys/graph"
@@ -318,6 +319,168 @@ func ExampleLabeledUndirected_Density() {
 	fmt.Println(g.Density())
 	// Output:
 	// 0.5
+}
+
+func ExampleLabeledUndirected_Eulerian() {
+	//   0--
+	//  /   \
+	//  \    \
+	//   1----3
+	//  / \  /
+	//  \ / /
+	//   2--
+	var g graph.LabeledUndirected
+	g.AddEdge(graph.Edge{0, 1}, 0)
+	g.AddEdge(graph.Edge{1, 2}, 0)
+	g.AddEdge(graph.Edge{1, 2}, 0)
+	g.AddEdge(graph.Edge{0, 3}, 0)
+	g.AddEdge(graph.Edge{1, 3}, 0)
+	g.AddEdge(graph.Edge{2, 3}, 0)
+	fmt.Println(g.Eulerian())
+	// Output:
+	// 2 3 <nil>
+}
+
+func ExampleLabeledUndirected_EulerianCycle() {
+	//    0---
+	// a /    \ b
+	//   \  c  \
+	//    1-----3
+	// d / \  f/ \ g
+	//   \ e\ /  /
+	//    ---2---
+	var g graph.LabeledUndirected
+	g.AddEdge(graph.Edge{0, 1}, 'a')
+	g.AddEdge(graph.Edge{0, 3}, 'b')
+	g.AddEdge(graph.Edge{1, 2}, 'd')
+	g.AddEdge(graph.Edge{1, 2}, 'e')
+	g.AddEdge(graph.Edge{1, 3}, 'c')
+	g.AddEdge(graph.Edge{2, 3}, 'f')
+	g.AddEdge(graph.Edge{2, 3}, 'g')
+	c, err := g.EulerianCycle()
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(c)
+	// prettier,
+	fmt.Print("\n", c[0].To)
+	for _, to := range c[1:] {
+		fmt.Printf(" --%c-- %d", to.Label, to.To)
+	}
+	fmt.Println()
+	// Output:
+	// [{0 -1} {1 97} {3 99} {2 103} {1 100} {2 101} {3 102} {0 98}]
+	//
+	// 0 --a-- 1 --c-- 3 --g-- 2 --d-- 1 --e-- 2 --f-- 3 --b-- 0
+}
+
+func ExampleLabeledUndirected_EulerianCycleD() {
+	//    a
+	// 0-------1
+	//  \    c/|\
+	//   \   /d| \
+	//  b \  \ | /e
+	//     \  \|/
+	//      ---2--\
+	//          \-/f
+	var g graph.LabeledUndirected
+	g.AddEdge(graph.Edge{0, 1}, 'a')
+	g.AddEdge(graph.Edge{0, 2}, 'b')
+	g.AddEdge(graph.Edge{1, 2}, 'c')
+	g.AddEdge(graph.Edge{1, 2}, 'd')
+	g.AddEdge(graph.Edge{1, 2}, 'e')
+	g.AddEdge(graph.Edge{2, 2}, 'f') // 6 edges total
+	c, err := g.EulerianCycleD(6)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(c)
+	// prettier,
+	fmt.Print("\n", c[0].To)
+	for _, to := range c[1:] {
+		fmt.Printf(" --%c-- %d", to.Label, to.To)
+	}
+	fmt.Println()
+	// Output:
+	// [{0 -1} {1 97} {2 101} {1 99} {2 100} {2 102} {0 98}]
+	//
+	// 0 --a-- 1 --e-- 2 --c-- 1 --d-- 2 --f-- 2 --b-- 0
+}
+
+func ExampleLabeledUndirected_EulerianPath() {
+	//    0
+	//  a/|\
+	//  /b| \
+	//  \ | /c
+	//   \|/
+	//    1
+	var g graph.LabeledUndirected
+	g.AddEdge(graph.Edge{0, 1}, 'a')
+	g.AddEdge(graph.Edge{0, 1}, 'b')
+	g.AddEdge(graph.Edge{0, 1}, 'c')
+	c, err := g.EulerianPath()
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(c)
+	// prettier,
+	fmt.Print("\n", c[0].To)
+	for _, to := range c[1:] {
+		fmt.Printf(" --%c-- %d", to.Label, to.To)
+	}
+	fmt.Println()
+	// Output:
+	// [{0 -1} {1 97} {0 99} {1 98}]
+	//
+	// 0 --a-- 1 --c-- 0 --b-- 1
+}
+
+func ExampleLabeledUndirected_EulerianPathD() {
+	//    0
+	//  a/|\
+	//  /b| \
+	//  \ | /c
+	//   \|/
+	//    1
+	var g graph.LabeledUndirected
+	g.AddEdge(graph.Edge{0, 1}, 'a')
+	g.AddEdge(graph.Edge{0, 1}, 'b')
+	g.AddEdge(graph.Edge{0, 1}, 'c')
+	c, err := g.EulerianPathD(3, 0)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(c)
+	// prettier,
+	fmt.Print("\n", c[0].To)
+	for _, to := range c[1:] {
+		fmt.Printf(" --%c-- %d", to.Label, to.To)
+	}
+	fmt.Println()
+	// Output:
+	// [{0 -1} {1 97} {0 99} {1 98}]
+	//
+	// 0 --a-- 1 --c-- 0 --b-- 1
+}
+
+func ExampleLabeledUndirected_EulerianStart() {
+	//   0--
+	//  /   \
+	//  \    \
+	//   1----3
+	//  / \  /
+	//  \ / /
+	//   2--
+	var g graph.LabeledUndirected
+	g.AddEdge(graph.Edge{0, 1}, 0)
+	g.AddEdge(graph.Edge{1, 2}, 0)
+	g.AddEdge(graph.Edge{1, 2}, 0)
+	g.AddEdge(graph.Edge{0, 3}, 0)
+	g.AddEdge(graph.Edge{1, 3}, 0)
+	g.AddEdge(graph.Edge{2, 3}, 0)
+	fmt.Println(g.EulerianStart())
+	// Output:
+	// 2
 }
 
 func ExampleLabeledUndirected_FromList() {

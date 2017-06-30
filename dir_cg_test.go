@@ -12,6 +12,7 @@ package graph_test
 
 import (
 	"fmt"
+	"log"
 	"math/big"
 
 	"github.com/soniakeys/graph"
@@ -123,6 +124,157 @@ func ExampleLabeledDirected_Doms() {
 	// Output:
 	// post: [4 2 5 3 1 0]
 	// doms: [0 0 1 1 1 3 -1]
+}
+
+func ExampleLabeledDirected_Eulerian() {
+	//   /<--------\
+	//  /   /<---\  \
+	// 0-->1-->\ /  /
+	//      \-->2--/
+	//         / \
+	//        /<--\
+	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
+		0: {{To: 1}},
+		1: {{To: 2}, {To: 2}},
+		2: {{To: 0}, {To: 1}, {To: 2}},
+	}}
+	fmt.Println(g.Eulerian())
+	// Output:
+	// -1 -1 <nil>
+}
+
+func ExampleLabeledDirected_EulerianCycle() {
+	//   /<----------d---\
+	//  /      /<--e---\  \
+	// 0--a-->1--b-->\ /  /
+	//         \--c-->2--/
+	//               / \
+	//              /   \
+	//             /<-f--\
+	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
+		0: {{1, 'a'}},
+		1: {{2, 'b'}, {2, 'c'}},
+		2: {{0, 'd'}, {1, 'e'}, {2, 'f'}},
+	}}
+	c, err := g.EulerianCycle()
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(c)
+	// prettier,
+	fmt.Print("\n", c[0].To)
+	for _, to := range c[1:] {
+		fmt.Printf(" --%c-- %d", to.Label, to.To)
+	}
+	fmt.Println()
+	// Output:
+	// [{0 -1} {1 97} {2 98} {1 101} {2 99} {2 102} {0 100}]
+	//
+	// 0 --a-- 1 --b-- 2 --e-- 1 --c-- 2 --f-- 2 --d-- 0
+}
+
+func ExampleLabeledDirected_EulerianCycleD() {
+	//   /<----------d---\
+	//  /      /<--e---\  \
+	// 0--a-->1--b-->\ /  /
+	//         \--c-->2--/
+	//               / \
+	//              /   \
+	//             /<-f--\
+	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
+		0: {{1, 'a'}},
+		1: {{2, 'b'}, {2, 'c'}},
+		2: {{0, 'd'}, {1, 'e'}, {2, 'f'}},
+	}}
+	c, err := g.EulerianCycleD(6)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(c)
+	// prettier,
+	fmt.Print("\n", c[0].To)
+	for _, to := range c[1:] {
+		fmt.Printf(" --%c-- %d", to.Label, to.To)
+	}
+	fmt.Println()
+	// Output:
+	// [{0 -1} {1 97} {2 98} {1 101} {2 99} {2 102} {0 100}]
+	//
+	// 0 --a-- 1 --b-- 2 --e-- 1 --c-- 2 --f-- 2 --d-- 0
+}
+
+func ExampleLabeledDirected_EulerianPath() {
+	//         /<--e---\
+	// 3--a-->1--b-->\ /
+	//         \--c-->2--d-->0
+	//               / \
+	//              /   \
+	//             /<-f--\
+	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
+		3: {{1, 'a'}},
+		1: {{2, 'b'}, {2, 'c'}},
+		2: {{0, 'd'}, {1, 'e'}, {2, 'f'}},
+	}}
+	c, err := g.EulerianPath()
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(c)
+	// prettier,
+	fmt.Print("\n", c[0].To)
+	for _, to := range c[1:] {
+		fmt.Printf(" --%c-- %d", to.Label, to.To)
+	}
+	fmt.Println()
+	// Output:
+	// [{3 -1} {1 97} {2 98} {1 101} {2 99} {2 102} {0 100}]
+	//
+	// 3 --a-- 1 --b-- 2 --e-- 1 --c-- 2 --f-- 2 --d-- 0
+}
+
+func ExampleLabeledDirected_EulerianPathD() {
+	//         /<--e---\
+	// 3--a-->1--b-->\ /
+	//         \--c-->2--d-->0
+	//               / \
+	//              /   \
+	//             /<-f--\
+	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
+		3: {{1, 'a'}},
+		1: {{2, 'b'}, {2, 'c'}},
+		2: {{0, 'd'}, {1, 'e'}, {2, 'f'}},
+	}}
+	c, err := g.EulerianPathD(6, 3)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(c)
+	// prettier,
+	fmt.Print("\n", c[0].To)
+	for _, to := range c[1:] {
+		fmt.Printf(" --%c-- %d", to.Label, to.To)
+	}
+	fmt.Println()
+	// Output:
+	// [{3 -1} {1 97} {2 98} {1 101} {2 99} {2 102} {0 100}]
+	//
+	// 3 --a-- 1 --b-- 2 --e-- 1 --c-- 2 --f-- 2 --d-- 0
+}
+
+func ExampleLabeledDirected_EulerianStart() {
+	//      /<---\
+	// 3-->1-->\ /
+	//      \-->2-->0
+	//         / \
+	//        /<--\
+	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
+		3: {{To: 1}},
+		1: {{To: 2}, {To: 2}},
+		2: {{To: 0}, {To: 1}, {To: 2}},
+	}}
+	fmt.Println(g.EulerianStart())
+	// Output:
+	// 3 <nil>
 }
 
 func ExampleLabeledDirected_FromList() {
@@ -245,6 +397,44 @@ func ExampleLabeledDirected_IsTree() {
 	// Output:
 	// true false
 	// false false
+}
+
+func ExampleLabeledDirected_MaximalNonBranchingPaths() {
+	//   a    b     c
+	// 0--->1---->2---->3
+	//             \ d
+	//    -->6      ---->4
+	// e /  / f
+	//  5<--
+	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
+		0: {{1, 'a'}},
+		1: {{2, 'b'}},
+		2: {{3, 'c'}, {4, 'd'}},
+		5: {{6, 'e'}},
+		6: {{5, 'f'}},
+	}}
+	g.MaximalNonBranchingPaths(func(p []graph.Half) bool {
+		fmt.Println(p)
+		// prettier,
+		fmt.Print(p[0].To)
+		for _, to := range p[1:] {
+			fmt.Printf(" --%c-- %d", to.Label, to.To)
+		}
+		fmt.Println("\n")
+		return true
+	})
+	// Output:
+	// [{0 -1} {1 97} {2 98}]
+	// 0 --a-- 1 --b-- 2
+	//
+	// [{2 -1} {3 99}]
+	// 2 --c-- 3
+	//
+	// [{2 -1} {4 100}]
+	// 2 --d-- 4
+	//
+	// [{5 -1} {6 101} {5 102}]
+	// 5 --e-- 6 --f-- 5
 }
 
 func ExampleLabeledDirected_PostDominators() {

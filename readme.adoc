@@ -33,10 +33,10 @@ developed, built, and tested.  It might be of interest if for example you
 plan to fork or contribute to the the repository.
 
 == Test coverage
-5 Nov 2016
+1 Jul 2017
 ....
-graph          95.5%
-graph/df       20.7%
-graph/dot      77.5%
+graph          93.7%
+graph/alt      88.0%
+graph/dot      77.7%
 graph/treevis  79.4%
 ....

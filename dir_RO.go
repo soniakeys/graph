@@ -219,20 +219,63 @@ func (from Directed) domFrontiers(d Dominators) DominanceFrontiers {
 	return f
 }
 
+// Eulerian scans a directed graph to determine if it is Eulerian.
+//
+// If the graph represents an Eulerian cycle, it returns -1, -1, nil.
+//
+// If the graph does not represent an Eulerian cycle but does represent an
+// Eulerian path, it returns the start and end nodes of the path, and nil.
+//
+// Otherwise it returns an error indicating a reason the graph is non-Eulerian.
+// Also in this case it returns a relevant node in either start or end.
+//
+// See also method EulerianStart, which short-circuits when it finds a start
+// node whereas this method completely validates a graph as Eulerian.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g Directed) Eulerian() (start, end NI, err error) {
+	ind := g.InDegree()
+	start = -1
+	end = -1
+	for n, to := range g.AdjacencyList {
+		switch {
+		case len(to) > ind[n]:
+			if start >= 0 {
+				return NI(n), -1, errors.New("multiple start candidates")
+			}
+			if len(to) > ind[n]+1 {
+				return NI(n), -1, errors.New("excessive out-degree")
+			}
+			start = NI(n)
+		case ind[n] > len(to):
+			if end >= 0 {
+				return -1, NI(n), errors.New("multiple end candidates")
+			}
+			if ind[n] > len(to)+1 {
+				return -1, NI(n), errors.New("excessive in-degree")
+			}
+			end = NI(n)
+		}
+	}
+	return start, end, nil
+}
+
 // EulerianCycle finds an Eulerian cycle in a directed multigraph.
 //
 // * If g has no nodes, result is nil, nil.
 //
 // * If g is Eulerian, result is an Eulerian cycle with err = nil.
-// The cycle result is a list of nodes, where the first and last
-// nodes are the same.
+// The first element of the result represents only a start node.
+// The remaining elements represent the half arcs of the cycle.
 //
-// * Otherwise, result is nil, error
+// * Otherwise, result is nil, with a non-nil error giving a reason the graph
+// is not Eulerian.
 //
 // Internally, EulerianCycle copies the entire graph g.
 // See EulerianCycleD for a more space efficient version.
 //
-// There are equivalent labeled and unlabeled versions of this method.
+// There are nearly equivalent labeled and unlabeled versions of this method.
+// In the labeled version the first element of of the
 func (g Directed) EulerianCycle() ([]NI, error) {
 	c, m := g.Copy()
 	return c.EulerianCycleD(m)
@@ -248,23 +291,27 @@ func (g Directed) EulerianCycle() ([]NI, error) {
 // * If g has no nodes, result is nil, nil.
 //
 // * If g is Eulerian, result is an Eulerian cycle with err = nil.
-// The cycle result is a list of nodes, where the first and last
-// nodes are the same.
+// The first element of the result represents only a start node.
+// The remaining elements represent the half arcs of the cycle.
 //
-// * Otherwise, result is nil, error
+// * Otherwise, result is nil, with a non-nil error giving a reason the graph
+// is not Eulerian.
 //
 // There are equivalent labeled and unlabeled versions of this method.
 func (g Directed) EulerianCycleD(ma int) ([]NI, error) {
+	// algorithm adapted from "Sketch of Eulerian Circuit Algorithm" by
+	// Carl Lee, accessed at http://www.ms.uky.edu/~lee/ma515fa10/euler.pdf.
 	if g.Order() == 0 {
 		return nil, nil
 	}
 	e := newEulerian(g.AdjacencyList, ma)
+	e.p[0] = 0
 	for e.s >= 0 {
 		v := e.top() // v is node that starts cycle
 		e.push()
 		// if Eulerian, we'll always come back to starting node
 		if e.top() != v {
-			return nil, errors.New("not balanced")
+			return nil, errors.New("not Eulerian")
 		}
 		e.keep()
 	}
@@ -279,24 +326,25 @@ func (g Directed) EulerianCycleD(ma int) ([]NI, error) {
 // * If g has no nodes, result is nil, nil.
 //
 // * If g has an Eulerian path, result is an Eulerian path with err = nil.
-// The path result is a list of nodes, where the first node is start.
+// The first element of the result represents only a start node.
+// The remaining elements represent the half arcs of the path.
 //
-// * Otherwise, result is nil, error
+// * Otherwise, result is nil, with a non-nil error giving a reason the graph
+// is not Eulerian.
 //
 // Internally, EulerianPath copies the entire graph g.
 // See EulerianPathD for a more space efficient version.
 //
 // There are equivalent labeled and unlabeled versions of this method.
 func (g Directed) EulerianPath() ([]NI, error) {
-	ind := g.InDegree()
-	var start NI
-	for n, to := range g.AdjacencyList {
-		if len(to) > ind[n] {
-			start = NI(n)
-			break
-		}
-	}
 	c, m := g.Copy()
+	start, err := c.EulerianStart()
+	if err != nil {
+		return nil, err
+	}
+	if start < 0 {
+		start = 0
+	}
 	return c.EulerianPathD(m, start)
 }
 
@@ -310,10 +358,13 @@ func (g Directed) EulerianPath() ([]NI, error) {
 //
 // * If g has no nodes, result is nil, nil.
 //
-// * If g has an Eulerian path, result is an Eulerian path with err = nil.
-// The path result is a list of nodes, where the first node is start.
+// * If g has an Eulerian path starting at start, result is an Eulerian path
+// with err = nil.
+// The first element of the result represents only a start node.
+// The remaining elements represent the half arcs of the path.
 //
-// * Otherwise, result is nil, error
+// * Otherwise, result is nil, with a non-nil error giving a reason the graph
+// is not Eulerian.
 //
 // There are equivalent labeled and unlabeled versions of this method.
 func (g Directed) EulerianPathD(ma int, start NI) ([]NI, error) {
@@ -322,7 +373,7 @@ func (g Directed) EulerianPathD(ma int, start NI) ([]NI, error) {
 	}
 	e := newEulerian(g.AdjacencyList, ma)
 	e.p[0] = start
-	// unlike EulerianCycle, the first path doesn't have be a cycle.
+	// unlike EulerianCycle, the first path doesn't have to be a cycle.
 	e.push()
 	e.keep()
 	for e.s >= 0 {
@@ -341,47 +392,66 @@ func (g Directed) EulerianPathD(ma int, start NI) ([]NI, error) {
 	return e.p, nil
 }
 
-// starting at the node on the top of the stack, follow arcs until stuck.
-// mark nodes visited, push nodes on stack, remove arcs from g.
-func (e *eulerian) push() {
-	for u := e.top(); ; {
-		e.uv.SetBit(int(u), 0) // reset unvisited bit
-		arcs := e.g[u]
-		if len(arcs) == 0 {
-			return // stuck
+// EulerianStart finds a candidate start node for an Eulerian path.
+//
+// A candidate start node in the directed case has out-degree one greater then
+// in-degree.  EulerianStart scans the graph returning immediately with the
+// node (and err == nil) when it finds such a candidate.
+//
+// EulerianStart also returns immediately with an error if it finds the graph
+// cannot contain an Eulerian path.  In this case it also returns a relevant
+// node.
+//
+// If the scan completes without finding a candidate start node, the graph
+// represents an Eulerian cycle.  In this case it returns -1, nil, and any
+// node can be chosen as a start node for an eulerian path.
+//
+// See also method Eulerian, which completely validates a graph as Eulerian
+// whereas this method short-curcuits when it finds a start node.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g Directed) EulerianStart() (start NI, err error) {
+	ind := g.InDegree()
+	end := -1
+	for n, to := range g.AdjacencyList {
+		switch {
+		case len(to) > ind[n]:
+			if len(to) == ind[n]+1 {
+				return NI(n), nil // candidate start
+			}
+			return -1, errors.New("excessive out-degree")
+		case ind[n] > len(to):
+			if end >= 0 {
+				return NI(n), errors.New("multiple end candidates")
+			}
+			if ind[n] > len(to)+1 {
+				return NI(n), errors.New("excessive in-degree")
+			}
+			end = n
 		}
-		w := arcs[0] // follow first arc
-		e.s++        // push followed node on stack
-		e.p[e.s] = w
-		e.g[u] = arcs[1:] // consume arc
-		u = w
 	}
+	return -1, nil // cycle
 }
 
-// like push, but for for undirected graphs.
-func (e *eulerian) pushUndir() {
-	for u := e.top(); ; {
-		e.uv.SetBit(int(u), 0)
-		arcs := e.g[u]
-		if len(arcs) == 0 {
-			return
-		}
-		w := arcs[0]
-		e.s++
-		e.p[e.s] = w
-		e.g[u] = arcs[1:] // consume arc
-		// here is the only difference, consume reciprocal arc as well:
-		a2 := e.g[w]
-		for x, rx := range a2 {
-			if rx == u { // here it is
-				last := len(a2) - 1
-				a2[x] = a2[last]   // someone else gets the seat
-				e.g[w] = a2[:last] // and it's gone.
-				break
-			}
-		}
-		u = w
+type eulerian struct {
+	g  AdjacencyList // working copy of graph, it gets consumed
+	m  int           // number of arcs in g, updated as g is consumed
+	uv bits.Bits     // unvisited
+	// low end of p is stack of unfinished nodes
+	// high end is finished path
+	p []NI // stack + path
+	s int  // stack pointer
+}
+
+func newEulerian(g AdjacencyList, m int) *eulerian {
+	e := &eulerian{
+		g:  g,
+		m:  m,
+		uv: bits.New(len(g)),
+		p:  make([]NI, m+1),
 	}
+	e.uv.SetAll()
+	return e
 }
 
 // starting with the node on top of the stack, move nodes with no arcs.
@@ -397,29 +467,8 @@ func (e *eulerian) keep() {
 	}
 }
 
-type eulerian struct {
-	g  AdjacencyList // working copy of graph, it gets consumed
-	m  int           // number of arcs in g, updated as g is consumed
-	uv bits.Bits     // unvisited
-	// low end of p is stack of unfinished nodes
-	// high end is finished path
-	p []NI // stack + path
-	s int  // stack pointer
-}
-
 func (e *eulerian) top() NI {
 	return e.p[e.s]
-}
-
-func newEulerian(g AdjacencyList, m int) *eulerian {
-	e := &eulerian{
-		g:  g,
-		m:  m,
-		uv: bits.New(len(g)),
-		p:  make([]NI, m+1),
-	}
-	e.uv.SetAll()
-	return e
 }
 
 // MaximalNonBranchingPaths finds all paths in a directed graph that are

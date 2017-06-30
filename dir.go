@@ -325,3 +325,35 @@ func (d Dominators) Set(n NI) []NI {
 		}
 	}
 }
+
+// starting at the node on the top of the stack, follow arcs until stuck.
+// mark nodes visited, push nodes on stack, remove arcs from g.
+func (e *eulerian) push() {
+	for u := e.top(); ; {
+		e.uv.SetBit(int(u), 0) // reset unvisited bit
+		arcs := e.g[u]
+		if len(arcs) == 0 {
+			return // stuck
+		}
+		w := arcs[0] // follow first arc
+		e.s++        // push followed node on stack
+		e.p[e.s] = w
+		e.g[u] = arcs[1:] // consume arc
+		u = w
+	}
+}
+
+func (e *labEulerian) push() {
+	for u := e.top().To; ; {
+		e.uv.SetBit(int(u), 0) // reset unvisited bit
+		arcs := e.g[u]
+		if len(arcs) == 0 {
+			return // stuck
+		}
+		w := arcs[0] // follow first arc
+		e.s++        // push followed node on stack
+		e.p[e.s] = w
+		e.g[u] = arcs[1:] // consume arc
+		u = w.To
+	}
+}

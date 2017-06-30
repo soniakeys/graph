@@ -324,6 +324,160 @@ func ExampleUndirected_Density() {
 	// 0.5
 }
 
+func ExampleUndirected_Eulerian_cycle() {
+	//   0---
+	//  /    \
+	//  \     \
+	//   1-----3
+	//  / \   / \
+	//  \  \ /  /
+	//   ---2---
+	var g graph.Undirected
+	g.AddEdge(0, 1)
+	g.AddEdge(0, 3)
+	g.AddEdge(1, 2)
+	g.AddEdge(1, 2)
+	g.AddEdge(1, 3)
+	g.AddEdge(2, 3)
+	g.AddEdge(2, 3)
+	fmt.Println(g.Eulerian())
+	// Output:
+	// -1 -1 <nil>
+}
+
+func ExampleUndirected_Eulerian_königsberg() {
+	//   0--
+	//  / \ \
+	//  \ /  \
+	//   1----3
+	//  / \  /
+	//  \ / /
+	//   2--
+	var g graph.Undirected
+	g.AddEdge(0, 1)
+	g.AddEdge(0, 1)
+	g.AddEdge(1, 2)
+	g.AddEdge(1, 2)
+	g.AddEdge(0, 3)
+	g.AddEdge(1, 3)
+	g.AddEdge(2, 3)
+	fmt.Println(g.Eulerian())
+	// Output:
+	// 0 1 non-Eulerian
+}
+
+func ExampleUndirected_Eulerian_loopIsolated() {
+	//  0  1--\
+	//      \-/
+	var g graph.Undirected
+	g.AddEdge(1, 1)
+	fmt.Println(g.Eulerian())
+	// Output:
+	// -1 -1 <nil>
+}
+
+func ExampleUndirected_Eulerian_path() {
+	//  /--\
+	// 0----1
+	//  \--/
+	var g graph.Undirected
+	g.AddEdge(0, 1)
+	g.AddEdge(0, 1)
+	g.AddEdge(0, 1)
+	fmt.Println(g.Eulerian())
+	// Output:
+	// 0 1 <nil>
+}
+
+func ExampleUndirected_EulerianCycle() {
+	//   0---
+	//  /    \
+	//  \     \
+	//   1-----3
+	//  / \   / \
+	//  \  \ /  /
+	//   ---2---
+	var g graph.Undirected
+	g.AddEdge(0, 1)
+	g.AddEdge(0, 3)
+	g.AddEdge(1, 2)
+	g.AddEdge(1, 2)
+	g.AddEdge(1, 3)
+	g.AddEdge(2, 3)
+	g.AddEdge(2, 3)
+	fmt.Println(g.EulerianCycle())
+	// Output:
+	// [0 1 3 2 1 2 3 0] <nil>
+}
+
+func ExampleUndirected_EulerianCycleD() {
+	// 0----1
+	//  \  /|\
+	//   \ \|/
+	//    --2--\
+	//       \-/
+	var g graph.Undirected
+	// add 6 edges
+	g.AddEdge(0, 1)
+	g.AddEdge(0, 2)
+	g.AddEdge(1, 2)
+	g.AddEdge(1, 2)
+	g.AddEdge(1, 2)
+	g.AddEdge(2, 2) // loop
+	m := g.Size()
+	fmt.Println("m =", m)
+	fmt.Println(g.EulerianCycleD(m))
+	// Output:
+	// m = 6
+	// [0 1 2 2 1 2 0] <nil>
+}
+
+func ExampleUndirected_EulerianPath() {
+	//  /--\
+	// 0----1
+	//  \--/
+	var g graph.Undirected
+	g.AddEdge(0, 1)
+	g.AddEdge(0, 1)
+	g.AddEdge(0, 1)
+	fmt.Println(g.EulerianPath())
+	// Output:
+	// [0 1 0 1] <nil>
+}
+
+func ExampleUndirected_EulerianPathD() {
+	//  /--\
+	// 0----1
+	//  \--/
+	var g graph.Undirected
+	g.AddEdge(0, 1)
+	g.AddEdge(0, 1)
+	g.AddEdge(0, 1)
+	fmt.Println(g.EulerianPathD(3, 0))
+	// Output:
+	// [0 1 0 1] <nil>
+}
+
+func ExampleUndirected_EulerianStart() {
+	//   0--
+	//  /   \
+	//  \    \
+	//   1----3
+	//  / \  /
+	//  \ / /
+	//   2--
+	var g graph.Undirected
+	g.AddEdge(0, 1)
+	g.AddEdge(1, 2)
+	g.AddEdge(1, 2)
+	g.AddEdge(0, 3)
+	g.AddEdge(1, 3)
+	g.AddEdge(2, 3)
+	fmt.Println(g.EulerianStart())
+	// Output:
+	// 2
+}
+
 func ExampleUndirected_FromList() {
 	//    4   3
 	//   / \

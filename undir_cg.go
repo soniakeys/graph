@@ -572,7 +572,58 @@ func (g LabeledUndirected) Density() float64 {
 	return Density(g.Order(), g.Size())
 }
 
-// EulerianCycleD finds an Eulerian cycle in a directed multigraph.
+// Eulerian scans an undirected graph to determine if it is Eulerian.
+//
+// If the graph represents an Eulerian cycle, it returns -1, -1, nil.
+//
+// If the graph does not represent an Eulerian cycle but does represent an
+// Eulerian path, it returns the two end nodes of the path, and nil.
+//
+// Otherwise it returns an error.
+//
+// See also method EulerianStart, which short-circuits as soon as it finds
+// a node that must be a start or end node of an Eulerian path.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g LabeledUndirected) Eulerian() (end1, end2 NI, err error) {
+	end1 = -1
+	end2 = -1
+	for n := range g.LabeledAdjacencyList {
+		switch {
+		case g.Degree(NI(n))%2 == 0:
+		case end1 < 0:
+			end1 = NI(n)
+		case end2 < 0:
+			end2 = NI(n)
+		default:
+			err = errors.New("non-Eulerian")
+			return
+		}
+	}
+	return
+}
+
+// EulerianCycle finds an Eulerian cycle in an undirected multigraph.
+//
+// * If g has no nodes, result is nil, nil.
+//
+// * If g is Eulerian, result is an Eulerian cycle with err = nil.
+// The first element of the result represents only a start node.
+// The remaining elements represent the half arcs of the cycle.
+//
+// * Otherwise, result is nil, with a non-nil error giving a reason the graph
+// is not Eulerian.
+//
+// Internally, EulerianCycle copies the entire graph g.
+// See EulerianCycleD for a more space efficient version.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g LabeledUndirected) EulerianCycle() ([]Half, error) {
+	c, _ := g.Copy()
+	return c.EulerianCycleD(c.Size())
+}
+
+// EulerianCycleD finds an Eulerian cycle in an undirected multigraph.
 //
 // EulerianCycleD is destructive on its receiver g.  See EulerianCycle for
 // a non-destructive version.
@@ -583,10 +634,11 @@ func (g LabeledUndirected) Density() float64 {
 // * If g has no nodes, result is nil, nil.
 //
 // * If g is Eulerian, result is an Eulerian cycle with err = nil.
-// The cycle result is a list of nodes, where the first and last
-// nodes are the same.
+// The first element of the result represents only a start node.
+// The remaining elements represent the half arcs of the cycle.
 //
-// * Otherwise, result is nil, error
+// * Otherwise, result is nil, with a non-nil error giving a reason the graph
+// is not Eulerian.
 //
 // There are equivalent labeled and unlabeled versions of this method.
 func (g LabeledUndirected) EulerianCycleD(m int) ([]Half, error) {
@@ -594,11 +646,14 @@ func (g LabeledUndirected) EulerianCycleD(m int) ([]Half, error) {
 		return nil, nil
 	}
 	e := newLabEulerian(g.LabeledAdjacencyList, m)
+	e.p[0] = Half{0, -1}
 	for e.s >= 0 {
 		v := e.top()
-		e.pushUndir() // call modified method
-		if e.top() != v {
-			return nil, errors.New("not balanced")
+		if err := e.pushUndir(); err != nil {
+			return nil, err
+		}
+		if e.top().To != v.To {
+			return nil, errors.New("not Eulerian")
 		}
 		e.keep()
 	}
@@ -606,6 +661,99 @@ func (g LabeledUndirected) EulerianCycleD(m int) ([]Half, error) {
 		return nil, errors.New("not strongly connected")
 	}
 	return e.p, nil
+}
+
+// EulerianPath finds an Eulerian path in an undirected multigraph.
+//
+// * If g has no nodes, result is nil, nil.
+//
+// * If g has an Eulerian path, result is an Eulerian path with err = nil.
+// The first element of the result represents only a start node.
+// The remaining elements represent the half arcs of the path.
+//
+// * Otherwise, result is nil, with a non-nil error giving a reason the graph
+// is not Eulerian.
+//
+// Internally, EulerianPath copies the entire graph g.
+// See EulerianPathD for a more space efficient version.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g LabeledUndirected) EulerianPath() ([]Half, error) {
+	c, _ := g.Copy()
+	start := c.EulerianStart()
+	if start < 0 {
+		start = 0
+	}
+	return c.EulerianPathD(c.Size(), start)
+}
+
+// EulerianPathD finds an Eulerian path in a undirected multigraph.
+//
+// EulerianPathD is destructive on its receiver g.  See EulerianPath for
+// a non-destructive version.
+//
+// Argument m must be the correct size, or number of edges in g.
+// Argument start must be a valid start node for the path.
+//
+// * If g has no nodes, result is nil, nil.
+//
+// * If g has an Eulerian path starting at start, result is an Eulerian path
+// with err = nil.
+// The first element of the result represents only a start node.
+// The remaining elements represent the half arcs of the path.
+//
+// * Otherwise, result is nil, with a non-nil error giving a reason the graph
+// is not Eulerian.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g LabeledUndirected) EulerianPathD(m int, start NI) ([]Half, error) {
+	if g.Order() == 0 {
+		return nil, nil
+	}
+	e := newLabEulerian(g.LabeledAdjacencyList, m)
+	e.p[0] = Half{start, -1}
+	// unlike EulerianCycle, the first path doesn't have to be a cycle.
+	if err := e.pushUndir(); err != nil {
+		return nil, err
+	}
+	e.keep()
+	for e.s >= 0 {
+		start = e.top().To
+		e.push()
+		// paths after the first must be cycles though
+		// (as long as there are nodes on the stack)
+		if e.top().To != start {
+			return nil, errors.New("no Eulerian path")
+		}
+		e.keep()
+	}
+	if !e.uv.AllZeros() {
+		return nil, errors.New("no Eulerian path")
+	}
+	return e.p, nil
+}
+
+// EulerianStart finds a candidate start node for an Eulerian path.
+//
+// A graph representing an Eulerian path can have two nodes with odd degree.
+// If it does, these must be the end nodes of the path.  EulerianEnd scans
+// for a node with an odd degree, returning immediately with the first one
+// it finds.
+//
+// If the scan completes without finding a node with odd degree the method
+// returns -1.
+//
+// See also method Eulerian, which completely validates a graph as representing
+// an Eulerian path.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g LabeledUndirected) EulerianStart() NI {
+	for n := range g.LabeledAdjacencyList {
+		if g.Degree(NI(n))%2 != 0 {
+			return NI(n)
+		}
+	}
+	return -1
 }
 
 // FromList constructs a FromList representing the tree reachable from

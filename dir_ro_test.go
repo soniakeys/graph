@@ -17,6 +17,7 @@ package graph_test
 import (
 	"fmt"
 	"math/big"
+	"testing"
 
 	"github.com/soniakeys/graph"
 )
@@ -127,6 +128,202 @@ func ExampleDirected_Doms() {
 	// Output:
 	// post: [4 2 5 3 1 0]
 	// doms: [0 0 1 1 1 3 -1]
+}
+
+func ExampleDirected_Eulerian() {
+	//   /<--------\
+	//  /   /<---\  \
+	// 0-->1-->\ /  /
+	//      \-->2--/
+	//         / \
+	//        /<--\
+	g := graph.Directed{graph.AdjacencyList{
+		0: {1},
+		1: {2, 2},
+		2: {0, 1, 2},
+	}}
+	fmt.Println(g.Eulerian())
+	// Output:
+	// -1 -1 <nil>
+}
+
+func ExampleDirected_EulerianCycle() {
+	//   /<--------\
+	//  /   /<---\  \
+	// 0-->1-->\ /  /
+	//      \-->2--/
+	//         / \
+	//        /<--\
+	g := graph.Directed{graph.AdjacencyList{
+		0: {1},
+		1: {2, 2},
+		2: {0, 1, 2},
+	}}
+	fmt.Println(g.EulerianCycle())
+	// Output:
+	// [0 1 2 1 2 2 0] <nil>
+}
+
+func ExampleDirected_EulerianCycleD() {
+	//   /<--------\
+	//  /   /<---\  \
+	// 0-->1-->\ /  /
+	//      \-->2--/
+	//         / \
+	//        /<--\
+	g := graph.Directed{graph.AdjacencyList{
+		0: {1},
+		1: {2, 2},
+		2: {0, 1, 2},
+	}}
+	fmt.Println("ma =", g.ArcSize())
+	fmt.Println(g.EulerianCycleD(6))
+	// Output:
+	// ma = 6
+	// [0 1 2 1 2 2 0] <nil>
+}
+
+func TestEulerianCycle(t *testing.T) {
+	same := func(a, b []graph.NI) bool {
+		if len(a) != len(b) {
+			return false
+		}
+		for i, x := range a {
+			if b[i] != x {
+				return false
+			}
+		}
+		return true
+	}
+	var msg string
+	for _, tc := range []struct {
+		g     graph.AdjacencyList
+		cycle []graph.NI
+		ok    bool
+	}{
+		{nil, nil, true},
+		{graph.AdjacencyList{nil}, []graph.NI{0}, true},    // 1 node, 0 arcs
+		{graph.AdjacencyList{{0}}, []graph.NI{0, 0}, true}, // loop
+		{graph.AdjacencyList{nil, nil}, nil, false},        // not connected
+		{graph.AdjacencyList{{1}, nil}, nil, false},        // not balanced
+		{graph.AdjacencyList{nil, {0}}, nil, false},        // not balanced
+	} {
+		got, err := graph.Directed{tc.g}.EulerianCycle()
+		switch {
+		case err != nil:
+			if !tc.ok {
+				continue
+			}
+			msg = "g.EulerianCycle() returned error" + err.Error()
+		case !tc.ok:
+			msg = fmt.Sprintf("g.EulerianCycle() = %v, want error", got)
+		case !same(got, tc.cycle):
+			msg = fmt.Sprintf("g.EulerianCycle() = %v, want %v", got, tc.cycle)
+		default:
+			continue
+		}
+		t.Log("g:", tc.g)
+		t.Fatal(msg)
+	}
+}
+
+func ExampleDirected_EulerianPath() {
+	//      /<---\
+	// 3-->1-->\ /
+	//      \-->2-->0
+	//         / \
+	//        /<--\
+	g := graph.Directed{graph.AdjacencyList{
+		3: {1},
+		1: {2, 2},
+		2: {0, 1, 2},
+	}}
+	fmt.Println(g.EulerianPath())
+	// Output:
+	// [3 1 2 1 2 2 0] <nil>
+}
+
+func ExampleDirected_EulerianPathD() {
+	//      /<---\
+	// 3-->1-->\ /
+	//      \-->2-->0
+	//         / \
+	//        /<--\
+	g := graph.Directed{graph.AdjacencyList{
+		3: {1},
+		1: {2, 2},
+		2: {0, 1, 2},
+	}}
+	fmt.Println("ma =", g.ArcSize())
+	fmt.Print("start: ")
+	fmt.Println(g.EulerianStart())
+	fmt.Println(g.EulerianPathD(6, 3))
+	// Output:
+	// ma = 6
+	// start: 3 <nil>
+	// [3 1 2 1 2 2 0] <nil>
+}
+
+func ExampleDirected_EulerianStart() {
+	//      /<---\
+	// 3-->1-->\ /
+	//      \-->2-->0
+	//         / \
+	//        /<--\
+	g := graph.Directed{graph.AdjacencyList{
+		3: {1},
+		1: {2, 2},
+		2: {0, 1, 2},
+	}}
+	fmt.Println(g.EulerianStart())
+	// Output:
+	// 3 <nil>
+}
+
+func TestEulerianPath(t *testing.T) {
+	same := func(a, b []graph.NI) bool {
+		if len(a) != len(b) {
+			return false
+		}
+		for i, x := range a {
+			if b[i] != x {
+				return false
+			}
+		}
+		return true
+	}
+	var msg string
+	for _, tc := range []struct {
+		g    graph.AdjacencyList
+		path []graph.NI
+		ok   bool
+	}{
+		{nil, nil, true},
+		{graph.AdjacencyList{nil}, []graph.NI{0}, true},    // 1 node, 0 arcs
+		{graph.AdjacencyList{{0}}, []graph.NI{0, 0}, true}, // loop
+		{graph.AdjacencyList{{1}, nil}, []graph.NI{0, 1}, true},
+		{graph.AdjacencyList{nil, {0}}, []graph.NI{1, 0}, true},
+		{graph.AdjacencyList{nil, nil}, nil, false},         // not connected
+		{graph.AdjacencyList{{1}, nil, {1}}, nil, false},    // two starts
+		{graph.AdjacencyList{nil, nil, {0, 1}}, nil, false}, // two ends
+	} {
+		got, err := graph.Directed{tc.g}.EulerianPath()
+		switch {
+		case err != nil:
+			if !tc.ok {
+				continue
+			}
+			msg = "g.EulerianPath() returned error" + err.Error()
+		case !tc.ok:
+			msg = fmt.Sprintf("g.EulerianPath() = %v, want error", got)
+		case !same(got, tc.path):
+			msg = fmt.Sprintf("g.EulerianPath() = %v, want %v", got, tc.path)
+		default:
+			continue
+		}
+		t.Log("g:", tc.g)
+		t.Fatal(msg)
+	}
 }
 
 func ExampleDirected_FromList() {
@@ -249,6 +446,30 @@ func ExampleDirected_IsTree() {
 	// Output:
 	// true false
 	// false false
+}
+
+func ExampleDirected_MaximalNonBranchingPaths() {
+	// 0-->1-->2-->3
+	//          \
+	//   -->6    ->4
+	//  /  /
+	// 5<--
+	g := graph.Directed{graph.AdjacencyList{
+		0: {1},
+		1: {2},
+		2: {3, 4},
+		5: {6},
+		6: {5},
+	}}
+	g.MaximalNonBranchingPaths(func(p []graph.NI) bool {
+		fmt.Println(p)
+		return true
+	})
+	// Output:
+	// [0 1 2]
+	// [2 3]
+	// [2 4]
+	// [5 6 5]
 }
 
 func ExampleDirected_PostDominators() {

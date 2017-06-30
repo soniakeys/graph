@@ -7,6 +7,8 @@ package graph
 // LabeledUndirected.
 
 import (
+	"fmt"
+
 	"github.com/soniakeys/bits"
 )
 
@@ -558,5 +560,65 @@ func (g LabeledUndirected) TarjanBiconnectedComponents(emit func([]LabeledEdge) 
 		if number[w] == 0 && !biconnect(NI(w), 0) {
 			return
 		}
+	}
+}
+
+func (e *eulerian) pushUndir() error {
+	for u := e.top(); ; {
+		e.uv.SetBit(int(u), 0)
+		arcs := e.g[u]
+		if len(arcs) == 0 {
+			return nil
+		}
+		w := arcs[0]
+		e.s++
+		e.p[e.s] = w
+		e.g[u] = arcs[1:] // consume arc
+		// difference from directed counterpart in dir.go:
+		// as long as it's not a loop, consume reciprocal arc as well
+		if w != u {
+			a2 := e.g[w]
+			for x, rx := range a2 {
+				if rx == u { // here it is
+					last := len(a2) - 1
+					a2[x] = a2[last]   // someone else gets the seat
+					e.g[w] = a2[:last] // and it's gone.
+					goto l
+				}
+			}
+			return fmt.Errorf("graph not undirected.  %d -> %d reciprocal not found", u, w)
+		}
+	l:
+		u = w
+	}
+}
+
+func (e *labEulerian) pushUndir() error {
+	for u := e.top(); ; {
+		e.uv.SetBit(int(u.To), 0)
+		arcs := e.g[u.To]
+		if len(arcs) == 0 {
+			return nil
+		}
+		w := arcs[0]
+		e.s++
+		e.p[e.s] = w
+		e.g[u.To] = arcs[1:] // consume arc
+		// difference from directed counterpart in dir.go:
+		// as long as it's not a loop, consume reciprocal arc as well
+		if w.To != u.To {
+			a2 := e.g[w.To]
+			for x, rx := range a2 {
+				if rx.To == u.To && rx.Label == w.Label { // here it is
+					last := len(a2) - 1
+					a2[x] = a2[last]      // someone else can have the seat
+					e.g[w.To] = a2[:last] // and it's gone.
+					goto l
+				}
+			}
+			return fmt.Errorf("graph not undirected.  %d -> %v reciprocal not found", u.To, w)
+		}
+	l:
+		u = w
 	}
 }
