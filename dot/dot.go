@@ -7,11 +7,11 @@
 // efficiently.
 //
 // There is no goal to provide a rich API to the many capabilities of the
-// dot format.  Someday, maybe, another package.  Not now.
+// dot format.  Someday, maybe, another package.  Not currently.
 //
 // The scheme
 //
-// The dot package is a separate package from graph.  It includes graph;
+// The dot package is a separate package from graph.  It imports graph;
 // graph knows nothing of dot.  This keeps the graph package uncluttered by
 // file format specific code.  Dot functions are functions then, not methods
 // of graph representations.
@@ -21,12 +21,12 @@
 // String function that does not require an io.Writer and simply returns the
 // dot format as a string.
 //
-// Optional arguments are variadic and consist of calls to configuration
+// Optional arguments are variadic and constructed by calls to configuration
 // functions defined in this package.  Not all configuration functions are
 // meaningful for all graph types.  When a Write or String function is called
 // it (1) initializes a Config struct from the package variable Defaults,
 // then (2) in some cases initializes some members according to the graph type,
-// then (3) calls the config functions in order.  Each config function can
+// then (3) calls the option functions in order.  Each option function can
 // modify the Config struct.  After processing options, the funcion generates
 // a dot file using the options specified in the Config struct.
 package dot
@@ -57,7 +57,7 @@ import (
 // or a pointer to any of these types.
 //
 // See also Write().
-func String(g interface{}, options ...func(*Config)) (string, error) {
+func String(g interface{}, options ...Option) (string, error) {
 	var b bytes.Buffer
 	if err := Write(g, &b, options...); err != nil {
 		return "", err
@@ -95,7 +95,7 @@ func String(g interface{}, options ...func(*Config)) (string, error) {
 // Directed(true) will produce a directed dot file.
 //
 // See also String().
-func Write(g interface{}, w io.Writer, options ...func(*Config)) error {
+func Write(g interface{}, w io.Writer, options ...Option) error {
 	switch t := g.(type) {
 	case graph.AdjacencyList:
 		return writeAdjacencyList(t, w, options)
@@ -133,7 +133,7 @@ func Write(g interface{}, w io.Writer, options ...func(*Config)) error {
 	return fmt.Errorf("dot: unknown graph type")
 }
 
-func writeAdjacencyList(g graph.AdjacencyList, w io.Writer, options []func(*Config)) error {
+func writeAdjacencyList(g graph.AdjacencyList, w io.Writer, options []Option) error {
 	cf := Defaults
 	for _, o := range options {
 		o(&cf)
@@ -141,7 +141,7 @@ func writeAdjacencyList(g graph.AdjacencyList, w io.Writer, options []func(*Conf
 	return writeAL(g, w, &cf)
 }
 
-func writeUndirected(g graph.AdjacencyList, w io.Writer, options []func(*Config)) error {
+func writeUndirected(g graph.AdjacencyList, w io.Writer, options []Option) error {
 	cf := Defaults
 	cf.Directed = false
 	for _, o := range options {
@@ -319,7 +319,7 @@ func writeALUndirected(g graph.AdjacencyList, cf *Config, iso bits.Bits, b *bufi
 	return nil
 }
 
-func writeLabeledAdjacencyList(g graph.LabeledAdjacencyList, w io.Writer, options []func(*Config)) error {
+func writeLabeledAdjacencyList(g graph.LabeledAdjacencyList, w io.Writer, options []Option) error {
 	cf := Defaults
 	for _, o := range options {
 		o(&cf)
@@ -327,7 +327,7 @@ func writeLabeledAdjacencyList(g graph.LabeledAdjacencyList, w io.Writer, option
 	return writeLAL(g, w, &cf)
 }
 
-func writeLabeledUndirected(g graph.LabeledAdjacencyList, w io.Writer, options []func(*Config)) error {
+func writeLabeledUndirected(g graph.LabeledAdjacencyList, w io.Writer, options []Option) error {
 	cf := Defaults
 	cf.Directed = false
 	for _, o := range options {
@@ -436,7 +436,7 @@ func writeLALUndirected(g graph.LabeledAdjacencyList, cf *Config, iso bits.Bits,
 	return nil
 }
 
-func writeFromList(f graph.FromList, w io.Writer, options []func(*Config)) error {
+func writeFromList(f graph.FromList, w io.Writer, options []Option) error {
 	cf := Defaults
 	GraphAttr("rankdir", "BT")(&cf)
 	for _, o := range options {
@@ -491,7 +491,7 @@ func writeFromList(f graph.FromList, w io.Writer, options []func(*Config)) error
 	return writeTail(b)
 }
 
-func writeWeightedEdgeList(g graph.WeightedEdgeList, w io.Writer, options []func(*Config)) error {
+func writeWeightedEdgeList(g graph.WeightedEdgeList, w io.Writer, options []Option) error {
 	cf := Defaults
 	cf.Directed = false
 	cf.EdgeLabel = func(l graph.LI) string {

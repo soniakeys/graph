@@ -42,6 +42,9 @@ var Defaults = Config{
 	NodeID:    func(n graph.NI) string { return strconv.Itoa(int(n)) },
 }
 
+// Options are passed variadic arguments to a function like Write or String.
+type Option func(*Config)
+
 // Directed specifies whether to write a dot format directected or undirected
 // graph.
 //
@@ -53,7 +56,7 @@ var Defaults = Config{
 // In this case the Write or String function requires that all arcs between
 // distinct nodes occur in reciprocal pairs.  For each pair the function
 // outputs a single edge in dot format.
-func Directed(d bool) func(*Config) {
+func Directed(d bool) Option {
 	return func(c *Config) { c.Directed = d }
 }
 
@@ -61,7 +64,7 @@ func Directed(d bool) func(*Config) {
 // dot format given the arc label integers of graph package.
 //
 // The default function is simply strconv.Itoa of the graph package arc label.
-func EdgeLabel(f func(graph.LI) string) func(*Config) {
+func EdgeLabel(f func(graph.LI) string) Option {
 	return func(c *Config) { c.EdgeLabel = f }
 }
 
@@ -70,7 +73,7 @@ func EdgeLabel(f func(graph.LI) string) func(*Config) {
 // Graph attributes are held in a slice, and so are ordered.  This function
 // updates the value of the last matching attribute if it exists, or adds a
 // new attribute to the end of the list.
-func GraphAttr(attr, val string) func(*Config) {
+func GraphAttr(attr, val string) Option {
 	return func(c *Config) {
 		for i := len(c.GraphAttr) - 1; i >= 0; i-- {
 			if c.GraphAttr[i].Attr == attr {
@@ -85,7 +88,7 @@ func GraphAttr(attr, val string) func(*Config) {
 // Indent specifies an indent string for the body of the dot format.
 //
 // The default is two spaces.
-func Indent(i string) func(*Config) {
+func Indent(i string) Option {
 	return func(c *Config) { c.Indent = i }
 }
 
@@ -95,7 +98,7 @@ func Indent(i string) func(*Config) {
 // isolated nodes are not included in the dot output.
 //
 // Isolated(true) will include isolated nodes.
-func Isolated(i bool) func(*Config) {
+func Isolated(i bool) Option {
 	return func(c *Config) { c.Isolated = i }
 }
 
@@ -104,7 +107,7 @@ func Isolated(i bool) func(*Config) {
 //
 // The default function is simply strconv.Itoa of the graph package node
 // integer.
-func NodeID(f func(graph.NI) string) func(*Config) {
+func NodeID(f func(graph.NI) string) Option {
 	return func(c *Config) { c.NodeID = f }
 }
 
@@ -112,7 +115,7 @@ func NodeID(f func(graph.NI) string) func(*Config) {
 //
 // The resulting dot file should be rendered with Graphviz programs
 // neato or fdp.
-func NodePos(f func(graph.NI) string) func(*Config) {
+func NodePos(f func(graph.NI) string) Option {
 	return func(c *Config) { c.NodePos = f }
 }
 
@@ -124,6 +127,6 @@ func NodePos(f func(graph.NI) string) func(*Config) {
 // single dot format edges.
 //
 // See WriteWeightedEdgeList for more detail.
-func UndirectArcs(u bool) func(*Config) {
+func UndirectArcs(u bool) Option {
 	return func(c *Config) { c.UndirectArcs = u }
 }
