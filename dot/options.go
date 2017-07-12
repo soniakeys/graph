@@ -24,6 +24,7 @@ type AttrVal struct {
 type Config struct {
 	Directed     bool
 	EdgeLabel    func(graph.LI) string
+	EdgeAttr     func(graph.LI) []AttrVal
 	GraphAttr    []AttrVal
 	Indent       string
 	Isolated     bool
@@ -66,6 +67,12 @@ func Directed(d bool) Option {
 // The default function is simply strconv.Itoa of the graph package arc label.
 func EdgeLabel(f func(graph.LI) string) Option {
 	return func(c *Config) { c.EdgeLabel = f }
+}
+
+// EdgeAttr specifies a function to generate a list of edge attributes for
+// given the arc label integers of graph package.
+func EdgeAttr(f func(graph.LI) []AttrVal) Option {
+	return func(c *Config) { c.EdgeAttr = f }
 }
 
 // GraphAttr adds a dot format graph attribute.

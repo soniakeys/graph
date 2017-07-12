@@ -217,6 +217,10 @@ func writeALDirected(g graph.AdjacencyList, cf *Config, iso bits.Bits, b *bufio.
 }
 
 func writeALEdgeStmt(fr graph.NI, to []graph.NI, op string, cf *Config, iso bits.Bits, b *bufio.Writer) (err error) {
+	attr := ""
+	if cf.EdgeAttr != nil {
+		attr = " " + fmtAttr(cf.EdgeAttr(0))
+	}
 	if len(to) == 0 { // fast path
 		if cf.Isolated && iso.Bit(int(fr)) == 1 {
 			_, err = fmt.Fprintf(b, "%s%s\n", cf.Indent, cf.NodeID(fr))
@@ -224,8 +228,8 @@ func writeALEdgeStmt(fr graph.NI, to []graph.NI, op string, cf *Config, iso bits
 		return
 	}
 	if len(to) == 1 { // fast path
-		_, err = fmt.Fprintf(b, "%s%s %s %s\n",
-			cf.Indent, cf.NodeID(fr), op, cf.NodeID(to[0]))
+		_, err = fmt.Fprintf(b, "%s%s %s %s%s\n",
+			cf.Indent, cf.NodeID(fr), op, cf.NodeID(to[0]), attr)
 		return
 	}
 	// otherwise it's complicated.  we like to use a subgraph rhs to keep
@@ -251,7 +255,7 @@ func writeALEdgeStmt(fr graph.NI, to []graph.NI, op string, cf *Config, iso bits
 			m[to]++
 		}
 	}
-	if _, err = b.WriteString("}\n"); err != nil {
+	if _, err = b.WriteString("}" + attr + "\n"); err != nil {
 		return
 	}
 	// make additional passes over the map until it's fully consumed
@@ -273,7 +277,7 @@ func writeALEdgeStmt(fr graph.NI, to []graph.NI, op string, cf *Config, iso bits
 			}
 			c1 = " "
 		}
-		if _, err = b.WriteString("}\n"); err != nil {
+		if _, err = b.WriteString("}" + attr + "\n"); err != nil {
 			return
 		}
 	}
@@ -387,14 +391,32 @@ func writeLALEdgeStmt(fr graph.NI, to []graph.Half, op string, cf *Config, iso b
 		return
 	}
 	for _, to := range to {
-		_, err = fmt.Fprintf(b, "%s%s %s %s [label = %s]\n",
+		var attr []AttrVal
+		if cf.EdgeAttr != nil {
+			attr = cf.EdgeAttr(to.Label)
+		}
+		if el := cf.EdgeLabel(to.Label); el > "" {
+			attr = append(attr, AttrVal{"label", cf.EdgeLabel(to.Label)})
+		}
+		_, err = fmt.Fprintf(b, "%s%s %s %s %s\n",
 			cf.Indent, cf.NodeID(fr), op, cf.NodeID(to.To),
-			cf.EdgeLabel(to.Label))
+			fmtAttr(attr))
 		if err != nil {
 			return
 		}
 	}
 	return
+}
+
+func fmtAttr(attr []AttrVal) string {
+	if len(attr) == 0 {
+		return ""
+	}
+	f := fmt.Sprintf("[%s = %s", attr[0].Attr, attr[0].Val)
+	for _, a := range attr[1:] {
+		f = fmt.Sprintf("%s, %s = %s", f, a.Attr, a.Val)
+	}
+	return f + "]"
 }
 
 func writeLALUndirected(g graph.LabeledAdjacencyList, cf *Config, iso bits.Bits, b *bufio.Writer) error {
