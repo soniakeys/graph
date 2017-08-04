@@ -1,0 +1,71 @@
+= Depth First Search
+
+If you are unfamiliar with depth first search, you might start with some introductory material such as at https://en.wikipedia.org/wiki/Depth-first_search[Wikipedia] or most any introduction to graph theory or graph algorithms.  This tutorial is more specific to the context of this graph library.
+
+The library implements a DepthFirst method on AdjacencyList.  Pseudocode for this method is,
+
+----
+Initialize a data structure that can record for each node of a graph g, if the node has been "visited."
+Define a recursive function f that takes a node n:
+    Do something useful with n.
+    Record in the data structure that node n has been visited.
+    For each node "to" you can go to from n:
+        If "to" is not already visited, recurse on "to."
+Initiate the search by calling f on some node of g.
+----
+
+And the Go source is similar to,
+
+[source,go]
+----
+func (g AdjacencyList) DepthFirst(start NI, visit func(NI)) {
+    v = make([]bool, len(g)) // data structure to record "visited"
+    var df func(NI)          // recursive function
+    df = func(n NI) {        // recursive function takes node n
+        visit(n)                  // callback to do something useful
+        v[n] = true               // record that node n has been visited
+        for _, to := range g[n] { // for "to" reachable from n
+            if !v[to] {      // if "to" not yet visited,
+                df(to)       // recurse
+            }
+        }
+    }
+    df(start)                // initiate search from start node
+}
+----
+
+"Search" isn't quite the right word here though.  This actually implements a full depth first traversal.  If you were searchinging for something and you found it early, this code would still continue through all nodes of the graph.  The change from "traversal" to "search with immediate return on found" is pretty easy; just add some boolean returns and tests:
+
+[source,go]
+----
+func (g AdjacencyList) DepthFirstSearch(start NI, visit func(NI) (ok bool)) bool {
+    v = make([]bool, len(g))
+    var df func(NI) bool
+    df = func(n NI) bool {
+        if !visit(n) {
+            return false
+        }
+        v[n] = true
+        for _, to := range g[n] {
+            if !v[to] && !df(to) {
+                return false
+            }
+        }
+        return true
+    }
+    return df(start)
+}
+----
+
+Thus begin some tough questions about API design.  Should the library include both of these functions?  The second one is more general, but if the API includes only that one then for a traverse people are forced to write "return true" and some will fret over the inefficiency of the unneeded tests on the always-true result.
+
+The API problem grows from this point.  Consider a function to test if a graph represents a directed tree rooted at a given node.  We might try to use the DepthFirstSearch method just shown...
+
+[source,go]
+----
+func IsTree(g AdjacencyList, root NI) bool {
+   return g.DepthFirstSearch(root, func(n NI) bool {
+       return !v[n] // oh no, wait, we need access to v here
+----
+
+It turns out almost all applications of depth first search need access to the "visisted" indicator.  The API could be expanded, but then it turns out that lots of hooks are needed to handle any significant subset of applications for depth first search.  In the C++ Boost library for example `depth_first_visit` has a callback parameter something like "visit" above, a parameter something like the "visited" data structure needed above, and then a parameter bundling _nine more_ hooks into the depth first algorithm.
