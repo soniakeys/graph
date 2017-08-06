@@ -47,23 +47,38 @@ func (g Directed) Copy() (c Directed, ma int) {
 //
 // There are equivalent labeled and unlabeled versions of this method.
 func (g Directed) Cyclic() (cyclic bool, fr NI, to NI) {
-	// A graph is cyclic if it has a "back arc."  That is, if DF search
-	// reaches a node that is already on the path currently being explored.
 	a := g.AdjacencyList
-	vis := bits.New(len(a))
-	path := bits.New(len(a))
-	for n := vis.ZeroFrom(0); n >= 0; n = vis.ZeroFrom(n + 1) {
-		a.DepthFirst(NI(n), Visited(&vis), PathBits(&path),
-			OkArcVisitor(func(n NI, x int) (ok bool) {
-				to = a[n][x]
-				if ok = path.Bit(int(to)) == 0; !ok {
-					cyclic = true
-					fr = n
+	fr, to = -1, -1
+	temp := bits.New(len(a))
+	perm := bits.New(len(a))
+	var df func(int)
+	df = func(n int) {
+		switch {
+		case temp.Bit(n) == 1:
+			cyclic = true
+			return
+		case perm.Bit(n) == 1:
+			return
+		}
+		temp.SetBit(n, 1)
+		for _, nb := range a[n] {
+			df(int(nb))
+			if cyclic {
+				if fr < 0 {
+					fr, to = NI(n), nb
 				}
 				return
-			}))
-		if cyclic {
-			return
+			}
+		}
+		temp.SetBit(n, 0)
+		perm.SetBit(n, 1)
+	}
+	for n := range a {
+		if perm.Bit(n) == 1 {
+			continue
+		}
+		if df(n); cyclic { // short circuit as soon as a cycle is found
+			break
 		}
 	}
 	return
@@ -87,10 +102,10 @@ func (g Directed) Dominators(start NI) Dominators {
 	// depth-first and may allow Doms to run a little faster by presenting
 	// a shallower tree.
 	post := make([]NI, l)
-	a.BreadthFirst(start, NodeVisitor(func(n NI) {
+	a.BreadthFirstTraverse(start, func(n NI) {
 		l--
 		post[l] = n
-	}))
+	})
 	tr, _ := g.Transpose()
 	return g.Doms(tr, post[l:])
 }
@@ -189,10 +204,10 @@ func (g Directed) PostDominators(end NI) Dominators {
 	a := tr.AdjacencyList
 	l := len(a)
 	post := make([]NI, l)
-	a.BreadthFirst(end, NodeVisitor(func(n NI) {
+	a.BreadthFirstTraverse(end, func(n NI) {
 		l--
 		post[l] = n
-	}))
+	})
 	return tr.Doms(g, post[l:])
 }
 
@@ -481,7 +496,7 @@ func (e *eulerian) top() NI {
 // A maximal non-branching path cannot be extended to a longer non-branching
 // path by including another node at either end.
 //
-// In the case of a cyclic non-branching path, the first and last elements
+// In the case of a cyclic non-branching path, the first and last nodes
 // of the path will be the same node, indicating an isolated cycle.
 //
 // The method calls the emit argument for each path or isolated cycle in g,
@@ -591,18 +606,7 @@ func (g Directed) InDegree() []int {
 //
 // There are equivalent labeled and unlabeled versions of this method.
 func (g Directed) IsTree(root NI) (isTree, allTree bool) {
-	// A graph is a tree if DF search never encounters a node already visited.
 	a := g.AdjacencyList
-	v := bits.New(len(a))
-	a.DepthFirst(root, Visited(&v), OkArcVisitor(func(n NI, x int) bool {
-		isTree = v.Bit(int(a[n][x])) == 0
-		return isTree
-	}))
-	return isTree, isTree && v.AllOnes()
-}
-
-/*
-	a := g.LabeledAdjacencyList
 	v := bits.New(len(a))
 	v.SetAll()
 	var df func(NI) bool
@@ -612,15 +616,15 @@ func (g Directed) IsTree(root NI) (isTree, allTree bool) {
 		}
 		v.SetBit(int(n), 0)
 		for _, to := range a[n] {
-			if !df(to.To) {
+			if !df(to) {
 				return false
 			}
 		}
 		return true
 	}
 	isTree = df(root)
-	return isTree, isTree && v.Zero()
-}*/
+	return isTree, isTree && v.AllZeros()
+}
 
 // StronglyConnectedComponents identifies strongly connected components in
 // a directed graph.

@@ -8,12 +8,12 @@ import (
 	"github.com/soniakeys/graph"
 )
 
-// BreadthFirst traverses a graph breadth first using a direction
+// BreadthFirst2 traverses a graph breadth first using a direction
 // optimizing algorithm pioneered by Scott Beamer.
 //
 // The algorithm is supposed to be faster than the conventional breadth first
 // algorithm but I haven't seen it yet.
-func BreadthFirst(g, tr graph.AdjacencyList, ma int, start graph.NI, f *graph.FromList, v func(graph.NI) bool) int {
+func BreadthFirst2(g, tr graph.AdjacencyList, ma int, start graph.NI, f *graph.FromList, v func(graph.NI) bool) int {
 	if tr == nil {
 		var d graph.Directed
 		d, ma = graph.Directed{g}.Transpose()

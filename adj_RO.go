@@ -60,93 +60,29 @@ func (g AdjacencyList) BoundsOk() (ok bool, fr NI, to NI) {
 	return true, -1, to
 }
 
-// BreadthFirst traverses a directed or undirected graph in breadth first order.
-//
-// Argument start is the start node for the traversal.  Argument opt can be
-// any number of values returned by a supported TraverseOption function.
-//
-// Supported:
-//
-//   From
-//   NodeVisitor
-//   OkNodeVisitor
-//   Rand
-//
-// Unsupported:
-//
-//   ArcVisitor
-//   OkArcVisitor
-//   Visited
-//   PathBits
+// BreadthFirstTraverse traverses a directed or undirected graph in breadth
+// first order.
 //
 // There are equivalent labeled and unlabeled versions of this method.
 //
-// See also alt.BreadthFirst, a direction optimizing breadth first algorithm.
-func (g AdjacencyList) BreadthFirst(start NI, opt ...TraverseOption) {
-	cf := &config{start: start}
-	for _, o := range opt {
-		o(cf)
-	}
-	f := cf.fromList
-	switch {
-	case f == nil:
-		e := NewFromList(len(g))
-		f = &e
-	case f.Paths == nil:
-		*f = NewFromList(len(g))
-	}
-	rp := f.Paths
-	// the frontier consists of nodes all at the same level
-	frontier := []NI{cf.start}
-	level := 1
-	// assign path when node is put on frontier
-	rp[cf.start] = PathEnd{Len: level, From: -1}
-	for {
-		f.MaxLen = level
-		level++
-		var next []NI
-		if cf.rand == nil {
-			for _, n := range frontier {
-				// visit nodes as they come off frontier
-				if cf.nodeVisitor != nil {
-					cf.nodeVisitor(n)
-				}
-				if cf.okNodeVisitor != nil {
-					if !cf.okNodeVisitor(n) {
-						return
-					}
-				}
-				for _, nb := range g[n] {
-					if rp[nb].Len == 0 {
-						next = append(next, nb)
-						rp[nb] = PathEnd{From: n, Len: level}
-					}
-				}
-			}
-		} else { // take nodes off frontier at random
-			for _, i := range cf.rand.Perm(len(frontier)) {
-				n := frontier[i]
-				// remainder of block same as above
-				if cf.nodeVisitor != nil {
-					cf.nodeVisitor(n)
-				}
-				if cf.okNodeVisitor != nil {
-					if !cf.okNodeVisitor(n) {
-						return
-					}
-				}
-				for _, nb := range g[n] {
-					if rp[nb].Len == 0 {
-						next = append(next, nb)
-						rp[nb] = PathEnd{From: n, Len: level}
-					}
+// See also alt.BreadthFirst, a variant with more options, and
+// alt.BreadthFirst2, a direction optimizing variant.
+func (g AdjacencyList) BreadthFirstTraverse(start NI, visit func(NI)) {
+	v := bits.New(len(g))
+	v.SetBit(int(start), 1)
+	visit(start)
+	var next []NI
+	for frontier := []NI{start}; len(frontier) > 0; {
+		for _, n := range frontier {
+			for _, nb := range g[n] {
+				if v.Bit(int(nb)) == 0 {
+					v.SetBit(int(nb), 1)
+					visit(nb)
+					next = append(next, nb)
 				}
 			}
 		}
-		if len(next) == 0 {
-			break
-		}
-		frontier = next
+		frontier, next = next, frontier[:0]
 	}
 }
 
@@ -161,101 +97,6 @@ func (g AdjacencyList) Copy() (c AdjacencyList, ma int) {
 		ma += len(to)
 	}
 	return
-}
-
-// DepthFirst traverses a directed or undirected graph in depth first order.
-//
-// Argument start is the start node for the traversal.  Argument opt can be
-// any number of values returned by a supported TraverseOption function.
-//
-// Supported:
-//
-//   NodeVisitor
-//   OkNodeVisitor
-//   ArcVisitor
-//   OkArcVisitor
-//   Visited
-//   PathBits
-//   Rand
-//
-// Unsupported:
-//
-//   From
-//
-// There are equivalent labeled and unlabeled versions of this method.
-func (g AdjacencyList) DepthFirst(start NI, options ...TraverseOption) {
-	cf := &config{start: start}
-	for _, o := range options {
-		o(cf)
-	}
-	b := cf.visBits
-	if b == nil {
-		n := bits.New(len(g))
-		b = &n
-	} else if b.Bit(int(cf.start)) != 0 {
-		return
-	}
-	if cf.pathBits != nil {
-		cf.pathBits.ClearAll()
-	}
-	var df func(NI) bool
-	df = func(n NI) bool {
-		b.SetBit(int(n), 1)
-		if cf.pathBits != nil {
-			cf.pathBits.SetBit(int(n), 1)
-		}
-
-		if cf.nodeVisitor != nil {
-			cf.nodeVisitor(n)
-		}
-		if cf.okNodeVisitor != nil {
-			if !cf.okNodeVisitor(n) {
-				return false
-			}
-		}
-
-		if cf.rand == nil {
-			for x, to := range g[n] {
-				if cf.arcVisitor != nil {
-					cf.arcVisitor(n, x)
-				}
-				if cf.okArcVisitor != nil {
-					if !cf.okArcVisitor(n, x) {
-						return false
-					}
-				}
-				if b.Bit(int(to)) != 0 {
-					continue
-				}
-				if !df(to) {
-					return false
-				}
-			}
-		} else {
-			to := g[n]
-			for _, x := range cf.rand.Perm(len(to)) {
-				if cf.arcVisitor != nil {
-					cf.arcVisitor(n, x)
-				}
-				if cf.okArcVisitor != nil {
-					if !cf.okArcVisitor(n, x) {
-						return false
-					}
-				}
-				if b.Bit(int(to[x])) != 0 {
-					continue
-				}
-				if !df(to[x]) {
-					return false
-				}
-			}
-		}
-		if cf.pathBits != nil {
-			cf.pathBits.SetBit(int(n), 0)
-		}
-		return true
-	}
-	df(cf.start)
 }
 
 // HasArc returns true if g has any arc from node `fr` to node `to`.
