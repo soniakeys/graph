@@ -315,7 +315,7 @@ func (g LabeledUndirected) BronKerbosch3(pivot func(P, X bits.Bits) NI, emit fun
 	P.SetAll()
 	// code above same as BK2
 	// code below new to BK3
-	_, ord, _ := g.Degeneracy()
+	ord, _ := g.DegeneracyOrdering()
 	p2 := bits.New(len(a))
 	x2 := bits.New(len(a))
 	for _, n := range ord {
@@ -476,15 +476,17 @@ func (g LabeledUndirected) Copy() (c LabeledUndirected, ma int) {
 	return LabeledUndirected{l}, s
 }
 
-// Degeneracy computes k-degeneracy, vertex ordering and k-cores.
+// Degeneracy is a measure of dense subgraphs within a graph.
 //
 // See Wikipedia https://en.wikipedia.org/wiki/Degeneracy_(graph_theory)
 //
+// See also method DegeneracyOrdering which returns a degeneracy node
+// ordering and k-core breaks.
+//
 // There are equivalent labeled and unlabeled versions of this method.
-func (g LabeledUndirected) Degeneracy() (k int, ordering []NI, cores []int) {
+func (g LabeledUndirected) Degeneracy() (k int) {
 	a := g.LabeledAdjacencyList
-	// WP algorithm
-	ordering = make([]NI, len(a))
+	// WP algorithm, attributed to Matula and Beck.
 	L := bits.New(len(a))
 	d := make([]int, len(a))
 	var D [][]NI
@@ -496,7 +498,7 @@ func (g LabeledUndirected) Degeneracy() (k int, ordering []NI, cores []int) {
 		}
 		D[dv] = append(D[dv], NI(v))
 	}
-	for ox := range a {
+	for range a {
 		// find a non-empty D
 		i := 0
 		for len(D[i]) == 0 {
@@ -504,10 +506,88 @@ func (g LabeledUndirected) Degeneracy() (k int, ordering []NI, cores []int) {
 		}
 		// k is max(i, k)
 		if i > k {
-			for len(cores) <= i {
-				cores = append(cores, 0)
+			k = i
+		}
+		// select from D[i]
+		Di := D[i]
+		last := len(Di) - 1
+		v := Di[last]
+		// Add v to ordering, remove from Di
+		L.SetBit(int(v), 1)
+		D[i] = Di[:last]
+		// move neighbors
+		for _, nb := range a[v] {
+			if L.Bit(int(nb.To)) == 1 {
+				continue
 			}
-			cores[k] = ox
+			dn := d[nb.To] // old number of neighbors of nb
+			Ddn := D[dn]   // nb is in this list
+			// remove it from the list
+			for wx, w := range Ddn {
+				if w == nb.To {
+					last := len(Ddn) - 1
+					Ddn[wx], Ddn[last] = Ddn[last], Ddn[wx]
+					D[dn] = Ddn[:last]
+				}
+			}
+			dn-- // new number of neighbors
+			d[nb.To] = dn
+			// re--add it to it's new list
+			D[dn] = append(D[dn], nb.To)
+		}
+	}
+	return
+}
+
+// DegeneracyOrdering computes degeneracy node ordering and k-core breaks.
+//
+// See Wikipedia https://en.wikipedia.org/wiki/Degeneracy_(graph_theory)
+//
+// In return value ordering, nodes are ordered by their "coreness" as
+// defined at https://en.wikipedia.org/wiki/Degeneracy_(graph_theory)#k-Cores.
+//
+// Return value kbreaks indexes ordering by coreness number.  len(kbreaks)
+// will be one more than the graph degeneracy as returned by the Degeneracy
+// method.  If degeneracy is d, d = len(kbreaks) - 1, kbreaks[d] is the last
+// value in kbreaks and ordering[:kbreaks[d]] contains nodes of the d-cores
+// of the graph.  kbreaks[0] is always the number of nodes in g as all nodes
+// are in in a 0-core.
+//
+// Note that definitions of "k-core" differ on whether a k-core must be a
+// single connected component.  This method does not resolve individual
+// connected components.
+//
+// See also method Degeneracy which returns just the degeneracy number.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g LabeledUndirected) DegeneracyOrdering() (ordering []NI, kbreaks []int) {
+	a := g.LabeledAdjacencyList
+	// WP algorithm
+	k := 0
+	ordering = make([]NI, len(a))
+	kbreaks = []int{len(a)}
+	L := bits.New(len(a))
+	d := make([]int, len(a))
+	var D [][]NI
+	for v, nb := range a {
+		dv := len(nb)
+		d[v] = dv
+		for len(D) <= dv {
+			D = append(D, nil)
+		}
+		D[dv] = append(D[dv], NI(v))
+	}
+	for ox := len(a) - 1; ox >= 0; ox-- {
+		// find a non-empty D
+		i := 0
+		for len(D[i]) == 0 {
+			i++
+		}
+		// k is max(i, k)
+		if i > k {
+			for len(kbreaks) <= i {
+				kbreaks = append(kbreaks, ox+1)
+			}
 			k = i
 		}
 		// select from D[i]
@@ -539,7 +619,9 @@ func (g LabeledUndirected) Degeneracy() (k int, ordering []NI, cores []int) {
 			D[dn] = append(D[dn], nb.To)
 		}
 	}
-	cores[k] = len(ordering)
+	//for i, j := 0, k; i < j; i, j = i+1, j-1 {
+	//	kbreaks[i], kbreaks[j] = kbreaks[j], kbreaks[i]
+	//}
 	return
 }
 

@@ -173,11 +173,11 @@ func ExampleUndirected_BronKerbosch3() {
 		return true
 	})
 	// Output:
-	// [0 4]
-	// [3 4]
+	// [1 2 5]
 	// [4 5]
 	// [2 3]
-	// [1 2 5]
+	// [3 4]
+	// [0 4]
 }
 
 func ExampleUndirected_ConnectedComponentBits() {
@@ -250,52 +250,36 @@ func ExampleUndirected_ConnectedComponentReps() {
 }
 
 func ExampleUndirected_Degeneracy() {
-	//
-	//   /---2
-	//  0--./|\
-	//  |\ /\| \
-	//  | .  6  3--5
-	//  |/ \/| /
-	//  1--'\|/
-	//   \---4
-	//
-	// Same graph redrawn to show ordering:
-	//
-	//          /-----\
-	//         /  /--\ \
-	//      /-+--+-\  \|
-	//  5--3--4--6--2--1--0
-	//         \  \  \---/|\
-	//          \  \-----/ |
-	//           \--------/
-	//
+	//   1   ----5
+	//  / \ /   / \
+	// 0---2---4  |
+	//      \   \ /
+	//   3   ----6
 	var g graph.Undirected
 	g.AddEdge(0, 1)
 	g.AddEdge(0, 2)
-	g.AddEdge(0, 4)
-	g.AddEdge(0, 6)
 	g.AddEdge(1, 2)
-	g.AddEdge(1, 4)
-	g.AddEdge(1, 6)
-	g.AddEdge(6, 2)
-	g.AddEdge(6, 4)
-	g.AddEdge(3, 2)
-	g.AddEdge(3, 4)
-	g.AddEdge(3, 5)
-	k, ord, cores := g.Degeneracy()
-	fmt.Println("Degeneracy:", k)
+	g.AddEdge(2, 4)
+	g.AddEdge(2, 5)
+	g.AddEdge(2, 6)
+	g.AddEdge(4, 5)
+	g.AddEdge(4, 6)
+	g.AddEdge(5, 6)
+	ord, breaks := g.DegeneracyOrdering()
+	fmt.Println("Degeneracy:", len(breaks)-1)
+	fmt.Println("k-breaks:", breaks)
 	fmt.Println("Ordering:", ord)
-	fmt.Println("0-core:", ord[:cores[0]])
-	for k := 1; k < len(cores); k++ {
-		fmt.Printf("%d-core: %d\n", k, ord[cores[k-1]:cores[k]])
+	for k, x := range breaks {
+		fmt.Printf("nodes of %d-core(s): %d\n", k, ord[:x])
 	}
 	// Output:
 	// Degeneracy: 3
-	// Ordering: [5 3 4 6 2 1 0]
-	// 0-core: []
-	// 1-core: [5]
-	// 2-core: [3]
-	// 3-core: [4 6 2 1 0]
+	// k-breaks: [7 6 6 4]
+	// Ordering: [4 5 6 2 0 1 3]
+	// nodes of 0-core(s): [4 5 6 2 0 1 3]
+	// nodes of 1-core(s): [4 5 6 2 0 1]
+	// nodes of 2-core(s): [4 5 6 2 0 1]
+	// nodes of 3-core(s): [4 5 6 2]
 }
 
 func ExampleUndirected_Degree() {
