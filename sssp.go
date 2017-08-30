@@ -643,7 +643,10 @@ func (g LabeledDirected) DAGOptimalPaths(start, end NI, ordering []NI, w WeightF
 // As usual for Dijkstra's algorithm, arc weights must be non-negative.
 // Graphs may be directed or undirected.  Loops and parallel arcs are
 // allowed.
-func (g LabeledAdjacencyList) Dijkstra(start, end NI, w WeightFunc) (f FromList, dist []float64, reached int) {
+//
+// Paths and path distances are encoded in the returned FromList and dist
+// slice.   The number of nodes reached is returned as nReached.
+func (g LabeledAdjacencyList) Dijkstra(start, end NI, w WeightFunc) (f FromList, dist []float64, nReached int) {
 	r := make([]tentResult, len(g))
 	for i := range r {
 		r[i].nx = NI(i)

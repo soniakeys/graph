@@ -102,7 +102,7 @@ func (g Directed) Dominators(start NI) Dominators {
 	// depth-first and may allow Doms to run a little faster by presenting
 	// a shallower tree.
 	post := make([]NI, l)
-	a.BreadthFirstTraverse(start, func(n NI) {
+	a.BreadthFirst(start, func(n NI) {
 		l--
 		post[l] = n
 	})
@@ -204,7 +204,7 @@ func (g Directed) PostDominators(end NI) Dominators {
 	a := tr.AdjacencyList
 	l := len(a)
 	post := make([]NI, l)
-	a.BreadthFirstTraverse(end, func(n NI) {
+	a.BreadthFirst(end, func(n NI) {
 		l--
 		post[l] = n
 	})

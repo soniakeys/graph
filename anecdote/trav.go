@@ -24,13 +24,13 @@ func DFLarge() (string, string) {
 }
 
 func BFSmall() (string, string) {
-	chungLuSmall.AdjacencyList.BreadthFirstTraverse(chungLuSmallCCRep,
+	chungLuSmall.AdjacencyList.BreadthFirst(chungLuSmallCCRep,
 		func(graph.NI) {})
 	return "BreadthFirst", chungLuSmallCCTag
 }
 
 func BFLarge() (string, string) {
-	chungLuLarge.AdjacencyList.BreadthFirstTraverse(chungLuLargeCCRep,
+	chungLuLarge.AdjacencyList.BreadthFirst(chungLuLargeCCRep,
 		func(graph.NI) {})
 	return "BreadthFirst", chungLuLargeCCTag
 }

@@ -60,14 +60,14 @@ func (g AdjacencyList) BoundsOk() (ok bool, fr NI, to NI) {
 	return true, -1, to
 }
 
-// BreadthFirstTraverse traverses a directed or undirected graph in breadth
+// BreadthFirst traverses a directed or undirected graph in breadth
 // first order.
 //
 // There are equivalent labeled and unlabeled versions of this method.
 //
 // See also alt.BreadthFirst, a variant with more options, and
 // alt.BreadthFirst2, a direction optimizing variant.
-func (g AdjacencyList) BreadthFirstTraverse(start NI, visit func(NI)) {
+func (g AdjacencyList) BreadthFirst(start NI, visit func(NI)) {
 	v := bits.New(len(g))
 	v.SetBit(int(start), 1)
 	visit(start)

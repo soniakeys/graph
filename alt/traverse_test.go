@@ -193,7 +193,7 @@ func ExampleRand() {
 	// 8
 }
 
-func ExampleAdjacencyList_BreadthFirst_singlePath() {
+func ExampleBreadthFirst_singlePath() {
 	// arcs are directed right:
 	//    1   3---5
 	//   / \ /   /
@@ -221,7 +221,7 @@ func ExampleAdjacencyList_BreadthFirst_singlePath() {
 	// path: [1 4 6]
 }
 
-func ExampleAdjacencyList_BreadthFirst_allPaths() {
+func ExampleBreadthFirst_allPaths() {
 	// arcs are directed right:
 	//    1   3---5
 	//   / \ /   /
@@ -253,7 +253,7 @@ func ExampleAdjacencyList_BreadthFirst_allPaths() {
 	// 6 [1 4 6]
 }
 
-func ExampleAdjacencyList_BreadthFirst_traverse() {
+func ExampleBreadthFirst_traverse() {
 	// arcs directed down
 	//    0--
 	//   /|  \
@@ -283,7 +283,7 @@ func ExampleAdjacencyList_BreadthFirst_traverse() {
 	// visit 8 level 3
 }
 
-func ExampleAdjacencyList_BreadthFirst_traverseRandom() {
+func ExampleBreadthFirst_traverseRandom() {
 	// arcs directed down
 	//    0--
 	//   /|  \
