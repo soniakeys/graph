@@ -10,6 +10,40 @@ import (
 	"github.com/soniakeys/graph/alt"
 )
 
+func ExampleSCCKosaraju() {
+	// /---0---\
+	// |   |\--/
+	// |   v
+	// |   5<=>4---\
+	// |   |   |   |
+	// v   v   |   |
+	// 7<=>6   |   |
+	//     |   v   v
+	//     \-->3<--2
+	//         |   ^
+	//         |   |
+	//         \-->1
+	g := graph.Directed{graph.AdjacencyList{
+		0: {0, 5, 7},
+		5: {4, 6},
+		4: {5, 2, 3},
+		7: {6},
+		6: {7, 3},
+		3: {1},
+		1: {2},
+		2: {3},
+	}}
+	alt.SCCKosaraju(g, func(c []graph.NI) bool {
+		fmt.Println(c)
+		return true
+	})
+	// Output:
+	// [0]
+	// [5 4]
+	// [6 7]
+	// [2 1 3]
+}
+
 func ExampleSCCPathBased() {
 	// /---0---\
 	// |   |\--/

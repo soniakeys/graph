@@ -629,10 +629,13 @@ func (g Directed) IsTree(root NI) (isTree, allTree bool) {
 // StronglyConnectedComponents identifies strongly connected components in
 // a directed graph.
 //
-// The method calls the emit argument for each component identified.  Each
-// component is a list of nodes.  The emit function must return true for the
-// method to continue identifying components.  If emit returns false, the
-// method returns immediately.
+// The method calls the emit function for each component identified.  The
+// argument to emit is the node list of a component.  The emit function must
+// return true for the method to continue identifying components.  If emit
+// returns false, the method returns immediately.
+//
+// Note well:  The backing slice for the node list passed to emit is reused
+// across emit calls.  If you need to retain the node list you must copy it.
 //
 // There are equivalent labeled and unlabeled versions of this method.
 //
@@ -644,7 +647,7 @@ func (g Directed) StronglyConnectedComponents(emit func([]NI) bool) {
 	// by David J. Pearce.
 	a := g.AdjacencyList
 	rindex := make([]int, len(a))
-	var S []NI
+	var S, scc []NI
 	index := 1
 	c := len(a) - 1
 	var visit func(NI) bool
@@ -667,7 +670,7 @@ func (g Directed) StronglyConnectedComponents(emit func([]NI) bool) {
 			S = append(S, v)
 			return true
 		}
-		var scc []NI
+		scc = scc[:0]
 		index--
 		for last := len(S) - 1; last >= 0; last-- {
 			w := S[last]
@@ -693,25 +696,19 @@ func (g Directed) StronglyConnectedComponents(emit func([]NI) bool) {
 // Condensation returns strongly connected components and their
 // condensation graph.
 //
-// Components are ordered in a forward topological ordering.
+// Components are ordered in a reverse topological ordering.
 func (g Directed) Condensation() (scc [][]NI, cd AdjacencyList) {
-	var r [][]NI
-	// problems:  1. need to prove that Pearce returns a reverse topological
-	// ordering like Tarjan.  2.  Why the reversing?  why not just collect
-	// the components and use them as they are?
+	a := g.AdjacencyList
+	b := make([]NI, len(a)) // backing slice for scc
 	g.StronglyConnectedComponents(func(c []NI) bool {
-		r = append(r, c)
+		n := copy(b, c)
+		scc = append(scc, b[:n])
+		b = b[n:]
 		return true
 	})
-	scc = make([][]NI, len(r))
-	last := len(r) - 1
-	for i, ci := range r {
-		scc[last-i] = ci
-	}
 	cd = make(AdjacencyList, len(scc)) // return value
-	cond := make([]NI, g.Order())      // mapping from g node to cd node
-	for cn := len(cd) - 1; cn >= 0; cn-- {
-		c := scc[cn]
+	cond := make([]NI, len(a))         // mapping from g node to cd node
+	for cn, c := range scc {
 		for _, n := range c {
 			cond[n] = NI(cn) // map g node to cd node
 		}
@@ -719,7 +716,7 @@ func (g Directed) Condensation() (scc [][]NI, cd AdjacencyList) {
 		m := bits.New(len(cd)) // tos map
 		m.SetBit(cn, 1)
 		for _, n := range c {
-			for _, to := range g.AdjacencyList[n] {
+			for _, to := range a[n] {
 				if ct := cond[to]; m.Bit(int(ct)) == 0 {
 					m.SetBit(int(ct), 1)
 					tos = append(tos, ct)

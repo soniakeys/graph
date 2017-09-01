@@ -159,3 +159,28 @@ func SCCTarjanLarge() (string, string) {
 	kronDLargeSCCTag = "Kronecker giant component " + h(max) + " nds"
 	return "SCC Tarjan", kronDLargeTag
 }
+func SCCKosarajuSmall() (string, string) {
+	max := 0
+	alt.SCCKosaraju(kronDSmall, func(c []graph.NI) bool {
+		if len(c) > max {
+			max = len(c)
+			kronDSmallSCCRep = c[0]
+		}
+		return true
+	})
+	kronDSmallSCCTag = "Kronecker giant component " + h(max) + " nds"
+	return "SCC Kosaraju", kronDSmallTag
+}
+
+func SCCKosarajuLarge() (string, string) {
+	max := 0
+	alt.SCCKosaraju(kronDLarge, func(c []graph.NI) bool {
+		if len(c) > max {
+			max = len(c)
+			kronDLargeSCCRep = c[0]
+		}
+		return true
+	})
+	kronDLargeSCCTag = "Kronecker giant component " + h(max) + " nds"
+	return "SCC Kosaraju", kronDLargeTag
+}

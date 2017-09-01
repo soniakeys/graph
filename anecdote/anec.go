@@ -65,8 +65,9 @@ func prop() {
 	fmt.Println("Method                 Graph                          Time")
 	for _, tc := range []func() (string, string){
 		CCSmall, CCLarge,
-		SCCPathSmall, SCCPathLarge,
+		SCCKosarajuSmall, SCCKosarajuLarge,
 		SCCTarjanSmall, SCCTarjanLarge,
+		SCCPathSmall, SCCPathLarge,
 		SCCPearceSmall, SCCPearceLarge,
 		SCCEucSmall, SCCEucLarge,
 	} {

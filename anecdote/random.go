@@ -22,7 +22,6 @@ func ChungLuSmall() (string, int, int) {
 	for i := range w {
 		w[i] = 5 + 10*float64(n-i)/float64(n)
 	}
-	var m int
 	chungLuSmall, m = graph.ChungLu(w, r)
 	chungLuSmallTag = "ChungLu " + h(n) + " nds"
 	return "Chung Lu (undirected)", n, m
@@ -37,7 +36,6 @@ func ChungLuLarge() (string, int, int) {
 	for i := range w {
 		w[i] = 2 + 50*n/float64(i+1)
 	}
-	var m int
 	chungLuLarge, m = graph.ChungLu(w, r)
 	chungLuLargeTag = "ChungLu " + h(n) + " nds"
 	return "Chung Lu (undirected)", n, m
@@ -107,7 +105,6 @@ var gnpUSmallTag string
 func GnpUSmall() (string, int, int) {
 	const n = 1000
 	gnpUSmallTag = fmt.Sprint("Gnp ", n, " nds")
-	var m int
 	gnpUSmall, m = graph.GnpUndirected(n, .2, r)
 	return "Gnp undirected", n, m
 }
@@ -118,7 +115,6 @@ var gnpULargeTag string
 func GnpULarge() (string, int, int) {
 	const n = 2e4
 	gnpULargeTag = fmt.Sprint("Gnp ", n, " nds")
-	var m int
 	gnpULarge, m = graph.GnpUndirected(n, .105, r)
 	return "Gnp undirected", n, m
 }
@@ -165,7 +161,6 @@ var gnpDSmallTag string
 func GnpDSmall() (string, int, int) {
 	const n = 1000
 	gnpDSmallTag = fmt.Sprint("Gnp ", n, " nds")
-	var ma int
 	gnpDSmall, ma = graph.GnpDirected(n, .101, r)
 	return "Gnp directed", n, ma
 }
@@ -176,7 +171,6 @@ var gnpDLargeTag string
 func GnpDLarge() (string, int, int) {
 	const n = 2e4
 	gnpDLargeTag = fmt.Sprint("Gnp ", n, " nds")
-	var ma int
 	gnpDLarge, ma = graph.GnpDirected(n, .05, r)
 	return "Gnp directed", n, ma
 }
@@ -205,9 +199,10 @@ func GnmDLarge() (string, int, int) {
 
 var kronDSmall graph.Directed
 var kronDSmallTag string
+var m, ma int
 
 func KronDSmall() (string, int, int) {
-	kronDSmall, ma := graph.KroneckerDirected(11, 7, r)
+	kronDSmall, ma = graph.KroneckerDirected(11, 7, r)
 	kronDSmallTag = "Kronecker " + h(kronDSmall.Order()) + "nds"
 	return "Kronecker directed", kronDSmall.Order(), ma
 }
@@ -216,7 +211,7 @@ var kronDLarge graph.Directed
 var kronDLargeTag string
 
 func KronDLarge() (string, int, int) {
-	kronDLarge, ma := graph.KroneckerDirected(17, 21, r)
+	kronDLarge, ma = graph.KroneckerDirected(17, 21, r)
 	kronDLargeTag = "Kronecker " + h(kronDLarge.Order()) + "nds"
 	return "Kronecker directed", kronDLarge.Order(), ma
 }
@@ -225,7 +220,7 @@ var kronUSmall graph.Undirected
 var kronUSmallTag string
 
 func KronUSmall() (string, int, int) {
-	kronUSmall, m := graph.KroneckerUndirected(11, 7, r)
+	kronUSmall, m = graph.KroneckerUndirected(11, 7, r)
 	kronUSmallTag = "Kronecker " + h(kronUSmall.Order()) + "nds"
 	return "Kronecker undirected", kronUSmall.Order(), m
 }
@@ -234,7 +229,7 @@ var kronULarge graph.Undirected
 var kronULargeTag string
 
 func KronULarge() (string, int, int) {
-	kronULarge, m := graph.KroneckerUndirected(17, 21, r)
+	kronULarge, m = graph.KroneckerUndirected(17, 21, r)
 	kronULargeTag = "Kronecker " + h(kronULarge.Order()) + " nds"
 	return "Kronecker undirected", kronULarge.Order(), m
 }
