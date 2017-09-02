@@ -548,7 +548,7 @@ func (g Directed) MaximalNonBranchingPaths(emit func([]NI) bool) {
 	}
 }
 
-// FromList transposes a labeled graph into a FromList.
+// FromList transposes a graph into a FromList.
 //
 // Receiver g should be connected as a tree or forest.  Specifically no node
 // can have multiple incoming arcs.  If any node n in g has multiple incoming
