@@ -41,11 +41,27 @@ that might be useful.  Here are some elements that characterize the direction.
   and the unique key property is not always needed or wanted.  The Adjacency
   list implementation of this library is all done in slices.  Slices are used
   in algorithms where possible, in preference to maps.  Maps are still used in
-  some cases where uniqueness is needed.  (But also bits are used.)
+  some cases where uniqueness is needed.
+
+* Bitsets are widely used, particularly to store one bit of information per
+  node of a graph.  I used math/big at first but then moved to a dense bitset
+  of my own.  Yes, I considered other third-party bitsets but had my own
+  feature set I wanted.  A slice of bools is another alternative.  Bools will
+  be faster in almost all cases but the bitset will use less memory.  I'm
+  chosing size over speed for now.
 
 * Interfaces not generally used.  Algorithms are implemented directly on
   concrete data types and not on interfaces describing the capabilities of
-  the data types.
+  the data types.  The abstraction of interfaces is a nice match to graph
+  theory and the convenience of running graph algorithms on any type that
+  implements an interface is appealing, but the costs seem too high to me.
+  Slices are rich with capababilites that get hidden behind interfaces and
+  direct slice manipulation is always faster than going through interfaces.
+  An impedance for programs using the library is that they will generally
+  have to implement a mapping from slice indexes to their application data,
+  often including for example, some other form of node ID.  This seems fair
+  to push this burden outside the graph library; the library cannot know
+  the needs of this mapping.
 
 * Code generation is used to provide methods that work on both labeled and
   unlabeled graphs.  Code is written to labeled types, then transformations
@@ -57,6 +73,19 @@ that might be useful.  Here are some elements that characterize the direction.
   these algorithms.  But as a preliminary step, more traditional
   single-threaded algorithms are implemented.
 
+* The focus has been on static finite graphs.  Again there is much interesting
+  work in online algorithms, dynamic graphs, and infinite graphs, but these
+  are not generally considered here.
+
 * Algorithms selected for implementation are generally ones commonly appearing
   in beginning graph theory discussions and in general purpose graph libraries
-  in other programming languages.
+  in other programming languages.  With these as drivers, there's a big risk
+  developing a library of curiosities and academic exercises rather than a
+  library of practical utility.  But well, it's a start.  The hope is that
+  there are some practical drivers behind graph theory and behind other graph
+  libraries.
+
+* There is active current research going on in graph algorithm development.
+  One goal for this library is to implement newer and faster algorithms.
+  In some cases where it seems not too much work, an older algorithms may be
+  implemented for comparison.  These generally go in the alt subdirectory.
