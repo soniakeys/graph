@@ -63,6 +63,10 @@ func (g AdjacencyList) BoundsOk() (ok bool, fr NI, to NI) {
 // BreadthFirst traverses a directed or undirected graph in breadth
 // first order.
 //
+// Traversal starts at node start and visits the nodes reachable from
+// start.  The function visit is called for each node visited.  Nodes
+// not reachable from start are not visited.
+//
 // There are equivalent labeled and unlabeled versions of this method.
 //
 // See also alt.BreadthFirst, a variant with more options, and
@@ -97,6 +101,31 @@ func (g AdjacencyList) Copy() (c AdjacencyList, ma int) {
 		ma += len(to)
 	}
 	return
+}
+
+// DepthFirst traverses a directed or undirected graph in depth
+// first order.
+//
+// Traversal starts at node start and visits the nodes reachable from
+// start.  The function visit is called for each node visited.  Nodes
+// not reachable from start are not visited.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+//
+// See also alt.DepthFirst, a variant with more options.
+func (g AdjacencyList) DepthFirst(start NI, visit func(NI)) {
+	v := bits.New(len(g))
+	var f func(NI)
+	f = func(n NI) {
+		visit(n)
+		v.SetBit(int(n), 1)
+		for _, to := range g[n] {
+			if v.Bit(int(to)) == 0 {
+				f(to)
+			}
+		}
+	}
+	f(start)
 }
 
 // HasArc returns true if g has any arc from node `fr` to node `to`.

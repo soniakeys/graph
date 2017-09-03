@@ -20,6 +20,44 @@ import (
 	"github.com/soniakeys/graph"
 )
 
+func ExampleLabeledAdjacencyList_AnyLoop_loop() {
+	g := graph.LabeledAdjacencyList{
+		2: {{To: 2}},
+	}
+	fmt.Println(g.AnyLoop())
+	// Output:
+	// true 2
+}
+
+func ExampleLabeledAdjacencyList_AnyLoop_noLoop() {
+	g := graph.LabeledAdjacencyList{
+		1: {{To: 0}},
+	}
+	lp, _ := g.AnyLoop()
+	fmt.Println("has loop:", lp)
+	// Output:
+	// has loop: false
+}
+
+func ExampleLabeledAdjacencyList_AnyParallelMap_parallelArcs() {
+	g := graph.LabeledAdjacencyList{
+		1: {{To: 0}, {To: 0}},
+	}
+	// result true 1 0 means parallel arcs from node 1 to node 0
+	fmt.Println(g.AnyParallelMap())
+	// Output:
+	// true 1 0
+}
+
+func ExampleLabeledAdjacencyList_AnyParallelMap_noParallelArcs() {
+	g := graph.LabeledAdjacencyList{
+		1: {{To: 0}},
+	}
+	fmt.Println(g.AnyParallelMap()) // result false -1 -1 means no parallel arc
+	// Output:
+	// false -1 -1
+}
+
 func ExampleLabeledAdjacencyList_ArcDensity() {
 	// 0-->1
 	// |
@@ -80,6 +118,54 @@ func ExampleLabeledAdjacencyList_BoundsOk() {
 	// false 0 {9 0}
 }
 
+func ExampleLabeledAdjacencyList_BreadthFirst() {
+	//   <-0->
+	//  /  |  \
+	// v   v   v
+	// 1-->2   4
+	// ^   |   ^
+	// |   v   |
+	// \---3   5
+	g := graph.LabeledAdjacencyList{
+		0: {{To: 1}, {To: 2}, {To: 4}},
+		1: {{To: 2}},
+		2: {{To: 3}},
+		3: {{To: 1}},
+		5: {{To: 4}},
+	}
+	g.BreadthFirst(0, func(n graph.NI) { fmt.Println(n) })
+	// Output:
+	// 0
+	// 1
+	// 2
+	// 4
+	// 3
+}
+
+func ExampleLabeledAdjacencyList_DepthFirst() {
+	//   <-0->
+	//  /  |  \
+	// v   v   v
+	// 1-->2   4
+	// ^   |   ^
+	// |   v   |
+	// \---3   5
+	g := graph.LabeledAdjacencyList{
+		0: {{To: 1}, {To: 2}, {To: 4}},
+		1: {{To: 2}},
+		2: {{To: 3}},
+		3: {{To: 1}},
+		5: {{To: 4}},
+	}
+	g.DepthFirst(0, func(n graph.NI) { fmt.Println(n) })
+	// Output:
+	// 0
+	// 1
+	// 2
+	// 3
+	// 4
+}
+
 func ExampleLabeledAdjacencyList_HasArc() {
 	g := graph.LabeledAdjacencyList{
 		2: {{To: 0}, {To: 2}, {To: 0}, {To: 1}, {To: 1}},
@@ -89,44 +175,6 @@ func ExampleLabeledAdjacencyList_HasArc() {
 	// Output:
 	// true 3
 	// true 1
-}
-
-func ExampleLabeledAdjacencyList_AnyLoop_loop() {
-	g := graph.LabeledAdjacencyList{
-		2: {{To: 2}},
-	}
-	fmt.Println(g.AnyLoop())
-	// Output:
-	// true 2
-}
-
-func ExampleLabeledAdjacencyList_AnyLoop_noLoop() {
-	g := graph.LabeledAdjacencyList{
-		1: {{To: 0}},
-	}
-	lp, _ := g.AnyLoop()
-	fmt.Println("has loop:", lp)
-	// Output:
-	// has loop: false
-}
-
-func ExampleLabeledAdjacencyList_AnyParallelMap_parallelArcs() {
-	g := graph.LabeledAdjacencyList{
-		1: {{To: 0}, {To: 0}},
-	}
-	// result true 1 0 means parallel arcs from node 1 to node 0
-	fmt.Println(g.AnyParallelMap())
-	// Output:
-	// true 1 0
-}
-
-func ExampleLabeledAdjacencyList_AnyParallelMap_noParallelArcs() {
-	g := graph.LabeledAdjacencyList{
-		1: {{To: 0}},
-	}
-	fmt.Println(g.AnyParallelMap()) // result false -1 -1 means no parallel arc
-	// Output:
-	// false -1 -1
 }
 
 func ExampleLabeledAdjacencyList_IsolatedNodes() {

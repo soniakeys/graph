@@ -24,6 +24,44 @@ import (
 	"github.com/soniakeys/graph"
 )
 
+func ExampleAdjacencyList_AnyLoop_loop() {
+	g := graph.AdjacencyList{
+		2: {2},
+	}
+	fmt.Println(g.AnyLoop())
+	// Output:
+	// true 2
+}
+
+func ExampleAdjacencyList_AnyLoop_noLoop() {
+	g := graph.AdjacencyList{
+		1: {0},
+	}
+	lp, _ := g.AnyLoop()
+	fmt.Println("has loop:", lp)
+	// Output:
+	// has loop: false
+}
+
+func ExampleAdjacencyList_AnyParallelMap_parallelArcs() {
+	g := graph.AdjacencyList{
+		1: {0, 0},
+	}
+	// result true 1 0 means parallel arcs from node 1 to node 0
+	fmt.Println(g.AnyParallelMap())
+	// Output:
+	// true 1 0
+}
+
+func ExampleAdjacencyList_AnyParallelMap_noParallelArcs() {
+	g := graph.AdjacencyList{
+		1: {0},
+	}
+	fmt.Println(g.AnyParallelMap()) // result false -1 -1 means no parallel arc
+	// Output:
+	// false -1 -1
+}
+
 func ExampleAdjacencyList_ArcDensity() {
 	// 0-->1
 	// |
@@ -84,6 +122,54 @@ func ExampleAdjacencyList_BoundsOk() {
 	// false 0 9
 }
 
+func ExampleAdjacencyList_BreadthFirst() {
+	//   <-0->
+	//  /  |  \
+	// v   v   v
+	// 1-->2   4
+	// ^   |   ^
+	// |   v   |
+	// \---3   5
+	g := graph.AdjacencyList{
+		0: {1, 2, 4},
+		1: {2},
+		2: {3},
+		3: {1},
+		5: {4},
+	}
+	g.BreadthFirst(0, func(n graph.NI) { fmt.Println(n) })
+	// Output:
+	// 0
+	// 1
+	// 2
+	// 4
+	// 3
+}
+
+func ExampleAdjacencyList_DepthFirst() {
+	//   <-0->
+	//  /  |  \
+	// v   v   v
+	// 1-->2   4
+	// ^   |   ^
+	// |   v   |
+	// \---3   5
+	g := graph.AdjacencyList{
+		0: {1, 2, 4},
+		1: {2},
+		2: {3},
+		3: {1},
+		5: {4},
+	}
+	g.DepthFirst(0, func(n graph.NI) { fmt.Println(n) })
+	// Output:
+	// 0
+	// 1
+	// 2
+	// 3
+	// 4
+}
+
 func ExampleAdjacencyList_HasArc() {
 	g := graph.AdjacencyList{
 		2: {0, 2, 0, 1, 1},
@@ -93,44 +179,6 @@ func ExampleAdjacencyList_HasArc() {
 	// Output:
 	// true 3
 	// true 1
-}
-
-func ExampleAdjacencyList_AnyLoop_loop() {
-	g := graph.AdjacencyList{
-		2: {2},
-	}
-	fmt.Println(g.AnyLoop())
-	// Output:
-	// true 2
-}
-
-func ExampleAdjacencyList_AnyLoop_noLoop() {
-	g := graph.AdjacencyList{
-		1: {0},
-	}
-	lp, _ := g.AnyLoop()
-	fmt.Println("has loop:", lp)
-	// Output:
-	// has loop: false
-}
-
-func ExampleAdjacencyList_AnyParallelMap_parallelArcs() {
-	g := graph.AdjacencyList{
-		1: {0, 0},
-	}
-	// result true 1 0 means parallel arcs from node 1 to node 0
-	fmt.Println(g.AnyParallelMap())
-	// Output:
-	// true 1 0
-}
-
-func ExampleAdjacencyList_AnyParallelMap_noParallelArcs() {
-	g := graph.AdjacencyList{
-		1: {0},
-	}
-	fmt.Println(g.AnyParallelMap()) // result false -1 -1 means no parallel arc
-	// Output:
-	// false -1 -1
 }
 
 func ExampleAdjacencyList_IsolatedNodes() {
