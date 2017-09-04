@@ -478,23 +478,25 @@ func ExampleLabeledUndirected_FromList() {
 	g.AddEdge(graph.Edge{2, 4}, 0)
 	g.AddEdge(graph.Edge{4, 1}, 0)
 	g.AddEdge(graph.Edge{1, 0}, 0)
-	f, cycle := g.FromList(4)
-	if cycle >= 0 {
-		return
-	}
+	var f graph.FromList
+	n, st := g.FromList(&f, 4)
+	fmt.Println("Nodes spanned:", n)
+	fmt.Println("Simple tree:", st)
 	fmt.Println("n  from  path len")
 	for n, e := range f.Paths {
-		fmt.Printf("%d  %3d  %3d\n", n, e.From, e.Len)
+		fmt.Printf("%d  %3d  %8d\n", n, e.From, e.Len)
 	}
-	fmt.Println("MaxLen:  ", f.MaxLen)
+	fmt.Println("MaxLen:       ", f.MaxLen)
 	// Output:
+	// Nodes spanned: 4
+	// Simple tree: true
 	// n  from  path len
-	// 0    1    3
-	// 1    4    2
-	// 2    4    2
-	// 3   -1    0
-	// 4   -1    1
-	// MaxLen:   3
+	// 0    1         3
+	// 1    4         2
+	// 2    4         2
+	// 3   -1         0
+	// 4   -1         1
+	// MaxLen:        3
 }
 
 func ExampleLabeledUndirected_FromList_cycle() {
@@ -509,10 +511,25 @@ func ExampleLabeledUndirected_FromList_cycle() {
 	g.AddEdge(graph.Edge{2, 3}, 0)
 	g.AddEdge(graph.Edge{2, 4}, 0)
 	g.AddEdge(graph.Edge{3, 4}, 0)
-	_, cycle := g.FromList(0)
-	fmt.Println("cycle:", cycle)
+	var f graph.FromList
+	n, st := g.FromList(&f, 0)
+	fmt.Println("Nodes spanned:", n)
+	fmt.Println("Simple tree:", st)
+	fmt.Println("n  from  path len")
+	for n, e := range f.Paths {
+		fmt.Printf("%d  %3d  %8d\n", n, e.From, e.Len)
+	}
+	fmt.Println("MaxLen:       ", f.MaxLen)
 	// Output:
-	// cycle: 2
+	// Nodes spanned: 5
+	// Simple tree: false
+	// n  from  path len
+	// 0   -1         1
+	// 1    0         2
+	// 2    0         2
+	// 3    2         3
+	// 4    3         4
+	// MaxLen:        4
 }
 
 func ExampleLabeledUndirected_FromList_loop() {
@@ -523,10 +540,23 @@ func ExampleLabeledUndirected_FromList_loop() {
 	g.AddEdge(graph.Edge{0, 1}, 0)
 	g.AddEdge(graph.Edge{0, 2}, 0)
 	g.AddEdge(graph.Edge{2, 2}, 0)
-	_, cycle := g.FromList(0)
-	fmt.Println("cycle:", cycle)
+	var f graph.FromList
+	n, st := g.FromList(&f, 0)
+	fmt.Println("Nodes spanned:", n)
+	fmt.Println("Simple tree:", st)
+	fmt.Println("n  from  path len")
+	for n, e := range f.Paths {
+		fmt.Printf("%d  %3d  %8d\n", n, e.From, e.Len)
+	}
+	fmt.Println("MaxLen:       ", f.MaxLen)
 	// Output:
-	// cycle: 2
+	// Nodes spanned: 3
+	// Simple tree: false
+	// n  from  path len
+	// 0   -1         1
+	// 1    0         2
+	// 2    0         2
+	// MaxLen:        2
 }
 
 func ExampleLabeledUndirected_FromList_loopDisconnected() {
@@ -536,20 +566,23 @@ func ExampleLabeledUndirected_FromList_loopDisconnected() {
 	var g graph.LabeledUndirected
 	g.AddEdge(graph.Edge{0, 1}, 0)
 	g.AddEdge(graph.Edge{2, 2}, 0)
-	f, cycle := g.FromList(0)
-	fmt.Println("cycle:", cycle)
-	// Output:
-	// cycle: -1
+	var f graph.FromList
+	n, st := g.FromList(&f, 0)
+	fmt.Println("Nodes spanned:", n)
+	fmt.Println("Simple tree:", st)
 	fmt.Println("n  from  path len")
 	for n, e := range f.Paths {
-		fmt.Printf("%d  %3d  %3d\n", n, e.From, e.Len)
+		fmt.Printf("%d  %3d  %8d\n", n, e.From, e.Len)
 	}
+	fmt.Println("MaxLen:       ", f.MaxLen)
 	// Output:
-	// cycle: -1
+	// Nodes spanned: 2
+	// Simple tree: true
 	// n  from  path len
-	// 0   -1    1
-	// 1    0    2
-	// 2   -1    0
+	// 0   -1         1
+	// 1    0         2
+	// 2   -1         0
+	// MaxLen:        2
 }
 
 func ExampleLabeledUndirected_FromList_multigraph() {
@@ -561,10 +594,24 @@ func ExampleLabeledUndirected_FromList_multigraph() {
 	g.AddEdge(graph.Edge{0, 2}, 0)
 	g.AddEdge(graph.Edge{2, 3}, 0)
 	g.AddEdge(graph.Edge{2, 3}, 0)
-	_, cycle := g.FromList(0)
-	fmt.Println("cycle:", cycle)
+	var f graph.FromList
+	n, st := g.FromList(&f, 0)
+	fmt.Println("Nodes spanned:", n)
+	fmt.Println("Simple tree:", st)
+	fmt.Println("n  from  path len")
+	for n, e := range f.Paths {
+		fmt.Printf("%d  %3d  %8d\n", n, e.From, e.Len)
+	}
+	fmt.Println("MaxLen:       ", f.MaxLen)
 	// Output:
-	// cycle: 3
+	// Nodes spanned: 4
+	// Simple tree: false
+	// n  from  path len
+	// 0   -1         1
+	// 1    0         2
+	// 2    0         2
+	// 3    2         3
+	// MaxLen:        3
 }
 
 func ExampleLabeledUndirected_IsConnected() {

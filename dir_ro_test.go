@@ -336,14 +336,14 @@ func ExampleDirected_FromList() {
 		4: {2, 1},
 		1: {0},
 	}}
-	f, n := g.FromList()
-	fmt.Println("n:", n)
+	f, sf := g.FromList()
+	fmt.Println("simple forest:", sf)
 	fmt.Println("N  From")
 	for n, e := range f.Paths {
 		fmt.Printf("%d %4d\n", n, e.From)
 	}
 	// Output:
-	// n: -1
+	// simple forest: true
 	// N  From
 	// 0    1
 	// 1    4
@@ -364,9 +364,19 @@ func ExampleDirected_FromList_nonTree() {
 		2: {3},
 		3: {},
 	}}
-	fmt.Println(g.FromList())
+	f, sf := g.FromList()
+	fmt.Println("simple forest:", sf)
+	fmt.Println("N  From")
+	for n, e := range f.Paths {
+		fmt.Printf("%d %4d\n", n, e.From)
+	}
 	// Output:
-	// <nil> 3
+	// simple forest: false
+	// N  From
+	// 0   -1
+	// 1    0
+	// 2    0
+	// 3    1
 }
 
 func ExampleDirected_FromList_multigraphTree() {
@@ -377,33 +387,41 @@ func ExampleDirected_FromList_multigraphTree() {
 		0: {1, 2, 2},
 		2: {},
 	}}
-	fmt.Println(g.FromList())
-	// Output:
-	// <nil> 2
-}
-
-func ExampleDirected_FromList_rootLoops() {
-	//     /-\
-	//    0--/  3--\
-	//   / \     \-/
-	//  1   2
-	g := graph.Directed{graph.AdjacencyList{
-		0: {0, 1, 2},
-		3: {3},
-	}}
-	f, n := g.FromList()
-	fmt.Println("n:", n)
+	f, sf := g.FromList()
+	fmt.Println("simple forest:", sf)
 	fmt.Println("N  From")
 	for n, e := range f.Paths {
 		fmt.Printf("%d %4d\n", n, e.From)
 	}
 	// Output:
-	// n: -1
+	// simple forest: false
 	// N  From
-	// 0    0
+	// 0   -1
 	// 1    0
 	// 2    0
-	// 3    3
+}
+
+func ExampleDirected_FromList_rootLoop() {
+	//     /-\
+	//    0--/
+	//   / \
+	//  1   2
+	g := graph.Directed{graph.AdjacencyList{
+		0: {0, 1, 2},
+		2: {},
+	}}
+	f, sf := g.FromList()
+	fmt.Println("simple forest:", sf)
+	fmt.Println("N  From")
+	for n, e := range f.Paths {
+		fmt.Printf("%d %4d\n", n, e.From)
+	}
+	// Output:
+	// simple forest: false
+	// N  From
+	// 0   -1
+	// 1    0
+	// 2    0
 }
 
 func ExampleDirected_InDegree() {

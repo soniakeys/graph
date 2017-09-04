@@ -287,14 +287,14 @@ func ExampleLabeledDirected_FromList() {
 		4: {{To: 2}, {To: 1}},
 		1: {{To: 0}},
 	}}
-	f, n := g.FromList()
-	fmt.Println("n:", n)
+	f, sf := g.FromList()
+	fmt.Println("simple forest:", sf)
 	fmt.Println("N  From")
 	for n, e := range f.Paths {
 		fmt.Printf("%d %4d\n", n, e.From)
 	}
 	// Output:
-	// n: -1
+	// simple forest: true
 	// N  From
 	// 0    1
 	// 1    4
@@ -315,9 +315,19 @@ func ExampleLabeledDirected_FromList_nonTree() {
 		2: {{To: 3}},
 		3: {},
 	}}
-	fmt.Println(g.FromList())
+	f, sf := g.FromList()
+	fmt.Println("simple forest:", sf)
+	fmt.Println("N  From")
+	for n, e := range f.Paths {
+		fmt.Printf("%d %4d\n", n, e.From)
+	}
 	// Output:
-	// <nil> 3
+	// simple forest: false
+	// N  From
+	// 0   -1
+	// 1    0
+	// 2    0
+	// 3    1
 }
 
 func ExampleLabeledDirected_FromList_multigraphTree() {
@@ -328,33 +338,41 @@ func ExampleLabeledDirected_FromList_multigraphTree() {
 		0: {{To: 1}, {To: 2}, {To: 2}},
 		2: {},
 	}}
-	fmt.Println(g.FromList())
-	// Output:
-	// <nil> 2
-}
-
-func ExampleLabeledDirected_FromList_rootLoops() {
-	//     /-\
-	//    0--/  3--\
-	//   / \     \-/
-	//  1   2
-	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
-		0: {{To: 0}, {To: 1}, {To: 2}},
-		3: {{To: 3}},
-	}}
-	f, n := g.FromList()
-	fmt.Println("n:", n)
+	f, sf := g.FromList()
+	fmt.Println("simple forest:", sf)
 	fmt.Println("N  From")
 	for n, e := range f.Paths {
 		fmt.Printf("%d %4d\n", n, e.From)
 	}
 	// Output:
-	// n: -1
+	// simple forest: false
 	// N  From
-	// 0    0
+	// 0   -1
 	// 1    0
 	// 2    0
-	// 3    3
+}
+
+func ExampleLabeledDirected_FromList_rootLoop() {
+	//     /-\
+	//    0--/
+	//   / \
+	//  1   2
+	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
+		0: {{To: 0}, {To: 1}, {To: 2}},
+		2: {},
+	}}
+	f, sf := g.FromList()
+	fmt.Println("simple forest:", sf)
+	fmt.Println("N  From")
+	for n, e := range f.Paths {
+		fmt.Printf("%d %4d\n", n, e.From)
+	}
+	// Output:
+	// simple forest: false
+	// N  From
+	// 0   -1
+	// 1    0
+	// 2    0
 }
 
 func ExampleLabeledDirected_InDegree() {

@@ -472,23 +472,25 @@ func ExampleUndirected_FromList() {
 	g.AddEdge(2, 4)
 	g.AddEdge(4, 1)
 	g.AddEdge(1, 0)
-	f, cycle := g.FromList(4)
-	if cycle >= 0 {
-		return
-	}
+	var f graph.FromList
+	n, st := g.FromList(&f, 4)
+	fmt.Println("Nodes spanned:", n)
+	fmt.Println("Simple tree:", st)
 	fmt.Println("n  from  path len")
 	for n, e := range f.Paths {
-		fmt.Printf("%d  %3d  %3d\n", n, e.From, e.Len)
+		fmt.Printf("%d  %3d  %8d\n", n, e.From, e.Len)
 	}
-	fmt.Println("MaxLen:  ", f.MaxLen)
+	fmt.Println("MaxLen:       ", f.MaxLen)
 	// Output:
+	// Nodes spanned: 4
+	// Simple tree: true
 	// n  from  path len
-	// 0    1    3
-	// 1    4    2
-	// 2    4    2
-	// 3   -1    0
-	// 4   -1    1
-	// MaxLen:   3
+	// 0    1         3
+	// 1    4         2
+	// 2    4         2
+	// 3   -1         0
+	// 4   -1         1
+	// MaxLen:        3
 }
 
 func ExampleUndirected_FromList_cycle() {
@@ -503,10 +505,25 @@ func ExampleUndirected_FromList_cycle() {
 	g.AddEdge(2, 3)
 	g.AddEdge(2, 4)
 	g.AddEdge(3, 4)
-	_, cycle := g.FromList(0)
-	fmt.Println("cycle:", cycle)
+	var f graph.FromList
+	n, st := g.FromList(&f, 0)
+	fmt.Println("Nodes spanned:", n)
+	fmt.Println("Simple tree:", st)
+	fmt.Println("n  from  path len")
+	for n, e := range f.Paths {
+		fmt.Printf("%d  %3d  %8d\n", n, e.From, e.Len)
+	}
+	fmt.Println("MaxLen:       ", f.MaxLen)
 	// Output:
-	// cycle: 2
+	// Nodes spanned: 5
+	// Simple tree: false
+	// n  from  path len
+	// 0   -1         1
+	// 1    0         2
+	// 2    0         2
+	// 3    2         3
+	// 4    3         4
+	// MaxLen:        4
 }
 
 func ExampleUndirected_FromList_loop() {
@@ -517,10 +534,23 @@ func ExampleUndirected_FromList_loop() {
 	g.AddEdge(0, 1)
 	g.AddEdge(0, 2)
 	g.AddEdge(2, 2)
-	_, cycle := g.FromList(0)
-	fmt.Println("cycle:", cycle)
+	var f graph.FromList
+	n, st := g.FromList(&f, 0)
+	fmt.Println("Nodes spanned:", n)
+	fmt.Println("Simple tree:", st)
+	fmt.Println("n  from  path len")
+	for n, e := range f.Paths {
+		fmt.Printf("%d  %3d  %8d\n", n, e.From, e.Len)
+	}
+	fmt.Println("MaxLen:       ", f.MaxLen)
 	// Output:
-	// cycle: 2
+	// Nodes spanned: 3
+	// Simple tree: false
+	// n  from  path len
+	// 0   -1         1
+	// 1    0         2
+	// 2    0         2
+	// MaxLen:        2
 }
 
 func ExampleUndirected_FromList_loopDisconnected() {
@@ -530,20 +560,23 @@ func ExampleUndirected_FromList_loopDisconnected() {
 	var g graph.Undirected
 	g.AddEdge(0, 1)
 	g.AddEdge(2, 2)
-	f, cycle := g.FromList(0)
-	fmt.Println("cycle:", cycle)
-	// Output:
-	// cycle: -1
+	var f graph.FromList
+	n, st := g.FromList(&f, 0)
+	fmt.Println("Nodes spanned:", n)
+	fmt.Println("Simple tree:", st)
 	fmt.Println("n  from  path len")
 	for n, e := range f.Paths {
-		fmt.Printf("%d  %3d  %3d\n", n, e.From, e.Len)
+		fmt.Printf("%d  %3d  %8d\n", n, e.From, e.Len)
 	}
+	fmt.Println("MaxLen:       ", f.MaxLen)
 	// Output:
-	// cycle: -1
+	// Nodes spanned: 2
+	// Simple tree: true
 	// n  from  path len
-	// 0   -1    1
-	// 1    0    2
-	// 2   -1    0
+	// 0   -1         1
+	// 1    0         2
+	// 2   -1         0
+	// MaxLen:        2
 }
 
 func ExampleUndirected_FromList_multigraph() {
@@ -555,10 +588,24 @@ func ExampleUndirected_FromList_multigraph() {
 	g.AddEdge(0, 2)
 	g.AddEdge(2, 3)
 	g.AddEdge(2, 3)
-	_, cycle := g.FromList(0)
-	fmt.Println("cycle:", cycle)
+	var f graph.FromList
+	n, st := g.FromList(&f, 0)
+	fmt.Println("Nodes spanned:", n)
+	fmt.Println("Simple tree:", st)
+	fmt.Println("n  from  path len")
+	for n, e := range f.Paths {
+		fmt.Printf("%d  %3d  %8d\n", n, e.From, e.Len)
+	}
+	fmt.Println("MaxLen:       ", f.MaxLen)
 	// Output:
-	// cycle: 3
+	// Nodes spanned: 4
+	// Simple tree: false
+	// n  from  path len
+	// 0   -1         1
+	// 1    0         2
+	// 2    0         2
+	// 3    2         3
+	// MaxLen:        3
 }
 
 func ExampleUndirected_IsConnected() {

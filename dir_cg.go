@@ -548,41 +548,38 @@ func (g LabeledDirected) MaximalNonBranchingPaths(emit func([]Half) bool) {
 	}
 }
 
-// FromList transposes a graph into a FromList.
+// FromList transposes a directed graph into a FromList, creating a spanning
+// forest.
 //
-// Receiver g should be connected as a tree or forest.  Specifically no node
-// can have multiple incoming arcs.  If any node n in g has multiple incoming
-// arcs, the method returns (nil, n) where n is a node with multiple
-// incoming arcs.
+// The method populates the From members in a FromList.Path and returns the
+// FromList.  Also returned is a bool, true if the graph is found to be a
+// simple graph representing a tree or forest.  Loops, or any case of multiple
+// arcs going to a node will cause simpleForest to be false.
 //
-// Otherwise (normally) the method populates the From members in a
-// FromList.Path and returns the FromList and -1.
+// The FromList return value f will always be a spanning forest of the graph.
+// The bool return value simpleForest tells if the receiver graph g was a
+// simple forest to begin with.
 //
 // Other members of the FromList are left as zero values.
 // Use FromList.RecalcLen and FromList.RecalcLeaves as needed.
 //
-// Unusual cases are parallel arcs and loops.  A parallel arc represents
-// a case of multiple arcs going to some node and so will lead to a (nil, n)
-// return, even though a graph might be considered a multigraph tree.
-// A single loop on a node that would otherwise be a root node, though,
-// is not a case of multiple incoming arcs and so does not force a (nil, n)
-// result.
-//
 // There are equivalent labeled and unlabeled versions of this method.
-func (g LabeledDirected) FromList() (*FromList, NI) {
+func (g LabeledDirected) FromList() (f *FromList, simpleForest bool) {
 	paths := make([]PathEnd, g.Order())
 	for i := range paths {
 		paths[i].From = -1
 	}
+	simpleForest = true
 	for fr, to := range g.LabeledAdjacencyList {
 		for _, to := range to {
-			if paths[to.To].From >= 0 {
-				return nil, to.To
+			if int(to.To) == fr || paths[to.To].From >= 0 {
+				simpleForest = false
+			} else {
+				paths[to.To].From = NI(fr)
 			}
-			paths[to.To].From = NI(fr)
 		}
 	}
-	return &FromList{Paths: paths}, -1
+	return &FromList{Paths: paths}, simpleForest
 }
 
 // InDegree computes the in-degree of each node in g

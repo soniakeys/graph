@@ -857,38 +857,39 @@ func (g Undirected) EulerianStart() NI {
 // not reachable from root will have PathEnd values of {From: -1, Len: 0}.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g Undirected) FromList(root NI) (f FromList, cycle NI) {
-	p := make([]PathEnd, g.Order())
-	for i := range p {
-		p[i].From = -1
+func (g Undirected) FromList(f *FromList, root NI) (nSpanned int, simpleTree bool) {
+	a := g.AdjacencyList
+	p := f.Paths
+	if len(p) != len(a) {
+		p = make([]PathEnd, len(a))
+		for i := range p {
+			p[i].From = -1
+		}
+		f.Paths = p
 	}
-	ml := 0
-	var df func(NI, NI) bool
-	df = func(fr, n NI) bool {
+	var df func(NI, NI)
+	df = func(fr, n NI) {
+		nSpanned++
 		l := p[n].Len + 1
 		for _, to := range g.AdjacencyList[n] {
 			if to == fr {
 				continue
 			}
 			if p[to].Len > 0 {
-				cycle = to
-				return false
+				simpleTree = false
+				continue
 			}
 			p[to] = PathEnd{From: n, Len: l}
-			if l > ml {
-				ml = l
+			if l > f.MaxLen {
+				f.MaxLen = l
 			}
-			if !df(n, to) {
-				return false
-			}
+			df(n, to)
 		}
-		return true
 	}
+	simpleTree = true
 	p[root].Len = 1
-	if !df(-1, root) {
-		return
-	}
-	return FromList{Paths: p, MaxLen: ml}, -1
+	df(-1, root)
+	return
 }
 
 // IsConnected tests if an undirected graph is a single connected component.
