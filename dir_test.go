@@ -28,6 +28,136 @@ func ExampleDirected_DAGMaxLenPath() {
 	// [3 4 0 2]
 }
 
+func ExampleDirected_FromList() {
+	//    4   3
+	//   / \
+	//  2   1
+	//       \
+	//        0
+	g := graph.Directed{graph.AdjacencyList{
+		4: {2, 1},
+		1: {0},
+	}}
+	f, sf := g.FromList()
+	fmt.Println("simple forest:", sf)
+	fmt.Println("N  From")
+	for n, e := range f.Paths {
+		fmt.Printf("%d %4d\n", n, e.From)
+	}
+	// Output:
+	// simple forest: true
+	// N  From
+	// 0    1
+	// 1    4
+	// 2    4
+	// 3   -1
+	// 4   -1
+}
+
+func ExampleDirected_SpanTree() {
+	//    0   5
+	//   / \
+	//  1   2
+	//     / \
+	//    3-->4
+	g := graph.Directed{graph.AdjacencyList{
+		0: {1, 2},
+		2: {3, 4},
+		3: {4},
+		5: {},
+	}}
+	var f graph.FromList
+	ns, simple := g.SpanTree(0, &f)
+	fmt.Println("nodes spanned:", ns)
+	fmt.Println("simple tree:", simple)
+	fmt.Println("N  From  Len")
+	for n, e := range f.Paths {
+		fmt.Printf("%d %4d %4d\n", n, e.From, e.Len)
+	}
+	// Output:
+	// nodes spanned: 5
+	// simple tree: false
+	// N  From  Len
+	// 0   -1    1
+	// 1    0    2
+	// 2    0    2
+	// 3    2    3
+	// 4    2    3
+	// 5   -1    0
+}
+
+func ExampleDirected_FromList_nonTree() {
+	//    0
+	//   / \
+	//  1   2
+	//   \ /
+	//    3
+	g := graph.Directed{graph.AdjacencyList{
+		0: {1, 2},
+		1: {3},
+		2: {3},
+		3: {},
+	}}
+	f, sf := g.FromList()
+	fmt.Println("simple forest:", sf)
+	fmt.Println("N  From")
+	for n, e := range f.Paths {
+		fmt.Printf("%d %4d\n", n, e.From)
+	}
+	// Output:
+	// simple forest: false
+	// N  From
+	// 0   -1
+	// 1    0
+	// 2    0
+	// 3    1
+}
+
+func ExampleDirected_FromList_multigraphTree() {
+	//    0
+	//   / \\
+	//  1   2
+	g := graph.Directed{graph.AdjacencyList{
+		0: {1, 2, 2},
+		2: {},
+	}}
+	f, sf := g.FromList()
+	fmt.Println("simple forest:", sf)
+	fmt.Println("N  From")
+	for n, e := range f.Paths {
+		fmt.Printf("%d %4d\n", n, e.From)
+	}
+	// Output:
+	// simple forest: false
+	// N  From
+	// 0   -1
+	// 1    0
+	// 2    0
+}
+
+func ExampleDirected_FromList_rootLoop() {
+	//     /-\
+	//    0--/
+	//   / \
+	//  1   2
+	g := graph.Directed{graph.AdjacencyList{
+		0: {0, 1, 2},
+		2: {},
+	}}
+	f, sf := g.FromList()
+	fmt.Println("simple forest:", sf)
+	fmt.Println("N  From")
+	for n, e := range f.Paths {
+		fmt.Printf("%d %4d\n", n, e.From)
+	}
+	// Output:
+	// simple forest: false
+	// N  From
+	// 0   -1
+	// 1    0
+	// 2    0
+}
+
 func ExampleDirected_Transpose() {
 	g := graph.Directed{graph.AdjacencyList{
 		2: {0, 1},
@@ -248,6 +378,75 @@ func ExampleLabeledDirected_DAGMaxLenPath() {
 	// ordering: [3 4 1 0 2]
 	// path from 3: {4, 'W'} {0, 'M'} {2, 'P'}
 	// label path: WMP
+}
+
+func ExampleLabeledDirected_FromList() {
+	//      0
+	// 'A' / \ 'B'
+	//    1   2
+	//         \ 'C'
+	//          3
+	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
+		0: {{1, 'A'}, {2, 'B'}},
+		2: {{3, 'C'}},
+		3: {},
+	}}
+	f, l, s := g.FromList()
+	fmt.Println("simple forest:", s)
+	fmt.Println("n  from  label")
+	for n, e := range f.Paths {
+		fmt.Printf("%d   %2d", n, e.From)
+		if e.From < 0 {
+			fmt.Println()
+		} else {
+			fmt.Printf("     %c\n", l[n])
+		}
+	}
+	// Output:
+	// simple forest: true
+	// n  from  label
+	// 0   -1
+	// 1    0     A
+	// 2    0     B
+	// 3    2     C
+}
+
+func ExampleLabeledDirected_SpanTree() {
+	//      0       4
+	// 'A' / \ 'B'   \ 'D'
+	//    1   2       5
+	//         \ 'C'
+	//          3
+	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
+		0: {{1, 'A'}, {2, 'B'}},
+		2: {{3, 'C'}},
+		4: {{5, 'D'}},
+		5: {},
+	}}
+	var f graph.FromList
+	l := make([]graph.LI, g.Order())
+	ns, simple := g.SpanTree(2, &f, l)
+	fmt.Println("nodes spanned:", ns)
+	fmt.Println("simple tree:", simple)
+	fmt.Println("n  from  label")
+	for n, e := range f.Paths {
+		fmt.Printf("%d   %2d", n, e.From)
+		if e.From < 0 {
+			fmt.Println()
+		} else {
+			fmt.Printf("     %c\n", l[n])
+		}
+	}
+	// Output:
+	// nodes spanned: 2
+	// simple tree: true
+	// n  from  label
+	// 0   -1
+	// 1   -1
+	// 2   -1
+	// 3    2     C
+	// 4   -1
+	// 5   -1
 }
 
 func ExampleLabeledDirected_Transpose() {

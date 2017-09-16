@@ -110,7 +110,7 @@ that might be useful.  Here are some elements that characterize the direction.
   might be of interest.  Sometimes an algorithm will have a primary result but
   then some secondary values that also might be of interest.  If they are
   already computed as a byproduct of the algorithm, or can be computed at
-  negligable cost, return them.
+  negligible cost, return them.
 
 * Sometimes in conflict with the multiple result principle, methods will not
   speculatively compute secondary results if there is any significant cost

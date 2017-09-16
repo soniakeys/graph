@@ -148,6 +148,187 @@ func ExampleUndirected_SimpleEdges() {
 	// {1 2}
 }
 
+func ExampleUndirected_FromList() {
+	//    0   5
+	//   / \   \
+	//  1   2   6
+	//     / \
+	//    3---4
+	var g graph.Undirected
+	g.AddEdge(0, 1)
+	g.AddEdge(0, 2)
+	g.AddEdge(2, 3)
+	g.AddEdge(2, 4)
+	g.AddEdge(3, 4)
+	g.AddEdge(5, 6)
+	f, r, s := g.FromList()
+	fmt.Println("simple forest:", s)
+	fmt.Println("roots:", r)
+	fmt.Println("n  from  path len")
+	for n, e := range f.Paths {
+		fmt.Printf("%d  %3d  %8d\n", n, e.From, e.Len)
+	}
+	fmt.Println("MaxLen:       ", f.MaxLen)
+	// Output:
+	// simple forest: false
+	// roots: [0 5]
+	// n  from  path len
+	// 0   -1         1
+	// 1    0         2
+	// 2    0         2
+	// 3    2         3
+	// 4    2         3
+	// 5   -1         1
+	// 6    5         2
+	// MaxLen:        3
+}
+
+func ExampleUndirected_SpanTree() {
+	//    4   3
+	//   / \
+	//  2   1
+	//       \
+	//        0
+	var g graph.Undirected
+	g.AddEdge(2, 4)
+	g.AddEdge(4, 1)
+	g.AddEdge(1, 0)
+	var f graph.FromList
+	n, st := g.SpanTree(4, &f)
+	fmt.Println("Nodes spanned:", n)
+	fmt.Println("Simple tree:", st)
+	fmt.Println("n  from  path len")
+	for n, e := range f.Paths {
+		fmt.Printf("%d  %3d  %8d\n", n, e.From, e.Len)
+	}
+	fmt.Println("MaxLen:       ", f.MaxLen)
+	// Output:
+	// Nodes spanned: 4
+	// Simple tree: true
+	// n  from  path len
+	// 0    1         3
+	// 1    4         2
+	// 2    4         2
+	// 3   -1         0
+	// 4   -1         1
+	// MaxLen:        3
+}
+
+func ExampleUndirected_SpanTree_cycle() {
+	//    0
+	//   / \
+	//  1   2
+	//     / \
+	//    3---4
+	var g graph.Undirected
+	g.AddEdge(0, 1)
+	g.AddEdge(0, 2)
+	g.AddEdge(2, 3)
+	g.AddEdge(2, 4)
+	g.AddEdge(3, 4)
+	var f graph.FromList
+	n, st := g.SpanTree(0, &f)
+	fmt.Println("Nodes spanned:", n)
+	fmt.Println("Simple tree:", st)
+	fmt.Println("n  from  path len")
+	for n, e := range f.Paths {
+		fmt.Printf("%d  %3d  %8d\n", n, e.From, e.Len)
+	}
+	fmt.Println("MaxLen:       ", f.MaxLen)
+	// Output:
+	// Nodes spanned: 5
+	// Simple tree: false
+	// n  from  path len
+	// 0   -1         1
+	// 1    0         2
+	// 2    0         2
+	// 3    2         3
+	// 4    2         3
+	// MaxLen:        3
+}
+
+func ExampleUndirected_SpanTree_loop() {
+	//    0
+	//   / \ /-\
+	//  1   2--/
+	var g graph.Undirected
+	g.AddEdge(0, 1)
+	g.AddEdge(0, 2)
+	g.AddEdge(2, 2)
+	var f graph.FromList
+	n, st := g.SpanTree(0, &f)
+	fmt.Println("Nodes spanned:", n)
+	fmt.Println("Simple tree:", st)
+	fmt.Println("n  from  path len")
+	for n, e := range f.Paths {
+		fmt.Printf("%d  %3d  %8d\n", n, e.From, e.Len)
+	}
+	fmt.Println("MaxLen:       ", f.MaxLen)
+	// Output:
+	// Nodes spanned: 3
+	// Simple tree: false
+	// n  from  path len
+	// 0   -1         1
+	// 1    0         2
+	// 2    0         2
+	// MaxLen:        2
+}
+
+func ExampleUndirected_SpanTree_loopDisconnected() {
+	//    0
+	//   /   /-\
+	//  1   2--/
+	var g graph.Undirected
+	g.AddEdge(0, 1)
+	g.AddEdge(2, 2)
+	var f graph.FromList
+	n, st := g.SpanTree(0, &f)
+	fmt.Println("Nodes spanned:", n)
+	fmt.Println("Simple tree:", st)
+	fmt.Println("n  from  path len")
+	for n, e := range f.Paths {
+		fmt.Printf("%d  %3d  %8d\n", n, e.From, e.Len)
+	}
+	fmt.Println("MaxLen:       ", f.MaxLen)
+	// Output:
+	// Nodes spanned: 2
+	// Simple tree: true
+	// n  from  path len
+	// 0   -1         1
+	// 1    0         2
+	// 2   -1         0
+	// MaxLen:        2
+}
+
+func ExampleUndirected_SpanTree_multigraph() {
+	//    0
+	//   / \
+	//  1   2==3
+	var g graph.Undirected
+	g.AddEdge(0, 1)
+	g.AddEdge(0, 2)
+	g.AddEdge(2, 3)
+	g.AddEdge(2, 3)
+	var f graph.FromList
+	n, st := g.SpanTree(0, &f)
+	fmt.Println("Nodes spanned:", n)
+	fmt.Println("Simple tree:", st)
+	fmt.Println("n  from  path len")
+	for n, e := range f.Paths {
+		fmt.Printf("%d  %3d  %8d\n", n, e.From, e.Len)
+	}
+	fmt.Println("MaxLen:       ", f.MaxLen)
+	// Output:
+	// Nodes spanned: 4
+	// Simple tree: false
+	// n  from  path len
+	// 0   -1         1
+	// 1    0         2
+	// 2    0         2
+	// 3    2         3
+	// MaxLen:        3
+}
+
 func ExampleUndirected_TarjanBiconnectedComponents() {
 	// undirected edges:
 	// 3---2---1---7---9
@@ -264,6 +445,74 @@ func ExampleLabeledUndirected_HasEdgeLabel() {
 	// false -1 -1
 	// true 1 2
 	// true true
+}
+
+func ExampleLabeledUndirected_FromList() {
+	//      0
+	// 'A' / \ 'B'
+	//    1---2
+	//     'C' \ 'D'
+	//          3
+	var g graph.LabeledUndirected
+	g.AddEdge(graph.Edge{0, 1}, 'A')
+	g.AddEdge(graph.Edge{0, 2}, 'B')
+	g.AddEdge(graph.Edge{1, 2}, 'C')
+	g.AddEdge(graph.Edge{2, 3}, 'D')
+	f, l, r, s := g.FromList()
+	fmt.Println("simple forest:", s)
+	fmt.Println("roots:", r)
+	fmt.Println("n  from  label")
+	for n, e := range f.Paths {
+		fmt.Printf("%d   %2d", n, e.From)
+		if e.From < 0 {
+			fmt.Println()
+		} else {
+			fmt.Printf("     %c\n", l[n])
+		}
+	}
+	// Output:
+	// simple forest: false
+	// roots: [0]
+	// n  from  label
+	// 0   -1
+	// 1    0     A
+	// 2    0     B
+	// 3    2     D
+}
+
+func ExampleLabeledUndirected_SpanTree() {
+	//      0
+	// 'A' / \ 'B'
+	//    1---2
+	//     'C' \ 'D'
+	//          3
+	var g graph.LabeledUndirected
+	g.AddEdge(graph.Edge{0, 1}, 'A')
+	g.AddEdge(graph.Edge{0, 2}, 'B')
+	g.AddEdge(graph.Edge{1, 2}, 'C')
+	g.AddEdge(graph.Edge{2, 3}, 'D')
+	var f graph.FromList
+	l := make([]graph.LI, g.Order())
+	ns, simple := g.SpanTree(2, &f, l)
+	fmt.Println("nodes spanned:", ns)
+	fmt.Println("simple tree:", simple)
+	fmt.Println("n  from  label")
+	for n, e := range f.Paths {
+		fmt.Printf("%d   %2d", n, e.From)
+		if e.From < 0 {
+			fmt.Println()
+		} else {
+			fmt.Printf("     %c\n", l[n])
+		}
+	}
+	// Output:
+	// nodes spanned: 4
+	// simple tree: false
+	// n  from  label
+	// 0    2     B
+	// 1    2     C
+	// 2   -1
+	// 3    2     D
 }
 
 func ExampleLabeledUndirected_RemoveEdge() {

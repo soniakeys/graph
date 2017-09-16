@@ -150,6 +150,40 @@ func (g Undirected) Edges(v EdgeVisitor) {
 	// undefined behavior is that unpaired arcs are silently ignored.
 }
 
+// FromList builds a forest with a tree spanning each connected component.
+//
+// For each component a root is chosen and spanning is done with the method
+// Undirected.SpanTree, and so is breadth-first.  Returned is a FromList with
+// all spanned trees, a list of roots chosen, and a bool indicating if the
+// receiver graph g was found to be a simple graph connected as a forest.
+// Any cycles, loops, or parallel edges in any component will cause
+// simpleForest to be false, but FromList f will still be populated with
+// a valid and complete spanning forest.
+func (g Undirected) FromList() (f FromList, roots []NI, simpleForest bool) {
+	p := make([]PathEnd, g.Order())
+	for i := range p {
+		p[i].From = -1
+	}
+	f.Paths = p
+	simpleForest = true
+	ts := 0
+	for n := range g.AdjacencyList {
+		if p[n].From >= 0 {
+			continue
+		}
+		roots = append(roots, NI(n))
+		ns, st := g.SpanTree(NI(n), &f)
+		if !st {
+			simpleForest = false
+		}
+		ts += ns
+		if ts == len(p) {
+			break
+		}
+	}
+	return
+}
+
 // HasEdge returns true if g has any edge between nodes n1 and n2.
 //
 // Also returned are indexes x1 and x2 such that g[n1][x1] == n2
@@ -185,6 +219,68 @@ func (g Undirected) SimpleEdges(v EdgeVisitor) {
 		}
 	}
 	// undefined behavior is that unpaired arcs may or may not be emitted.
+}
+
+// SpanTree builds a tree spanning a connected component.
+//
+// The component is spanned by breadth-first search from the given root.
+// The resulting spanning tree in stored a FromList.
+//
+// If FromList.Paths is not the same length as g, it is allocated and
+// initialized. This allows a zero value FromList to be passed as f.
+// If FromList.Paths is the same length as g, it is used as is and is not
+// reinitialized. This allows multiple trees to be spanned in the same
+// FromList with successive calls.
+//
+// For nodes spanned, the Path member of the returned FromList is populated
+// with both From and Len values.  The MaxLen member will be updated but
+// not Leaves.
+//
+// Returned is the number of nodes spanned, which will be the number of nodes
+// in the component, and a bool indicating if the component was found to be a
+// simply connected unrooted tree in the receiver graph g.  Any cycles, loops,
+// or parallel edges in the component will cause simpleTree to be false, but
+// FromList f will still be populated with a valid and complete spanning tree.
+func (g Undirected) SpanTree(root NI, f *FromList) (nSpanned int, simpleTree bool) {
+	a := g.AdjacencyList
+	p := f.Paths
+	if len(p) != len(a) {
+		p = make([]PathEnd, len(a))
+		for i := range p {
+			p[i].From = -1
+		}
+		f.Paths = p
+	}
+	simpleTree = true
+	p[root] = PathEnd{From: -1, Len: 1}
+	type arc struct {
+		from NI
+		half NI
+	}
+	var next []arc
+	frontier := []arc{{-1, root}}
+	for len(frontier) > 0 {
+		for _, fa := range frontier { // fa frontier arc
+			nSpanned++
+			l := p[fa.half].Len + 1
+			for _, to := range a[fa.half] {
+				if to == fa.from {
+					continue
+				}
+				if p[to].Len > 0 {
+					simpleTree = false
+					continue
+				}
+				p[to] = PathEnd{From: fa.half, Len: l}
+				if l > f.MaxLen {
+					f.MaxLen = l
+				}
+				next = append(next, arc{fa.half, to})
+			}
+		}
+		frontier, next = next, frontier[:0]
+	}
+	return
 }
 
 // TarjanBiconnectedComponents decomposes a graph into maximal biconnected
@@ -407,6 +503,120 @@ func (g LabeledUndirected) Edges(v LabeledEdgeVisitor) {
 			unpaired[fr] = append(unpaired[fr], to)
 		}
 	}
+}
+
+// FromList builds a forest with a tree spanning each connected component in g.
+//
+// A root is chosen and spanning is done with the LabeledUndirected.SpanTree
+// method, and so is breadth-first.  Returned is a FromList with all spanned
+// trees, labels corresponding to arcs in f,
+// a list of roots chosen, and a bool indicating if the receiver graph g was
+// found to be a simple graph connected as a forest.  Any cycles, loops, or
+// parallel edges in any component will cause simpleForest to be false, but
+// FromList f will still be populated with a valid and complete spanning forest.
+
+// FromList builds a forest with a tree spanning each connected component.
+//
+// For each component a root is chosen and spanning is done with the method
+// Undirected.SpanTree, and so is breadth-first.  Returned is a FromList with
+// all spanned trees, labels corresponding to arcs in f, a list of roots
+// chosen, and a bool indicating if the receiver graph g was found to be a
+// simple graph connected as a forest.  Any cycles, loops, or parallel edges
+// in any component will cause simpleForest to be false, but FromList f will
+// still be populated with a valid and complete spanning forest.
+func (g LabeledUndirected) FromList() (f FromList, labels []LI, roots []NI, simpleForest bool) {
+	p := make([]PathEnd, g.Order())
+	for i := range p {
+		p[i].From = -1
+	}
+	f.Paths = p
+	labels = make([]LI, len(p))
+	simpleForest = true
+	ts := 0
+	for n := range g.LabeledAdjacencyList {
+		if p[n].From >= 0 {
+			continue
+		}
+		roots = append(roots, NI(n))
+		ns, st := g.SpanTree(NI(n), &f, labels)
+		if !st {
+			simpleForest = false
+		}
+		ts += ns
+		if ts == len(p) {
+			break
+		}
+	}
+	return
+}
+
+// SpanTree builds a tree spanning a connected component.
+//
+// The component is spanned by breadth-first search from the given root.
+// The resulting spanning tree in stored a FromList, and arc labels optionally
+// stored in a slice.
+//
+// If FromList.Paths is not the same length as g, it is allocated and
+// initialized.  This allows a zero value FromList to be passed as f.
+// If FromList.Paths is the same length as g, it is used as is and is not
+// reinitialized.  This allows multiple trees to be spanned in the same
+// FromList with successive calls.
+//
+// For nodes spanned, the Path member of returned FromList f is populated
+// populated with both From and Len values.  The MaxLen member will be
+// updated but not Leaves.
+//
+// The labels slice will be populated only if it is same length as g.
+// Nil can be passed for example if labels are not needed.
+//
+// Returned is the number of nodes spanned, which will be the number of nodes
+// in the component, and a bool indicating if the component was found to be a
+// simply connected unrooted tree in the receiver graph g.  Any cycles, loops,
+// or parallel edges in the component will cause simpleTree to be false, but
+// FromList f will still be populated with a valid and complete spanning tree.
+func (g LabeledUndirected) SpanTree(root NI, f *FromList, labels []LI) (nSpanned int, simple bool) {
+	a := g.LabeledAdjacencyList
+	p := f.Paths
+	if len(p) != len(a) {
+		p = make([]PathEnd, len(a))
+		for i := range p {
+			p[i].From = -1
+		}
+		f.Paths = p
+	}
+	simple = true
+	p[root].Len = 1
+	type arc struct {
+		from NI
+		half Half
+	}
+	var next []arc
+	frontier := []arc{{-1, Half{root, -1}}}
+	for len(frontier) > 0 {
+		for _, fa := range frontier { // fa frontier arc
+			nSpanned++
+			l := p[fa.half.To].Len + 1
+			for _, to := range a[fa.half.To] {
+				if to.To == fa.from && to.Label == fa.half.Label {
+					continue
+				}
+				if p[to.To].Len > 0 {
+					simple = false
+					continue
+				}
+				p[to.To] = PathEnd{From: fa.half.To, Len: l}
+				if len(labels) == len(p) {
+					labels[to.To] = to.Label
+				}
+				if l > f.MaxLen {
+					f.MaxLen = l
+				}
+				next = append(next, arc{fa.half.To, to})
+			}
+		}
+		frontier, next = next, frontier[:0]
+	}
+	return
 }
 
 // HasEdge returns true if g has any edge between nodes n1 and n2.

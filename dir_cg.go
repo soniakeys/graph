@@ -548,40 +548,6 @@ func (g LabeledDirected) MaximalNonBranchingPaths(emit func([]Half) bool) {
 	}
 }
 
-// FromList transposes a directed graph into a FromList, creating a spanning
-// forest.
-//
-// The method populates the From members in a FromList.Path and returns the
-// FromList.  Also returned is a bool, true if the graph is found to be a
-// simple graph representing a tree or forest.  Loops, or any case of multiple
-// arcs going to a node will cause simpleForest to be false.
-//
-// The FromList return value f will always be a spanning forest of the graph.
-// The bool return value simpleForest tells if the receiver graph g was a
-// simple forest to begin with.
-//
-// Other members of the FromList are left as zero values.
-// Use FromList.RecalcLen and FromList.RecalcLeaves as needed.
-//
-// There are equivalent labeled and unlabeled versions of this method.
-func (g LabeledDirected) FromList() (f *FromList, simpleForest bool) {
-	paths := make([]PathEnd, g.Order())
-	for i := range paths {
-		paths[i].From = -1
-	}
-	simpleForest = true
-	for fr, to := range g.LabeledAdjacencyList {
-		for _, to := range to {
-			if int(to.To) == fr || paths[to.To].From >= 0 {
-				simpleForest = false
-			} else {
-				paths[to.To].From = NI(fr)
-			}
-		}
-	}
-	return &FromList{Paths: paths}, simpleForest
-}
-
 // InDegree computes the in-degree of each node in g
 //
 // There are equivalent labeled and unlabeled versions of this method.

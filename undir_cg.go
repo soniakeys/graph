@@ -838,60 +838,6 @@ func (g LabeledUndirected) EulerianStart() NI {
 	return -1
 }
 
-// FromList constructs a FromList representing the tree reachable from
-// the given root.
-//
-// The connected component containing root should represent a simple graph,
-// connected as a tree.
-//
-// For nodes connected as a tree, the Path member of the returned FromList
-// will be populated with both From and Len values.  The MaxLen member will be
-// set but Leaves will be left a zero value.  Return value cycle will be -1.
-//
-// If the connected component containing root is not connected as a tree,
-// a cycle will be detected.  The returned FromList will be a zero value and
-// return value cycle will be a node involved in the cycle.
-//
-// Loops and parallel edges will be detected as cycles, however only in the
-// connected component containing root.  If g is not fully connected, nodes
-// not reachable from root will have PathEnd values of {From: -1, Len: 0}.
-//
-// There are equivalent labeled and unlabeled versions of this method.
-func (g LabeledUndirected) FromList(f *FromList, root NI) (nSpanned int, simpleTree bool) {
-	a := g.LabeledAdjacencyList
-	p := f.Paths
-	if len(p) != len(a) {
-		p = make([]PathEnd, len(a))
-		for i := range p {
-			p[i].From = -1
-		}
-		f.Paths = p
-	}
-	var df func(NI, NI)
-	df = func(fr, n NI) {
-		nSpanned++
-		l := p[n].Len + 1
-		for _, to := range g.LabeledAdjacencyList[n] {
-			if to.To == fr {
-				continue
-			}
-			if p[to.To].Len > 0 {
-				simpleTree = false
-				continue
-			}
-			p[to.To] = PathEnd{From: n, Len: l}
-			if l > f.MaxLen {
-				f.MaxLen = l
-			}
-			df(n, to.To)
-		}
-	}
-	simpleTree = true
-	p[root].Len = 1
-	df(-1, root)
-	return
-}
-
 // IsConnected tests if an undirected graph is a single connected component.
 //
 // There are equivalent labeled and unlabeled versions of this method.

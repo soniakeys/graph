@@ -42,6 +42,95 @@ func (g Directed) DAGMaxLenPath(ordering []NI) (path []NI) {
 	return append([]NI{n}, path...)
 }
 
+// FromList creates a spanning forest of a graph.
+//
+// The method populates the From members in f.Paths and returns the FromList.
+// Also returned is a bool, true if the receiver is found to be a simple graph
+// representing a tree or forest.  Loops, or any case of multiple arcs going to
+// a node will cause simpleForest to be false.
+//
+// The FromList return value f will always be a spanning forest of the entire
+// graph.  The bool return value simpleForest tells if the receiver graph g
+// was a simple forest to begin with.
+//
+// Other members of the FromList are left as zero values.
+// Use FromList.RecalcLen and FromList.RecalcLeaves as needed.
+func (g Directed) FromList() (f *FromList, simpleForest bool) {
+	paths := make([]PathEnd, g.Order())
+	for i := range paths {
+		paths[i].From = -1
+	}
+	simpleForest = true
+	for fr, to := range g.AdjacencyList {
+		for _, to := range to {
+			if int(to) == fr || paths[to].From >= 0 {
+				simpleForest = false
+			} else {
+				paths[to].From = NI(fr)
+			}
+		}
+	}
+	return &FromList{Paths: paths}, simpleForest
+}
+
+// SpanTree builds a tree spanning nodes reachable from the given root.
+//
+// The component is spanned by breadth-first search from root.
+// The resulting spanning tree in stored a FromList.
+//
+// If FromList.Paths is not the same length as g, it is allocated and
+// initialized. This allows a zero value FromList to be passed as f.
+// If FromList.Paths is the same length as g, it is used as is and is not
+// reinitialized. This allows multiple trees to be spanned in the same
+// FromList with successive calls.
+//
+// For nodes spanned, the Path member of the returned FromList is populated
+// with both From and Len values.  The MaxLen member will be updated but
+// not Leaves.
+//
+// Returned is the number of nodes spanned, which will be the number of nodes
+// reachable from root, and a bool indicating if these nodes were found to be
+// a simply connected tree in the receiver graph g.  Any cycles, loops,
+// or parallel arcs in the component will cause simpleTree to be false, but
+// FromList f will still be populated with a valid spanning tree.
+func (g Directed) SpanTree(root NI, f *FromList) (nSpanned int, simpleTree bool) {
+	a := g.AdjacencyList
+	p := f.Paths
+	if len(p) != len(a) {
+		p = make([]PathEnd, len(a))
+		for i := range p {
+			p[i].From = -1
+		}
+		f.Paths = p
+	}
+	simpleTree = true
+	p[root].Len = 1
+	type arc struct {
+		from, to NI
+	}
+	var next []arc
+	frontier := []arc{{-1, root}}
+	for len(frontier) > 0 {
+		for _, fa := range frontier { // fa frontier arc
+			nSpanned++
+			l := p[fa.to].Len + 1
+			for _, to := range a[fa.to] {
+				if p[to].Len > 0 {
+					simpleTree = false
+					continue
+				}
+				p[to] = PathEnd{From: fa.to, Len: l}
+				if l > f.MaxLen {
+					f.MaxLen = l
+				}
+				next = append(next, arc{fa.to, to})
+			}
+		}
+		frontier, next = next, frontier[:0]
+	}
+	return
+}
+
 // Undirected returns copy of g augmented as needed to make it undirected.
 func (g Directed) Undirected() Undirected {
 	c, _ := g.AdjacencyList.Copy()       // start with a copy
@@ -126,36 +215,104 @@ func (g LabeledDirected) DAGMaxLenPath(ordering []NI) (n NI, path []Half) {
 	return
 }
 
-// FromListLabels transposes a labeled graph into a FromList and associated
-// list of labels.
+// FromList creates a spanning forest of a graph.
 //
-// Receiver g should be connected as a tree or forest.  Specifically no node
-// can have multiple incoming arcs.  If any node n in g has multiple incoming
-// arcs, the method returns (nil, nil, n) where n is a node with multiple
-// incoming arcs.
+// The method populates the From members in f.Paths and returns the FromList.
+// Also returned is a list of labels corresponding to the from arcs, and a
+// bool, true if the receiver is found to be a simple graph representing
+// a tree or forest.  Loops, or any case of multiple arcs going to a node
+// will cause simpleForest to be false.
 //
-// Otherwise (normally) the method populates the From members in a
-// FromList.Path, populates a slice of labels, and returns the FromList,
-// labels, and -1.
+// The FromList return value f will always be a spanning forest of the entire
+// graph.  The bool return value simpleForest tells if the receiver graph g
+// was a simple forest to begin with.
 //
 // Other members of the FromList are left as zero values.
 // Use FromList.RecalcLen and FromList.RecalcLeaves as needed.
-func (g LabeledDirected) FromListLabels() (*FromList, []LI, NI) {
-	labels := make([]LI, g.Order())
+func (g LabeledDirected) FromList() (f *FromList, labels []LI, simpleForest bool) {
+	labels = make([]LI, g.Order())
 	paths := make([]PathEnd, g.Order())
 	for i := range paths {
 		paths[i].From = -1
 	}
+	simpleForest = true
 	for fr, to := range g.LabeledAdjacencyList {
 		for _, to := range to {
-			if paths[to.To].From >= 0 {
-				return nil, nil, to.To
+			if int(to.To) == fr || paths[to.To].From >= 0 {
+				simpleForest = false
+			} else {
+				paths[to.To].From = NI(fr)
+				labels[to.To] = to.Label
 			}
-			paths[to.To].From = NI(fr)
-			labels[to.To] = to.Label
 		}
 	}
-	return &FromList{Paths: paths}, labels, -1
+	return &FromList{Paths: paths}, labels, simpleForest
+}
+
+// SpanTree builds a tree spanning nodes reachable from the given root.
+//
+// The component is spanned by breadth-first search from root.
+// The resulting spanning tree in stored a FromList, and arc labels optionally
+// stored in a slice.
+//
+// If FromList.Paths is not the same length as g, it is allocated and
+// initialized. This allows a zero value FromList to be passed as f.
+// If FromList.Paths is the same length as g, it is used as is and is not
+// reinitialized. This allows multiple trees to be spanned in the same
+// FromList with successive calls.
+//
+// For nodes spanned, the Path member of the returned FromList is populated
+// with both From and Len values.  The MaxLen member will be updated but
+// not Leaves.
+//
+// The labels slice will be populated only if it is same length as g.
+// Nil can be passed for example if labels are not needed.
+//
+// Returned is the number of nodes spanned, which will be the number of nodes
+// reachable from root, and a bool indicating if these nodes were found to be
+// a simply connected tree in the receiver graph g.  Any cycles, loops,
+// or parallel arcs in the component will cause simpleTree to be false, but
+// FromList f will still be populated with a valid spanning tree.
+func (g LabeledDirected) SpanTree(root NI, f *FromList, labels []LI) (nSpanned int, simpleTree bool) {
+	a := g.LabeledAdjacencyList
+	p := f.Paths
+	if len(p) != len(a) {
+		p = make([]PathEnd, len(a))
+		for i := range p {
+			p[i].From = -1
+		}
+		f.Paths = p
+	}
+	simpleTree = true
+	p[root].Len = 1
+	type arc struct {
+		from NI
+		half Half
+	}
+	var next []arc
+	frontier := []arc{{-1, Half{root, -1}}}
+	for len(frontier) > 0 {
+		for _, fa := range frontier { // fa frontier arc
+			nSpanned++
+			l := p[fa.half.To].Len + 1
+			for _, to := range a[fa.half.To] {
+				if p[to.To].Len > 0 {
+					simpleTree = false
+					continue
+				}
+				p[to.To] = PathEnd{From: fa.half.To, Len: l}
+				if len(labels) == len(p) {
+					labels[to.To] = to.Label
+				}
+				if l > f.MaxLen {
+					f.MaxLen = l
+				}
+				next = append(next, arc{fa.half.To, to})
+			}
+		}
+		frontier, next = next, frontier[:0]
+	}
+	return
 }
 
 // Transpose constructs a new adjacency list that is the transpose of g.
