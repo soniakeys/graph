@@ -207,6 +207,32 @@ func ExampleUndirected_ConnectedComponentBits() {
 	// 1   0  000100
 }
 
+func ExampleUndirected_ConnectedComponentInts() {
+	//    0   1   2
+	//   / \   \
+	//  3---4   5
+	var g graph.Undirected
+	g.AddEdge(0, 3)
+	g.AddEdge(0, 4)
+	g.AddEdge(3, 4)
+	g.AddEdge(1, 5)
+	ci, nc := g.ConnectedComponentInts()
+	fmt.Println(nc, "components.")
+	fmt.Println("node  component int")
+	for n, i := range ci {
+		fmt.Println(n, "   ", i)
+	}
+	// Output:
+	// 3 components.
+	// node  component int
+	// 0     1
+	// 1     2
+	// 2     3
+	// 3     1
+	// 4     1
+	// 5     2
+}
+
 func ExampleUndirected_ConnectedComponentLists() {
 	//    0   1   2
 	//   / \   \
