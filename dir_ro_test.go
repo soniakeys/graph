@@ -546,3 +546,45 @@ func ExampleDirected_TopologicalSubgraph() {
 	// Output:
 	// [3 6 0 2 5] []
 }
+
+func ExampleDirected_TransitiveClosure() {
+	//     1-->2----
+	//     ^   |   |
+	//  0  |   v   v
+	//     ----3-->4-->5<=>7
+	//             |   ^
+	//             |   |
+	//             --->6<=>8
+	g := graph.Directed{graph.AdjacencyList{
+		1: {2},
+		2: {3, 4},
+		3: {1, 4},
+		4: {5, 6},
+		5: {7},
+		6: {5, 8},
+		7: {5},
+		8: {6},
+	}}
+	t := g.TransitiveClosure()
+	fmt.Println(".  0 1 2 3 4 5 6 7 8")
+	fmt.Println("   -----------------")
+	for fr, tn := range t {
+		fmt.Print(fr, ":")
+		for to := range t {
+			fmt.Print(" ", tn.Bit(to))
+		}
+		fmt.Println()
+	}
+	// Output:
+	// .  0 1 2 3 4 5 6 7 8
+	//    -----------------
+	// 0: 0 0 0 0 0 0 0 0 0
+	// 1: 0 1 1 1 1 1 1 1 1
+	// 2: 0 1 1 1 1 1 1 1 1
+	// 3: 0 1 1 1 1 1 1 1 1
+	// 4: 0 0 0 0 0 1 1 1 1
+	// 5: 0 0 0 0 0 1 0 1 0
+	// 6: 0 0 0 0 0 1 1 1 1
+	// 7: 0 0 0 0 0 1 0 1 0
+	// 8: 0 0 0 0 0 1 1 1 1
+}

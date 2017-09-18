@@ -848,3 +848,41 @@ func (g Directed) TopologicalSubgraph(nodes []NI) (ordering, cycle []NI) {
 		return -1
 	})
 }
+
+// TransitiveClosure returns the transitive closure of directed graph g.
+//
+// The algorithm is Warren's, which works most naturally with an adjacency
+// matrix representation.  The returned transitive closure is left in this
+// adjacency matrix representation.  For a graph g of order n, matrix tc
+// is returned as a length n slice of length n bits.Bits values, where
+// tc[from].Bit(to) == 1 represents an arc of the transitive closure.
+func (g Directed) TransitiveClosure() []bits.Bits {
+	// construct adjacency matrix
+	a := g.AdjacencyList
+	t := make([]bits.Bits, len(a))
+	for n := range t {
+		tn := bits.New(len(a))
+		for _, to := range a[n] {
+			tn.SetBit(int(to), 1)
+		}
+		t[n] = tn
+	}
+	// above diagonal
+	for i := 1; i < len(a); i++ {
+		ti := t[i]
+		for k := 0; k < i; k++ {
+			if ti.Bit(k) == 1 {
+				ti.Or(ti, t[k])
+			}
+		}
+	}
+	// below diagonal
+	for i, ti := range t[:len(a)-1] {
+		for k := i + 1; k < len(a); k++ {
+			if ti.Bit(k) == 1 {
+				ti.Or(ti, t[k])
+			}
+		}
+	}
+	return t
+}
