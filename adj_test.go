@@ -68,6 +68,12 @@ func ExampleAdjacencyList_IsUndirected() {
 // A directed graph with negative arc weights.
 // Arc weights are encoded simply as label numbers.
 func ExampleLabeledAdjacencyList_FloydWarshall() {
+	//   (-1)   (4)
+	//  0---->2---->1
+	//  ^     |     |
+	//  |(2)  |(3)  |(-2)
+	//  |     v     |
+	//  ------3<-----
 	g := graph.LabeledAdjacencyList{
 		0: {{To: 2, Label: -1}},
 		1: {{To: 3, Label: -2}},

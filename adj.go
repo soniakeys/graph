@@ -147,7 +147,10 @@ func (g LabeledAdjacencyList) FloydWarshall(w WeightFunc) (d [][]float64) {
 	d = newFWd(len(g))
 	for fr, to := range g {
 		for _, to := range to {
-			d[fr][to.To] = w(to.Label)
+			// < to pick min of parallel arcs (also nicely ignores NaN)
+			if wt := w(to.Label); wt < d[fr][to.To] {
+				d[fr][to.To] = wt
+			}
 		}
 	}
 	solveFW(d)
@@ -156,14 +159,14 @@ func (g LabeledAdjacencyList) FloydWarshall(w WeightFunc) (d [][]float64) {
 
 // little helper function, makes a blank matrix for FloydWarshall.
 func newFWd(n int) [][]float64 {
+	inf := math.Inf(1)
 	d := make([][]float64, n)
 	for i := range d {
 		di := make([]float64, n)
 		for j := range di {
-			if j != i {
-				di[j] = math.Inf(1)
-			}
+			di[j] = inf
 		}
+		di[i] = 0
 		d[i] = di
 	}
 	return d
