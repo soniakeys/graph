@@ -8,9 +8,6 @@ image:http://gowalker.org/api/v1/badge[link=https://gowalker.org/github.com/soni
 image:http://go-search.org/badge?id=github.com%2Fsoniakeys%2Fgraph[link=http://go-search.org/view?id=github.com%2Fsoniakeys%2Fgraph]
 image:https://travis-ci.org/soniakeys/graph.svg?branch=master[link=https://travis-ci.org/soniakeys/graph]
 
-Status, 7 Jun 2017:  Go 1.9 is bringing features I want.  Until it comes out,
-building latest commit requires Go tip.
-
 == Ancillary material of interest
 
 The directory link:tutorials[tutorials] is a work in progress - there are only
