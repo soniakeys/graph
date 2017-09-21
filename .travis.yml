@@ -1,6 +1,6 @@
 sudo: false
 language: go
-go: master
+go: 1.9.x
 before_script:
  - go tool vet -composites=false -printf=false -shift=false .
  - go get github.com/client9/misspell/cmd/misspell
