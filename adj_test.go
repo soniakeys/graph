@@ -67,7 +67,7 @@ func ExampleAdjacencyList_IsUndirected() {
 
 // A directed graph with negative arc weights.
 // Arc weights are encoded simply as label numbers.
-func ExampleLabeledAdjacencyList_FloydWarshall() {
+func ExampleLabeledAdjacencyList_DistanceMatrix() {
 	//   (-1)   (4)
 	//  0---->2---->1
 	//  ^     |     |
@@ -80,15 +80,15 @@ func ExampleLabeledAdjacencyList_FloydWarshall() {
 		2: {{To: 1, Label: 4}, {To: 3, Label: 3}},
 		3: {{To: 0, Label: 2}},
 	}
-	d := g.FloydWarshall(func(l graph.LI) float64 { return float64(l) })
+	d := g.DistanceMatrix(func(l graph.LI) float64 { return float64(l) })
 	for _, di := range d {
-		fmt.Printf("%2.0f\n", di)
+		fmt.Printf("%5.0f\n", di)
 	}
 	// Output:
-	// [ 0  3 -1  1]
-	// [ 0  0 -1 -2]
-	// [ 4  4  0  2]
-	// [ 2  5  1  0]
+	// [    0  +Inf    -1  +Inf]
+	// [ +Inf     0  +Inf    -2]
+	// [ +Inf     4     0     3]
+	// [    2  +Inf  +Inf     0]
 }
 
 func ExampleLabeledAdjacencyList_HasArcLabel() {

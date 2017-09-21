@@ -11,7 +11,6 @@ package graph
 // be left near their use.
 
 import (
-	"math"
 	"sort"
 )
 
@@ -134,17 +133,17 @@ func (g LabeledAdjacencyList) ArcsAsEdges() (el []LabeledEdge) {
 	return
 }
 
-// FloydWarshall finds all pairs shortest distances for a simple weighted
-// graph without negative cycles.
+// DistanceMatrix constructs a distance matrix corresponding to the arcs
+// of graph g and weight function w.
 //
-// In result array d, d[i][j] will be the shortest distance from node i
-// to node j.  Any diagonal element < 0 indicates a negative cycle exists.
+// An arc from f to t with WeightFunc return w is represented by d[f][t] == w.
+// In case of parallel arcs, the lowest weight is stored.  The distance from
+// any node to itself d[n][n] is 0, unless the node has a loop with a negative
+// weight.  If g has no arc from f to distinct t, +Inf is stored for d[f][t].
 //
-// If g is an undirected graph with no negative edge weights, the result
-// array will be a distance matrix, for example as used by package
-// github.com/soniakeys/cluster.
-func (g LabeledAdjacencyList) FloydWarshall(w WeightFunc) (d [][]float64) {
-	d = newFWd(len(g))
+// The returned DistanceMatrix is suitable for DistanceMatrix.FloydWarshall.
+func (g LabeledAdjacencyList) DistanceMatrix(w WeightFunc) (d DistanceMatrix) {
+	d = newDM(len(g))
 	for fr, to := range g {
 		for _, to := range to {
 			// < to pick min of parallel arcs (also nicely ignores NaN)
@@ -153,37 +152,7 @@ func (g LabeledAdjacencyList) FloydWarshall(w WeightFunc) (d [][]float64) {
 			}
 		}
 	}
-	solveFW(d)
 	return
-}
-
-// little helper function, makes a blank matrix for FloydWarshall.
-func newFWd(n int) [][]float64 {
-	inf := math.Inf(1)
-	d := make([][]float64, n)
-	for i := range d {
-		di := make([]float64, n)
-		for j := range di {
-			di[j] = inf
-		}
-		di[i] = 0
-		d[i] = di
-	}
-	return d
-}
-
-// Floyd Warshall solver, once the matrix d is initialized by arc weights.
-func solveFW(d [][]float64) {
-	for k, dk := range d {
-		for _, di := range d {
-			dik := di[k]
-			for j := range d {
-				if d2 := dik + dk[j]; d2 < di[j] {
-					di[j] = d2
-				}
-			}
-		}
-	}
 }
 
 // HasArcLabel returns true if g has any arc from node `fr` to node `to`

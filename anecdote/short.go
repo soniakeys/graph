@@ -4,12 +4,12 @@
 package main
 
 func FloydEuc() (string, string) {
-	eucSmall.FloydWarshall(eucSmallWtFunc)
+	eucSmall.DistanceMatrix(eucSmallWtFunc).FloydWarshall()
 	return "Floyd-Warshall", eucSmallTag
 }
 
 func FloydGeo() (string, string) {
-	geoSmall.FloydWarshall(geoSmallWtFunc)
+	geoSmall.DistanceMatrix(geoSmallWtFunc).FloydWarshall()
 	return "Floyd-Warshall", geoSmallTag
 }
 

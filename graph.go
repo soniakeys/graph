@@ -3,6 +3,8 @@
 
 package graph
 
+import "math"
+
 // graph.go contains type definitions for all graph types and components.
 // Also, go generate directives for source transformations.
 //
@@ -169,4 +171,77 @@ func (l WeightedEdgeList) Less(i, j int) bool {
 // Swap implements sort.Interface.
 func (l WeightedEdgeList) Swap(i, j int) {
 	l.Edges[i], l.Edges[j] = l.Edges[j], l.Edges[i]
+}
+
+// DistanceMatrix constructs a distance matrix corresponding to the weighted
+// edges of l.
+//
+// An edge n1, n2 with WeightFunc return w is represented by both
+// d[n1][n2] == w and d[n2][n1] = w.  In case of parallel edges, the lowest
+// weight is stored.  The distance from any node to itself d[n][n] is 0, unless
+// the node has a loop with a negative weight.  If g has no edge between n1 and
+// distinct n2, +Inf is stored for d[n1][n2] and d[n2][n1].
+//
+// The returned DistanceMatrix is suitable for DistanceMatrix.FloydWarshall.
+func (l WeightedEdgeList) DistanceMatrix() (d DistanceMatrix) {
+	d = newDM(l.Order)
+	for _, e := range l.Edges {
+		n1 := e.Edge.N1
+		n2 := e.Edge.N2
+		wt := l.WeightFunc(e.LI)
+		// < to pick min of parallel arcs (also nicely ignores NaN)
+		if wt < d[n1][n2] {
+			d[n1][n2] = wt
+			d[n2][n1] = wt
+		}
+	}
+	return
+}
+
+// A DistanceMatrix is a square matrix representing some distance between
+// nodes of a graph.  If the graph is directected, d[from][to] represents
+// some distance from node 'from' to node 'to'.  Depending on context, the
+// distance may be an arc weight or path distance.  A value of +Inf typically
+// means no arc or no path between the nodes.
+type DistanceMatrix [][]float64
+
+// little helper function, makes a blank distance matrix for FloydWarshall.
+// could be exported?
+func newDM(n int) DistanceMatrix {
+	inf := math.Inf(1)
+	d := make(DistanceMatrix, n)
+	for i := range d {
+		di := make([]float64, n)
+		for j := range di {
+			di[j] = inf
+		}
+		di[i] = 0
+		d[i] = di
+	}
+	return d
+}
+
+// FloydWarshall finds all pairs shortest distances for a weighted graph
+// without negative cycles.
+//
+// It operates on a distance matrix representing arcs of a graph and
+// destructively replaces arc weights with shortest path distances.
+//
+// In result array d, d[fr][to] will be the shortest distance from node 'fr'
+// to node 'to'.  An element value of +Inf means no path exists.  Any diagonal
+// element < 0 indicates a negative cycle exists.
+//
+// See DistanceMatrix constructor methods of LabeledAdjacencyList and
+// WeightedEdgeList for suitable inputs.
+func (d DistanceMatrix) FloydWarshall() {
+	for k, dk := range d {
+		for _, di := range d {
+			dik := di[k]
+			for j := range d {
+				if d2 := dik + dk[j]; d2 < di[j] {
+					di[j] = d2
+				}
+			}
+		}
+	}
 }
