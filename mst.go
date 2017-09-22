@@ -113,7 +113,9 @@ func (g LabeledUndirected) Kruskal(w WeightFunc) (spanningForest LabeledUndirect
 // generate the input graph sorted as required for KruskalSorted, you can
 // call that method directly and avoid the overhead of the sort.
 func (l WeightedEdgeList) Kruskal() (g LabeledUndirected, dist float64) {
-	sort.Sort(l)
+	e := l.Edges
+	w := l.WeightFunc
+	sort.Slice(e, func(i, j int) bool { return w(e[i].LI) < w(e[j].LI) })
 	return l.KruskalSorted()
 }
 

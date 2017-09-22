@@ -160,19 +160,6 @@ type WeightedEdgeList struct {
 	Edges []LabeledEdge
 }
 
-// Len implements sort.Interface.
-func (l WeightedEdgeList) Len() int { return len(l.Edges) }
-
-// Less implements sort.Interface.
-func (l WeightedEdgeList) Less(i, j int) bool {
-	return l.WeightFunc(l.Edges[i].LI) < l.WeightFunc(l.Edges[j].LI)
-}
-
-// Swap implements sort.Interface.
-func (l WeightedEdgeList) Swap(i, j int) {
-	l.Edges[i], l.Edges[j] = l.Edges[j], l.Edges[i]
-}
-
 // DistanceMatrix constructs a distance matrix corresponding to the weighted
 // edges of l.
 //
