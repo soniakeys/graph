@@ -44,8 +44,8 @@
 //
 // In contrast to Half, the type Edge represents both ends of an edge (but
 // no label.)  The type LabeledEdge adds the label.  The type WeightedEdgeList
-// bundles a list of LabeledEdges with a WeightFunc.  WeightedEdgeList is
-// currently only used by Kruskal methods.
+// bundles a list of LabeledEdges with a WeightFunc.  (WeightedEdgeList has
+// few methods.  It exists primarily to support the Kruskal algorithm.)
 //
 // FromList is a compact rooted tree (or forest) respresentation.  Like
 // AdjacencyList and LabeledAdjacencyList, it is a list with one element for
@@ -113,13 +113,10 @@
 // distance with the same minimum length, search methods are free to return
 // any of them.
 //
-//  Type name      Description, methods
+//  Algorithm      Description
 //  Dijkstra       Non-negative arc weights, single or all paths.
 //  AStar          Non-negative arc weights, heuristic guided, single path.
 //  BellmanFord    Negative arc weights allowed, no negative cycles, all paths.
 //  DAGPath        O(n) algorithm for DAGs, arc weights of any sign.
 //  FloydWarshall  all pairs distances, no negative cycles.
-//
-// These searches typically have one method that is full-featured and
-// then a convenience method with a simpler API targeting a simpler use case.
 package graph
