@@ -12,43 +12,6 @@ import (
 	"github.com/soniakeys/graph/alt"
 )
 
-// xrs is a cheap random source for use in examples, added to when stay the same
-// independent of changes to the standard library random source.  (I thought
-// the plan was to keep the standard source producing the same numbers but the
-// numbers seemed to change at one point.)
-type xrs [2]uint64
-
-func exampleSource(seed int64) *xrs {
-	var s xrs
-	s.Seed(seed)
-	return &s
-}
-
-func (s *xrs) Uint64() uint64 {
-	// xorshift128+ by WP
-	x := s[0]
-	y := s[1]
-	s[0] = y
-	x ^= x << 23                         // a
-	s[1] = x ^ y ^ (x >> 17) ^ (y >> 26) // b, c
-	return s[1] + y
-}
-
-func (s *xrs) Int63() int64 {
-	return int64(s.Uint64() >> 1)
-}
-
-func (s *xrs) Seed(n int64) {
-	if n == 0 {
-		panic("0 seed")
-	}
-	s[0] = uint64(n)
-	s[1] = uint64(n + n)
-	for i := 0; i < 20; i++ {
-		s.Uint64()
-	}
-}
-
 func ExampleArcVisitor() {
 	//   0
 	//  / \
@@ -212,22 +175,22 @@ func ExampleRand() {
 		0:  {1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
 		10: nil,
 	}
-	alt.DepthFirst(g, 0, alt.Rand(rand.New(exampleSource(7))),
+	alt.DepthFirst(g, 0, alt.Rand(rand.New(rand.NewSource(7))),
 		alt.NodeVisitor(func(n graph.NI) {
 			fmt.Println(n)
 		}))
 	// Output:
 	// 0
-	// 1
-	// 2
 	// 3
-	// 8
-	// 7
-	// 9
-	// 5
-	// 10
+	// 1
 	// 6
 	// 4
+	// 2
+	// 7
+	// 10
+	// 9
+	// 5
+	// 8
 }
 
 func ExampleBreadthFirst_singlePath() {
@@ -335,7 +298,7 @@ func ExampleBreadthFirst_traverseRandom() {
 	}
 
 	// only difference from non-random example
-	r := rand.New(exampleSource(8))
+	r := rand.New(rand.NewSource(8))
 
 	var f graph.FromList
 	alt.BreadthFirst(g, 0, alt.Rand(r), alt.From(&f),
@@ -344,12 +307,12 @@ func ExampleBreadthFirst_traverseRandom() {
 		}))
 	// Output:
 	// visit 0 level 1
+	// visit 1 level 2
 	// visit 3 level 2
 	// visit 2 level 2
-	// visit 1 level 2
-	// visit 6 level 3
 	// visit 8 level 3
 	// visit 5 level 3
+	// visit 6 level 3
 	// visit 4 level 3
 	// visit 7 level 3
 }
