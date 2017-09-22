@@ -179,7 +179,7 @@ func ExampleRand() {
 		alt.NodeVisitor(func(n graph.NI) {
 			fmt.Println(n)
 		}))
-	// Output:
+	// Random output:
 	// 0
 	// 3
 	// 1
@@ -305,7 +305,7 @@ func ExampleBreadthFirst_traverseRandom() {
 		alt.NodeVisitor(func(n graph.NI) {
 			fmt.Println("visit", n, "level", f.Paths[n].Len)
 		}))
-	// Output:
+	// Random output:
 	// visit 0 level 1
 	// visit 1 level 2
 	// visit 3 level 2

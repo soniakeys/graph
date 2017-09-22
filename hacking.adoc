@@ -21,6 +21,15 @@ something but for now I’ll try just running it manually now and then.
 Go fmt is not in the ci script, but I have at least one editor set up to run
 it on save, so code should stay formatted pretty well.
 
+== Examples with random output
+The math/rand generators with constant seeds used to give consistent numbers
+across Go versions and so some examples relied on this.  Sometime after Go 1.9
+though the numbers changed.  The technique for now is to go ahead and write
+those examples, get them working, then change the `// Output:` line to
+`// Random output:`.  This keeps them showing in go doc but keeps them from
+being run by go test.  This works for now.  It might be revisited at some
+point.
+
 == Plans
 The primary to-do list is the issue tracker on Github.
 

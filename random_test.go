@@ -28,7 +28,7 @@ func ExampleEuclidean() {
 	for n, to := range g.AdjacencyList {
 		fmt.Println(n, "->", to)
 	}
-	// Output:
+	// Random output:
 	// 4 nodes
 	// n  position
 	// 0  (0.92, 0.23)
@@ -58,7 +58,7 @@ func ExampleGeometric() {
 			}
 		}
 	}
-	// Output:
+	// Random output:
 	// 4 nodes
 	// n  position
 	// 0  (0.92, 0.23)
@@ -81,7 +81,7 @@ func ExampleKroneckerDirected() {
 	for fr, to := range a {
 		fmt.Println(fr, "->", to)
 	}
-	// Output:
+	// Random output:
 	// 4 nodes
 	// 5 arcs:
 	// 0 -> [2]
@@ -103,7 +103,7 @@ func ExampleKroneckerUndirected() {
 			}
 		}
 	}
-	// Output:
+	// Random output:
 	// 4 nodes
 	// 4 edges:
 	// 0 - 2
@@ -136,7 +136,7 @@ func ExampleLabeledGeometric() {
 				n, to.To, to.Label, wt[to.Label])
 		}
 	}
-	// Output:
+	// Random output:
 	// 4 nodes
 	// n  position
 	// 0  (0.92, 0.23)
@@ -183,7 +183,7 @@ func ExampleLabeledEuclidean() {
 				n, to.To, to.Label, wt[to.Label])
 		}
 	}
-	// Output:
+	// Random output:
 	// 4 nodes
 	// n  position
 	// 0  (0.92, 0.23)
