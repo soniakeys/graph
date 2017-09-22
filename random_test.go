@@ -12,45 +12,8 @@ import (
 	"github.com/soniakeys/graph"
 )
 
-// xrs is a cheap random source for use in examples, added to when stay the same
-// independent of changes to the standard library random source.  (I thought
-// the plan was to keep the standard source producing the same numbers but the
-// numbers seemed to change at one point.)
-type xrs [2]uint64
-
-func exampleSource(seed int64) *xrs {
-	var s xrs
-	s.Seed(seed)
-	return &s
-}
-
-func (s *xrs) Uint64() uint64 {
-	// xorshift128+ by WP
-	x := s[0]
-	y := s[1]
-	s[0] = y
-	x ^= x << 23                         // a
-	s[1] = x ^ y ^ (x >> 17) ^ (y >> 26) // b, c
-	return s[1] + y
-}
-
-func (s *xrs) Int63() int64 {
-	return int64(s.Uint64() >> 1)
-}
-
-func (s *xrs) Seed(n int64) {
-	if n == 0 {
-		panic("0 seed")
-	}
-	s[0] = uint64(n)
-	s[1] = uint64(n + n)
-	for i := 0; i < 20; i++ {
-		s.Uint64()
-	}
-}
-
 func ExampleEuclidean() {
-	r := rand.New(exampleSource(7))
+	r := rand.New(rand.NewSource(7))
 	g, pos, err := graph.Euclidean(4, 6, 1, 1, r)
 	if err != nil {
 		fmt.Println(err)
@@ -68,19 +31,19 @@ func ExampleEuclidean() {
 	// Output:
 	// 4 nodes
 	// n  position
-	// 0  (0.37, 0.65)
-	// 1  (0.46, 0.68)
-	// 2  (0.86, 0.84)
-	// 3  (0.95, 0.84)
+	// 0  (0.92, 0.23)
+	// 1  (0.24, 0.91)
+	// 2  (0.70, 0.15)
+	// 3  (0.35, 0.34)
 	// 6 arcs:
-	// 0 -> [1 2]
-	// 1 -> [2 3]
-	// 2 -> [3]
+	// 0 -> [2 1]
+	// 1 -> [0]
+	// 2 -> [3 0]
 	// 3 -> [1]
 }
 
 func ExampleGeometric() {
-	r := rand.New(exampleSource(7))
+	r := rand.New(rand.NewSource(7))
 	g, pos, m := graph.Geometric(4, .6, r)
 	fmt.Println(g.Order(), "nodes")
 	fmt.Println("n  position")
@@ -98,20 +61,19 @@ func ExampleGeometric() {
 	// Output:
 	// 4 nodes
 	// n  position
-	// 0  (0.37, 0.65)
-	// 1  (0.46, 0.68)
-	// 2  (0.86, 0.84)
-	// 3  (0.95, 0.84)
-	// 5 edges:
-	// 0 - 1
+	// 0  (0.92, 0.23)
+	// 1  (0.24, 0.91)
+	// 2  (0.70, 0.15)
+	// 3  (0.35, 0.34)
+	// 4 edges:
 	// 0 - 2
-	// 1 - 2
+	// 0 - 3
 	// 1 - 3
 	// 2 - 3
 }
 
 func ExampleKroneckerDirected() {
-	r := rand.New(exampleSource(7))
+	r := rand.New(rand.NewSource(7))
 	g, ma := graph.KroneckerDirected(2, 2, r)
 	a := g.AdjacencyList
 	fmt.Println(len(a), "nodes")
@@ -121,15 +83,15 @@ func ExampleKroneckerDirected() {
 	}
 	// Output:
 	// 4 nodes
-	// 4 arcs:
-	// 0 -> [1]
-	// 1 -> []
+	// 5 arcs:
+	// 0 -> [2]
+	// 1 -> [2]
 	// 2 -> [1]
-	// 3 -> [1 2]
+	// 3 -> [2 1]
 }
 
 func ExampleKroneckerUndirected() {
-	r := rand.New(exampleSource(7))
+	r := rand.New(rand.NewSource(7))
 	g, m := graph.KroneckerUndirected(2, 2, r)
 	a := g.AdjacencyList
 	fmt.Println(len(a), "nodes")
@@ -144,14 +106,14 @@ func ExampleKroneckerUndirected() {
 	// Output:
 	// 4 nodes
 	// 4 edges:
-	// 0 - 1
-	// 1 - 3
+	// 0 - 2
 	// 1 - 2
+	// 1 - 3
 	// 2 - 3
 }
 
 func ExampleLabeledGeometric() {
-	r := rand.New(exampleSource(7))
+	r := rand.New(rand.NewSource(7))
 	g, pos, wt := graph.LabeledGeometric(4, .6, r)
 	fmt.Println(g.Order(), "nodes")
 	fmt.Println("n  position")
@@ -177,32 +139,29 @@ func ExampleLabeledGeometric() {
 	// Output:
 	// 4 nodes
 	// n  position
-	// 0  (0.37, 0.65)
-	// 1  (0.46, 0.68)
-	// 2  (0.86, 0.84)
-	// 3  (0.95, 0.84)
-	// 5 edges:
-	// 0 - 1
+	// 0  (0.92, 0.23)
+	// 1  (0.24, 0.91)
+	// 2  (0.70, 0.15)
+	// 3  (0.35, 0.34)
+	// 4 edges:
 	// 0 - 2
-	// 1 - 2
+	// 0 - 3
 	// 1 - 3
 	// 2 - 3
-	// 10 arcs:
+	// 8 arcs:
 	// arc  label  weight
-	// 0->1   0    0.10
-	// 0->2   1    0.53
-	// 1->0   0    0.10
-	// 1->2   2    0.43
-	// 1->3   3    0.52
-	// 2->0   1    0.53
-	// 2->1   2    0.43
-	// 2->3   4    0.09
-	// 3->1   3    0.52
-	// 3->2   4    0.09
+	// 0->2   0    0.24
+	// 0->3   1    0.58
+	// 1->3   2    0.58
+	// 2->0   0    0.24
+	// 2->3   3    0.40
+	// 3->0   1    0.58
+	// 3->1   2    0.58
+	// 3->2   3    0.40
 }
 
 func ExampleLabeledEuclidean() {
-	r := rand.New(exampleSource(7))
+	r := rand.New(rand.NewSource(7))
 	g, pos, wt, err := graph.LabeledEuclidean(4, 6, 1, 1, r)
 	if err != nil {
 		fmt.Println(err)
@@ -227,22 +186,22 @@ func ExampleLabeledEuclidean() {
 	// Output:
 	// 4 nodes
 	// n  position
-	// 0  (0.37, 0.65)
-	// 1  (0.46, 0.68)
-	// 2  (0.86, 0.84)
-	// 3  (0.95, 0.84)
+	// 0  (0.92, 0.23)
+	// 1  (0.24, 0.91)
+	// 2  (0.70, 0.15)
+	// 3  (0.35, 0.34)
 	// 6 arcs:
-	// 0 -> [{1 4} {2 5}]
-	// 1 -> [{2 1} {3 2}]
-	// 2 -> [{3 3}]
-	// 3 -> [{1 0}]
+	// 0 -> [{2 1} {1 5}]
+	// 1 -> [{0 4}]
+	// 2 -> [{3 0} {0 2}]
+	// 3 -> [{1 3}]
 	// arc  label  weight
-	// 0->1   4    0.10
-	// 0->2   5    0.53
-	// 1->2   1    0.43
-	// 1->3   2    0.52
-	// 2->3   3    0.09
-	// 3->1   0    0.52
+	// 0->2   1    0.24
+	// 0->1   5    0.96
+	// 1->0   4    0.96
+	// 2->3   0    0.40
+	// 2->0   2    0.24
+	// 3->1   3    0.58
 }
 
 func TestEuclidean(t *testing.T) {
