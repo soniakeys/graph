@@ -21,22 +21,6 @@ import (
 // a graph.
 type NI int32
 
-// nodeList satisfies sort.Interface.
-//
-// This type used to be exported from graph.go but wasn't otherwise used in
-// the public API anywhere.  It's narrowly useful, only sorting in one way,
-// and there's currently no labeled counterpart, so it's un-exported now to
-// simplify the API surface.  I vaguely remember considering using it more
-// widely, in the AdjacencyList type definition for example, but seeing some
-// way it would be awkward.  maybe it could be reconsidered at some point.
-//
-// Meanwhile the only use currently is here in AnyParallelSort.
-type nodeList []NI
-
-func (l nodeList) Len() int           { return len(l) }
-func (l nodeList) Less(i, j int) bool { return l[i] < l[j] }
-func (l nodeList) Swap(i, j int)      { l[i], l[j] = l[j], l[i] }
-
 // AnyParallelSort identifies if a graph contains parallel arcs, multiple arcs
 // that lead from a node to the same node.
 //
@@ -52,14 +36,14 @@ func (l nodeList) Swap(i, j int)      { l[i], l[j] = l[j], l[i] }
 // for small or sparse graphs but will have asymtotically worse performance for
 // large dense graphs.
 func (g AdjacencyList) AnyParallelSort() (has bool, fr, to NI) {
-	var t nodeList
+	var t []NI
 	for n, to := range g {
 		if len(to) == 0 {
 			continue
 		}
 		// different code in the labeled version, so no code gen.
 		t = append(t[:0], to...)
-		sort.Sort(t)
+		sort.Slice(t, func(i, j int) bool { return t[i] < t[j] })
 		t0 := t[0]
 		for _, to := range t[1:] {
 			if to == t0 {
@@ -111,7 +95,7 @@ func (g AdjacencyList) IsUndirected() (u bool, from, to NI) {
 // Nodes are not relabeled and the graph remains equivalent.
 func (g AdjacencyList) SortArcLists() {
 	for _, to := range g {
-		sort.Sort(nodeList(to))
+		sort.Slice(to, func(i, j int) bool { return to[i] < to[j] })
 	}
 }
 
@@ -186,7 +170,7 @@ func (g LabeledAdjacencyList) HasArcLabel(fr, to NI, l LI) (bool, int) {
 // for small or sparse graphs but will have asymtotically worse performance for
 // large dense graphs.
 func (g LabeledAdjacencyList) AnyParallelSort() (has bool, fr, to NI) {
-	var t nodeList
+	var t []NI
 	for n, to := range g {
 		if len(to) == 0 {
 			continue
@@ -196,7 +180,7 @@ func (g LabeledAdjacencyList) AnyParallelSort() (has bool, fr, to NI) {
 		for _, to := range to {
 			t = append(t, to.To)
 		}
-		sort.Sort(t)
+		sort.Slice(t, func(i, j int) bool { return t[i] < t[j] })
 		t0 := t[0]
 		for _, to := range t[1:] {
 			if to == t0 {
