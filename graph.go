@@ -3,7 +3,9 @@
 
 package graph
 
-import "math"
+import (
+	"math"
+)
 
 // graph.go contains type definitions for all graph types and components.
 // Also, go generate directives for source transformations.
@@ -231,4 +233,79 @@ func (d DistanceMatrix) FloydWarshall() {
 			}
 		}
 	}
+}
+
+type PathMatrix [][]NI
+
+func (m PathMatrix) Path(i, j NI, visit func(n NI)) {
+	for {
+		visit(i)
+		if i == j {
+			return
+		}
+		i = m[i][j]
+	}
+}
+
+func (d DistanceMatrix) FloydWarshallPaths() PathMatrix {
+	m := make(PathMatrix, len(d))
+	inf := math.Inf(1)
+	for i, di := range d {
+		mi := make([]NI, len(d))
+		for j, dij := range di {
+			if dij == inf {
+				mi[j] = -1
+			} else {
+				mi[j] = NI(j)
+			}
+		}
+		m[i] = mi
+	}
+	for k, dk := range d {
+		for i, di := range d {
+			mi := m[i]
+			dik := di[k]
+			for j := range d {
+				if d2 := dik + dk[j]; d2 < di[j] {
+					di[j] = d2
+					mi[j] = mi[k]
+				}
+			}
+		}
+	}
+	return m
+}
+func (d DistanceMatrix) FloydWarshallFromLists() []FromList {
+	l := make([]FromList, len(d))
+	inf := math.Inf(1)
+	for i, di := range d {
+		li := NewFromList(len(d))
+		p := li.Paths
+		for j, dij := range di {
+			if i == j || dij == inf {
+				p[j] = PathEnd{From: -1}
+			} else {
+				p[j] = PathEnd{From: NI(i)}
+			}
+		}
+		l[i] = li
+	}
+	for k, dk := range d {
+		pk := l[k].Paths
+		for i, di := range d {
+			dik := di[k]
+			pi := l[i].Paths
+			for j := range d {
+				if d2 := dik + dk[j]; d2 < di[j] {
+					di[j] = d2
+					pi[j] = pk[j]
+				}
+			}
+		}
+	}
+	for _, li := range l {
+		li.RecalcLeaves()
+		li.RecalcLen()
+	}
+	return l
 }
