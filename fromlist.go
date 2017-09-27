@@ -250,6 +250,9 @@ func (f *FromList) RecalcLeaves() {
 //
 // RecalcLen relies on the Leaves member being valid.  If it is not known
 // to be valid, call RecalcLeaves before calling RecalcLen.
+//
+// RecalcLen will panic if the FromList is cyclic.  Use the Cyclic method
+// if needed to verify that the FromList is acyclic.
 func (f *FromList) RecalcLen() {
 	p := f.Paths
 	var setLen func(NI) int
