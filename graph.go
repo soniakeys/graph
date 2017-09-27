@@ -216,9 +216,9 @@ func newDM(n int) DistanceMatrix {
 // It operates on a distance matrix representing arcs of a graph and
 // destructively replaces arc weights with shortest path distances.
 //
-// In result array d, d[fr][to] will be the shortest distance from node 'fr'
-// to node 'to'.  An element value of +Inf means no path exists.  Any diagonal
-// element < 0 indicates a negative cycle exists.
+// In receiver d, d[fr][to] will be the shortest distance from node
+// 'fr' to node 'to'.  An element value of +Inf means no path exists.
+// Any diagonal element < 0 indicates a negative cycle exists.
 //
 // See DistanceMatrix constructor methods of LabeledAdjacencyList and
 // WeightedEdgeList for suitable inputs.
@@ -235,22 +235,51 @@ func (d DistanceMatrix) FloydWarshall() {
 	}
 }
 
+// PathMatrix is a return type for FloydWarshallPaths.
+//
+// It encodes all pairs shortest paths.
 type PathMatrix [][]NI
 
-func (m PathMatrix) Path(i, j NI, p []NI) []NI {
+// Path returns a shortest path from node start to end.
+//
+// Argument p is truncated, appended to, and returned as the result.
+// Thus the underlying allocation is reused if possible.
+// If there is no path from start to end, p is returned truncated to
+// zero length.
+//
+// If receiver m is not a valid populated PathMatrix as returned by
+// FloydWarshallPaths, behavior is undefined and a panic is likely.
+func (m PathMatrix) Path(start, end NI, p []NI) []NI {
 	p = p[:0]
 	for {
-		p = append(p, i)
-		if i == j {
+		p = append(p, start)
+		if start == end {
 			return p
 		}
-		i = m[i][j]
-		if i < 0 {
+		start = m[start][end]
+		if start < 0 {
 			return p[:0]
 		}
 	}
 }
 
+// FloydWarshallPaths finds all pairs shortest paths for a weighted graph
+// without negative cycles.
+//
+// It operates on a distance matrix representing arcs of a graph and
+// destructively replaces arc weights with shortest path distances.
+//
+// In receiver d, d[fr][to] will be the shortest distance from node
+// 'fr' to node 'to'.  An element value of +Inf means no path exists.
+// Any diagonal element < 0 indicates a negative cycle exists.
+//
+// The return value encodes the paths.  See PathMatrix.Path.
+//
+// See DistanceMatrix constructor methods of LabeledAdjacencyList and
+// WeightedEdgeList for suitable inputs.
+//
+// See also similar method FloydWarshallFromLists which has a richer
+// return value.
 func (d DistanceMatrix) FloydWarshallPaths() PathMatrix {
 	m := make(PathMatrix, len(d))
 	inf := math.Inf(1)
@@ -279,6 +308,30 @@ func (d DistanceMatrix) FloydWarshallPaths() PathMatrix {
 	}
 	return m
 }
+
+// FloydWarshallFromLists finds all pairs shortest paths for a weighted
+// graph without negative cycles.
+//
+// It operates on a distance matrix representing arcs of a graph and
+// destructively replaces arc weights with shortest path distances.
+//
+// In receiver d, d[fr][to] will be the shortest distance from node
+// 'fr' to node 'to'.  An element value of +Inf means no path exists.
+// Any diagonal element < 0 indicates a negative cycle exists.
+//
+// The return value encodes the paths.  The FromLists are fully populated
+// with Leaves and Len values.  See for example FromList.PathTo for
+// extracting paths.  Note though that for i'th FromList of the return
+// value, PathTo(j) will return the path from j's root, which will not
+// be i in the case that there is no path from i to j.  You must check
+// the first node of the path to see if it is i.  If not, there is no
+// path from i to j.  See example.
+//
+// See DistanceMatrix constructor methods of LabeledAdjacencyList and
+// WeightedEdgeList for suitable inputs.
+//
+// See also similar method FloydWarshallPaths, which has a lighter
+// weight return value.
 func (d DistanceMatrix) FloydWarshallFromLists() []FromList {
 	l := make([]FromList, len(d))
 	inf := math.Inf(1)

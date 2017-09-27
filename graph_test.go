@@ -157,6 +157,8 @@ func ExampleDistanceMatrix_FloydWarshallFromLists() {
 	for i, li := range l {
 		for j := range l {
 			p := li.PathTo(graph.NI(j), s)
+			// Note:  Test that returned path actually starts at i.
+			// If not, there is no path.
 			if p[0] != graph.NI(i) {
 				p = nil
 			}
