@@ -237,13 +237,17 @@ func (d DistanceMatrix) FloydWarshall() {
 
 type PathMatrix [][]NI
 
-func (m PathMatrix) Path(i, j NI, visit func(n NI)) {
+func (m PathMatrix) Path(i, j NI, p []NI) []NI {
+	p = p[:0]
 	for {
-		visit(i)
+		p = append(p, i)
 		if i == j {
-			return
+			return p
 		}
 		i = m[i][j]
+		if i < 0 {
+			return p[:0]
+		}
 	}
 }
 
