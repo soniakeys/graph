@@ -280,6 +280,39 @@ func ExampleDominanceFrontiers_Frontier() {
 	// map[2:{}]
 }
 
+func ExampleDominanceFrontiers_Frontier_labeled() {
+	//     0
+	//     |
+	//     1
+	//     |
+	// --->2
+	// |  / \
+	// --3   4
+	//      / \
+	//     5   6
+	//      \ /
+	//       7
+	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
+		0: {{To: 1}},
+		1: {{To: 2}},
+		2: {{To: 3}, {To: 4}},
+		3: {{To: 2}},
+		4: {{To: 5}, {To: 6}},
+		5: {{To: 7}},
+		6: {{To: 7}},
+		7: {},
+	}}
+	f := g.Dominators(0).Frontiers()
+	type ns map[graph.NI]struct{}
+	fmt.Println(f.Frontier(ns{
+		0: struct{}{},
+		1: struct{}{},
+		3: struct{}{},
+	}))
+	// Output:
+	// map[2:{}]
+}
+
 func ExampleDominators_Frontiers() {
 	//   0
 	//   |

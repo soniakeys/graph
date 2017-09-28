@@ -288,6 +288,27 @@ func ExampleLabeledUndirected_Degeneracy() {
 	g.AddEdge(graph.Edge{4, 5}, 0)
 	g.AddEdge(graph.Edge{4, 6}, 0)
 	g.AddEdge(graph.Edge{5, 6}, 0)
+	fmt.Println(g.Degeneracy())
+	// Output:
+	// 3
+}
+
+func ExampleLabeledUndirected_DegeneracyOrdering() {
+	//   1   ----5
+	//  / \ /   / \
+	// 0---2---4  |
+	//      \   \ /
+	//   3   ----6
+	var g graph.LabeledUndirected
+	g.AddEdge(graph.Edge{0, 1}, 0)
+	g.AddEdge(graph.Edge{0, 2}, 0)
+	g.AddEdge(graph.Edge{1, 2}, 0)
+	g.AddEdge(graph.Edge{2, 4}, 0)
+	g.AddEdge(graph.Edge{2, 5}, 0)
+	g.AddEdge(graph.Edge{2, 6}, 0)
+	g.AddEdge(graph.Edge{4, 5}, 0)
+	g.AddEdge(graph.Edge{4, 6}, 0)
+	g.AddEdge(graph.Edge{5, 6}, 0)
 	ord, breaks := g.DegeneracyOrdering()
 	fmt.Println("Degeneracy:", len(breaks)-1)
 	fmt.Println("k-breaks:", breaks)
@@ -303,7 +324,6 @@ func ExampleLabeledUndirected_Degeneracy() {
 	// nodes of 1-core(s): [4 5 6 2 0 1]
 	// nodes of 2-core(s): [4 5 6 2 0 1]
 	// nodes of 3-core(s): [4 5 6 2]
-
 }
 
 func ExampleLabeledUndirected_Degree() {

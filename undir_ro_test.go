@@ -291,6 +291,27 @@ func ExampleUndirected_Degeneracy() {
 	g.AddEdge(4, 5)
 	g.AddEdge(4, 6)
 	g.AddEdge(5, 6)
+	fmt.Println(g.Degeneracy())
+	// Output:
+	// 3
+}
+
+func ExampleUndirected_DegeneracyOrdering() {
+	//   1   ----5
+	//  / \ /   / \
+	// 0---2---4  |
+	//      \   \ /
+	//   3   ----6
+	var g graph.Undirected
+	g.AddEdge(0, 1)
+	g.AddEdge(0, 2)
+	g.AddEdge(1, 2)
+	g.AddEdge(2, 4)
+	g.AddEdge(2, 5)
+	g.AddEdge(2, 6)
+	g.AddEdge(4, 5)
+	g.AddEdge(4, 6)
+	g.AddEdge(5, 6)
 	ord, breaks := g.DegeneracyOrdering()
 	fmt.Println("Degeneracy:", len(breaks)-1)
 	fmt.Println("k-breaks:", breaks)
