@@ -343,7 +343,7 @@ func (g Undirected) TarjanBiconnectedComponents(emit func([]Edge) bool) {
 		return true
 	}
 	for w := range g.AdjacencyList {
-		if number[w] == 0 && !biconnect(NI(w), 0) {
+		if number[w] == 0 && !biconnect(NI(w), -1) {
 			return
 		}
 	}
@@ -715,15 +715,7 @@ func (g LabeledUndirected) RemoveEdgeLabel(n1, n2 NI, l LI) (ok bool) {
 //
 // See also the eqivalent unlabeled TarjanBiconnectedComponents.
 func (g LabeledUndirected) TarjanBiconnectedComponents(emit func([]LabeledEdge) bool) {
-	// Implemented closely to pseudocode in "Depth-first search and linear
-	// graph algorithms", Robert Tarjan, SIAM J. Comput. Vol. 1, No. 2,
-	// June 1972.
-	//
-	// Note Tarjan's "adjacency structure" is graph.AdjacencyList,
-	// His "adjacency list" is an element of a graph.AdjacencyList, also
-	// termed a "to-list", "neighbor list", or "child list."
-	//
-	// Nearly identical code in undir.go.
+	// Code nearly identical to unlabled version.
 	number := make([]int, g.Order())
 	lowpt := make([]int, g.Order())
 	var stack []LabeledEdge
@@ -767,7 +759,7 @@ func (g LabeledUndirected) TarjanBiconnectedComponents(emit func([]LabeledEdge) 
 		return true
 	}
 	for w := range g.LabeledAdjacencyList {
-		if number[w] == 0 && !biconnect(NI(w), 0) {
+		if number[w] == 0 && !biconnect(NI(w), -1) {
 			return
 		}
 	}
