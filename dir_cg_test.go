@@ -340,7 +340,7 @@ func ExampleLabeledDirected_MaximalNonBranchingPaths() {
 		for _, to := range p[1:] {
 			fmt.Printf(" --%c-- %d", to.Label, to.To)
 		}
-		fmt.Println("\n")
+		fmt.Print("\n\n")
 		return true
 	})
 	// Output:
