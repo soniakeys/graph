@@ -300,8 +300,9 @@ func (g Undirected) TarjanBiconnectedComponents(emit func([]Edge) bool) {
 	// Note Tarjan's "adjacency structure" is graph.AdjacencyList,
 	// His "adjacency list" is an element of a graph.AdjacencyList, also
 	// termed a "to-list", "neighbor list", or "child list."
-	number := make([]int, g.Order())
-	lowpt := make([]int, g.Order())
+	a := g.AdjacencyList
+	number := make([]int, len(a))
+	lowpt := make([]int, len(a))
 	var stack []Edge
 	var i int
 	var biconnect func(NI, NI) bool
@@ -309,7 +310,7 @@ func (g Undirected) TarjanBiconnectedComponents(emit func([]Edge) bool) {
 		i++
 		number[v] = i
 		lowpt[v] = i
-		for _, w := range g.AdjacencyList[v] {
+		for _, w := range a[v] {
 			if number[w] == 0 {
 				stack = append(stack, Edge{v, w})
 				if !biconnect(w, v) {
@@ -342,92 +343,58 @@ func (g Undirected) TarjanBiconnectedComponents(emit func([]Edge) bool) {
 		}
 		return true
 	}
-	for w := range g.AdjacencyList {
+	for w := range a {
 		if number[w] == 0 && !biconnect(NI(w), -1) {
 			return
 		}
 	}
 }
 
-/* half-baked.  Read the 72 paper.  Maybe revisit at some point.
-type BiconnectedComponents struct {
-	Graph  AdjacencyList
-	Start  int
-	Cuts   big.Int // bitmap of node cuts
-	From   []int   // from-tree
-	Leaves []int   // leaves of from-tree
-}
-
-func NewBiconnectedComponents(g Undirected) *BiconnectedComponents {
-	return &BiconnectedComponents{
-		Graph: g,
-		From:  make([]int, len(g)),
-	}
-}
-
-func (b *BiconnectedComponents) Find(start int) {
-	g := b.Graph
-	depth := make([]int, len(g))
-	low := make([]int, len(g))
-	// reset from any previous run
-	b.Cuts.SetInt64(0)
-	bf := b.From
-	for n := range bf {
-		bf[n] = -1
-	}
-	b.Leaves = b.Leaves[:0]
-	d := 1 // depth. d > 0 means visited
-	depth[start] = d
-	low[start] = d
-	d++
-	var df func(int, int)
-	df = func(from, n int) {
-		bf[n] = from
-		depth[n] = d
-		dn := d
-		l := d
-		d++
-		cut := false
-		leaf := true
-		for _, nb := range g[n] {
-			if depth[nb] == 0 {
-				leaf = false
-				df(n, nb)
-				if low[nb] < l {
-					l = low[nb]
+func (g Undirected) ArticulationPoints() (p []NI) {
+	a := g.AdjacencyList
+	number := make([]int, len(a))
+	lowpt := make([]int, len(a))
+	var i int
+	var biconnect func(NI, NI)
+	biconnect = func(v, u NI) {
+		i++
+		number[v] = i
+		lowpt[v] = i
+		for _, w := range a[v] {
+			if number[w] == 0 {
+				biconnect(w, v)
+				if lowpt[w] < lowpt[v] {
+					lowpt[v] = lowpt[w]
 				}
-				if low[nb] >= dn {
-					cut = true
+				if lowpt[w] >= number[v] {
+					p = append(p, v)
 				}
-			} else if nb != from && depth[nb] < l {
-				l = depth[nb]
+			} else if number[w] < number[v] && w != u {
+				if number[w] < lowpt[v] {
+					lowpt[v] = number[w]
+				}
 			}
 		}
-		low[n] = l
-		if cut {
-			b.Cuts.SetBit(&b.Cuts, n, 1)
-		}
-		if leaf {
-			b.Leaves = append(b.Leaves, n)
-		}
-		d--
 	}
-	nbs := g[start]
-	if len(nbs) == 0 {
-		return
-	}
-	df(start, nbs[0])
-	var rc uint
-	for _, nb := range nbs[1:] {
-		if depth[nb] == 0 {
-			rc = 1
-			df(start, nb)
+	for v := range a {
+		if number[v] == 0 { // v is a root
+			i++
+			number[v] = i
+			lowpt[v] = i
+			rc := 0
+			for _, w := range a[v] {
+				if number[w] == 0 {
+					rc++ // w is a child of a root
+					biconnect(w, NI(v))
+				}
+			}
+			if rc > 1 {
+				p = append(p, NI(v))
+			}
 		}
 	}
-	b.Cuts.SetBit(&b.Cuts, start, rc)
 	return
 }
-*/
 
 // AddEdge adds an edge to a labeled graph.
 //

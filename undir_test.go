@@ -373,6 +373,29 @@ func ExampleUndirected_TarjanBiconnectedComponents() {
 	// {1 7}
 }
 
+func ExampleUndirected_ArticulationPoints() {
+	// undirected edges:
+	// 3---2---1---7---9
+	//  \ / \ / \   \ /
+	//   4   5---6   8
+	var g graph.Undirected
+	g.AddEdge(3, 4)
+	g.AddEdge(3, 2)
+	g.AddEdge(2, 4)
+	g.AddEdge(2, 5)
+	g.AddEdge(2, 1)
+	g.AddEdge(5, 1)
+	g.AddEdge(6, 1)
+	g.AddEdge(6, 5)
+	g.AddEdge(7, 1)
+	g.AddEdge(7, 9)
+	g.AddEdge(7, 8)
+	g.AddEdge(9, 8)
+	fmt.Println(g.ArticulationPoints())
+	// Output:
+	// [2 7 1]
+}
+
 func ExampleLabeledUndirected_AddEdge() {
 	//       --0--
 	//      /     \\6001
