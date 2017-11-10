@@ -600,6 +600,14 @@ func (g LabeledDirected) IsTree(root NI) (isTree, allTree bool) {
 // Note well:  The backing slice for the node list passed to emit is reused
 // across emit calls.  If you need to retain the node list you must copy it.
 //
+// The components emitted represent a partition of the nodes in g.
+// So for example, if the first component emitted has the same length as g
+// then it will be the only component and it means the entire graph g is
+// strongly connected.
+//
+// See also Condensation which returns a condensation graph in addition
+// to the strongly connected components.
+//
 // There are equivalent labeled and unlabeled versions of this method.
 //
 // The algorithm here is by David Pearce.  See also alt.SCCPathBased and
@@ -659,7 +667,12 @@ func (g LabeledDirected) StronglyConnectedComponents(emit func([]NI) bool) {
 // Condensation returns strongly connected components and their
 // condensation graph.
 //
+// A condensation represents a directed acyclic graph.
 // Components are ordered in a reverse topological ordering.
+//
+// See also StronglyConnectedComponents, which returns the components only.
+//
+// There are equivalent labeled and unlabeled versions of this method.
 func (g LabeledDirected) Condensation() (scc [][]NI, cd AdjacencyList) {
 	a := g.LabeledAdjacencyList
 	b := make([]NI, len(a)) // backing slice for scc
