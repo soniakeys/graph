@@ -884,18 +884,17 @@ func (g Undirected) IsConnected() bool {
 		return true
 	}
 	b := bits.New(len(a))
-	b.SetAll()
 	var df func(NI)
 	df = func(n NI) {
-		b.SetBit(int(n), 0)
+		b.SetBit(int(n), 1)
 		for _, to := range a[n] {
-			if b.Bit(int(to)) == 1 {
+			if b.Bit(int(to)) == 0 {
 				df(to)
 			}
 		}
 	}
 	df(0)
-	return b.AllZeros()
+	return b.AllOnes()
 }
 
 // IsTree identifies trees in undirected graphs.
