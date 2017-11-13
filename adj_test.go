@@ -5,6 +5,8 @@ package graph_test
 
 import (
 	"fmt"
+	"os"
+	"text/template"
 
 	"github.com/soniakeys/graph"
 )
@@ -171,6 +173,43 @@ func ExampleLabeledAdjacencyList_IsUndirected_labelMismatch() {
 	fmt.Printf("%t %d {%d %c}\n", ok, fr, to.To, to.Label)
 	// Output:
 	// false 0 {1 A}
+}
+
+func ExampleLabeledAdjacencyList_ArcLabels() {
+	//      0
+	//    // \
+	//  x//y  \x
+	//  //     \
+	// 1------->2
+	//     z
+	g := graph.LabeledAdjacencyList{
+		0: {{1, 'x'}, {1, 'y'}, {2, 'x'}},
+		1: {{2, 'z'}},
+		2: {},
+	}
+	l := g.ArcLabels()
+	fmt.Println(graph.OrderMap(l))
+	// prettier,
+	template.Must(template.New("").Parse(
+		`{{range $k, $v := .}}{{printf "%c" $k}}: {{$v}}
+{{end}}`)).Execute(os.Stdout, l)
+	// Output:
+	// map[120:2 121:1 122:1 ]
+	// x: 2
+	// y: 1
+	// z: 1
+}
+
+func ExampleLabeledAdjacencyList_ArcLabels_undirected() {
+	//         /----\
+	// 0------1-----/
+	//   3772   2089
+	var g graph.LabeledUndirected
+	g.AddEdge(graph.Edge{0, 1}, 3772) // edge has reciprocal arcs
+	g.AddEdge(graph.Edge{1, 1}, 2089) // loop has just one arc
+	fmt.Println(graph.OrderMap(g.ArcLabels()))
+	// Output:
+	// map[2089:1 3772:2 ]
 }
 
 func ExampleLabeledAdjacencyList_NegativeArc() {

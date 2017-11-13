@@ -231,6 +231,17 @@ func (g LabeledAdjacencyList) IsUndirected() (u bool, from NI, to Half) {
 	return true, -1, to
 }
 
+// ArcLabels constructs the multiset of LIs present in g.
+func (g LabeledAdjacencyList) ArcLabels() map[LI]int {
+	s := map[LI]int{}
+	for _, to := range g {
+		for _, to := range to {
+			s[to.Label]++
+		}
+	}
+	return s
+}
+
 // NegativeArc returns true if the receiver graph contains a negative arc.
 func (g LabeledAdjacencyList) NegativeArc(w WeightFunc) bool {
 	for _, nbs := range g {
