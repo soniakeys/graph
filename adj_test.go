@@ -23,18 +23,28 @@ func ExampleAdjacencyList_construction() {
 }
 
 func ExampleAdjacencyList_AnyParallelSort_parallelArcs() {
+	//   0
+	//  / \
+	// 1==>2
 	g := graph.AdjacencyList{
-		1: {0, 0},
+		0: {1, 2},
+		1: {2, 2},
+		2: {},
 	}
-	// result true 1 0 means parallel arcs from node 1 to node 0
+	// result true 1 2 means parallel arcs from node 1 to node 2
 	fmt.Println(g.AnyParallelSort())
 	// Output:
-	// true 1 0
+	// true 1 2
 }
 
 func ExampleAdjacencyList_AnyParallelSort_noParallelArcs() {
+	//   0
+	//  / \
+	// 1-->2
 	g := graph.AdjacencyList{
-		1: {0},
+		0: {1, 2},
+		1: {2},
+		2: {},
 	}
 	// result false -1 -1 means no parallel arc
 	fmt.Println(g.AnyParallelSort())
@@ -94,13 +104,20 @@ func ExampleLabeledAdjacencyList_DistanceMatrix() {
 }
 
 func ExampleLabeledAdjacencyList_HasArcLabel() {
+	//    /--\
+	//   2<--/
+	//  ||  b
+	// a||c
+	//  ||
+	//  vv
+	//   0
 	g := graph.LabeledAdjacencyList{
-		2: {{0, 10}, {2, 20}, {0, 30}},
+		2: {{0, 'a'}, {2, 'b'}, {0, 'c'}},
 	}
-	fmt.Println(g.HasArcLabel(2, 0, 30))
-	fmt.Println(g.HasArcLabel(1, 0, 30))
-	fmt.Println(g.HasArcLabel(2, 0, 100))
-	fmt.Println(g.HasArcLabel(2, 2, 20)) // test for loop
+	fmt.Println(g.HasArcLabel(2, 0, 'c'))
+	fmt.Println(g.HasArcLabel(1, 0, 'c'))
+	fmt.Println(g.HasArcLabel(2, 0, 'z'))
+	fmt.Println(g.HasArcLabel(2, 2, 'b')) // test for loop
 	// Output:
 	// true 2
 	// false -1
@@ -109,13 +126,19 @@ func ExampleLabeledAdjacencyList_HasArcLabel() {
 }
 
 func ExampleLabeledAdjacencyList_AnyParallelSort_parallelArcs() {
+	//    0
+	//   / \\
+	//  /  a\\b
+	// 1----->2
 	g := graph.LabeledAdjacencyList{
-		1: {{0, 0}, {0, 0}},
+		0: {{1, 0}, {2, 'a'}, {2, 'b'}}, // different labels, still parallel
+		1: {{2, 0}},
+		2: {},
 	}
-	// result true 1 0 means parallel arc from node 1 to node 0
+	// result true 0 2 means parallel arc from node 0 to node 2
 	fmt.Println(g.AnyParallelSort())
 	// Output:
-	// true 1 0
+	// true 0 2
 }
 
 func ExampleLabeledAdjacencyList_AnyParallelSort_noParallelArcs() {
