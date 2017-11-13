@@ -16,6 +16,8 @@ package graph_test
 
 import (
 	"fmt"
+	"os"
+	"text/template"
 
 	"github.com/soniakeys/bits"
 	"github.com/soniakeys/graph"
@@ -509,6 +511,90 @@ func ExampleUndirected_EulerianStart() {
 	// 2
 }
 
+func ExampleUndirected_InduceBits() {
+	// undirected graph:
+	//   1
+	//  /|\\
+	// 0 |  2
+	//  \| /
+	//   3-
+	var g graph.Undirected
+	g.AddEdge(1, 0)
+	g.AddEdge(1, 3)
+	g.AddEdge(1, 2)
+	g.AddEdge(1, 2)
+	g.AddEdge(0, 3)
+	g.AddEdge(2, 3)
+	s := g.InduceBits(bits.NewGivens(2, 1, 3))
+	fmt.Println("Subgraph:")
+	for fr, to := range s.Undirected.AdjacencyList {
+		fmt.Printf("%d: %d\n", fr, to)
+	}
+	fmt.Println("Sub NI -> Super NI")
+	for b, p := range s.SuperNI {
+		fmt.Printf("  %d         %d\n", b, p)
+	}
+	fmt.Println("Super NI -> Sub NI")
+	template.Must(template.New("").Parse(
+		`{{range $k, $v := .}}  {{$k}}         {{$v}}
+{{end}}`)).Execute(os.Stdout, s.SubNI)
+	// Output:
+	// Subgraph:
+	// 0: [2 1 1]
+	// 1: [0 0 2]
+	// 2: [0 1]
+	// Sub NI -> Super NI
+	//   0         1
+	//   1         2
+	//   2         3
+	// Super NI -> Sub NI
+	//   1         0
+	//   2         1
+	//   3         2
+}
+
+func ExampleUndirected_InduceList() {
+	// undirected graph:
+	//   1
+	//  /|\\
+	// 0 |  2
+	//  \| /
+	//   3-
+	var g graph.Undirected
+	g.AddEdge(1, 0)
+	g.AddEdge(1, 3)
+	g.AddEdge(1, 2)
+	g.AddEdge(1, 2)
+	g.AddEdge(0, 3)
+	g.AddEdge(2, 3)
+	s := g.InduceList([]graph.NI{2, 1, 2, 3})
+	fmt.Println("Subgraph:")
+	for fr, to := range s.Undirected.AdjacencyList {
+		fmt.Printf("%d: %d\n", fr, to)
+	}
+	fmt.Println("Sub NI -> Super NI")
+	for b, p := range s.SuperNI {
+		fmt.Printf("  %d         %d\n", b, p)
+	}
+	fmt.Println("Super NI -> Sub NI")
+	template.Must(template.New("").Parse(
+		`{{range $k, $v := .}}  {{$k}}         {{$v}}
+{{end}}`)).Execute(os.Stdout, s.SubNI)
+	// Output:
+	// Subgraph:
+	// 0: [1 1 2]
+	// 1: [2 0 0]
+	// 2: [1 0]
+	// Sub NI -> Super NI
+	//   0         2
+	//   1         1
+	//   2         3
+	// Super NI -> Sub NI
+	//   1         1
+	//   2         0
+	//   3         2
+}
+
 func ExampleUndirected_IsConnected() {
 	// undirected graph:
 	//   0
@@ -567,4 +653,65 @@ func ExampleUndirected_Size() {
 	// Output:
 	// Size: 2
 	// (Arc size = 3)
+}
+
+func ExampleUndirectedSubgraph_AddNode() {
+	// supergraph:
+	//    0
+	//   / \
+	//  1---2
+	var g graph.Undirected
+	g.AddEdge(1, 0)
+	g.AddEdge(1, 2)
+	g.AddEdge(0, 2)
+	s := g.InduceList(nil)    // construct empty subgraph
+	fmt.Println(s.AddNode(2)) // first node added will have NI = 0
+	fmt.Println(s.AddNode(1)) // next node added will have NI = 1
+	fmt.Println(s.AddNode(1)) // returns existing mapping
+	fmt.Println(s.AddNode(2)) // returns existing mapping
+	fmt.Println("Subgraph:")  // (it has no arcs)
+	for fr, to := range s.Undirected.AdjacencyList {
+		fmt.Printf("%d: %d\n", fr, to)
+	}
+	fmt.Println("Mappings:")
+	// mapping from subgraph NIs to supergraph NIs
+	fmt.Println(s.SuperNI)
+	// mapping from supergraph NIs to subgraph NIs
+	fmt.Println(graph.OrderMap(s.SubNI))
+	// Output:
+	// 0
+	// 1
+	// 1
+	// 0
+	// Subgraph:
+	// 0: []
+	// 1: []
+	// Mappings:
+	// [2 1]
+	// map[1:1 2:0 ]
+}
+
+func ExampleUndirectedSubgraph_AddNode_panic() {
+	// supergraph:
+	//    0
+	//   / \
+	//  1---2
+	var g graph.Undirected
+	g.AddEdge(1, 0)
+	g.AddEdge(1, 2)
+	g.AddEdge(0, 2)
+	s := g.InduceList(nil)
+	func() {
+		defer func() { fmt.Println(recover()) }()
+		s.AddNode(-1)
+	}()
+	s.AddNode(0) // ok
+	s.AddNode(2) // ok
+	func() {
+		defer func() { fmt.Println(recover()) }()
+		s.AddNode(3)
+	}()
+	// Output:
+	// AddNode: NI -1 not in supergraph
+	// AddNode: NI 3 not in supergraph
 }

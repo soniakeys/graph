@@ -4,7 +4,14 @@
 package graph
 
 import (
+	"bytes"
+	"errors"
+	"fmt"
 	"math"
+	"reflect"
+	"text/template"
+
+	"github.com/soniakeys/bits"
 )
 
 // graph.go contains type definitions for all graph types and components.
@@ -16,11 +23,17 @@ import (
 //  AdjacencyList
 //  Directed
 //  Undirected
+//  Subgraph
+//  DirectedSubgraph
+//  UndirectedSubgraph
 //  LI
 //  Half
 //  LabeledAdjacencyList
 //  LabeledDirected
 //  LabeledUndirected
+//  LabeledSubgraph
+//  LabeledDirectedSubgraph
+//  LabeledUndirectedSubgraph
 //  Edge
 //  LabeledEdge
 //  WeightFunc
@@ -31,9 +44,11 @@ import (
 //go:generate gofmt -r "LabeledAdjacencyList -> AdjacencyList" -w adj_RO.go
 //go:generate gofmt -r "n.To -> n" -w adj_RO.go
 //go:generate gofmt -r "Half -> NI" -w adj_RO.go
+//go:generate gofmt -r "LabeledSubgraph -> Subgraph" -w adj_RO.go
 
 //go:generate cp dir_cg.go dir_RO.go
 //go:generate gofmt -r "LabeledDirected -> Directed" -w dir_RO.go
+//go:generate gofmt -r "LabeledDirectedSubgraph -> DirectedSubgraph" -w dir_RO.go
 //go:generate gofmt -r "LabeledAdjacencyList -> AdjacencyList" -w dir_RO.go
 //go:generate gofmt -r "labEulerian -> eulerian" -w dir_RO.go
 //go:generate gofmt -r "newLabEulerian -> newEulerian" -w dir_RO.go
@@ -43,6 +58,7 @@ import (
 
 //go:generate cp undir_cg.go undir_RO.go
 //go:generate gofmt -r "LabeledUndirected -> Undirected" -w undir_RO.go
+//go:generate gofmt -r "LabeledUndirectedSubgraph -> UndirectedSubgraph" -w undir_RO.go
 //go:generate gofmt -r "LabeledAdjacencyList -> AdjacencyList" -w undir_RO.go
 //go:generate gofmt -r "newLabEulerian -> newEulerian" -w undir_RO.go
 //go:generate gofmt -r "Half{n, -1} -> n" -w undir_RO.go
@@ -76,6 +92,56 @@ type Directed struct {
 // specifically that every arc between distinct nodes has a reciprocal.
 type Undirected struct {
 	AdjacencyList // embedded to include AdjacencyList methods
+}
+
+// Subgraph represents a subgraph mapped to a supergraph.
+//
+// The subgraph is the embedded AdjacencyList and so the Subgraph type inherits
+// all methods of Adjacency list.
+//
+// The embedded subgraph mapped relative to a specific supergraph, member
+// Super.  A subgraph may have fewer nodes than its supergraph.
+// Each node of the subgraph must map to a distinct node of the supergraph.
+//
+// The mapping giving the supergraph node for a given subgraph node is
+// represented by member SuperNI, a slice parallel to the the subgraph.
+//
+// The mapping in the other direction, giving a subgraph NI for a given
+// supergraph NI, is represented with map SubNI.
+//
+// Multiple Subgraphs can be created relative to a single supergraph.
+// The Subgraph type represents a mapping to only a single supergraph however.
+//
+// See graph methods InduceList and InduceBits for construction of
+// node-induced subgraphs.
+//
+// Alternatively an empty subgraph can be constructed with InduceList(nil).
+// Arbitrary subgraphs can then be built up with methods AddNode and AddArc.
+type Subgraph struct {
+	AdjacencyList                // the subgraph
+	Super         *AdjacencyList // the supergraph
+	SubNI         map[NI]NI      // subgraph NIs, indexed by supergraph NIs
+	SuperNI       []NI           // supergraph NIs indexed by subgraph NIs
+}
+
+// DirectedSubgraph represents a subgraph mapped to a supergraph.
+//
+// See additional doc at Subgraph type.
+type DirectedSubgraph struct {
+	Directed
+	Super   *Directed
+	SubNI   map[NI]NI
+	SuperNI []NI
+}
+
+// UndirectedSubgraph represents a subgraph mapped to a supergraph.
+//
+// See additional doc at Subgraph type.
+type UndirectedSubgraph struct {
+	Undirected
+	Super   *Undirected
+	SubNI   map[NI]NI
+	SuperNI []NI
 }
 
 // LI is a label integer, used for associating labels with arcs.
@@ -126,6 +192,36 @@ type LabeledDirected struct {
 // and Undirected.
 type LabeledUndirected struct {
 	LabeledAdjacencyList // embedded to include LabeledAdjacencyList methods
+}
+
+// LabeledSubgraph represents a subgraph mapped to a supergraph.
+//
+// See additional doc at Subgraph type.
+type LabeledSubgraph struct {
+	LabeledAdjacencyList
+	Super   *LabeledAdjacencyList
+	SubNI   map[NI]NI
+	SuperNI []NI
+}
+
+// LabeledDirectedSubgraph represents a subgraph mapped to a supergraph.
+//
+// See additional doc at Subgraph type.
+type LabeledDirectedSubgraph struct {
+	LabeledDirected
+	Super   *LabeledDirected
+	SubNI   map[NI]NI
+	SuperNI []NI
+}
+
+// LabeledUndirectedSubgraph represents a subgraph mapped to a supergraph.
+//
+// See additional doc at Subgraph type.
+type LabeledUndirectedSubgraph struct {
+	LabeledUndirected
+	Super   *LabeledUndirected
+	SubNI   map[NI]NI
+	SuperNI []NI
 }
 
 // Edge is an undirected edge between nodes N1 and N2.
@@ -365,4 +461,225 @@ func (d DistanceMatrix) FloydWarshallFromLists() []FromList {
 		li.RecalcLen()
 	}
 	return l
+}
+
+// AddEdge adds an edge to a subgraph.
+//
+// For argument e, e.N1 and e.N2 must be NIs in supergraph s.Super.  As with
+// AddNode, AddEdge panics if e.N1 and e.N2 are not valid node indexes of
+// s.Super.
+//
+// Edge e must exist in s.Super.  Further, the number of
+// parallel edges in the subgraph cannot exceed the number of corresponding
+// parallel edges in the supergraph.  That is, each edge already added to the
+// subgraph counts against the edges available in the supergraph.  If a matching
+// edge is not available, AddEdge returns an error.
+//
+// If a matching edge is available, subgraph nodes are added as needed, the
+// subgraph edge is added, and the method returns nil.
+func (s *UndirectedSubgraph) AddEdge(n1, n2 NI) error {
+	// verify supergraph NIs first, but without adding subgraph nodes just yet.
+	if int(n1) < 0 || int(n1) >= s.Super.Order() {
+		panic(fmt.Sprint("AddEdge: NI ", n1, " not in supergraph"))
+	}
+	if int(n2) < 0 || int(n2) >= s.Super.Order() {
+		panic(fmt.Sprint("AddEdge: NI ", n2, " not in supergraph"))
+	}
+	// count existing matching edges in subgraph
+	n := 0
+	a := s.Undirected.AdjacencyList
+	if b1, ok := s.SubNI[n1]; ok {
+		if b2, ok := s.SubNI[n2]; ok {
+			// both NIs already exist in subgraph, need to count edges
+			for _, t := range a[b1] {
+				if t == b2 {
+					n++
+				}
+			}
+			if b1 != b2 {
+				// verify reciprocal arcs exist
+				r := 0
+				for _, t := range a[b2] {
+					if t == b1 {
+						r++
+					}
+				}
+				if r < n {
+					n = r
+				}
+			}
+		}
+	}
+	// verify matching edges are available in supergraph
+	m := 0
+	for _, t := range (*s.Super).AdjacencyList[n1] {
+		if t == n2 {
+			if m == n {
+				goto r // arc match after all existing arcs matched
+			}
+			m++
+		}
+	}
+	return errors.New("edge not available in supergraph")
+r:
+	if n1 != n2 {
+		// verify reciprocal arcs
+		m = 0
+		for _, t := range (*s.Super).AdjacencyList[n2] {
+			if t == n1 {
+				if m == n {
+					goto good
+				}
+				m++
+			}
+		}
+		return errors.New("edge not available in supergraph")
+	}
+good:
+	// matched enough edges.  nodes can finally
+	// be added as needed and then the edge can be added.
+	b1 := s.AddNode(n1)
+	b2 := s.AddNode(n2)
+	s.Undirected.AddEdge(b1, b2)
+	return nil // success
+}
+
+// AddEdge adds an edge to a subgraph.
+//
+// For argument e, e.N1 and e.N2 must be NIs in supergraph s.Super.  As with
+// AddNode, AddEdge panics if e.N1 and e.N2 are not valid node indexes of
+// s.Super.
+//
+// Edge e must exist in s.Super with label l.  Further, the number of
+// parallel edges in the subgraph cannot exceed the number of corresponding
+// parallel edges in the supergraph.  That is, each edge already added to the
+// subgraph counts against the edges available in the supergraph.  If a matching
+// edge is not available, AddEdge returns an error.
+//
+// If a matching edge is available, subgraph nodes are added as needed, the
+// subgraph edge is added, and the method returns nil.
+func (s *LabeledUndirectedSubgraph) AddEdge(e Edge, l LI) error {
+	// verify supergraph NIs first, but without adding subgraph nodes just yet.
+	if int(e.N1) < 0 || int(e.N1) >= s.Super.Order() {
+		panic(fmt.Sprint("AddEdge: NI ", e.N1, " not in supergraph"))
+	}
+	if int(e.N2) < 0 || int(e.N2) >= s.Super.Order() {
+		panic(fmt.Sprint("AddEdge: NI ", e.N2, " not in supergraph"))
+	}
+	// count existing matching edges in subgraph
+	n := 0
+	a := s.LabeledUndirected.LabeledAdjacencyList
+	if b1, ok := s.SubNI[e.N1]; ok {
+		if b2, ok := s.SubNI[e.N2]; ok {
+			// both NIs already exist in subgraph, need to count edges
+			h := Half{b2, l}
+			for _, t := range a[b1] {
+				if t == h {
+					n++
+				}
+			}
+			if b1 != b2 {
+				// verify reciprocal arcs exist
+				r := 0
+				h.To = b1
+				for _, t := range a[b2] {
+					if t == h {
+						r++
+					}
+				}
+				if r < n {
+					n = r
+				}
+			}
+		}
+	}
+	// verify matching edges are available in supergraph
+	m := 0
+	h := Half{e.N2, l}
+	for _, t := range (*s.Super).LabeledAdjacencyList[e.N1] {
+		if t == h {
+			if m == n {
+				goto r // arc match after all existing arcs matched
+			}
+			m++
+		}
+	}
+	return errors.New("edge not available in supergraph")
+r:
+	if e.N1 != e.N2 {
+		// verify reciprocal arcs
+		m = 0
+		h.To = e.N1
+		for _, t := range (*s.Super).LabeledAdjacencyList[e.N2] {
+			if t == h {
+				if m == n {
+					goto good
+				}
+				m++
+			}
+		}
+		return errors.New("edge not available in supergraph")
+	}
+good:
+	// matched enough edges.  nodes can finally
+	// be added as needed and then the edge can be added.
+	n1 := s.AddNode(e.N1)
+	n2 := s.AddNode(e.N2)
+	s.LabeledUndirected.AddEdge(Edge{n1, n2}, l)
+	return nil // success
+}
+
+// utility function called from all of the InduceList methods.
+func mapList(l []NI) (sub map[NI]NI, sup []NI) {
+	sub = map[NI]NI{}
+	// one pass to collect unique NIs
+	for _, p := range l {
+		sub[NI(p)] = -1
+	}
+	if len(sub) == len(l) { // NIs in l are unique
+		sup = append([]NI{}, l...) // just copy them
+		for b, p := range l {
+			sub[p] = NI(b) // and fill in map
+		}
+	} else { // NIs in l not unique
+		sup = make([]NI, 0, len(sub))
+		for _, p := range l { // preserve ordering of first occurrences in l
+			if sub[p] < 0 {
+				sub[p] = NI(len(sup))
+				sup = append(sup, p)
+			}
+		}
+	}
+	return
+}
+
+// utility function called from all of the InduceBits methods.
+func mapBits(t bits.Bits) (sub map[NI]NI, sup []NI) {
+	sup = make([]NI, 0, t.OnesCount())
+	sub = make(map[NI]NI, cap(sup))
+	t.IterateOnes(func(n int) bool {
+		sub[NI(n)] = NI(len(sup))
+		sup = append(sup, NI(n))
+		return true
+	})
+	return
+}
+
+// OrderMap formats maps for testable examples.
+//
+// OrderMap provides simple, no-frills formatting of maps in sorted order,
+// convenient in some cases for output of testable examples.
+func OrderMap(m interface{}) string {
+	// in particular exclude slices, which template would happily accept but
+	// which would probably represent a coding mistake
+	if reflect.TypeOf(m).Kind() != reflect.Map {
+		panic("not a map")
+	}
+	t := template.Must(template.New("").Parse(
+		`map[{{range $k, $v := .}}{{$k}}:{{$v}} {{end}}]`))
+	var b bytes.Buffer
+	if err := t.Execute(&b, m); err != nil {
+		panic(err)
+	}
+	return b.String()
 }

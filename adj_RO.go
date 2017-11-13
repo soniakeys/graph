@@ -8,6 +8,8 @@ package graph
 // DO NOT EDIT adj_RO.go.  The RO is for Read Only.
 
 import (
+	"errors"
+	"fmt"
 	"math/rand"
 
 	"github.com/soniakeys/bits"
@@ -195,6 +197,140 @@ func (g AdjacencyList) AnyParallelMap() (has bool, fr, to NI) {
 		}
 	}
 	return false, -1, -1
+}
+
+// AddNode maps a node in a supergraph to a subgraph node.
+//
+// Argument p must be an NI in supergraph s.Super.  AddNode panics if
+// p is not a valid node index of s.Super.
+//
+// AddNode is idempotent in that it does not add a new node to the subgraph if
+// a subgraph node already exists mapped to supergraph node p.
+//
+// The mapped subgraph NI is returned.
+func (s *Subgraph) AddNode(p NI) (b NI) {
+	if int(p) < 0 || int(p) >= s.Super.Order() {
+		panic(fmt.Sprint("AddNode: NI ", p, " not in supergraph"))
+	}
+	if b, ok := s.SubNI[p]; ok {
+		return b
+	}
+	a := s.AdjacencyList
+	b = NI(len(a))
+	s.AdjacencyList = append(a, nil)
+	s.SuperNI = append(s.SuperNI, p)
+	s.SubNI[p] = b
+	return
+}
+
+// AddArc adds an arc to a subgraph.
+//
+// Arguments fr, to must be NIs in supergraph s.Super.  As with AddNode,
+// AddArc panics if fr and to are not valid node indexes of s.Super.
+//
+// The arc specfied by fr, to must exist in s.Super.  Further, the number of
+// parallel arcs in the subgraph cannot exceed the number of corresponding
+// parallel arcs in the supergraph.  That is, each arc already added to the
+// subgraph counts against the arcs available in the supergraph.  If a matching
+// arc is not available, AddArc returns an error.
+//
+// If a matching arc is available, subgraph nodes are added as needed, the
+// subgraph arc is added, and the method returns nil.
+func (s *Subgraph) AddArc(fr NI, to NI) error {
+	// verify supergraph NIs first, but without adding subgraph nodes just yet.
+	if int(fr) < 0 || int(fr) >= s.Super.Order() {
+		panic(fmt.Sprint("AddArc: NI ", fr, " not in supergraph"))
+	}
+	if int(to) < 0 || int(to) >= s.Super.Order() {
+		panic(fmt.Sprint("AddArc: NI ", to, " not in supergraph"))
+	}
+	// count existing matching arcs in subgraph
+	n := 0
+	a := s.AdjacencyList
+	if bf, ok := s.SubNI[fr]; ok {
+		if bt, ok := s.SubNI[to]; ok {
+			// both NIs already exist in subgraph, need to count arcs
+			bTo := to
+			bTo = bt
+			for _, t := range a[bf] {
+				if t == bTo {
+					n++
+				}
+			}
+		}
+	}
+	// verify matching arcs are available in supergraph
+	for _, t := range (*s.Super)[fr] {
+		if t == to {
+			if n > 0 {
+				n-- // match existing arc
+				continue
+			}
+			// no more existing arcs need to be matched.  nodes can finally
+			// be added as needed and then the arc can be added.
+			bf := s.AddNode(fr)
+			to = s.AddNode(to)
+			s.AdjacencyList[bf] = append(s.AdjacencyList[bf], to)
+			return nil // success
+		}
+	}
+	return errors.New("arc not available in supergraph")
+}
+
+func (super AdjacencyList) induceArcs(sub map[NI]NI, sup []NI) AdjacencyList {
+	s := make(AdjacencyList, len(sup))
+	for b, p := range sup {
+		var a []NI
+		for _, to := range super[p] {
+			if bt, ok := sub[to]; ok {
+				to = bt
+				a = append(a, to)
+			}
+		}
+		s[b] = a
+	}
+	return s
+}
+
+// InduceList constructs a node-induced subgraph.
+//
+// The subgraph is induced on receiver graph g.  Argument l must be a list of
+// NIs in receiver graph g.  Receiver g becomes the supergraph of the induced
+// subgraph.
+//
+// Duplicate NIs are allowed in list l.  The duplicates are effectively removed
+// and only a single corresponding node is created in the subgraph.  Subgraph
+// NIs are mapped in the order of list l, execpt for ignoring duplicates.
+// NIs in l that are not in g will panic.
+//
+// Returned is the constructed Subgraph object containing the induced subgraph
+// and the mappings to the supergraph.
+func (g *AdjacencyList) InduceList(l []NI) *Subgraph {
+	sub, sup := mapList(l)
+	return &Subgraph{
+		Super:   g,
+		SubNI:   sub,
+		SuperNI: sup,
+
+		AdjacencyList: g.induceArcs(sub, sup)}
+}
+
+// InduceBits constructs a node-induced subgraph.
+//
+// The subgraph is induced on receiver graph g.  Argument t must be a bitmap
+// representing NIs in receiver graph g.  Receiver g becomes the supergraph
+// of the induced subgraph.  NIs in t that are not in g will panic.
+//
+// Returned is the constructed Subgraph object containing the induced subgraph
+// and the mappings to the supergraph.
+func (g *AdjacencyList) InduceBits(t bits.Bits) *Subgraph {
+	sub, sup := mapBits(t)
+	return &Subgraph{
+		Super:   g,
+		SubNI:   sub,
+		SuperNI: sup,
+
+		AdjacencyList: g.induceArcs(sub, sup)}
 }
 
 // IsSimple checks for loops and parallel arcs.

@@ -13,6 +13,8 @@ package graph_test
 import (
 	"fmt"
 	"log"
+	"os"
+	"text/template"
 
 	"github.com/soniakeys/bits"
 	"github.com/soniakeys/graph"
@@ -514,6 +516,107 @@ func ExampleLabeledUndirected_EulerianStart() {
 	// 2
 }
 
+func ExampleLabeledUndirected_InduceBits() {
+	// undirected graph:
+	//     1
+	//    /|\\
+	//  a/ | \\
+	//  / b| c\\d
+	// 0   |    2
+	//  \  |   /
+	//  e\ |  /f
+	//    \| /
+	//     3-
+	var g graph.LabeledUndirected
+	g.AddEdge(graph.Edge{1, 0}, 'a')
+	g.AddEdge(graph.Edge{1, 3}, 'b')
+	g.AddEdge(graph.Edge{1, 2}, 'c')
+	g.AddEdge(graph.Edge{1, 2}, 'd')
+	g.AddEdge(graph.Edge{0, 3}, 'e')
+	g.AddEdge(graph.Edge{2, 3}, 'f')
+	s := g.InduceBits(bits.NewGivens(2, 1, 3))
+	fmt.Println("Subgraph:")
+	for fr, to := range s.LabeledUndirected.LabeledAdjacencyList {
+		fmt.Print(fr, ": [")
+		for _, h := range to {
+			fmt.Printf("{%d, %c} ", h.To, h.Label)
+		}
+		fmt.Println("]")
+	}
+	fmt.Println("Sub NI -> Super NI")
+	for b, p := range s.SuperNI {
+		fmt.Printf("  %d         %d\n", b, p)
+	}
+	fmt.Println("Super NI -> Sub NI")
+	template.Must(template.New("").Parse(
+		`{{range $k, $v := .}}  {{$k}}         {{$v}}
+{{end}}`)).Execute(os.Stdout, s.SubNI)
+	// Output:
+	// Subgraph:
+	// 0: [{2, b} {1, c} {1, d} ]
+	// 1: [{0, c} {0, d} {2, f} ]
+	// 2: [{0, b} {1, f} ]
+	// Sub NI -> Super NI
+	//   0         1
+	//   1         2
+	//   2         3
+	// Super NI -> Sub NI
+	//   1         0
+	//   2         1
+	//   3         2
+}
+
+func ExampleLabeledUndirected_InduceList() {
+	// undirected graph:
+	//     1
+	//    /|\\
+	//  a/ | \\
+	//  / b| c\\d
+	// 0   |    2
+	//  \  |   /
+	//  e\ |  /f
+	//    \| /
+	//     3-
+	var g graph.LabeledUndirected
+	g.AddEdge(graph.Edge{1, 0}, 'a')
+	g.AddEdge(graph.Edge{1, 3}, 'b')
+	g.AddEdge(graph.Edge{1, 2}, 'c')
+	g.AddEdge(graph.Edge{1, 2}, 'd')
+	g.AddEdge(graph.Edge{0, 3}, 'e')
+	g.AddEdge(graph.Edge{2, 3}, 'f')
+	s := g.InduceList([]graph.NI{2, 1, 2, 3})
+	fmt.Println("Subgraph:")
+	for fr, to := range s.LabeledUndirected.LabeledAdjacencyList {
+		fmt.Print(fr, ": [")
+		for _, h := range to {
+			fmt.Printf("{%d, %c} ", h.To, h.Label)
+		}
+		fmt.Println("]")
+	}
+	fmt.Println("Sub NI -> Super NI")
+
+	for b, p := range s.SuperNI {
+		fmt.Printf("  %d         %d\n", b, p)
+	}
+	fmt.Println("Super NI -> Sub NI")
+	template.Must(template.New("").Parse(
+		`{{range $k, $v := .}}  {{$k}}         {{$v}}
+{{end}}`)).Execute(os.Stdout, s.SubNI)
+	// Output:
+	// Subgraph:
+	// 0: [{1, c} {1, d} {2, f} ]
+	// 1: [{2, b} {0, c} {0, d} ]
+	// 2: [{1, b} {0, f} ]
+	// Sub NI -> Super NI
+	//   0         2
+	//   1         1
+	//   2         3
+	// Super NI -> Sub NI
+	//   1         1
+	//   2         0
+	//   3         2
+}
+
 func ExampleLabeledUndirected_IsConnected() {
 	// undirected graph:
 	//   0
@@ -572,4 +675,63 @@ func ExampleLabeledUndirected_Size() {
 	// Output:
 	// Size: 2
 	// (Arc size = 3)
+}
+
+func ExampleLabeledUndirectedSubgraph_AddNode() {
+	// supergraph:
+	//    0
+	//   / \
+	//  1---2
+	var g graph.LabeledUndirected
+	g.AddEdge(graph.Edge{0, 1}, -1)
+	g.AddEdge(graph.Edge{0, 2}, -1)
+	g.AddEdge(graph.Edge{1, 2}, -1)
+	s := g.InduceList(nil)    // construct empty subgraph
+	fmt.Println(s.AddNode(2)) // first node added will have NI = 0
+	fmt.Println(s.AddNode(1)) // next node added will have NI = 1
+	fmt.Println(s.AddNode(1)) // returns existing mapping
+	fmt.Println(s.AddNode(2)) // returns existing mapping
+	fmt.Println("Subgraph:")  // (it has no arcs)
+	for fr, to := range s.LabeledUndirected.LabeledAdjacencyList {
+		fmt.Printf("%d: %d\n", fr, to)
+	}
+	fmt.Println("Mappings:")
+	fmt.Println(s.SuperNI)
+	fmt.Println(graph.OrderMap(s.SubNI))
+	// Output:
+	// 0
+	// 1
+	// 1
+	// 0
+	// Subgraph:
+	// 0: []
+	// 1: []
+	// Mappings:
+	// [2 1]
+	// map[1:1 2:0 ]
+}
+
+func ExampleLabeledUndirectedSubgraph_AddNode_panic() {
+	// supergraph:
+	//    0
+	//   / \
+	//  1---2
+	var g graph.LabeledUndirected
+	g.AddEdge(graph.Edge{0, 1}, -1)
+	g.AddEdge(graph.Edge{0, 2}, -1)
+	g.AddEdge(graph.Edge{1, 2}, -1)
+	s := g.InduceList(nil)
+	func() {
+		defer func() { fmt.Println(recover()) }()
+		fmt.Println(s.AddNode(-1))
+	}()
+	s.AddNode(0) // ok
+	s.AddNode(2) // ok
+	func() {
+		defer func() { fmt.Println(recover()) }()
+		fmt.Println(s.AddNode(3))
+	}()
+	// Output:
+	// AddNode: NI -1 not in supergraph
+	// AddNode: NI 3 not in supergraph
 }

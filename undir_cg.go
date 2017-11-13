@@ -5,6 +5,7 @@ package graph
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/soniakeys/bits"
 )
@@ -871,6 +872,73 @@ func (g LabeledUndirected) EulerianStart() NI {
 		}
 	}
 	return -1
+}
+
+// AddNode maps a node in a supergraph to a subgraph node.
+//
+// Argument p must be an NI in supergraph s.Super.  AddNode panics if
+// p is not a valid node index of s.Super.
+//
+// AddNode is idempotent in that it does not add a new node to the subgraph if
+// a subgraph node already exists mapped to supergraph node p.
+//
+// The mapped subgraph NI is returned.
+func (s *LabeledUndirectedSubgraph) AddNode(p NI) (b NI) {
+	if int(p) < 0 || int(p) >= s.Super.Order() {
+		panic(fmt.Sprint("AddNode: NI ", p, " not in supergraph"))
+	}
+	if b, ok := s.SubNI[p]; ok {
+		return b
+	}
+	a := s.LabeledUndirected.LabeledAdjacencyList
+	b = NI(len(a))
+	s.LabeledUndirected.LabeledAdjacencyList = append(a, nil)
+	s.SuperNI = append(s.SuperNI, p)
+	s.SubNI[p] = b
+	return
+}
+
+// InduceList constructs a node-induced subgraph.
+//
+// The subgraph is induced on receiver graph g.  Argument l must be a list of
+// NIs in receiver graph g.  Receiver g becomes the supergraph of the induced
+// subgraph.
+//
+// Duplicate NIs are allowed in list l.  The duplicates are effectively removed
+// and only a single corresponding node is created in the subgraph.  Subgraph
+// NIs are mapped in the order of list l, execpt for ignoring duplicates.
+// NIs in l that are not in g will panic.
+//
+// Returned is the constructed Subgraph object containing the induced subgraph
+// and the mappings to the supergraph.
+func (g *LabeledUndirected) InduceList(l []NI) *LabeledUndirectedSubgraph {
+	sub, sup := mapList(l)
+	return &LabeledUndirectedSubgraph{
+		Super:   g,
+		SubNI:   sub,
+		SuperNI: sup,
+		LabeledUndirected: LabeledUndirected{
+			g.LabeledAdjacencyList.induceArcs(sub, sup),
+		}}
+}
+
+// InduceBits constructs a node-induced subgraph.
+//
+// The subgraph is induced on receiver graph g.  Argument t must be a bitmap
+// representing NIs in receiver graph g.  Receiver g becomes the supergraph
+// of the induced subgraph.  NIs in t that are not in g will panic.
+//
+// Returned is the constructed Subgraph object containing the induced subgraph
+// and the mappings to the supergraph.
+func (g *LabeledUndirected) InduceBits(t bits.Bits) *LabeledUndirectedSubgraph {
+	sub, sup := mapBits(t)
+	return &LabeledUndirectedSubgraph{
+		Super:   g,
+		SubNI:   sub,
+		SuperNI: sup,
+		LabeledUndirected: LabeledUndirected{
+			g.LabeledAdjacencyList.induceArcs(sub, sup),
+		}}
 }
 
 // IsConnected tests if an undirected graph is a single connected component.

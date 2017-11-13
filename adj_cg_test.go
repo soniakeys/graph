@@ -13,10 +13,13 @@ package graph_test
 import (
 	"fmt"
 	"math/rand"
+	"os"
 	"reflect"
 	"sort"
 	"testing"
+	"text/template"
 
+	"github.com/soniakeys/bits"
 	"github.com/soniakeys/graph"
 )
 
@@ -177,6 +180,104 @@ func ExampleLabeledAdjacencyList_HasArc() {
 	// true 1
 }
 
+func ExampleLabeledAdjacencyList_InduceBits() {
+	// arcs directed down:
+	//     1
+	//    /|\\
+	//  a/ | \\
+	//  / b| c\\d
+	// 0   |    2
+	//  \  |   /
+	//  e\ |  /f
+	//    \| /
+	//     3-
+	g := graph.LabeledAdjacencyList{
+		1: {{0, 'a'}, {3, 'b'}, {2, 'c'}, {2, 'd'}},
+		0: {{3, 'e'}},
+		2: {{3, 'f'}},
+		3: {},
+	}
+	s := g.InduceBits(bits.NewGivens(2, 1, 3))
+	fmt.Println("Subgraph:")
+	for fr, to := range s.LabeledAdjacencyList {
+		fmt.Print(fr, ": [")
+		for _, h := range to {
+			fmt.Printf("{%d, %c} ", h.To, h.Label)
+		}
+		fmt.Println("]")
+	}
+	fmt.Println("Sub NI -> Super NI")
+	for b, p := range s.SuperNI {
+		fmt.Printf("  %d         %d\n", b, p)
+	}
+	fmt.Println("Super NI -> Sub NI")
+	template.Must(template.New("").Parse(
+		`{{range $k, $v := .}}  {{$k}}         {{$v}}
+{{end}}`)).Execute(os.Stdout, s.SubNI)
+	// Output:
+	// Subgraph:
+	// 0: [{2, b} {1, c} {1, d} ]
+	// 1: [{2, f} ]
+	// 2: []
+	// Sub NI -> Super NI
+	//   0         1
+	//   1         2
+	//   2         3
+	// Super NI -> Sub NI
+	//   1         0
+	//   2         1
+	//   3         2
+}
+
+func ExampleLabeledAdjacencyList_InduceList() {
+	// arcs directed down:
+	//     1
+	//    /|\\
+	//  a/ | \\
+	//  / b| c\\d
+	// 0   |    2
+	//  \  |   /
+	//  e\ |  /f
+	//    \| /
+	//     3-
+	g := graph.LabeledAdjacencyList{
+		1: {{0, 'a'}, {3, 'b'}, {2, 'c'}, {2, 'd'}},
+		0: {{3, 'e'}},
+		2: {{3, 'f'}},
+		3: {},
+	}
+	s := g.InduceList([]graph.NI{2, 1, 2, 3})
+	fmt.Println("Subgraph:")
+	for fr, to := range s.LabeledAdjacencyList {
+		fmt.Print(fr, ": [")
+		for _, h := range to {
+			fmt.Printf("{%d, %c} ", h.To, h.Label)
+		}
+		fmt.Println("]")
+	}
+	fmt.Println("Sub NI -> Super NI")
+	for b, p := range s.SuperNI {
+		fmt.Printf("  %d         %d\n", b, p)
+	}
+	fmt.Println("Super NI -> Sub NI")
+	template.Must(template.New("").Parse(
+		`{{range $k, $v := .}}  {{$k}}         {{$v}}
+{{end}}`)).Execute(os.Stdout, s.SubNI)
+	// Output:
+	// Subgraph:
+	// 0: [{2, f} ]
+	// 1: [{2, b} {0, c} {0, d} ]
+	// 2: []
+	// Sub NI -> Super NI
+	//   0         2
+	//   1         1
+	//   2         3
+	// Super NI -> Sub NI
+	//   1         1
+	//   2         0
+	//   3         2
+}
+
 func ExampleLabeledAdjacencyList_IsolatedNodes() {
 	//   0  1
 	//  / \
@@ -318,4 +419,127 @@ func TestShuffleArcListsLabeled(t *testing.T) {
 	}
 	testCase(.2, nil)
 	testCase(.6, rand.New(rand.NewSource(3)))
+}
+
+func ExampleLabeledSubgraph_AddNode() {
+	// supergraph:
+	//    0
+	//   / \
+	//  1-->2
+	g := graph.LabeledAdjacencyList{
+		0: {{1, -1}, {2, -1}},
+		1: {{2, -1}},
+		2: {},
+	}
+	s := g.InduceList(nil)    // construct empty subgraph
+	fmt.Println(s.AddNode(2)) // first node added will have NI = 0
+	fmt.Println(s.AddNode(1)) // next node added will have NI = 1
+	fmt.Println(s.AddNode(1)) // returns existing mapping
+	fmt.Println(s.AddNode(2)) // returns existing mapping
+	fmt.Println("Subgraph:")  // (it has no arcs)
+	for fr, to := range s.LabeledAdjacencyList {
+		fmt.Printf("%d: %d\n", fr, to)
+	}
+	fmt.Println("Mappings:")
+	fmt.Println(s.SuperNI)
+	fmt.Println(graph.OrderMap(s.SubNI))
+	// Output:
+	// 0
+	// 1
+	// 1
+	// 0
+	// Subgraph:
+	// 0: []
+	// 1: []
+	// Mappings:
+	// [2 1]
+	// map[1:1 2:0 ]
+}
+
+func ExampleLabeledSubgraph_AddNode_panic() {
+	// supergraph:
+	//    0
+	//   / \
+	//  1-->2
+	g := graph.LabeledAdjacencyList{
+		0: {{1, -1}, {2, -1}},
+		1: {{2, -1}},
+		2: {},
+	}
+	s := g.InduceList(nil)
+	func() {
+		defer func() { fmt.Println(recover()) }()
+		fmt.Println(s.AddNode(-1))
+	}()
+	s.AddNode(0) // ok
+	s.AddNode(2) // ok
+	func() {
+		defer func() { fmt.Println(recover()) }()
+		fmt.Println(s.AddNode(3))
+	}()
+	// Output:
+	// AddNode: NI -1 not in supergraph
+	// AddNode: NI 3 not in supergraph
+}
+
+func ExampleLabeledSubgraph_AddArc() {
+	// supergraph:
+	//     0
+	//    / \\
+	//  x/  y\\z
+	//  1      2
+	g := graph.LabeledAdjacencyList{
+		0: {{1, 'x'}, {2, 'y'}, {2, 'z'}},
+		2: {},
+	}
+	s := g.InduceList(nil)                       // construct empty subgraph
+	fmt.Println(s.AddArc(1, graph.Half{0, 'x'})) // no, not that direction
+	fmt.Println(s.AddArc(0, graph.Half{1, 'y'})) // no, not with that label
+	fmt.Println(s.AddArc(0, graph.Half{2, 'y'})) // okay
+	fmt.Println("Subgraph:")
+	for fr, to := range s.LabeledAdjacencyList {
+		fmt.Print(fr, ":")
+		for _, h := range to {
+			fmt.Printf(" {%d, %c}", h.To, h.Label)
+		}
+		fmt.Println()
+	}
+	fmt.Println("Mappings:")
+	// mapping from subgraph NIs to supergraph NIs
+	fmt.Println(s.SuperNI)
+	// mapping from supergraph NIs to subgraph NIs
+	fmt.Println(graph.OrderMap(s.SubNI))
+	// Output:
+	// arc not available in supergraph
+	// arc not available in supergraph
+	// <nil>
+	// Subgraph:
+	// 0: {1, y}
+	// 1:
+	// Mappings:
+	// [0 2]
+	// map[0:0 2:1 ]
+}
+
+func ExampleLabeledSubgraph_AddArc_panic() {
+	// supergraph:
+	//    0
+	//   / \\
+	//  1    2
+	g := graph.LabeledAdjacencyList{
+		0: {{1, -1}, {2, -1}, {2, -1}},
+		2: {},
+	}
+	s := g.InduceList(nil)
+	func() {
+		defer func() { fmt.Println(recover()) }()
+		fmt.Println(s.AddArc(0, graph.Half{-1, -1}))
+	}()
+	func() {
+		defer func() { fmt.Println(recover()) }()
+		fmt.Println(s.AddArc(3, graph.Half{0, -1}))
+	}()
+	// Output:
+	// AddArc: NI -1 not in supergraph
+	// AddArc: NI 3 not in supergraph
 }

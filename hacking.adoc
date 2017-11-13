@@ -124,3 +124,12 @@ that might be useful.  Here are some elements that characterize the direction.
 * Sometimes in conflict with the multiple result principle, methods will not
   speculatively compute secondary results if there is any significant cost
   and if the secondary result can be just as easily computed later.
+
+== Code Maintenance
+There are tons of cut and paste variants.  There's the basic AdjacencyList,
+then Directed and Undirected variants, then Labeled variants of each of those.
+Code gen helps avoid some cut and paste but there's a bunch that doesn't
+code gen very well and so is duplicated with cut and paste.  In particular
+the testable examples in the _test files don't cg well and so are pretty much
+all duplicated by hand.  If you change code, think about where there should
+be variants and go look to see if the variants need similar changes.
