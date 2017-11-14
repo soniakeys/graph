@@ -188,6 +188,42 @@ func (g LabeledAdjacencyList) AnyParallel() (has bool, fr, to NI) {
 	return false, -1, -1
 }
 
+// AnyParallelLabel identifies if a graph contains parallel arcs with the same
+// label.
+//
+// If the graph has parallel arcs with the same label, the results fr and to
+// represent an example where there are parallel arcs from node `fr`
+// to node `to`.
+//
+// If there are no parallel arcs, the method returns false -1 Half{}.
+//
+// Multiple loops on a node count as parallel arcs.
+func (g LabeledAdjacencyList) AnyParallelLabel() (has bool, fr NI, to Half) {
+	var t []Half
+	for n, to := range g {
+		if len(to) == 0 {
+			continue
+		}
+		// slightly different code needed here compared to AdjacencyList
+		t = t[:0]
+		for _, to := range to {
+			t = append(t, to)
+		}
+		sort.Slice(t, func(i, j int) bool {
+			return t[i].To < t[j].To ||
+				t[i].To == t[j].To && t[i].Label < t[j].Label
+		})
+		t0 := t[0]
+		for _, to := range t[1:] {
+			if to == t0 {
+				return true, NI(n), t0
+			}
+			t0 = to
+		}
+	}
+	return false, -1, Half{}
+}
+
 // IsUndirected returns true if g represents an undirected graph.
 //
 // Returns true when all non-loop arcs are paired in reciprocal pairs with

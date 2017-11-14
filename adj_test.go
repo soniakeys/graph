@@ -151,6 +151,36 @@ func ExampleLabeledAdjacencyList_AnyParallel_noParallelArcs() {
 	// false -1 -1
 }
 
+func ExampleLabeledAdjacencyList_AnyParallelLabel() {
+	//    0
+	//   / \\
+	//  /  a\\a
+	// 1----->2
+	g := graph.LabeledAdjacencyList{
+		0: {{1, 0}, {2, 'a'}, {2, 'a'}}, // same labels
+		1: {{2, 0}},
+		2: {},
+	}
+	fmt.Println(g.AnyParallelLabel())
+	// Output:
+	// true 0 {2 97}
+}
+
+func ExampleLabeledAdjacencyList_AnyParallelLabel_none() {
+	//    0
+	//   / \\
+	//  /  a\\b
+	// 1----->2
+	g := graph.LabeledAdjacencyList{
+		0: {{1, 0}, {2, 'a'}, {2, 'b'}}, // different labels
+		1: {{2, 0}},
+		2: {},
+	}
+	fmt.Println(g.AnyParallelLabel())
+	// Output:
+	// false -1 {0 0}
+}
+
 func ExampleLabeledAdjacencyList_IsUndirected() {
 	//             0<--
 	// (label 'A')  \  \ (matching label 'A' on reciprocal)
