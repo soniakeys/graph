@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/soniakeys/graph"
+	"github.com/soniakeys/graph/alt"
 )
 
 func main() {
@@ -23,6 +24,7 @@ func main() {
 	sssp()
 	shortestone()
 	eulerian()
+	parallel()
 }
 
 func h(n int) string {
@@ -187,5 +189,50 @@ func eulerian() {
 		uEuDTest(uEuLarge),
 	} {
 		fmt.Printf("%-22s %-38s %12s\n", r.method, r.tag, r.d)
+	}
+}
+
+func parallel() {
+	fmt.Println("\nParallel arc tests")
+	fmt.Println("Graph       Sort           Map  Best")
+	for i, g := range []interface{}{
+		chungLuSmall,
+		chungLuLarge,
+		eucLarge,
+		gnpDSmall,
+		gnpDLarge,
+		gnpUSmall,
+		gnpULarge,
+		gnmDSmall,
+		gnmDLarge,
+		gnmUSmall,
+		gnmULarge,
+		kronDSmall,
+		kronDLarge,
+		kronUSmall,
+		kronULarge,
+	} {
+		var tm, ts time.Duration
+		switch h := g.(type) {
+		case graph.Directed:
+			t := time.Now()
+			alt.AnyParallelMap(h.AdjacencyList)
+			tm = time.Now().Sub(t)
+			t = time.Now()
+			h.AnyParallel()
+			ts = time.Now().Sub(t)
+		case graph.Undirected:
+			t := time.Now()
+			alt.AnyParallelMap(h.AdjacencyList)
+			tm = time.Now().Sub(t)
+			t = time.Now()
+			h.AnyParallel()
+			ts = time.Now().Sub(t)
+		}
+		best := "Map"
+		if ts < tm {
+			best = "Sort"
+		}
+		fmt.Printf("%2d  %12s  %12s  %s\n", i, ts, tm, best)
 	}
 }

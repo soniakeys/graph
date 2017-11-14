@@ -22,7 +22,7 @@ func ExampleAdjacencyList_construction() {
 	_ = graph.AdjacencyList{9: nil} // empty graph with 10 nodes
 }
 
-func ExampleAdjacencyList_AnyParallelSort_parallelArcs() {
+func ExampleAdjacencyList_AnyParallel_parallelArcs() {
 	//   0
 	//  / \
 	// 1==>2
@@ -32,12 +32,12 @@ func ExampleAdjacencyList_AnyParallelSort_parallelArcs() {
 		2: {},
 	}
 	// result true 1 2 means parallel arcs from node 1 to node 2
-	fmt.Println(g.AnyParallelSort())
+	fmt.Println(g.AnyParallel())
 	// Output:
 	// true 1 2
 }
 
-func ExampleAdjacencyList_AnyParallelSort_noParallelArcs() {
+func ExampleAdjacencyList_AnyParallel_noParallelArcs() {
 	//   0
 	//  / \
 	// 1-->2
@@ -47,7 +47,7 @@ func ExampleAdjacencyList_AnyParallelSort_noParallelArcs() {
 		2: {},
 	}
 	// result false -1 -1 means no parallel arc
-	fmt.Println(g.AnyParallelSort())
+	fmt.Println(g.AnyParallel())
 	// Output:
 	// false -1 -1
 }
@@ -125,7 +125,7 @@ func ExampleLabeledAdjacencyList_HasArcLabel() {
 	// true 1
 }
 
-func ExampleLabeledAdjacencyList_AnyParallelSort_parallelArcs() {
+func ExampleLabeledAdjacencyList_AnyParallel_parallelArcs() {
 	//    0
 	//   / \\
 	//  /  a\\b
@@ -136,17 +136,17 @@ func ExampleLabeledAdjacencyList_AnyParallelSort_parallelArcs() {
 		2: {},
 	}
 	// result true 0 2 means parallel arc from node 0 to node 2
-	fmt.Println(g.AnyParallelSort())
+	fmt.Println(g.AnyParallel())
 	// Output:
 	// true 0 2
 }
 
-func ExampleLabeledAdjacencyList_AnyParallelSort_noParallelArcs() {
+func ExampleLabeledAdjacencyList_AnyParallel_noParallelArcs() {
 	g := graph.LabeledAdjacencyList{
 		1: {{0, 0}},
 	}
 	// result false -1 -1 means no parallel arc
-	fmt.Println(g.AnyParallelSort())
+	fmt.Println(g.AnyParallel())
 	// Output:
 	// false -1 -1
 }

@@ -42,25 +42,6 @@ func ExampleLabeledAdjacencyList_AnyLoop_noLoop() {
 	// has loop: false
 }
 
-func ExampleLabeledAdjacencyList_AnyParallelMap_parallelArcs() {
-	g := graph.LabeledAdjacencyList{
-		1: {{To: 0}, {To: 0}},
-	}
-	// result true 1 0 means parallel arcs from node 1 to node 0
-	fmt.Println(g.AnyParallelMap())
-	// Output:
-	// true 1 0
-}
-
-func ExampleLabeledAdjacencyList_AnyParallelMap_noParallelArcs() {
-	g := graph.LabeledAdjacencyList{
-		1: {{To: 0}},
-	}
-	fmt.Println(g.AnyParallelMap()) // result false -1 -1 means no parallel arc
-	// Output:
-	// false -1 -1
-}
-
 func ExampleLabeledAdjacencyList_ArcDensity() {
 	// 0-->1
 	// |

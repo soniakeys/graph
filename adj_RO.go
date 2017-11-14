@@ -166,39 +166,6 @@ func (g AdjacencyList) AnyLoop() (bool, NI) {
 	return false, -1
 }
 
-// AnyParallelMap identifies if a graph contains parallel arcs, multiple arcs
-// that lead from a node to the same node.
-//
-// If the graph has parallel arcs, the method returns true and
-// results fr and to represent an example where there are parallel arcs
-// from node `fr` to node `to`.
-//
-// If there are no parallel arcs, the method returns false, -1 -1.
-//
-// Multiple loops on a node count as parallel arcs.
-//
-// "Map" in the method name indicates that a Go map is used to detect parallel
-// arcs.  Compared to method AnyParallelSort, this gives better asymtotic
-// performance for large dense graphs but may have increased overhead for
-// small or sparse graphs.
-//
-// There are equivalent labeled and unlabeled versions of this method.
-func (g AdjacencyList) AnyParallelMap() (has bool, fr, to NI) {
-	for n, to := range g {
-		if len(to) == 0 {
-			continue
-		}
-		m := map[NI]struct{}{}
-		for _, to := range to {
-			if _, ok := m[to]; ok {
-				return true, NI(n), to
-			}
-			m[to] = struct{}{}
-		}
-	}
-	return false, -1, -1
-}
-
 // AddNode maps a node in a supergraph to a subgraph node.
 //
 // Argument p must be an NI in supergraph s.Super.  AddNode panics if
@@ -348,7 +315,7 @@ func (g AdjacencyList) IsSimple() (ok bool, n NI) {
 	if lp, n := g.AnyLoop(); lp {
 		return false, n
 	}
-	if pa, n, _ := g.AnyParallelSort(); pa {
+	if pa, n, _ := g.AnyParallel(); pa {
 		return false, n
 	}
 	return true, -1

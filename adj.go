@@ -21,7 +21,7 @@ import (
 // a graph.
 type NI int32
 
-// AnyParallelSort identifies if a graph contains parallel arcs, multiple arcs
+// AnyParallel identifies if a graph contains parallel arcs, multiple arcs
 // that lead from a node to the same node.
 //
 // If the graph has parallel arcs, the results fr and to represent an example
@@ -31,11 +31,9 @@ type NI int32
 //
 // Multiple loops on a node count as parallel arcs.
 //
-// "Sort" in the method name indicates that sorting is used to detect parallel
-// arcs.  Compared to method AnyParallelMap, this may give better performance
-// for small or sparse graphs but will have asymtotically worse performance for
-// large dense graphs.
-func (g AdjacencyList) AnyParallelSort() (has bool, fr, to NI) {
+// See also alt.AnyParallelMap, which can perform better for some large
+// or dense graphs.
+func (g AdjacencyList) AnyParallel() (has bool, fr, to NI) {
 	var t []NI
 	for n, to := range g {
 		if len(to) == 0 {
@@ -155,7 +153,7 @@ func (g LabeledAdjacencyList) HasArcLabel(fr, to NI, l LI) (bool, int) {
 	return false, -1
 }
 
-// AnyParallelSort identifies if a graph contains parallel arcs, multiple arcs
+// AnyParallel identifies if a graph contains parallel arcs, multiple arcs
 // that lead from a node to the same node.
 //
 // If the graph has parallel arcs, the results fr and to represent an example
@@ -165,11 +163,9 @@ func (g LabeledAdjacencyList) HasArcLabel(fr, to NI, l LI) (bool, int) {
 //
 // Multiple loops on a node count as parallel arcs.
 //
-// "Sort" in the method name indicates that sorting is used to detect parallel
-// arcs.  Compared to method AnyParallelMap, this may give better performance
-// for small or sparse graphs but will have asymtotically worse performance for
-// large dense graphs.
-func (g LabeledAdjacencyList) AnyParallelSort() (has bool, fr, to NI) {
+// See also alt.AnyParallelMap, which can perform better for some large
+// or dense graphs.
+func (g LabeledAdjacencyList) AnyParallel() (has bool, fr, to NI) {
 	var t []NI
 	for n, to := range g {
 		if len(to) == 0 {
