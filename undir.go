@@ -350,50 +350,74 @@ func (g Undirected) TarjanBiconnectedComponents(emit func([]Edge) bool) {
 	}
 }
 
-func (g Undirected) ArticulationPoints() (p []NI) {
+func (g Undirected) BlockCut(block func([]Edge) bool, cut func(NI) bool, isolated func(NI) bool) {
 	a := g.AdjacencyList
 	number := make([]int, len(a))
 	lowpt := make([]int, len(a))
-	var i int
-	var biconnect func(NI, NI)
-	biconnect = func(v, u NI) {
+	var stack []Edge
+	var i, rc int
+	var biconnect func(NI, NI) bool
+	biconnect = func(v, u NI) bool {
 		i++
 		number[v] = i
 		lowpt[v] = i
 		for _, w := range a[v] {
 			if number[w] == 0 {
-				biconnect(w, v)
+				if u < 0 {
+					rc++
+				}
+				stack = append(stack, Edge{v, w})
+				if !biconnect(w, v) {
+					return false
+				}
 				if lowpt[w] < lowpt[v] {
 					lowpt[v] = lowpt[w]
 				}
 				if lowpt[w] >= number[v] {
-					p = append(p, v)
+					if u >= 0 && !cut(v) {
+						return false
+					}
+					var bcc []Edge
+					top := len(stack) - 1
+					for number[stack[top].N1] >= number[w] {
+						bcc = append(bcc, stack[top])
+						stack = stack[:top]
+						top--
+					}
+					bcc = append(bcc, stack[top])
+					stack = stack[:top]
+					top--
+					if !block(bcc) {
+						return false
+					}
 				}
 			} else if number[w] < number[v] && w != u {
+				stack = append(stack, Edge{v, w})
 				if number[w] < lowpt[v] {
 					lowpt[v] = number[w]
 				}
 			}
 		}
+		if u < 0 && rc > 1 {
+			return cut(v)
+		}
+		return true
 	}
-	for v := range a {
-		if number[v] == 0 { // v is a root
-			i++
-			number[v] = i
-			lowpt[v] = i
-			rc := 0
-			for _, w := range a[v] {
-				if number[w] == 0 {
-					rc++ // w is a child of a root
-					biconnect(w, NI(v))
-				}
+	for w := range a {
+		if number[w] > 0 {
+			continue
+		}
+		if len(a[w]) == 0 {
+			if !isolated(NI(w)) {
+				return
 			}
-			if rc > 1 {
-				p = append(p, NI(v))
-			}
+			continue
+		}
+		rc = 0
+		if !biconnect(NI(w), -1) {
+			return
 		}
 	}
-	return
 }
 
 // AddEdge adds an edge to a labeled graph.

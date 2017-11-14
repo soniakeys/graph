@@ -373,7 +373,7 @@ func ExampleUndirected_TarjanBiconnectedComponents() {
 	// {1 7}
 }
 
-func ExampleUndirected_ArticulationPoints() {
+func ExampleUndirected_BlockCut() {
 	// undirected edges:
 	// 3---2---1---7---9
 	//  \ / \ / \   \ /
@@ -391,9 +391,43 @@ func ExampleUndirected_ArticulationPoints() {
 	g.AddEdge(7, 9)
 	g.AddEdge(7, 8)
 	g.AddEdge(9, 8)
-	fmt.Println(g.ArticulationPoints())
+	g.BlockCut(
+		func(bcc []graph.Edge) bool {
+			fmt.Println("Edges:")
+			for _, e := range bcc {
+				fmt.Println(e)
+			}
+			return true
+		},
+		func(ap graph.NI) bool {
+			fmt.Println("Articulation Point:", ap)
+			return true
+		},
+		func(ip graph.NI) bool {
+			fmt.Println("Isolated Point:", ip)
+			return true
+		})
 	// Output:
-	// [2 7 1]
+	// Isolated Point: 0
+	// Articulation Point: 2
+	// Edges:
+	// {4 2}
+	// {3 4}
+	// {2 3}
+	// Edges:
+	// {6 1}
+	// {5 6}
+	// {5 1}
+	// {2 5}
+	// {1 2}
+	// Articulation Point: 7
+	// Edges:
+	// {8 7}
+	// {9 8}
+	// {7 9}
+	// Edges:
+	// {1 7}
+	// Articulation Point: 1
 }
 
 func ExampleLabeledUndirected_AddEdge() {
