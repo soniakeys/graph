@@ -12,6 +12,8 @@ package graph
 
 import (
 	"sort"
+
+	"github.com/soniakeys/bits"
 )
 
 // NI is a "node int"
@@ -51,6 +53,33 @@ func (g AdjacencyList) AnyParallel() (has bool, fr, to NI) {
 		}
 	}
 	return false, -1, -1
+}
+
+// Complement returns the arc-complement of a simple graph.
+//
+// The result will have an arc for every pair of distinct nodes where there
+// is not an arc in g.  The complement is valid for both directed and
+// undirected graphs.  If g is undirected, the complement will be undirected.
+// The result will always be a simple graph, having no loops or parallel arcs.
+func (g AdjacencyList) Complement() AdjacencyList {
+	c := make(AdjacencyList, len(g))
+	b := bits.New(len(g))
+	for n, to := range g {
+		b.ClearAll()
+		for _, to := range to {
+			b.SetBit(int(to), 1)
+		}
+		b.SetBit(n, 1)
+		ct := make([]NI, len(g)-b.OnesCount())
+		i := 0
+		b.IterateZeros(func(to int) bool {
+			ct[i] = NI(to)
+			i++
+			return true
+		})
+		c[n] = ct
+	}
+	return c
 }
 
 // IsUndirected returns true if g represents an undirected graph.

@@ -52,6 +52,24 @@ func ExampleAdjacencyList_AnyParallel_noParallelArcs() {
 	// false -1 -1
 }
 
+func ExampleAdjacencyList_Complement() {
+	//  0            0<-
+	//  |\           ^  \
+	//  v v  comp=>  |   \
+	//  2 1          2<==>1
+	g := graph.AdjacencyList{
+		0: {1, 2},
+		2: {},
+	}
+	for fr, to := range g.Complement() {
+		fmt.Println(fr, to)
+	}
+	// Output:
+	// 0 []
+	// 1 [0 2]
+	// 2 [0 1]
+}
+
 func ExampleAdjacencyList_IsUndirected() {
 	// 0<--    2<--\
 	//  \  \   |   |
