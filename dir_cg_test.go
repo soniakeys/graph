@@ -482,6 +482,22 @@ func ExampleLabeledDirected_PostDominators() {
 	// [0 0 1 1 1 3 -1]
 }
 
+func ExampleLabeledDirected_PageRank() {
+	//     0<-\
+	//    / \ |
+	//   /   \|
+	//  1---->2<---3
+	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
+		0: {{To: 1}, {To: 2}},
+		1: {{To: 2}},
+		2: {{To: 0}},
+		3: {{To: 2}},
+	}}
+	fmt.Printf("%.2f\n", g.PageRank(.85, 20))
+	// Output:
+	// [1.49 0.78 1.58 0.15]
+}
+
 func ExampleLabeledDirected_StronglyConnectedComponents() {
 	// /---0---\
 	// |   |\--/

@@ -712,6 +712,42 @@ func (g LabeledDirected) IsTree(root NI) (isTree, allTree bool) {
 	return isTree, isTree && v.AllZeros()
 }
 
+// PageRank computes a significance score for each node of a graph.
+//
+// The algorithm is credited to Google founders Brin and Lawrence.
+//
+// Argument d is a damping factor.  Reportedly a value of .85 works well.
+// Argument n is a number of iterations.  Reportedly values of 20 to 50
+// work well.
+//
+// Returned is the PageRank score for each node of g.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g LabeledDirected) PageRank(d float64, n int) []float64 {
+	// Following "PageRank Explained" by Ian Rogers, accessed at
+	// http://www.cs.princeton.edu/~chazelle/courses/BIB/pagerank.htm
+	a := g.LabeledAdjacencyList
+	p0 := make([]float64, len(a))
+	p1 := make([]float64, len(a))
+	for i := range p0 {
+		p0[i] = 1
+	}
+	d1 := 1 - d
+	for ; n > 0; n-- {
+		for i := range p1 {
+			p1[i] = d1
+		}
+		for fr, to := range a {
+			f := d / float64(len(to))
+			for _, to := range to {
+				p1[to.To] += p0[fr] * f
+			}
+		}
+		p0, p1 = p1, p0
+	}
+	return p0
+}
+
 // StronglyConnectedComponents identifies strongly connected components in
 // a directed graph.
 //

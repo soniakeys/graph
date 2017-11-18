@@ -501,6 +501,22 @@ func ExampleDirected_PostDominators() {
 	// [0 0 1 1 1 3 -1]
 }
 
+func ExampleDirected_PageRank() {
+	//     0<-\
+	//    / \ |
+	//   /   \|
+	//  1---->2<---3
+	g := graph.Directed{graph.AdjacencyList{
+		0: {1, 2},
+		1: {2},
+		2: {0},
+		3: {2},
+	}}
+	fmt.Printf("%.2f\n", g.PageRank(.85, 20))
+	// Output:
+	// [1.49 0.78 1.58 0.15]
+}
+
 func ExampleDirected_StronglyConnectedComponents() {
 	// /---0---\
 	// |   |\--/
