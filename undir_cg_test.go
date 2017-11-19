@@ -21,6 +21,28 @@ import (
 )
 
 func ExampleLabeledUndirected_Bipartite() {
+	// 0 1 2  5  6
+	//  \|/|     |
+	//   3 4     7
+	var g graph.LabeledUndirected
+	g.AddEdge(graph.Edge{0, 3}, 0)
+	g.AddEdge(graph.Edge{1, 3}, 0)
+	g.AddEdge(graph.Edge{2, 3}, 0)
+	g.AddEdge(graph.Edge{2, 4}, 0)
+	g.AddEdge(graph.Edge{6, 7}, 0)
+	b, _, ok := g.Bipartite()
+	fmt.Println("ok   ", ok)
+	fmt.Println("(bit) 76543210")
+	fmt.Println("Color", b.Color)
+	fmt.Println("N1   ", b.N1)
+	// Output:
+	// ok    true
+	// (bit) 76543210
+	// Color 01100111
+	// N1    5
+}
+
+func ExampleLabeledUndirected_BipartiteComponent() {
 	// 0 1 2
 	//  \|/|
 	//   3 4
@@ -29,19 +51,21 @@ func ExampleLabeledUndirected_Bipartite() {
 	g.AddEdge(graph.Edge{1, 3}, 0)
 	g.AddEdge(graph.Edge{2, 3}, 0)
 	g.AddEdge(graph.Edge{2, 4}, 0)
-	b, c1, c2, _ := g.Bipartite(0)
+	c1 := bits.New(g.Order())
+	c2 := bits.New(g.Order())
+	b, n1, n2, _ := g.BipartiteComponent(0, c1, c2)
 	if b {
 		fmt.Println("n:  43210")
-		fmt.Println("c1:", c1)
-		fmt.Println("c2:", c2)
+		fmt.Println("c1:", c1, " n1:", n1)
+		fmt.Println("c2:", c2, " n2:", n2)
 	}
 	// Output:
 	// n:  43210
-	// c1: 00111
-	// c2: 11000
+	// c1: 00111  n1: 3
+	// c2: 11000  n2: 2
 }
 
-func ExampleLabeledUndirected_Bipartite_oddCycle() {
+func ExampleLabeledUndirected_BipartiteComponent_oddCycle() {
 	// 0 1  2
 	//  \|/ |
 	//   3--4
@@ -51,7 +75,9 @@ func ExampleLabeledUndirected_Bipartite_oddCycle() {
 	g.AddEdge(graph.Edge{2, 3}, 0)
 	g.AddEdge(graph.Edge{2, 4}, 0)
 	g.AddEdge(graph.Edge{3, 4}, 0)
-	b, _, _, oc := g.Bipartite(0)
+	c1 := bits.New(g.Order())
+	c2 := bits.New(g.Order())
+	b, _, _, oc := g.BipartiteComponent(0, c1, c2)
 	if !b {
 		fmt.Println("odd cycle:", oc)
 	}
@@ -734,4 +760,19 @@ func ExampleLabeledUndirectedSubgraph_AddNode_panic() {
 	// Output:
 	// AddNode: NI -1 not in supergraph
 	// AddNode: NI 3 not in supergraph
+}
+
+func ExampleLabeledBipartite_Density() {
+	// 0 1 2
+	//  \|/|
+	//   3 4
+	var g graph.LabeledUndirected
+	g.AddEdge(graph.Edge{0, 3}, 0)
+	g.AddEdge(graph.Edge{1, 3}, 0)
+	g.AddEdge(graph.Edge{2, 3}, 0)
+	g.AddEdge(graph.Edge{2, 4}, 0)
+	b, _, _ := g.Bipartite()
+	fmt.Printf("%.2f\n", b.Density())
+	// Output:
+	// 0.67
 }

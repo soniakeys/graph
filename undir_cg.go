@@ -15,27 +15,73 @@ import (
 // DO NOT EDIT undir_RO.go.
 // The RO means read only and it is upper case RO to slow you down a bit
 // in case you start to edit the file.
+//-------------------
 
-// Bipartite determines if a connected component of an undirected graph
-// is bipartite, a component where nodes can be partitioned into two sets
-// such that every edge in the component goes from one set to the other.
+// Bipartite constructs an object indexing the bipartite structure of a graph.
 //
-// Argument n can be any representative node of the component.
+// In a bipartite component, nodes can be partitioned into two sets, or
+// "colors," such that every edge in the component goes from one set to the
+// other.
 //
-// If the component is bipartite, Bipartite returns true and a two-coloring
-// of the component.  Each color set is returned as a bitmap.  If the component
-// is not bipartite, Bipartite returns false and a representative odd cycle.
+// If the graph is bipartite, the method constructs and returns a new
+// Bipartite object as b and returns ok = true.
+//
+// If the component is not bipartite, a representative odd cycle as oc and
+// returns ok = false.
+//
+// In the case of a graph with mulitiple connected components, this method
+// provides no control over the color orientation by component.  See
+// Undirected.BipartiteComponent if this control is needed.
 //
 // There are equivalent labeled and unlabeled versions of this method.
-func (g LabeledUndirected) Bipartite(n NI) (b bool, c1, c2 bits.Bits, oc []NI) {
+func (g LabeledUndirected) Bipartite() (b *LabeledBipartite, oc []NI, ok bool) {
+	c1 := bits.New(g.Order())
+	c2 := bits.New(g.Order())
+	r, _, _ := g.ConnectedComponentReps()
+	var n, n1 int
+	for _, r := range r {
+		ok, n, _, oc = g.BipartiteComponent(r, c1, c2)
+		if !ok {
+			return
+		}
+		n1 += n
+	}
+	return &LabeledBipartite{g, c1, n1}, nil, true
+}
+
+// BipartiteComponent analyzes the bipartite structure of a connected component
+// of an undirected graph.
+//
+// In a bipartite component, nodes can be partitioned into two sets, or
+// "colors," such that every edge in the component goes from one set to the
+// other.
+//
+// Argument n can be any representative node of the component to be analyzed.
+// Arguments c1 and c2 must be separate bits.Bits objects constructed to be
+// of length of the number of nodes of g.  These bitmaps are used in the
+// component traversal and the bits of the component must be zero when the
+// method is called.
+//
+// If the component is bipartite, BipartiteComponent populates bitmaps
+// c1 and c2 with the two-coloring of the component, always assigning the set
+// with representative node n to bitmap c1.  It returns b = true,
+// and also returns the number of bits set in c1 and c2 as n1 and n2
+// respectively.
+//
+// If the component is not bipartite, BipartiteComponent returns b = false
+// and a representative odd cycle as oc.
+//
+// See also method Bipartite.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g LabeledUndirected) BipartiteComponent(n NI, c1, c2 bits.Bits) (b bool, n1, n2 int, oc []NI) {
 	a := g.LabeledAdjacencyList
-	c1 = bits.New(len(a))
-	c2 = bits.New(len(a))
 	b = true
 	var open bool
-	var df func(n NI, c1, c2 *bits.Bits)
-	df = func(n NI, c1, c2 *bits.Bits) {
+	var df func(n NI, c1, c2 *bits.Bits, n1, n2 *int)
+	df = func(n NI, c1, c2 *bits.Bits, n1, n2 *int) {
 		c1.SetBit(int(n), 1)
+		*n1++
 		for _, nb := range a[n] {
 			if c1.Bit(int(nb.To)) == 1 {
 				b = false
@@ -46,7 +92,7 @@ func (g LabeledUndirected) Bipartite(n NI) (b bool, c1, c2 bits.Bits, oc []NI) {
 			if c2.Bit(int(nb.To)) == 1 {
 				continue
 			}
-			df(nb.To, c2, c1)
+			df(nb.To, c2, c1, n2, n1)
 			if b {
 				continue
 			}
@@ -60,11 +106,11 @@ func (g LabeledUndirected) Bipartite(n NI) (b bool, c1, c2 bits.Bits, oc []NI) {
 			return
 		}
 	}
-	df(n, &c1, &c2)
+	df(n, &c1, &c2, &n1, &n2)
 	if b {
-		return b, c1, c2, nil
+		return b, n1, n2, nil
 	}
-	return b, bits.Bits{}, bits.Bits{}, oc
+	return b, 0, 0, oc
 }
 
 // BronKerbosch1 finds maximal cliques in an undirected graph.
@@ -1012,4 +1058,19 @@ func (g LabeledUndirected) Size() int {
 		}
 	}
 	return m2 / 2
+}
+
+// Density returns edge density of a bipartite graph.
+//
+// Edge density is number of edges over maximum possible number of edges.
+// Maximum possible number of edges in a bipartite graph is number of
+// nodes of one color times number of nodes of the other color.
+func (g LabeledBipartite) Density() float64 {
+	a := g.LabeledUndirected.LabeledAdjacencyList
+	s := 0
+	g.Color.IterateOnes(func(n int) bool {
+		s += len(a[n])
+		return true
+	})
+	return float64(s) / float64(g.N1*(len(a)-g.N1))
 }

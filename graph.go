@@ -23,6 +23,7 @@ import (
 //  AdjacencyList
 //  Directed
 //  Undirected
+//  Bipartite
 //  Subgraph
 //  DirectedSubgraph
 //  UndirectedSubgraph
@@ -31,6 +32,7 @@ import (
 //  LabeledAdjacencyList
 //  LabeledDirected
 //  LabeledUndirected
+//  LabeledBipartite
 //  LabeledSubgraph
 //  LabeledDirectedSubgraph
 //  LabeledUndirectedSubgraph
@@ -58,6 +60,7 @@ import (
 
 //go:generate cp undir_cg.go undir_RO.go
 //go:generate gofmt -r "LabeledUndirected -> Undirected" -w undir_RO.go
+//go:generate gofmt -r "LabeledBipartite -> Bipartite" -w undir_RO.go
 //go:generate gofmt -r "LabeledUndirectedSubgraph -> UndirectedSubgraph" -w undir_RO.go
 //go:generate gofmt -r "LabeledAdjacencyList -> AdjacencyList" -w undir_RO.go
 //go:generate gofmt -r "newLabEulerian -> newEulerian" -w undir_RO.go
@@ -92,6 +95,32 @@ type Directed struct {
 // specifically that every arc between distinct nodes has a reciprocal.
 type Undirected struct {
 	AdjacencyList // embedded to include AdjacencyList methods
+}
+
+// Bipartite represents a bipartite graph.
+//
+// In a bipartite graph, nodes are partitioned into two sets, or
+// "colors," such that every edge in the graph goes from one set to the
+// other.
+//
+// Member Color represents the partition with a bitmap of length the same
+// as the number of nodes in the graph.  For convenience N1 stores the number
+// of one bits in Color.
+//
+// To construct a Bipartite object, if you can easily or efficiently use
+// available information to construct the Color member, then you should do
+// this and construct a Bipartite object with a Go struct literal.
+//
+// If partition information is not readily available, see the constructor
+// Undirected.Bipartite.
+//
+// Alternatively, in some cases where the graph may have multiple connected
+// components, the lower level Undirected.BipartiteComponent can be used to
+// control color assignment by component.
+type Bipartite struct {
+	Undirected
+	Color bits.Bits
+	N1    int
 }
 
 // Subgraph represents a subgraph mapped to a supergraph.
@@ -192,6 +221,32 @@ type LabeledDirected struct {
 // and Undirected.
 type LabeledUndirected struct {
 	LabeledAdjacencyList // embedded to include LabeledAdjacencyList methods
+}
+
+// LabeledBipartite represents a bipartite graph.
+//
+// In a bipartite graph, nodes are partitioned into two sets, or
+// "colors," such that every edge in the graph goes from one set to the
+// other.
+//
+// Member Color represents the partition with a bitmap of length the same
+// as the number of nodes in the graph.  For convenience N1 stores the number
+// of one bits in Color.
+//
+// To construct a LabeledBipartite object, if you can easily or efficiently use
+// available information to construct the Color member, then you should do
+// this and construct a LabeledBipartite object with a Go struct literal.
+//
+// If partition information is not readily available, see the constructor
+// Undirected.LabeledBipartite.
+//
+// Alternatively, in some cases where the graph may have multiple connected
+// components, the lower level LabeledUndirected.BipartiteComponent can be used
+// to control color assignment by component.
+type LabeledBipartite struct {
+	LabeledUndirected
+	Color bits.Bits
+	N1    int
 }
 
 // LabeledSubgraph represents a subgraph mapped to a supergraph.
