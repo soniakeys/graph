@@ -104,8 +104,8 @@ type Undirected struct {
 // other.
 //
 // Member Color represents the partition with a bitmap of length the same
-// as the number of nodes in the graph.  For convenience N1 stores the number
-// of one bits in Color.
+// as the number of nodes in the graph.  For convenience N0 stores the number
+// of zero bits in Color.
 //
 // To construct a Bipartite object, if you can easily or efficiently use
 // available information to construct the Color member, then you should do
@@ -120,7 +120,7 @@ type Undirected struct {
 type Bipartite struct {
 	Undirected
 	Color bits.Bits
-	N1    int
+	N0    int
 }
 
 // Subgraph represents a subgraph mapped to a supergraph.
@@ -230,8 +230,8 @@ type LabeledUndirected struct {
 // other.
 //
 // Member Color represents the partition with a bitmap of length the same
-// as the number of nodes in the graph.  For convenience N1 stores the number
-// of one bits in Color.
+// as the number of nodes in the graph.  For convenience N0 stores the number
+// of zero bits in Color.
 //
 // To construct a LabeledBipartite object, if you can easily or efficiently use
 // available information to construct the Color member, then you should do
@@ -246,7 +246,7 @@ type LabeledUndirected struct {
 type LabeledBipartite struct {
 	LabeledUndirected
 	Color bits.Bits
-	N1    int
+	N0    int
 }
 
 // LabeledSubgraph represents a subgraph mapped to a supergraph.

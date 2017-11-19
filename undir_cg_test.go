@@ -34,12 +34,12 @@ func ExampleLabeledUndirected_Bipartite() {
 	fmt.Println("ok   ", ok)
 	fmt.Println("(bit) 76543210")
 	fmt.Println("Color", b.Color)
-	fmt.Println("N1   ", b.N1)
+	fmt.Println("N0   ", b.N0)
 	// Output:
 	// ok    true
 	// (bit) 76543210
-	// Color 01100111
-	// N1    5
+	// Color 10011000
+	// N0    5
 }
 
 func ExampleLabeledUndirected_BipartiteComponent() {
@@ -775,4 +775,42 @@ func ExampleLabeledBipartite_Density() {
 	fmt.Printf("%.2f\n", b.Density())
 	// Output:
 	// 0.67
+}
+
+func ExampleLabeledBipartite_PermuteBiadjacency() {
+	// 3 1 4
+	//  \|/|
+	//   2 0
+	var g graph.LabeledUndirected
+	g.AddEdge(graph.Edge{3, 2}, 0)
+	g.AddEdge(graph.Edge{1, 2}, 0)
+	g.AddEdge(graph.Edge{4, 2}, 0)
+	g.AddEdge(graph.Edge{4, 0}, 0)
+	b, _, _ := g.Bipartite()
+	fmt.Println("Permutation:", b.PermuteBiadjacency())
+	fmt.Println("Biadjacency:")
+	for fr, to := range g.LabeledAdjacencyList[:b.N0] {
+		fmt.Println(fr, to)
+	}
+	fmt.Println("Full graph:")
+	for fr, to := range g.LabeledAdjacencyList {
+		fmt.Println(fr, to)
+	}
+	fmt.Println("(bit) 43210")
+	fmt.Println("Color", b.Color)
+	fmt.Println("N0   ", b.N0)
+	// Output:
+	// Permutation: [0 2 1 3 4]
+	// Biadjacency:
+	// 0 [{4 0}]
+	// 1 [{3 0} {2 0} {4 0}]
+	// Full graph:
+	// 0 [{4 0}]
+	// 1 [{3 0} {2 0} {4 0}]
+	// 2 [{1 0}]
+	// 3 [{1 0}]
+	// 4 [{1 0} {0 0}]
+	// (bit) 43210
+	// Color 11100
+	// N0    2
 }

@@ -38,15 +38,16 @@ func (g LabeledUndirected) Bipartite() (b *LabeledBipartite, oc []NI, ok bool) {
 	c1 := bits.New(g.Order())
 	c2 := bits.New(g.Order())
 	r, _, _ := g.ConnectedComponentReps()
-	var n, n1 int
+	// accumulate n2 number of zero bits in c2 as number of one bits in n1
+	var n, n2 int
 	for _, r := range r {
 		ok, n, _, oc = g.BipartiteComponent(r, c1, c2)
 		if !ok {
 			return
 		}
-		n1 += n
+		n2 += n
 	}
-	return &LabeledBipartite{g, c1, n1}, nil, true
+	return &LabeledBipartite{g, c2, n2}, nil, true
 }
 
 // BipartiteComponent analyzes the bipartite structure of a connected component
@@ -1072,5 +1073,39 @@ func (g LabeledBipartite) Density() float64 {
 		s += len(a[n])
 		return true
 	})
-	return float64(s) / float64(g.N1*(len(a)-g.N1))
+	return float64(s) / float64(g.N0*(len(a)-g.N0))
+}
+
+// PermuteBiadjacency permutes a bipartite graph in place so that a prefix
+// of the adjacency list encodes a biadjacency matrix.
+//
+// The permutation applied is returned.  This would be helpful in referencing
+// any externally stored node information.
+//
+// The biadjacency matrix is encoded as the prefix AdjacencyList[:g.N0].
+// Note though that this slice does not represent a valid complete
+// AdjacencyList.  BoundsOk would return false, for example.
+//
+// In adjacency list terms, the result of the permutation is that nodes of
+// the prefix only have arcs to the suffix and nodes of the suffix only have
+// arcs to the prefix.
+func (g LabeledBipartite) PermuteBiadjacency() []int {
+	p := make([]int, g.Order())
+	i := 0
+	g.Color.IterateZeros(func(n int) bool {
+		p[n] = i
+		i++
+		return true
+	})
+	g.Color.IterateOnes(func(n int) bool {
+		p[n] = i
+		i++
+		return true
+	})
+	g.Permute(p)
+	g.Color.ClearAll()
+	for i := g.N0; i < g.Order(); i++ {
+		g.Color.SetBit(i, 1)
+	}
+	return p
 }
