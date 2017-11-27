@@ -3,6 +3,74 @@
 
 package graph
 
+import (
+	"github.com/soniakeys/bits"
+)
+
+func (g Directed) Cycles(emit func([]NI) bool) {
+	// Implementation of "Enumeration of the elementary circuits of a directed
+	// graph", by Robert Tarjan, TR 72-145, Cornell University, September 1972.
+	a, _ := g.AdjacencyList.Copy()
+	mark := bits.New(len(a))
+	var point, marked []NI
+	var s NI
+	var backtrack func(NI, string) (bool, bool)
+	backtrack = func(v NI, indent string) (f, ok bool) {
+		point = append(point, v)
+		mark.SetBit(int(v), 1)
+		marked = append(marked, v)
+		to := a[v]
+		for i := 0; i < len(to); {
+			w := to[i]
+			if w < s {
+				// "delete w from A(v)"
+				last := len(to) - 1
+				to[i] = to[last]
+				to = to[:last]
+				a[v] = to
+			} else {
+				i++
+				if w == s {
+					if !emit(point) {
+						return f, false
+					}
+					f = true
+				} else if mark.Bit(int(w)) == 0 {
+					switch g, ok := backtrack(w, indent+"  "); {
+					case !ok:
+						return f, false
+					case g:
+						f = true
+					}
+				}
+			}
+		}
+		// "f=true if an elementary circuit continuing the partial path
+		// on the stack has been found"
+		if f {
+			top := len(marked) - 1
+			for ; marked[top] != v; top-- {
+				u := marked[top]
+				marked = marked[:top]
+				mark.SetBit(int(u), 0)
+			}
+			marked = marked[:top]
+			mark.SetBit(int(v), 0)
+		}
+		point = point[:len(point)-1]
+		return f, true
+	}
+	for s = NI(0); int(s) < len(a); s++ {
+		if _, ok := backtrack(NI(s), ""); !ok {
+			return
+		}
+		for top := len(marked) - 1; top >= 0; top-- {
+			mark.SetBit(int(marked[top]), 0)
+			marked = marked[:top]
+		}
+	}
+}
+
 // dir.go has methods specific to directed graphs, types Directed and
 // LabeledDirected, also Dominators.
 //
@@ -176,6 +244,71 @@ func (g Directed) Transpose() (t Directed, ma int) {
 		}
 	}
 	return Directed{ta}, ma
+}
+
+func (g LabeledDirected) Cycles(emit func([]Half) bool) {
+	// Adaptation of "Enumeration of the elementary circuits of a directed
+	// graph", by Robert Tarjan, TR 72-145, Cornell University, September 1972.
+	a, _ := g.LabeledAdjacencyList.Copy()
+	mark := bits.New(len(a))
+	var half []Half
+	var marked []NI
+	var s NI
+	var backtrack func(NI, string) (bool, bool)
+	backtrack = func(v NI, indent string) (f, ok bool) {
+		mark.SetBit(int(v), 1)
+		marked = append(marked, v)
+		to := a[v]
+		for i := 0; i < len(to); {
+			w := to[i]
+			if w.To < s {
+				// "delete w from A(v)"
+				last := len(to) - 1
+				to[i] = to[last]
+				to = to[:last]
+				a[v] = to
+			} else {
+				i++
+				if w.To == s {
+					if !emit(append(half, w)) {
+						return f, false
+					}
+					f = true
+				} else if mark.Bit(int(w.To)) == 0 {
+					half = append(half, w)
+					switch g, ok := backtrack(w.To, indent+"  "); {
+					case !ok:
+						return f, false
+					case g:
+						f = true
+					}
+					half = half[:len(half)-1]
+				}
+			}
+		}
+		// "f=true if an elementary circuit continuing the partial path
+		// on the stack has been found"
+		if f {
+			top := len(marked) - 1
+			for ; marked[top] != v; top-- {
+				u := marked[top]
+				marked = marked[:top]
+				mark.SetBit(int(u), 0)
+			}
+			marked = marked[:top]
+			mark.SetBit(int(v), 0)
+		}
+		return f, true
+	}
+	for s = NI(0); int(s) < len(a); s++ {
+		if _, ok := backtrack(NI(s), ""); !ok {
+			return
+		}
+		for top := len(marked) - 1; top >= 0; top-- {
+			mark.SetBit(int(marked[top]), 0)
+			marked = marked[:top]
+		}
+	}
 }
 
 // DAGMaxLenPath finds a maximum length path in a directed acyclic graph.
