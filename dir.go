@@ -3,6 +3,139 @@
 
 package graph
 
+import (
+	"log"
+	"math"
+)
+
+// dir.go has methods specific to directed graphs, types Directed and
+// LabeledDirected, also Dominators.
+//
+// Methods on Directed are first, with exported methods alphabetized.
+// Dominators type and methods are at the end.
+//----------------------------
+
+type arc struct {
+	fr NI
+	to Half
+}
+type path struct {
+	start NI
+	steps []Half
+}
+
+/*
+func (g LabeledDirected) NegativeCycles(w WeightFunc, emit func([]NI) bool) {
+	a : = g.LabeledAdjacencyList
+	tr := a.UnLabeledTranspose() // transpose to speed G(F,R)
+	var all_nc func([]NI, map[arc]bool) bool
+	all_nc = func(F []NI, R map[arc]bool) bool {
+		// Step 1
+		if len(f) == 0 {
+			C = an_nc(0, R)
+			if C == 0 {
+				return true
+			}
+			// else continue to step 4
+		} else {
+			GFR := gfr(F, R)
+			// Step 2
+			if !(zL(GFR, F, R) < 0) {
+				return true
+			}
+			// Step 3
+			πΓ := zΓ(F, R)
+			if len(πΓ) == 0 {
+				// Step 5 (uncertain case)
+			}
+			C =
+			// else continue to step 4
+		}
+		// Step 4
+	}
+	all_nc(0, 0)
+}
+*/
+func gfr(a LabeledAdjacencyList, tr AdjacencyList, F path, R map[arc]bool) LabeledAdjacencyList {
+	g, _ := a.Copy()
+	s := F.steps
+	// remove arcs from nodes in F except last
+	if len(s) > 0 {
+		g[F.start] = nil
+		for _, h := range s[:len(s)-1] {
+			g[h.To] = nil
+		}
+	}
+	// remove arcs to nodes in F except start
+	for _, step := range s {
+		for _, fr := range tr[step.To] {
+			to := g[fr]
+			for i, h := range to {
+				if h.To == step.To {
+					last := len(to) - 1
+					to[i] = to[last]
+					to = to[:last]
+					g[fr] = to
+				}
+			}
+		}
+	}
+	// remove arcs in R
+	for a := range R {
+		to := g[a.fr]
+		for i, n := range to {
+			if n == a.to {
+				last := len(to) - 1
+				to[i] = to[last]
+				to = to[:last]
+				g[a.fr] = to
+				break
+			}
+		}
+	}
+	return g
+}
+
+func wPath(F path, w WeightFunc) float64 {
+	d := 0.
+	for _, h := range F.steps {
+		d += w(h.Label)
+	}
+	return d
+}
+
+func zL(GFR LabeledAdjacencyList, F path, wf WeightFunc, wp float64) float64 {
+	d0 := make([]float64, len(GFR))
+	d1 := make([]float64, len(GFR))
+	for i := range d0 {
+		d0[i] = math.Inf(1)
+	}
+	s := F.steps
+	d0[s[len(s)-1].To] = 0
+	log.Printf("%5.0f", d0)
+	for j := len(s); j < len(GFR); j++ {
+		for i, d := range d0 {
+			d1[i] = d
+		}
+		for vʹ, d0vʹ := range d0 {
+			if d0vʹ < math.Inf(1) {
+				for _, to := range GFR[vʹ] {
+					if sum := d0vʹ + wf(to.Label); sum < d1[to.To] {
+						d1[to.To] = sum
+					}
+				}
+			}
+		}
+		d0, d1 = d1, d0
+		log.Printf("%5.0f", d0)
+	}
+	return d0[F.start] + wp
+}
+
+func zΓ(GFR LabeledAdjacencyList, F path, wf WeightFunc, wp float64) {
+
+}
+
 // Cycles emits all elementary cycles in a directed graph.
 //
 // The algorithm here is Johnson's.  See also the equivalent but generally
@@ -111,12 +244,6 @@ func (g Directed) Cycles(emit func([]NI) bool) {
 		}
 	}
 }
-
-// dir.go has methods specific to directed graphs, types Directed and
-// LabeledDirected, also Dominators.
-//
-// Methods on Directed are first, with exported methods alphabetized.
-// Dominators type and methods are at the end.
 
 // DAGMaxLenPath finds a maximum length path in a directed acyclic graph.
 //

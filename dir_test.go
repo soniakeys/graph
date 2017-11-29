@@ -5,6 +5,8 @@ package graph_test
 
 import (
 	"fmt"
+	"reflect"
+	"testing"
 
 	"github.com/soniakeys/graph"
 )
@@ -40,6 +42,52 @@ func ExampleDirected_Cycles() {
 	// [1 5 4]
 	// [2 3 6 5]
 	// [2 6 5]
+}
+
+func TestCycles(t *testing.T) {
+	// Tushar Roy https://www.youtube.com/watch?v=johyrWospv0
+	//   /---->9
+	//  8<----/^
+	//  ^      |
+	//  |      |
+	//  1----->2--->7
+	//  ^     ^|^
+	//   \   / | \
+	//    \ / /   5
+	//     3<-    ^
+	//     |\     |
+	//     | ---->4
+	//     v      ^
+	//     6-----/
+	g := graph.Directed{graph.AdjacencyList{
+		8: {9},
+		9: {8},
+		1: {8, 2, 5},
+		2: {9, 7, 3},
+		3: {1, 2, 4, 6},
+		6: {4},
+		4: {5},
+		5: {2},
+	}}
+	want := [][]graph.NI{
+		{1, 2, 3},
+		{1, 5, 2, 3},
+		{2, 3},
+		{2, 3, 4, 5},
+		{2, 3, 6, 4, 5},
+		{8, 9},
+	}
+	i := 0
+	g.Cycles(func(c []graph.NI) bool {
+		if !reflect.DeepEqual(c, want[i]) {
+			t.Fatalf("cycle %d, got %d, want %d", i, c, want[i])
+		}
+		i++
+		return true
+	})
+	if i != len(want) {
+		t.Fatalf("only %d cycles.  want %d.", i, len(want))
+	}
 }
 
 func ExampleDirected_DAGMaxLenPath() {
