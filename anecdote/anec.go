@@ -7,6 +7,7 @@ package main
 import (
 	"fmt"
 	"math"
+	"math/rand"
 	"runtime"
 	"time"
 
@@ -25,6 +26,7 @@ func main() {
 	shortestone()
 	eulerian()
 	parallel()
+	cycles()
 }
 
 func h(n int) string {
@@ -234,5 +236,25 @@ func parallel() {
 			best = "Sort"
 		}
 		fmt.Printf("%2d  %12s  %12s  %s\n", i, ts, tm, best)
+	}
+}
+
+func cycles() {
+	fmt.Println("\nDirectedCycles")
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	g := graph.GnmDirected(18, 90, r)
+	g.ShuffleArcLists(r)
+	fmt.Println("Method                 Graph                                          Time")
+	for _, tc := range []struct {
+		f func(graph.Directed, func([]graph.NI) bool)
+		s string
+	}{
+		{graph.Directed.Cycles, "Johnson"},
+		{alt.TarjanCycles, "Tarjan"},
+	} {
+		t := time.Now()
+		tc.f(g, func(emit []graph.NI) bool { return true })
+		d := time.Now().Sub(t)
+		fmt.Printf("%-22s %-38s %12s\n", tc.s, "Gnm 18 90", d)
 	}
 }

@@ -3,70 +3,111 @@
 
 package graph
 
-import (
-	"github.com/soniakeys/bits"
-)
-
+// Cycles emits all elementary cycles in a directed graph.
+//
+// The algorithm here is Johnson's.  See also the equivalent but generally
+// slower alt.TarjanCycles.
 func (g Directed) Cycles(emit func([]NI) bool) {
-	// Implementation of "Enumeration of the elementary circuits of a directed
-	// graph", by Robert Tarjan, TR 72-145, Cornell University, September 1972.
-	a, _ := g.AdjacencyList.Copy()
-	mark := bits.New(len(a))
-	var point, marked []NI
+	// Johnsons "Finding all the elementary circuits of a directed graph",
+	// SIAM J. Comput. Vol. 4, No. 1, March 1975.
+	a := g.AdjacencyList
+	k := make(AdjacencyList, len(a))
+	B := make([]map[NI]bool, len(a))
+	blocked := make([]bool, len(a))
+	for i := range a {
+		blocked[i] = true
+		B[i] = map[NI]bool{}
+	}
 	var s NI
-	var backtrack func(NI, string) (bool, bool)
-	backtrack = func(v NI, indent string) (f, ok bool) {
-		point = append(point, v)
-		mark.SetBit(int(v), 1)
-		marked = append(marked, v)
-		to := a[v]
-		for i := 0; i < len(to); {
-			w := to[i]
-			if w < s {
-				// "delete w from A(v)"
-				last := len(to) - 1
-				to[i] = to[last]
-				to = to[:last]
-				a[v] = to
-			} else {
-				i++
-				if w == s {
-					if !emit(point) {
-						return f, false
-					}
+	var stack []NI
+	var unblock func(NI)
+	unblock = func(u NI) {
+		blocked[u] = false
+		for w := range B[u] {
+			delete(B[u], w)
+			if blocked[w] {
+				unblock(w)
+			}
+		}
+	}
+	var circuit func(NI) (bool, bool)
+	circuit = func(v NI) (found, ok bool) {
+		f := false
+		stack = append(stack, v)
+		blocked[v] = true
+		for _, w := range k[v] {
+			if w == s {
+				if !emit(stack) {
+					return
+				}
+				f = true
+			} else if !blocked[w] {
+				switch found, ok = circuit(w); {
+				case !ok:
+					return
+				case found:
 					f = true
-				} else if mark.Bit(int(w)) == 0 {
-					switch g, ok := backtrack(w, indent+"  "); {
-					case !ok:
-						return f, false
-					case g:
-						f = true
-					}
 				}
 			}
 		}
-		// "f=true if an elementary circuit continuing the partial path
-		// on the stack has been found"
 		if f {
-			top := len(marked) - 1
-			for ; marked[top] != v; top-- {
-				u := marked[top]
-				marked = marked[:top]
-				mark.SetBit(int(u), 0)
+			unblock(v)
+		} else {
+			for _, w := range k[v] {
+				B[w][v] = true
 			}
-			marked = marked[:top]
-			mark.SetBit(int(v), 0)
 		}
-		point = point[:len(point)-1]
+		stack = stack[:len(stack)-1]
 		return f, true
 	}
-	for s = NI(0); int(s) < len(a); s++ {
-		if _, ok := backtrack(NI(s), ""); !ok {
+	for s = 0; int(s) < len(a); s++ {
+		// (so there's a little extra n^2 component introduced here that
+		// comes from not making a proper subgraph but just removing arcs
+		// and leaving isolated nodes.  Iterating over the isolated nodes
+		// should be very fast though.  It seems like it would be a net win
+		// over creating a subgraph.)
+		// shallow subgraph
+		for z := NI(0); z < s; z++ {
+			k[z] = nil
+		}
+		for z := int(s); z < len(a); z++ {
+			k[z] = a[z]
+		}
+		// find scc in k with s
+		var scc []NI
+		Directed{k}.StronglyConnectedComponents(func(c []NI) bool {
+			for _, n := range c {
+				if n == s { // this is it
+					scc = c
+					return false // stop scc search
+				}
+			}
+			return true // keep looking
+		})
+		// clear k
+		for n := range k {
+			k[n] = nil
+		}
+		// map component
+		for _, n := range scc {
+			blocked[n] = false
+		}
+		// copy component to k
+		for _, fr := range scc {
+			var kt []NI
+			for _, to := range a[fr] {
+				if !blocked[to] {
+					kt = append(kt, to)
+				}
+			}
+			k[fr] = kt
+		}
+		if _, ok := circuit(s); !ok {
 			return
 		}
-		for top := len(marked) - 1; top >= 0; top-- {
-			mark.SetBit(int(marked[top]), 0)
-			marked = marked[:top]
+		// reblock component
+		for _, n := range scc {
+			blocked[n] = true
 		}
 	}
 }
@@ -246,67 +287,98 @@ func (g Directed) Transpose() (t Directed, ma int) {
 	return Directed{ta}, ma
 }
 
+// Cycles emits all elementary cycles in a directed graph.
+//
+// The algorithm here is Johnson's.  See also the equivalent but generally
+// slower alt.TarjanCycles.
 func (g LabeledDirected) Cycles(emit func([]Half) bool) {
-	// Adaptation of "Enumeration of the elementary circuits of a directed
-	// graph", by Robert Tarjan, TR 72-145, Cornell University, September 1972.
-	a, _ := g.LabeledAdjacencyList.Copy()
-	mark := bits.New(len(a))
-	var half []Half
-	var marked []NI
+	a := g.LabeledAdjacencyList
+	k := make(LabeledAdjacencyList, len(a))
+	B := make([]map[NI]bool, len(a))
+	blocked := make([]bool, len(a))
+	for i := range a {
+		blocked[i] = true
+		B[i] = map[NI]bool{}
+	}
 	var s NI
-	var backtrack func(NI, string) (bool, bool)
-	backtrack = func(v NI, indent string) (f, ok bool) {
-		mark.SetBit(int(v), 1)
-		marked = append(marked, v)
-		to := a[v]
-		for i := 0; i < len(to); {
-			w := to[i]
-			if w.To < s {
-				// "delete w from A(v)"
-				last := len(to) - 1
-				to[i] = to[last]
-				to = to[:last]
-				a[v] = to
-			} else {
-				i++
-				if w.To == s {
-					if !emit(append(half, w)) {
-						return f, false
-					}
-					f = true
-				} else if mark.Bit(int(w.To)) == 0 {
-					half = append(half, w)
-					switch g, ok := backtrack(w.To, indent+"  "); {
-					case !ok:
-						return f, false
-					case g:
-						f = true
-					}
-					half = half[:len(half)-1]
-				}
+	var stack []Half
+	var unblock func(NI)
+	unblock = func(u NI) {
+		blocked[u] = false
+		for w := range B[u] {
+			delete(B[u], w)
+			if blocked[w] {
+				unblock(w)
 			}
 		}
-		// "f=true if an elementary circuit continuing the partial path
-		// on the stack has been found"
-		if f {
-			top := len(marked) - 1
-			for ; marked[top] != v; top-- {
-				u := marked[top]
-				marked = marked[:top]
-				mark.SetBit(int(u), 0)
+	}
+	var circuit func(NI) (bool, bool)
+	circuit = func(v NI) (found, ok bool) {
+		f := false
+		blocked[v] = true
+		for _, w := range k[v] {
+			if w.To == s {
+				if !emit(append(stack, w)) {
+					return
+				}
+				f = true
+			} else if !blocked[w.To] {
+				stack = append(stack, w)
+				switch found, ok = circuit(w.To); {
+				case !ok:
+					return
+				case found:
+					f = true
+				}
+				stack = stack[:len(stack)-1]
 			}
-			marked = marked[:top]
-			mark.SetBit(int(v), 0)
+		}
+		if f {
+			unblock(v)
+		} else {
+			for _, w := range k[v] {
+				B[w.To][v] = true
+			}
 		}
 		return f, true
 	}
-	for s = NI(0); int(s) < len(a); s++ {
-		if _, ok := backtrack(NI(s), ""); !ok {
+	for s = 0; int(s) < len(a); s++ {
+		for z := NI(0); z < s; z++ {
+			k[z] = nil
+		}
+		for z := int(s); z < len(a); z++ {
+			k[z] = a[z]
+		}
+		var scc []NI
+		LabeledDirected{k}.StronglyConnectedComponents(func(c []NI) bool {
+			for _, n := range c {
+				if n == s {
+					scc = c
+					return false
+				}
+			}
+			return true
+		})
+		for n := range k {
+			k[n] = nil
+		}
+		for _, n := range scc {
+			blocked[n] = false
+		}
+		for _, fr := range scc {
+			var kt []Half
+			for _, to := range a[fr] {
+				if !blocked[to.To] {
+					kt = append(kt, to)
+				}
+			}
+			k[fr] = kt
+		}
+		if _, ok := circuit(s); !ok {
 			return
 		}
-		for top := len(marked) - 1; top >= 0; top-- {
-			mark.SetBit(int(marked[top]), 0)
-			marked = marked[:top]
+		for _, n := range scc {
+			blocked[n] = true
 		}
 	}
 }
