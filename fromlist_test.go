@@ -159,6 +159,38 @@ func ExampleFromList_PathTo() {
 	// [3]
 }
 
+func ExampleFromList_PathToLabeled() {
+	//       4  3
+	//   'x'/
+	//     1
+	// 'y'/ \'z'
+	//   0   2
+	t := &graph.FromList{
+		Paths: []graph.PathEnd{
+			4: {From: -1, Len: 1},
+			3: {From: -1, Len: 1},
+			1: {From: 4, Len: 2},
+			0: {From: 1, Len: 3},
+			2: {From: 1, Len: 3},
+		},
+	}
+	labels := []graph.LI{
+		1: 'x',
+		0: 'y',
+		2: 'z',
+	}
+	t.RecalcLeaves()
+	t.RecalcLen()
+	p := t.PathToLabeled(0, labels, nil)
+	fmt.Print(p.Start)
+	for _, h := range p.Path {
+		fmt.Printf(" {%d %c}", h.To, h.Label)
+	}
+	fmt.Println()
+	// Output:
+	// 4 {1 x} {0 y}
+}
+
 func ExampleFromList_Preorder() {
 	//     2
 	//    / \

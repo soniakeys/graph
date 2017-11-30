@@ -39,7 +39,7 @@ func ExampleLabeledAdjacencyList_AStarAPath() {
 	fmt.Println("Shortest path:", p)
 	fmt.Println("Path distance:", d)
 	// Output:
-	// Shortest path: [0 2 3 4]
+	// Shortest path: {0 [{2 9} {3 11} {4 6}]}
 	// Path distance: 26
 }
 
@@ -70,7 +70,7 @@ func ExampleLabeledAdjacencyList_AStarMPath() {
 	fmt.Println("Shortest path:", p)
 	fmt.Println("Path distance:", d)
 	// Output:
-	// Shortest path: [0 2 3 4]
+	// Shortest path: {0 [{2 9} {3 11} {4 6}]}
 	// Path distance: 26
 }
 
@@ -160,36 +160,36 @@ func ExampleLabeledDirected_BellmanFord() {
 	// but negative cycle not reached starting at node 1
 	start := graph.NI(1)
 	fmt.Println("start:", start)
-	f, dist, end := g.BellmanFord(w, start)
+	f, labels, dist, end := g.BellmanFord(w, start)
 	if end >= 0 {
 		fmt.Println("negative cycle")
 		return
 	} else {
 		fmt.Println("no negative cycle reachable from", start)
 	}
-	fmt.Println("end   path  path")
-	fmt.Println("node  len   dist   path")
+	fmt.Println("end       path  path")
+	fmt.Println("node  LI  len   dist   path")
 	p := make([]graph.NI, f.MaxLen)
 	for n, e := range f.Paths {
-		fmt.Printf("%d       %d   %4.0f   %d\n",
-			n, e.Len, dist[n], f.PathTo(graph.NI(n), p))
+		fmt.Printf("%d    %3d    %d   %4.0f   %d\n",
+			n, labels[n], e.Len, dist[n], f.PathTo(graph.NI(n), p))
 	}
 	// Output:
 	// negative cycle: true
 	// start: 1
 	// no negative cycle reachable from 1
-	// end   path  path
-	// node  len   dist   path
-	// 0       0   +Inf   []
-	// 1       1      0   [1]
-	// 2       4      5   [1 8 7 2]
-	// 3       6      5   [1 8 7 2 6 3]
-	// 4       0   +Inf   []
-	// 5       0   +Inf   []
-	// 6       5      7   [1 8 7 2 6]
-	// 7       3      9   [1 8 7]
-	// 8       2      8   [1 8]
-	// 9       0   +Inf   []
+	// end       path  path
+	// node  LI  len   dist   path
+	// 0      0    0   +Inf   []
+	// 1      0    1      0   [1]
+	// 2     -4    4      5   [1 8 7 2]
+	// 3     -2    6      5   [1 8 7 2 6 3]
+	// 4      0    0   +Inf   []
+	// 5      0    0   +Inf   []
+	// 6      2    5      7   [1 8 7 2 6]
+	// 7      1    3      9   [1 8 7]
+	// 8      8    2      8   [1 8]
+	// 9      0    0   +Inf   []
 }
 
 func ExampleFromList_BellmanFordCycle() {
@@ -219,7 +219,7 @@ func ExampleFromList_BellmanFordCycle() {
 	w := func(label graph.LI) float64 { return float64(label) }
 	start := graph.NI(10)
 	fmt.Println("start:", start)
-	f, _, end := g.BellmanFord(w, start)
+	f, _, _, end := g.BellmanFord(w, start)
 	fmt.Println("end of path with negative cycle:", end)
 	fmt.Println("negative cycle:", f.BellmanFordCycle(end))
 	// Output:
@@ -254,7 +254,7 @@ func ExampleLabeledDirected_NegativeCycle() {
 	w := func(label graph.LI) float64 { return float64(label) }
 	fmt.Println(g.NegativeCycle(w))
 	// Output:
-	// [9 4 5]
+	// [{9 -10} {4 6} {5 3}]
 }
 
 func ExampleLabeledDirected_DAGOptimalPaths_allShortestPaths() {
@@ -283,27 +283,27 @@ func ExampleLabeledDirected_DAGOptimalPaths_allShortestPaths() {
 	w := func(l graph.LI) float64 { return float64(l) }
 	// find all shortest paths from 3
 	var start, end graph.NI = 3, -1
-	f, dist, reached := g.DAGOptimalPaths(start, end, o, w, false)
-	fmt.Println("node  path dist  path len  leaf")
+	f, labels, dist, reached := g.DAGOptimalPaths(start, end, o, w, false)
+	fmt.Println("node  LI  path dist  path len  leaf")
 	for n, pd := range dist {
-		fmt.Printf("%d  %9.0f  %9d %7d\n",
-			n, pd, f.Paths[n].Len, f.Leaves.Bit(n))
+		fmt.Printf("%d  %5d %7.0f  %9d %7d\n",
+			n, labels[n], pd, f.Paths[n].Len, f.Leaves.Bit(n))
 	}
 	fmt.Println()
 	fmt.Println("Nodes reached:       ", reached)
 	fmt.Println("Max path len:        ", f.MaxLen)
 	// Output:
-	// node  path dist  path len  leaf
-	// 0          0          0       0
-	// 1          0          0       0
-	// 2          0          0       0
-	// 3          0          1       0
-	// 4          0          0       0
-	// 5         10          2       0
-	// 6         20          3       0
-	// 7         40          3       0
-	// 8         30          4       1
-	// 9         50          4       1
+	// node  LI  path dist  path len  leaf
+	// 0      0       0          0       0
+	// 1      0       0          0       0
+	// 2      0       0          0       0
+	// 3      0       0          1       0
+	// 4      0       0          0       0
+	// 5     10      10          2       0
+	// 6     10      20          3       0
+	// 7     30      40          3       0
+	// 8     10      30          4       1
+	// 9     10      50          4       1
 	//
 	// Nodes reached:        6
 	// Max path len:         4
@@ -337,7 +337,7 @@ func ExampleLabeledDirected_DAGMinDistPath() {
 	fmt.Println("Path:", p)
 	fmt.Println("Distance:", dist)
 	// Output:
-	// Path: [3 1 0 6 2]
+	// Path: {3 [{1 10} {0 -10} {6 5} {2 10}]}
 	// Distance: 15
 }
 
@@ -369,7 +369,7 @@ func ExampleLabeledDirected_DAGMaxDistPath() {
 	fmt.Println("Path:", p)
 	fmt.Println("Distance:", dist)
 	// Output:
-	// Path: [3 1 4 0 5 6 2]
+	// Path: {3 [{1 10} {4 -3} {0 -2} {5 2} {6 3} {2 10}]}
 	// Distance: 20
 }
 
@@ -398,7 +398,7 @@ func ExampleLabeledAdjacencyList_DijkstraPath() {
 	fmt.Println("Shortest path:", p)
 	fmt.Println("Path distance:", d)
 	// Output:
-	// Shortest path: [1 6 5]
+	// Shortest path: {1 [{6 11} {5 9}]}
 	// Path distance: 20
 }
 
@@ -424,26 +424,26 @@ func ExampleLabeledAdjacencyList_Dijkstra_allPaths() {
 	}
 	w := func(label graph.LI) float64 { return float64(label) }
 	start := graph.NI(2)
-	f, dist, n := g.Dijkstra(start, -1, w)
+	f, labels, dist, n := g.Dijkstra(start, -1, w)
 	fmt.Println(n, "paths found.")
-	fmt.Println("node:  path                  len  dist")
+	fmt.Println("node:  path      len  dist   LI")
 	p := make([]graph.NI, f.MaxLen)
 	for nd := range g {
 		r := &f.Paths[nd]
 		path := f.PathTo(graph.NI(nd), p)
 		if r.Len > 0 {
-			fmt.Printf("%d:     %-23s %d    %2.0f\n",
-				nd, fmt.Sprint(path), r.Len, dist[nd])
+			fmt.Printf("%d:     %-11s %d    %2.0f  %3d\n",
+				nd, fmt.Sprint(path), r.Len, dist[nd], labels[nd])
 		}
 	}
 
 	// Output:
 	// 4 paths found.
-	// node:  path                  len  dist
-	// 2:     [2]                     1     0
-	// 3:     [2 3]                   2    11
-	// 4:     [2 3 4]                 3    17
-	// 5:     [2 5]                   2     2
+	// node:  path      len  dist   LI
+	// 2:     [2]         1     0    0
+	// 3:     [2 3]       2    11   11
+	// 4:     [2 3 4]     3    17    6
+	// 5:     [2 5]       2     2    2
 }
 
 func TestSSSP(t *testing.T) {
@@ -453,13 +453,13 @@ func TestSSSP(t *testing.T) {
 
 func testSSSP(tc testCase, t *testing.T) {
 	w := func(label graph.LI) float64 { return tc.w[label] }
-	f, dist, _ := tc.l.LabeledAdjacencyList.Dijkstra(tc.start, tc.end, w)
-	pathD := f.PathTo(tc.end, nil)
+	f, labels, dist, _ := tc.l.LabeledAdjacencyList.Dijkstra(tc.start, tc.end, w)
+	pathD := f.PathToLabeled(tc.end, labels, nil)
 	distD := dist[tc.end]
 	// A*
 	pathA, distA := tc.l.AStarAPath(tc.start, tc.end, tc.h, w)
 	// test that a* path is same distance and length as dijkstra path
-	if len(pathA) != len(pathD) {
+	if len(pathA.Path) != len(pathD.Path) {
 		t.Log("pathA:", pathA)
 		t.Log("pathD:", pathD)
 		t.Fatal(len(tc.w), "A, D len mismatch")
@@ -471,8 +471,8 @@ func testSSSP(tc testCase, t *testing.T) {
 		t.Fatal(len(tc.w), "A, D dist mismatch")
 	}
 	// test Bellman Ford against Dijkstra all paths
-	dr, _, _ := tc.l.LabeledAdjacencyList.Dijkstra(tc.start, -1, w)
-	br, _, _ := tc.l.BellmanFord(w, tc.start)
+	dr, _, _, _ := tc.l.LabeledAdjacencyList.Dijkstra(tc.start, -1, w)
+	br, _, _, _ := tc.l.BellmanFord(w, tc.start)
 	// result objects should be identical
 	if len(dr.Paths) != len(br.Paths) {
 		t.Fatal("len(dr.Paths), len(br.Paths)",

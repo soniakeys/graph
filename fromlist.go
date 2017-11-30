@@ -180,7 +180,7 @@ func (f FromList) PathTo(end NI, p []NI) []NI {
 func PathTo(paths []PathEnd, end NI, p []NI) []NI {
 	n := paths[end].Len
 	if n == 0 {
-		return nil
+		return p[:0]
 	}
 	if cap(p) >= n {
 		p = p[:n]
@@ -194,6 +194,38 @@ func PathTo(paths []PathEnd, end NI, p []NI) []NI {
 			return p
 		}
 		end = paths[end].From
+	}
+}
+
+// PathToLabeled decodes a FromList, recovering a single path.
+//
+// The start of the returned path will be a root node of the FromList.
+//
+// Only the Paths member of the receiver is used.  Other members of the
+// FromList do not need to be valid, however the MaxLen member can be useful
+// for allocating argument p.
+//
+// Argument p can provide the result slice.  If p has capacity for the result
+// it will be used, otherwise a new slice is created for the result.
+//
+// See also function PathTo.
+func (f FromList) PathToLabeled(end NI, labels []LI, p []Half) LabeledPath {
+	n := f.Paths[end].Len - 1
+	if n <= 0 {
+		return LabeledPath{end, p[:0]}
+	}
+	if cap(p) >= n {
+		p = p[:n]
+	} else {
+		p = make([]Half, n)
+	}
+	for {
+		n--
+		p[n] = Half{To: end, Label: labels[end]}
+		end = f.Paths[end].From
+		if n == 0 {
+			return LabeledPath{end, p}
+		}
 	}
 }
 

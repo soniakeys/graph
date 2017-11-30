@@ -38,6 +38,7 @@ import (
 //  LabeledUndirectedSubgraph
 //  Edge
 //  LabeledEdge
+//  LabeledPath
 //  WeightFunc
 //  WeightedEdgeList
 //  TraverseOption
@@ -286,6 +287,12 @@ type Edge struct{ N1, N2 NI }
 type LabeledEdge struct {
 	Edge
 	LI
+}
+
+// LabeledPath is a start node and a path of half arcs leading from start.
+type LabeledPath struct {
+	Start NI
+	Path  []Half
 }
 
 // WeightFunc returns a weight for a given label.
