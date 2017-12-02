@@ -541,49 +541,83 @@ func ExampleLabeledDirected_Cycles() {
 }
 
 func TestNegativeCycles(t *testing.T) {
-	// example from the paper
-	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
-		1:  {{2, 53}, {6, 180}, {11, 353}},
-		2:  {{5, -30}},
-		3:  {{2, -10}, {4, -104}},
-		4:  {{2, 70}, {8, 172}},
-		5:  {{4, 10}, {6, 98}, {7, -20}},
-		6:  {{2, -20}, {7, 133}, {11, 175}, {12, 190}, {20, 162}},
-		7:  {{4, -40}, {10, 30}, {20, 120}},
-		8:  {{3, 183}, {7, 10}, {16, 338}},
-		9:  {{7, 159}, {8, -60}, {16, 201}},
-		10: {{9, 94}, {14, -50}, {15, 169}},
-		11: {{12, 60}, {19, 234}},
-		12: {{10, 134}, {13, 104}, {20, 104}},
-		13: {{10, 150}, {19, 86}},
-		14: {{13, 47}, {15, 30}},
-		15: {{9, -90}, {16, 115}, {18, 92}},
-		16: {{17, 125}},
-		17: {{18, 98}},
-		18: {{16, 137}},
-		19: {{14, 55}, {18, 100}},
-		20: {{10, 40}},
-	}}
-	/*
-		n := 0
-		g.Cycles(func(c []graph.Half) bool {
-			n++
-			d := 0.
-			for _, h := range c {
-				d += float64(h.Label)
-			}
-			if d < 0 {
-				log.Print(d, ": ", c)
-			}
-			return true
-		})
-		t.Log("------ ", n, " total cycles --------")
-	*/
-	g.NegativeCycles(func(l graph.LI) float64 { return float64(l) },
-		func(c []graph.Half) bool {
-			t.Log(c)
-			return true
-		})
+	// example from the paper, by table 1.  (arrows on fig 3 seem wrong)
+	arcs := []struct {
+		fr, to graph.NI
+		wt     float64
+	}{
+		1:  {1, 2, 53},
+		2:  {1, 6, 180},
+		3:  {1, 11, 353},
+		4:  {3, 2, -10},
+		5:  {4, 2, 70},
+		6:  {2, 5, -30},
+		7:  {6, 2, -20},
+		8:  {3, 4, -104},
+		9:  {8, 3, 183},
+		10: {5, 4, 10},
+		11: {7, 4, -40},
+		12: {4, 8, 172},
+		13: {5, 6, 98},
+		14: {5, 7, -20},
+		15: {6, 7, 133},
+		16: {6, 11, 175},
+		17: {6, 12, 190},
+		18: {6, 20, 162},
+		19: {8, 7, 10},
+		20: {9, 7, 159},
+		21: {7, 10, 30},
+		22: {7, 20, 120},
+		23: {9, 8, -60},
+		24: {8, 16, 338},
+		25: {10, 9, 94},
+		26: {15, 9, -90},
+		27: {9, 16, 201},
+		28: {12, 10, 134},
+		29: {13, 10, 150},
+		30: {10, 14, -50},
+		31: {10, 15, 169},
+		32: {20, 10, 40},
+		33: {11, 12, 60},
+		34: {11, 19, 234},
+		35: {12, 13, 104},
+		36: {12, 20, 104},
+		37: {14, 13, 47},
+		38: {18, 19, 86},
+		39: {14, 15, 30},
+		40: {19, 14, 55},
+		41: {15, 16, 115},
+		42: {15, 18, 92},
+		43: {16, 17, 125},
+		44: {18, 16, 137},
+		45: {17, 18, 98},
+		46: {19, 18, 100},
+	}
+	a := make(graph.LabeledAdjacencyList, 21)
+	for e := 1; e <= 46; e++ {
+		arc := arcs[e]
+		a[arc.fr] = append(a[arc.fr], graph.Half{arc.to, graph.LI(e)})
+	}
+	w := func(l graph.LI) float64 { return arcs[l].wt }
+	// results from paragraph of section 4, p. 284.
+	want := [][]graph.LI{
+		{21, 30, 39, 26, 23, 19},             // C2
+		{6, 14, 11, 5},                       // C1
+		{21, 30, 39, 26, 23, 9, 8, 5, 6, 14}, // C3
+		{21, 30, 39, 26, 23, 9, 4, 6, 14},    // C4 (corrected)
+	}
+	i := 0
+	graph.LabeledDirected{a}.NegativeCycles(w, func(c []graph.Half) bool {
+		got := make([]graph.LI, len(c))
+		for i, e := range c {
+			got[i] = e.Label
+		}
+		if !reflect.DeepEqual(got, want[i]) {
+			t.Fatal(got, want[i])
+		}
+		i++
+		return true
+	})
 }
 
 func ExampleLabeledDirected_DAGMaxLenPath() {
