@@ -481,17 +481,23 @@ func ExampleLabeledDirected_NegativeCycles() {
 		5: {{To: 1, Label: -2}, {To: 2, Label: -2}, {To: 4, Label: -1}},
 		6: {{To: 5, Label: 1}},
 	}}
-	g.NegativeCycles(func(l graph.LI) float64 { return float64(l) },
-		func(c []graph.Half) bool {
-			fmt.Println(c)
-			return true
-		})
+	w := func(l graph.LI) float64 { return float64(l) }
+	fmt.Println("dist  cycle")
+	g.NegativeCycles(w, func(c []graph.Half) bool {
+		d := 0.
+		for _, h := range c {
+			d += w(h.Label)
+		}
+		fmt.Printf("%3.0f   %d\n", d, c)
+		return true
+	})
 	// Output:
-	// [{2 -2} {6 -1} {5 1}]
-	// [{1 -4} {5 1} {4 -1}]
-	// [{1 -2} {5 1}]
-	// [{1 -4} {2 2} {6 -1} {5 1} {4 -1}]
-	// [{1 -4} {2 2} {3 2} {6 -1} {5 1} {4 -1}]
+	// dist  cycle
+	//  -2   [{2 -2} {6 -1} {5 1}]
+	//  -4   [{1 -4} {5 1} {4 -1}]
+	//  -1   [{1 -2} {5 1}]
+	//  -3   [{1 -4} {2 2} {6 -1} {5 1} {4 -1}]
+	//  -1   [{1 -4} {2 2} {3 2} {6 -1} {5 1} {4 -1}]
 }
 
 func ExampleLabeledDirected_Cycles() {
