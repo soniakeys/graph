@@ -295,6 +295,15 @@ type LabeledPath struct {
 	Path  []Half
 }
 
+// Distance returns total path distance given WeightFunc w.
+func (p LabeledPath) Distance(w WeightFunc) float64 {
+	d := 0.
+	for _, h := range p.Path {
+		d += w(h.Label)
+	}
+	return d
+}
+
 // WeightFunc returns a weight for a given label.
 //
 // WeightFunc is a parameter type for various search functions.  The intent

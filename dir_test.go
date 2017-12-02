@@ -461,6 +461,39 @@ func ExampleDominators_Set() {
 
 // ------- Labeled examples -------
 
+func ExampleLabeledDirected_NegativeCycles() {
+	//     -1      2
+	//  0----->1------>2--\
+	//  ^     ^^\     ^|   \2
+	// 3|  -4/ ||1   / |-1  v
+	//  |   /  ||   /  |    3
+	//  |  /   ||  /   |   /
+	//  | /  -2|| /-2  |  /-1
+	//  |/     \v/     v /
+	//  4<------5<-----6<
+	//      -1      1
+	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
+		0: {{To: 1, Label: -1}},
+		1: {{To: 2, Label: 2}, {To: 5, Label: 1}},
+		2: {{To: 3, Label: 2}, {To: 6, Label: -1}},
+		3: {{To: 6, Label: -1}},
+		4: {{To: 0, Label: 3}, {To: 1, Label: -4}},
+		5: {{To: 1, Label: -2}, {To: 2, Label: -2}, {To: 4, Label: -1}},
+		6: {{To: 5, Label: 1}},
+	}}
+	g.NegativeCycles(func(l graph.LI) float64 { return float64(l) },
+		func(c []graph.Half) bool {
+			fmt.Println(c)
+			return true
+		})
+	// Output:
+	// [{2 -2} {6 -1} {5 1}]
+	// [{1 -4} {5 1} {4 -1}]
+	// [{1 -2} {5 1}]
+	// [{1 -4} {2 2} {6 -1} {5 1} {4 -1}]
+	// [{1 -4} {2 2} {3 2} {6 -1} {5 1} {4 -1}]
+}
+
 func ExampleLabeledDirected_Cycles() {
 	//     -1      2
 	//  0----->1------>2--\
@@ -483,6 +516,14 @@ func ExampleLabeledDirected_Cycles() {
 	}}
 	g.Cycles(func(c []graph.Half) bool {
 		fmt.Println(c)
+		/*
+			d := 0.
+			for _, h := range c {
+				d += float64(h.Label)
+			}
+			if d < 0 {
+				fmt.Println("^^^ neg:", d)
+			}*/
 		return true
 	})
 	// Output:
@@ -497,6 +538,52 @@ func ExampleLabeledDirected_Cycles() {
 	// [{5 1} {4 -1} {1 -4}]
 	// [{3 2} {6 -1} {5 1} {2 -2}]
 	// [{6 -1} {5 1} {2 -2}]
+}
+
+func TestNegativeCycles(t *testing.T) {
+	// example from the paper
+	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
+		1:  {{2, 53}, {6, 180}, {11, 353}},
+		2:  {{5, -30}},
+		3:  {{2, -10}, {4, -104}},
+		4:  {{2, 70}, {8, 172}},
+		5:  {{4, 10}, {6, 98}, {7, -20}},
+		6:  {{2, -20}, {7, 133}, {11, 175}, {12, 190}, {20, 162}},
+		7:  {{4, -40}, {10, 30}, {20, 120}},
+		8:  {{3, 183}, {7, 10}, {16, 338}},
+		9:  {{7, 159}, {8, -60}, {16, 201}},
+		10: {{9, 94}, {14, -50}, {15, 169}},
+		11: {{12, 60}, {19, 234}},
+		12: {{10, 134}, {13, 104}, {20, 104}},
+		13: {{10, 150}, {19, 86}},
+		14: {{13, 47}, {15, 30}},
+		15: {{9, -90}, {16, 115}, {18, 92}},
+		16: {{17, 125}},
+		17: {{18, 98}},
+		18: {{16, 137}},
+		19: {{14, 55}, {18, 100}},
+		20: {{10, 40}},
+	}}
+	/*
+		n := 0
+		g.Cycles(func(c []graph.Half) bool {
+			n++
+			d := 0.
+			for _, h := range c {
+				d += float64(h.Label)
+			}
+			if d < 0 {
+				log.Print(d, ": ", c)
+			}
+			return true
+		})
+		t.Log("------ ", n, " total cycles --------")
+	*/
+	g.NegativeCycles(func(l graph.LI) float64 { return float64(l) },
+		func(c []graph.Half) bool {
+			t.Log(c)
+			return true
+		})
 }
 
 func ExampleLabeledDirected_DAGMaxLenPath() {

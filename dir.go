@@ -4,7 +4,6 @@
 package graph
 
 import (
-	"log"
 	"math"
 )
 
@@ -19,49 +18,89 @@ type arc struct {
 	fr NI
 	to Half
 }
-type path struct {
-	start NI
-	steps []Half
-}
 
-/*
-func (g LabeledDirected) NegativeCycles(w WeightFunc, emit func([]NI) bool) {
-	a : = g.LabeledAdjacencyList
-	tr := a.UnLabeledTranspose() // transpose to speed G(F,R)
-	var all_nc func([]NI, map[arc]bool) bool
-	all_nc = func(F []NI, R map[arc]bool) bool {
+func (g LabeledDirected) NegativeCycles(w WeightFunc, emit func([]Half) bool) {
+	a := g.LabeledAdjacencyList
+	// transpose to speed G(F,R)
+	lt, _ := LabeledDirected{a}.UnlabeledTranspose()
+	tr := lt.AdjacencyList
+	var all_nc func(LabeledPath, map[arc]bool, string) bool
+	all_nc = func(F LabeledPath, R map[arc]bool, indent string) bool {
+		// log.Print(indent, "all_nc F: ", F)
+		// log.Print(indent, "       R: ", R)
+		indent += "  "
+		GFR := gfr(a, tr, F, R)
+		// log.Print(indent, "  G(F,R): ", GFR)
+		var C []Half
+		var fr, FiStart NI
 		// Step 1
-		if len(f) == 0 {
-			C = an_nc(0, R)
-			if C == 0 {
+		if len(F.Path) == 0 {
+			// log.Print(indent, "Step 1: no F, look for any neg cycle")
+			C = LabeledDirected{GFR}.NegativeCycle(w)
+			if len(C) == 0 {
+				// log.Print(indent, "none.  done here!")
 				return true
 			}
-			// else continue to step 4
+			fr = C[len(C)-1].To
+			FiStart = fr
+			// log.Print(indent, "C: ", C, " fr (end of new neg cyc): ", fr)
+			// and continue to step 4
 		} else {
-			GFR := gfr(F, R)
 			// Step 2
-			if !(zL(GFR, F, R) < 0) {
+			wF := F.Distance(w)
+			// dL := zL(GFR, F, w, wF)
+			// log.Print(indent, "Step 2.  Lower bound: ", dL)
+			if !(zL(GFR, F, w, wF) < 0) {
+				// log.Print(indent, "no more to do")
 				return true
 			}
 			// Step 3
-			πΓ := zΓ(F, R)
+			πΓ := zΓ(GFR, F, w, wF)
+			// log.Print(indent, "Step 3.  πΓ: ", πΓ)
 			if len(πΓ) == 0 {
 				// Step 5 (uncertain case)
+				// log.Print(indent, "Step 5.  Upper bound non-neg: uncertain case")
+				Fi := LabeledPath{F.Start, append(F.Path, Half{})}
+				for _, Fi.Path[len(F.Path)] = range GFR[F.Path[len(F.Path)-1].To] {
+					if !all_nc(Fi, R, indent) {
+						return false
+					}
+				}
+				return true
 			}
-			C =
-			// else continue to step 4
+			C = append(F.Path, πΓ...)
+			fr = C[len(F.Path)-1].To
+			FiStart = F.Start
+			// and continue to step 4
 		}
 		// Step 4
+		// log.Print(indent, "Step 4: emit ******** ", C)
+		if !emit(C) {
+			return false
+		}
+		for i, er := range C[len(F.Path):] {
+			// log.Print(indent, "new half arc to restrict: ", er)
+			a := arc{fr, er}
+			// log.Print(indent, "full arc: ", a)
+			R[a] = true
+			l := len(F.Path) + i
+			if !all_nc(LabeledPath{FiStart, C[:l:l]}, R, indent) {
+				return false
+			}
+			delete(R, a)
+			fr = er.To
+		}
+		return true
 	}
-	all_nc(0, 0)
+	all_nc(LabeledPath{}, map[arc]bool{}, "")
 }
-*/
-func gfr(a LabeledAdjacencyList, tr AdjacencyList, F path, R map[arc]bool) LabeledAdjacencyList {
+
+func gfr(a LabeledAdjacencyList, tr AdjacencyList, F LabeledPath, R map[arc]bool) LabeledAdjacencyList {
 	g, _ := a.Copy()
-	s := F.steps
+	s := F.Path
 	// remove arcs from nodes in F except last
 	if len(s) > 0 {
-		g[F.start] = nil
+		g[F.Start] = nil
 		for _, h := range s[:len(s)-1] {
 			g[h.To] = nil
 		}
@@ -96,23 +135,15 @@ func gfr(a LabeledAdjacencyList, tr AdjacencyList, F path, R map[arc]bool) Label
 	return g
 }
 
-func wPath(F path, w WeightFunc) float64 {
-	d := 0.
-	for _, h := range F.steps {
-		d += w(h.Label)
-	}
-	return d
-}
-
-func zL(GFR LabeledAdjacencyList, F path, wf WeightFunc, wp float64) float64 {
+func zL(GFR LabeledAdjacencyList, F LabeledPath, wf WeightFunc, wp float64) float64 {
 	d0 := make([]float64, len(GFR))
 	d1 := make([]float64, len(GFR))
 	for i := range d0 {
 		d0[i] = math.Inf(1)
 	}
-	s := F.steps
+	s := F.Path
 	d0[s[len(s)-1].To] = 0
-	log.Printf("%5.0f", d0)
+	// log.Printf("%5.0f", d0)
 	for j := len(s); j < len(GFR); j++ {
 		for i, d := range d0 {
 			d1[i] = d
@@ -127,13 +158,18 @@ func zL(GFR LabeledAdjacencyList, F path, wf WeightFunc, wp float64) float64 {
 			}
 		}
 		d0, d1 = d1, d0
-		log.Printf("%5.0f", d0)
+		// log.Printf("%5.0f", d0)
 	}
-	return d0[F.start] + wp
+	return d0[F.Start] + wp
 }
 
-func zΓ(GFR LabeledAdjacencyList, F path, wf WeightFunc, wp float64) {
-
+func zΓ(GFR LabeledAdjacencyList, F LabeledPath, wf WeightFunc, wp float64) []Half {
+	p, d := GFR.DijkstraPath(F.Path[len(F.Path)-1].To, F.Start, wf)
+	// log.Print("πΓ: ", p, ", dΓ: ", d, " wp+d: ", wp+d)
+	if !(wp+d < 0) {
+		return nil
+	}
+	return p.Path
 }
 
 // Cycles emits all elementary cycles in a directed graph.
