@@ -5,6 +5,7 @@ package graph_test
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 	"testing"
 
@@ -604,6 +605,7 @@ func TestNegativeCycles(t *testing.T) {
 		arc := arcs[e]
 		a[arc.fr] = append(a[arc.fr], graph.Half{arc.to, graph.LI(e)})
 	}
+	c, _ := a.Copy()
 	w := func(l graph.LI) float64 { return arcs[l].wt }
 	// results from paragraph of section 4, p. 284.
 	want := [][]graph.LI{
@@ -624,6 +626,54 @@ func TestNegativeCycles(t *testing.T) {
 		i++
 		return true
 	})
+	if !reflect.DeepEqual(a[1:], c[1:]) {
+		t.Fatal("graph altered")
+	}
+}
+
+func TestC6(t *testing.T) {
+	g := graph.LabeledDirected{graph.LabeledAdjacencyList{
+		0: {{1, 1}, {2, 1}, {3, 1}, {4, -1}, {5, -1}},
+		1: {{0, 1}, {2, 1}, {3, 1}, {4, 1}, {5, -1}},
+		2: {{0, 1}, {1, 1}, {3, 1}, {4, 1}, {5, 1}},
+		3: {{0, 1}, {1, 1}, {2, 1}, {4, 1}, {5, 1}},
+		4: {{0, -1}, {1, 1}, {2, 1}, {3, 1}, {5, 1}},
+		5: {{0, -1}, {1, -1}, {2, 1}, {3, 1}, {4, 1}},
+	}}
+	w := func(l graph.LI) float64 { return float64(l) }
+	want := [][]graph.Half{
+		{{4, -1}, {0, -1}},
+		{{5, -1}, {0, -1}},
+		{{1, -1}, {5, -1}},
+		{{1, 1}, {5, -1}, {0, -1}},
+		{{5, -1}, {1, -1}, {0, 1}},
+		{{5, -1}, {4, 1}, {0, -1}},
+		{{5, -1}, {1, -1}, {4, 1}, {0, -1}},
+		{{5, -1}, {1, -1}, {3, 1}, {4, 1}, {0, -1}},
+		{{5, -1}, {1, -1}, {2, 1}, {4, 1}, {0, -1}},
+		{{4, -1}, {5, 1}, {0, -1}},
+		{{4, -1}, {1, 1}, {5, -1}, {0, -1}},
+		{{4, -1}, {3, 1}, {1, 1}, {5, -1}, {0, -1}},
+		{{4, -1}, {2, 1}, {1, 1}, {5, -1}, {0, -1}},
+	}
+	c, _ := g.Copy()
+	i := 0
+	g.NegativeCycles(w, func(c []graph.Half) bool {
+		if !reflect.DeepEqual(c, want[i]) {
+			t.Fatal("i: ", i, " got: ", c, " want: ", want[i])
+		}
+		i++
+		return true
+	})
+	if i != len(want) {
+		t.Fatal("only ", i)
+	}
+	if !reflect.DeepEqual(g, c) {
+		for fr, to := range g.LabeledAdjacencyList {
+			log.Println(fr, to)
+		}
+		t.Fatal("graph altered")
+	}
 }
 
 func ExampleLabeledDirected_DAGMaxLenPath() {

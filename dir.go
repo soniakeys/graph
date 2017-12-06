@@ -466,84 +466,164 @@ func (g LabeledDirected) NegativeCycles(w WeightFunc, emit func([]Half) bool) {
 	// 118 (2002) 279–291.
 	a := g.LabeledAdjacencyList
 	// transpose to speed G(F,R)
-	lt, _ := LabeledDirected{a}.UnlabeledTranspose()
+	lt, _ := g.UnlabeledTranspose()
 	tr := lt.AdjacencyList
-	var all_nc func(LabeledPath, map[arc]bool, string) bool
-	all_nc = func(F LabeledPath, R map[arc]bool, indent string) bool {
-		// log.Print(indent, "all_nc F: ", F)
-		// log.Print(indent, "       R: ", R)
-		indent += "  "
-		GFR := gfr(a, tr, F, R)
-		// log.Print(indent, "  G(F,R): ", GFR)
+	var all_nc func(LabeledPath) bool
+	all_nc = func(F LabeledPath) bool {
 		var C []Half
-		var fr, FiStart NI
+		var R LabeledPath
 		// Step 1
 		if len(F.Path) == 0 {
-			// log.Print(indent, "Step 1: no F, look for any neg cycle")
-			C = LabeledDirected{GFR}.NegativeCycle(w)
+			C = g.NegativeCycle(w)
 			if len(C) == 0 {
-				// log.Print(indent, "none.  done here!")
 				return true
 			}
-			fr = C[len(C)-1].To
-			FiStart = fr
-			// log.Print(indent, "C: ", C, " fr (end of new neg cyc): ", fr)
-			// and continue to step 4
+			// prep step 4 with no F:
+			F.Start = C[len(C)-1].To
+			R = LabeledPath{F.Start, C}
+			// and continue to remainder of step 4
 		} else {
 			// Step 2
+			fEnd := F.Path[len(F.Path)-1].To
 			wF := F.Distance(w)
-			// dL := zL(GFR, F, w, wF)
-			// log.Print(indent, "Step 2.  Lower bound: ", dL)
-			if !(zL(GFR, F, w, wF) < 0) {
-				// log.Print(indent, "no more to do")
+			dL := zL(a, F, w, wF)
+			if !(dL < 0) {
 				return true
 			}
 			// Step 3
-			πΓ := zΓ(GFR, F, w, wF)
-			// log.Print(indent, "Step 3.  πΓ: ", πΓ)
+			πΓ := zΓ(a, F, w, wF)
 			if len(πΓ) == 0 {
 				// Step 5 (uncertain case)
-				// log.Print(indent, "Step 5.  Upper bound non-neg: uncertain case")
-				Fi := LabeledPath{F.Start, append(F.Path, Half{})}
-				for _, Fi.Path[len(F.Path)] = range GFR[F.Path[len(F.Path)-1].To] {
-					if !all_nc(Fi, R, indent) {
+				//
+				// For each arc from end of F, search each case of extending
+				// F by that arc.
+				//
+				// before loop: save arcs from current path end,
+				// replace them with room for a single arc.
+				// extend F by room for one more arc,
+				save := a[fEnd]
+				a[fEnd] = []Half{{}}
+				last := len(F.Path)
+				F.Path = append(F.Path, Half{})
+				for _, h := range save {
+					// in each iteration, set the final arc in F, and the single
+					// outgoing arc, and save and clear all inbound arcs to the
+					// new end node.  make recursive call, then restore saved
+					// inbound arcs for the node.
+					F.Path[last] = h
+					a[fEnd][0] = h
+					save := cutTo(h.To, a, tr)
+					if !all_nc(F) {
 						return false
 					}
+					restore(a, save)
 				}
+				// after loop, restore saved outgoing arcs in g.
+				a[fEnd] = save
+				F.Path = F.Path[:last]
 				return true
 			}
+			// else prep for step 4
 			C = append(F.Path, πΓ...)
-			fr = C[len(F.Path)-1].To
-			FiStart = F.Start
+			R = LabeledPath{fEnd, πΓ}
 			// and continue to step 4
 		}
 		// Step 4
-		// log.Print(indent, "Step 4: emit ******** ", C)
+		// C is a new cycle.
+		// F is fixed path to be extended and is a prefix of C.
+		// R is the remainder of C
 		if !emit(C) {
 			return false
 		}
-		for i, er := range C[len(F.Path):] {
-			// log.Print(indent, "new half arc to restrict: ", er)
-			a := arc{fr, er}
-			// log.Print(indent, "full arc: ", a)
-			R[a] = true
-			l := len(F.Path) + i
-			if !all_nc(LabeledPath{FiStart, C[:l:l]}, R, indent) {
-				return false
+		// for each arc in R, if not the first arc,
+		// extend F by the arc of the previous iteration.
+		// remove arc from g,
+		// Then make the recursive call, then put the arc back in g.
+		//
+		// after loop, replace arcs from the two stacks.
+		type frto struct {
+			fr NI
+			to []Half
+		}
+		var frStack [][]arc
+		var toStack []frto
+		var fr0 NI
+		var to0 Half
+		for i, h := range R.Path {
+			if i > 0 {
+				// extend F by arc {fr0 to0}, the arc of the previous iteration.
+				// Remove arcs to to0.To and save on stack.
+				// Remove arcs from arc0.fr and save on stack.
+				F.Path = append(F.Path, to0)
+				frStack = append(frStack, cutTo(to0.To, a, tr))
+				toStack = append(toStack, frto{fr0, a[fr0]})
+				a[fr0] = nil
 			}
-			delete(R, a)
-			fr = er.To
+			toList := a[R.Start]
+			for j, to := range toList {
+				if to == h {
+					last := len(toList) - 1
+					toList[j], toList[last] = toList[last], toList[j]
+					a[R.Start] = toList[:last]
+					if !all_nc(F) {
+						return false
+					}
+					toList[last], toList[j] = toList[j], toList[last]
+					a[R.Start] = toList
+					break
+				}
+			}
+			fr0 = R.Start
+			to0 = h
+			R.Start = h.To
+		}
+		for i := len(frStack) - 1; i >= 0; i-- {
+			a[toStack[i].fr] = toStack[i].to
+			restore(a, frStack[i])
 		}
 		return true
 	}
-	all_nc(LabeledPath{}, map[arc]bool{}, "")
+	all_nc(LabeledPath{})
 }
 
 type arc struct {
-	fr NI
-	to Half
+	n NI  // node that had an arc cut from its toList
+	x int // index of arc that was swapped to the end of the list
 }
 
+// modify a cutting all arcs to node n.  return list of cut arcs than
+// can be processed in reverse order to restore changes to a
+func cutTo(n NI, a LabeledAdjacencyList, tr AdjacencyList) (c []arc) {
+	for _, fr := range tr[n] {
+		toList := a[fr]
+		for x := 0; x < len(toList); {
+			to := toList[x]
+			if to.To == n {
+				c = append(c, arc{fr, x})
+				last := len(toList) - 1
+				toList[x], toList[last] = toList[last], toList[x]
+				toList = toList[:last]
+			} else {
+				x++
+			}
+		}
+		a[fr] = toList
+	}
+	return
+}
+
+func restore(a LabeledAdjacencyList, c []arc) {
+	for i := len(c) - 1; i >= 0; i-- {
+		r := c[i]
+		toList := a[r.n]
+		last := len(toList)
+		toList = toList[:last+1]
+		toList[r.x], toList[last] = toList[last], toList[r.x]
+		a[r.n] = toList
+	}
+}
+
+/*
 func gfr(a LabeledAdjacencyList, tr AdjacencyList, F LabeledPath, R map[arc]bool) LabeledAdjacencyList {
 	g, _ := a.Copy()
 	s := F.Path
@@ -583,6 +663,7 @@ func gfr(a LabeledAdjacencyList, tr AdjacencyList, F LabeledPath, R map[arc]bool
 	}
 	return g
 }
+*/
 
 func zL(GFR LabeledAdjacencyList, F LabeledPath, wf WeightFunc, wp float64) float64 {
 	d0 := make([]float64, len(GFR))
@@ -592,7 +673,6 @@ func zL(GFR LabeledAdjacencyList, F LabeledPath, wf WeightFunc, wp float64) floa
 	}
 	s := F.Path
 	d0[s[len(s)-1].To] = 0
-	// log.Printf("%5.0f", d0)
 	for j := len(s); j < len(GFR); j++ {
 		for i, d := range d0 {
 			d1[i] = d
@@ -607,14 +687,12 @@ func zL(GFR LabeledAdjacencyList, F LabeledPath, wf WeightFunc, wp float64) floa
 			}
 		}
 		d0, d1 = d1, d0
-		// log.Printf("%5.0f", d0)
 	}
 	return d0[F.Start] + wp
 }
 
 func zΓ(GFR LabeledAdjacencyList, F LabeledPath, wf WeightFunc, wp float64) []Half {
 	p, d := GFR.DijkstraPath(F.Path[len(F.Path)-1].To, F.Start, wf)
-	// log.Print("πΓ: ", p, ", dΓ: ", d, " wp+d: ", wp+d)
 	if !(wp+d < 0) {
 		return nil
 	}
