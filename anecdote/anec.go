@@ -27,6 +27,7 @@ func main() {
 	eulerian()
 	parallel()
 	cycles()
+	negcycles()
 }
 
 func h(n int) string {
@@ -257,4 +258,76 @@ func cycles() {
 		d := time.Now().Sub(t)
 		fmt.Printf("%-22s %-38s %12s\n", tc.s, "Gnm 18 90", d)
 	}
+}
+
+func negcycles() {
+	fmt.Println("\nNegativeCycles")
+	fmt.Println("Method                 Graph                                          Time")
+	k9_20 := complete(9, 20, 10)
+	k11_20 := complete(11, 20, 10)
+	k11_14 := complete(11, 14, 10)
+	k13_14 := complete(13, 14, 10)
+	w := func(l graph.LI) float64 { return float64(l) }
+	filter := func(g graph.LabeledDirected, w graph.WeightFunc, emit func([]graph.Half) bool) {
+		g.Cycles(func(cy []graph.Half) bool {
+			d := 0.
+			for _, h := range cy {
+				d += w(h.Label)
+			}
+			if d < 0 {
+				return emit(cy)
+			}
+			return true
+		})
+	}
+	for _, g := range []struct {
+		g graph.LabeledDirected
+		s string
+	}{
+		{k9_20, "K9 2.0"},
+		{k11_20, "K11 2.0"},
+		{k11_14, "K11 1.4"},
+		{k13_14, "K13 1.4"},
+	} {
+		for _, tc := range []struct {
+			f func(graph.LabeledDirected, graph.WeightFunc, func([]graph.Half) bool)
+			s string
+		}{
+			{filter, "Filter Cycles"},
+			{alt.NegativeCycles, "Neg"},
+			{graph.LabeledDirected.NegativeCycles, "Neg'"},
+		} {
+			if !(g.s == "K13 1.4" && tc.s == "Filter Cycles") {
+				t := time.Now()
+				tc.f(g.g, w, func([]graph.Half) bool { return true })
+				d := time.Now().Sub(t)
+				fmt.Printf("%-22s %-38s %12s\n", tc.s, g.s, d)
+			}
+		}
+	}
+}
+
+func complete(n, pNum, pDen int) graph.LabeledDirected {
+	g := make(graph.LabeledAdjacencyList, n)
+	c := (n*pDen + pNum - 1) / pNum
+	for i := range g {
+		to := make([]graph.Half, n-1)
+		for k := range to {
+			j := k
+			if k >= i {
+				j++
+			}
+			d := i - j
+			if d < 0 {
+				d = -d
+			}
+			w := graph.LI(1)
+			if d > c {
+				w = -1
+			}
+			to[k] = graph.Half{graph.NI(j), w}
+		}
+		g[i] = to
+	}
+	return graph.LabeledDirected{g}
 }

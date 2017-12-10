@@ -29,6 +29,7 @@ import (
 //  UndirectedSubgraph
 //  LI
 //  Half
+//  fromHalf
 //  LabeledAdjacencyList
 //  LabeledDirected
 //  LabeledUndirected
@@ -184,6 +185,16 @@ type LI int32
 type Half struct {
 	To    NI // node ID, usable as a slice index
 	Label LI // half-arc ID for application data, often a weight
+}
+
+// fromHalf is a half arc, representing a labeled arc and the "neighbor" node
+// that the arc originates from.
+//
+// This used internally in a couple of places.  It used to be exported but is
+// not currently needed anwhere in the API.
+type fromHalf struct {
+	From  NI
+	Label LI
 }
 
 // A LabeledAdjacencyList represents a graph as a list of neighbors for each

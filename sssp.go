@@ -354,7 +354,8 @@ func (p *openHeap) Pop() interface{} {
 // cycle not reachable from start will not prevent the algorithm from finding
 // shortest paths from start.
 //
-// See also NegativeCycle to find a cycle anywhere in the graph, and see
+// See also NegativeCycle to find a cycle anywhere in the graph, see
+// NegativeCycles for enumerating all negative cycles, and see
 // HasNegativeCycle for lighter-weight negative cycle detection,
 func (g LabeledDirected) BellmanFord(w WeightFunc, start NI) (f FromList, labels []LI, dist []float64, end NI) {
 	a := g.LabeledAdjacencyList
@@ -428,8 +429,9 @@ func (f FromList) BellmanFordCycle(end NI) (c []NI) {
 // cycles anywhere in the graph.  Also path information is not computed,
 // reducing memory use somewhat compared to BellmanFord.
 //
-// See also NegativeCycle to obtain the cycle, and see BellmanFord for
-// single source shortest path searches.
+// See also NegativeCycle to obtain the cycle, see NegativeCycles for
+// enumerating all negative cycles, and see BellmanFord for single source
+// shortest path searches with negative cycle detection.
 func (g LabeledDirected) HasNegativeCycle(w WeightFunc) bool {
 	a := g.LabeledAdjacencyList
 	dist := make([]float64, len(a))
@@ -466,7 +468,8 @@ func (g LabeledDirected) HasNegativeCycle(w WeightFunc) bool {
 // cycles anywhere in the graph.  If a negative cycle exists, one will be
 // returned.  The result is nil if no negative cycle exists.
 //
-// See also HasNegativeCycle for lighter-weight cycle detection, and see
+// See also NegativeCycles for enumerating all negative cycles, see
+// HasNegativeCycle for lighter-weight cycle detection, and see
 // BellmanFord for single source shortest paths, also with negative cycle
 // detection.
 func (g LabeledDirected) NegativeCycle(w WeightFunc) (c []Half) {

@@ -225,16 +225,6 @@ func (g LabeledUndirected) Prim(start NI, w WeightFunc, f *FromList, labels []LI
 	return
 }
 
-// fromHalf is a half arc, representing a labeled arc and the "neighbor" node
-// that the arc originates from.
-//
-// (This used to be exported when there was a LabeledFromList.  Currently
-// unexported now that it seems to have much more limited use.)
-type fromHalf struct {
-	From  NI
-	Label LI
-}
-
 type prNode struct {
 	nx   NI
 	from fromHalf
