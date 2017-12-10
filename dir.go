@@ -461,6 +461,18 @@ func (g LabeledDirected) FromList() (f *FromList, labels []LI, simpleForest bool
 
 // NegativeCycles emits all cycles with negative cycle distance.
 //
+// The emit function is called for each cycle found.  Emit must return true
+// to continue cycle enumeration.  If emit returns false, NegativeCycles
+// stops and returns immediately.
+//
+// The method mutates receiver g while it runs.  Access to g before
+// NegativeCycles returns, such as during the emit callback, will find
+// g altered.  G is completely restored when NegativeCycles returns however,
+// even if terminated early with a false return from emit.
+//
+// If mutations on g are unacceptable, use g.Copy and run NegativeCycles on
+// the copy.
+//
 // See also:
 //
 // * NegativeCycle, which finds a single example of a negative cycle if
@@ -552,12 +564,12 @@ func (nc *negCyc) step3(F LabeledPath, fEnd NI, wF float64) bool {
 	return nc.step5(F, fEnd)
 }
 
-func (nc *negCyc) step4(C []Half, F, R LabeledPath) bool {
+func (nc *negCyc) step4(C []Half, F, R LabeledPath) (ok bool) {
 	// C is a new cycle.
 	// F is fixed path to be extended and is a prefix of C.
 	// R is the remainder of C
-	if !nc.emit(C) {
-		return false
+	if ok = nc.emit(C); !ok {
+		return
 	}
 	// for each arc in R, if not the first arc,
 	// extend F by the arc of the previous iteration.
@@ -589,13 +601,14 @@ func (nc *negCyc) step4(C []Half, F, R LabeledPath) bool {
 				last := len(toList) - 1
 				toList[j], toList[last] = toList[last], toList[j]
 				nc.a[R.Start] = toList[:last]
-				if !nc.all_nc(F) {
-					return false
-				}
+				ok = nc.all_nc(F) // return value
 				toList[last], toList[j] = toList[j], toList[last]
 				nc.a[R.Start] = toList
 				break
 			}
+		}
+		if !ok {
+			break
 		}
 		fr0 = R.Start
 		to0 = h
@@ -605,10 +618,10 @@ func (nc *negCyc) step4(C []Half, F, R LabeledPath) bool {
 		nc.a[toStack[i].fr] = toStack[i].to
 		nc.restore(frStack[i])
 	}
-	return true
+	return
 }
 
-func (nc *negCyc) step5(F LabeledPath, fEnd NI) bool {
+func (nc *negCyc) step5(F LabeledPath, fEnd NI) (ok bool) {
 	// Step 5 (uncertain case)
 	//
 	// For each arc from end of F, search each case of extending
@@ -617,6 +630,7 @@ func (nc *negCyc) step5(F LabeledPath, fEnd NI) bool {
 	// before loop: save arcs from current path end,
 	// replace them with room for a single arc.
 	// extend F by room for one more arc,
+	ok = true
 	save := nc.a[fEnd]
 	nc.a[fEnd] = []Half{{}}
 	last := len(F.Path)
@@ -629,14 +643,15 @@ func (nc *negCyc) step5(F LabeledPath, fEnd NI) bool {
 		F.Path[last] = h
 		nc.a[fEnd][0] = h
 		save := nc.cutTo(h.To)
-		if !nc.all_nc(F) {
-			return false
-		}
+		ok = nc.all_nc(F)
 		nc.restore(save)
+		if !ok {
+			break
+		}
 	}
 	// after loop, restore saved outgoing arcs in g.
 	nc.a[fEnd] = save
-	return true
+	return
 }
 
 type arc struct {

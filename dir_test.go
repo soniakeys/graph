@@ -674,6 +674,18 @@ func TestC6(t *testing.T) {
 		}
 		t.Fatal("graph altered")
 	}
+
+	// Test that graph is unaltered even after early return
+	for i := range want {
+		j := 0
+		g.NegativeCycles(w, func(c []graph.Half) bool {
+			j++
+			return j <= i
+		})
+		if !reflect.DeepEqual(g, c) {
+			t.Fatal("graph altered. i = ", i)
+		}
+	}
 }
 
 func ExampleLabeledDirected_DAGMaxLenPath() {
