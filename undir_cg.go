@@ -728,6 +728,33 @@ func (g LabeledUndirected) Degree(n NI) int {
 	return d
 }
 
+// DegreeCentralization returns the degree centralization metric of a graph.
+//
+// Degree of a node is one measure of node centrality and is directly
+// available from the adjacency list representation.  This allows degree
+// centralization for the graph to be very efficiently computed.
+//
+// The value returned is from 0 to 1 inclusive for simple graphs of three or
+// more nodes.  As a special case, 0 is returned for graphs of two or fewer
+// nodes.  The value returned can be > 1 for graphs with loops or parallel
+// edges.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g LabeledUndirected) DegreeCentralization() float64 {
+	a := g.LabeledAdjacencyList
+	if len(a) <= 2 {
+		return 0
+	}
+	var max, sum int
+	for _, to := range a {
+		if len(to) > max {
+			max = len(to)
+		}
+		sum += len(to)
+	}
+	return float64(len(a)*max-sum) / float64((len(a)-1)*(len(a)-2))
+}
+
 // Density returns density for a simple graph.
 //
 // See also Density function.

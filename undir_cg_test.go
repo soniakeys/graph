@@ -367,6 +367,56 @@ func ExampleLabeledUndirected_Degree() {
 	// 3
 }
 
+func ExampleLabeledUndirected_DegreeCentralization() {
+	// 0   1
+	//  \ /
+	//   2
+	//  / \
+	// 3   4
+	var star graph.LabeledUndirected
+	star.AddEdge(graph.Edge{2, 0}, 0)
+	star.AddEdge(graph.Edge{2, 1}, 0)
+	star.AddEdge(graph.Edge{2, 3}, 0)
+	star.AddEdge(graph.Edge{2, 4}, 0)
+	fmt.Println(star.DegreeCentralization())
+	//           3
+	//          /
+	// 0---1---2
+	//          \
+	//           4
+	var y graph.LabeledUndirected
+	y.AddEdge(graph.Edge{0, 1}, 0)
+	y.AddEdge(graph.Edge{1, 2}, 0)
+	y.AddEdge(graph.Edge{2, 3}, 0)
+	y.AddEdge(graph.Edge{2, 4}, 0)
+	fmt.Println(y.DegreeCentralization())
+	//
+	// 0---1---2---3---4
+	var line graph.LabeledUndirected
+	line.AddEdge(graph.Edge{0, 1}, 0)
+	line.AddEdge(graph.Edge{1, 2}, 0)
+	line.AddEdge(graph.Edge{2, 3}, 0)
+	line.AddEdge(graph.Edge{3, 4}, 0)
+	fmt.Println(line.DegreeCentralization())
+	//   1---2
+	//  /    |
+	// 0     |
+	//  \    |
+	//   3---4
+	var circle graph.LabeledUndirected
+	circle.AddEdge(graph.Edge{0, 1}, 0)
+	circle.AddEdge(graph.Edge{0, 3}, 0)
+	circle.AddEdge(graph.Edge{1, 2}, 0)
+	circle.AddEdge(graph.Edge{3, 4}, 0)
+	circle.AddEdge(graph.Edge{2, 4}, 0)
+	fmt.Println(circle.DegreeCentralization())
+	// Output:
+	// 1
+	// 0.5833333333333334
+	// 0.16666666666666666
+	// 0
+}
+
 func ExampleLabeledUndirected_Density() {
 	// 0---1
 	// |

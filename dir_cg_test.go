@@ -70,6 +70,49 @@ func ExampleLabeledDirected_Cyclic() {
 	// true 3 {1 0}
 }
 
+func ExampleLabeledDirected_DegreeCentralization() {
+	// 0<-   ->1
+	//    \ /
+	//     2
+	//    / \
+	// 4<-   ->5
+	star := graph.LabeledDirected{graph.LabeledAdjacencyList{
+		2: {{0, 0}, {1, 0}, {3, 0}, {4, 0}},
+		4: {},
+	}}
+	t, _ := star.Transpose()
+	fmt.Println(star.DegreeCentralization(), t.DegreeCentralization())
+	//           ->3
+	//          /
+	// 0<--1<--2
+	//          \
+	//           ->4
+	y := graph.LabeledDirected{graph.LabeledAdjacencyList{
+		2: {{1, 0}, {3, 0}, {4, 0}},
+		1: {{0, 0}},
+		4: {},
+	}}
+	t, _ = y.Transpose()
+	fmt.Println(y.DegreeCentralization(), t.DegreeCentralization())
+	//   ->1-->2
+	//  /      |
+	// 0       |
+	// ^       v
+	//  \--3<--4
+	circle := graph.LabeledDirected{graph.LabeledAdjacencyList{
+		0: {{1, 0}},
+		1: {{2, 0}},
+		2: {{4, 0}},
+		4: {{3, 0}},
+		3: {{0, 0}},
+	}}
+	fmt.Println(circle.DegreeCentralization())
+	// Output:
+	// 1 0.0625
+	// 0.6875 0.0625
+	// 0
+}
+
 func ExampleLabeledDirected_Dominators() {
 	//   0   6
 	//   |   |

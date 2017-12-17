@@ -85,6 +85,37 @@ func (g Directed) Cyclic() (cyclic bool, fr NI, to NI) {
 	return
 }
 
+// DegreeCentralization returns out-degree centralization.
+//
+// Out-degree of a node is one measure of node centrality and is directly
+// available from the adjacency list representation.  This allows degree
+// centralization for the graph to be very efficiently computed.
+//
+// The value returned is from 0 to 1 inclusive for simple directed graphs of
+// two or more nodes.  As a special case, 0 is returned for graphs of 0 or 1
+// nodes.  The value returned can be > 1 for graphs with loops or parallel
+// edges.
+//
+// In-degree centralization can be computed as DegreeCentralization of the
+// transpose.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g Directed) DegreeCentralization() float64 {
+	a := g.AdjacencyList
+	if len(a) <= 1 {
+		return 0
+	}
+	var max, sum int
+	for _, to := range a {
+		if len(to) > max {
+			max = len(to)
+		}
+		sum += len(to)
+	}
+	l1 := len(a) - 1
+	return float64(len(a)*max-sum) / float64(l1*l1)
+}
+
 // Dominators computes the immediate dominator for each node reachable from
 // start.
 //

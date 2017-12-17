@@ -370,6 +370,56 @@ func ExampleUndirected_Degree() {
 	// 3
 }
 
+func ExampleUndirected_DegreeCentralization() {
+	// 0   1
+	//  \ /
+	//   2
+	//  / \
+	// 3   4
+	var star graph.Undirected
+	star.AddEdge(2, 0)
+	star.AddEdge(2, 1)
+	star.AddEdge(2, 3)
+	star.AddEdge(2, 4)
+	fmt.Println(star.DegreeCentralization())
+	//           3
+	//          /
+	// 0---1---2
+	//          \
+	//           4
+	var y graph.Undirected
+	y.AddEdge(0, 1)
+	y.AddEdge(1, 2)
+	y.AddEdge(2, 3)
+	y.AddEdge(2, 4)
+	fmt.Println(y.DegreeCentralization())
+	//
+	// 0---1---2---3---4
+	var line graph.Undirected
+	line.AddEdge(0, 1)
+	line.AddEdge(1, 2)
+	line.AddEdge(2, 3)
+	line.AddEdge(3, 4)
+	fmt.Println(line.DegreeCentralization())
+	//   1---2
+	//  /    |
+	// 0     |
+	//  \    |
+	//   3---4
+	var circle graph.Undirected
+	circle.AddEdge(0, 1)
+	circle.AddEdge(0, 3)
+	circle.AddEdge(1, 2)
+	circle.AddEdge(3, 4)
+	circle.AddEdge(2, 4)
+	fmt.Println(circle.DegreeCentralization())
+	// Output:
+	// 1
+	// 0.5833333333333334
+	// 0.16666666666666666
+	// 0
+}
+
 func ExampleUndirected_Density() {
 	// 0---1
 	// |
