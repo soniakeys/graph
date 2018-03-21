@@ -248,6 +248,11 @@ func BreadthFirst(g graph.AdjacencyList, start graph.NI, opt ...TraverseOption) 
 		return true
 	}
 	for {
+		if cf.rand != nil {
+			cf.rand.Shuffle(len(frontier), func(i, j int) {
+				frontier[i], frontier[j] = frontier[j], frontier[i]
+			})
+		}
 		if cf.levelVisitor != nil {
 			cf.levelVisitor(level, frontier)
 		}
@@ -258,17 +263,9 @@ func BreadthFirst(g graph.AdjacencyList, start graph.NI, opt ...TraverseOption) 
 			cf.fromList.MaxLen = level
 		}
 		level++
-		if cf.rand == nil {
-			for _, n := range frontier {
-				if !visitNode(n) {
-					return
-				}
-			}
-		} else { // take nodes off frontier at random
-			for _, i := range cf.rand.Perm(len(frontier)) {
-				if !visitNode(frontier[i]) {
-					return
-				}
+		for _, n := range frontier {
+			if !visitNode(n) {
+				return
 			}
 		}
 		if len(next) == 0 {
