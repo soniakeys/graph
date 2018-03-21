@@ -36,6 +36,28 @@ func ExampleArcVisitor() {
 	// 0 -> 2
 }
 
+func ExampleLevelVisitor() {
+	//   0
+	//  / \
+	// 1-->2
+	// ^   |
+	// |   v
+	// \---3
+	g := graph.AdjacencyList{
+		0: {1, 2},
+		1: {2},
+		2: {3},
+		3: {1},
+	}
+	alt.BreadthFirst(g, 0, alt.LevelVisitor(func(l int, n []graph.NI) {
+		fmt.Println(l, n)
+	}))
+	// Output:
+	// 1 [0]
+	// 2 [1 2]
+	// 3 [3]
+}
+
 func ExampleNodeVisitor() {
 	//   0
 	//  / \
@@ -81,6 +103,28 @@ func ExampleOkArcVisitor() {
 	// 1 -> 2
 	// 2 -> 3
 	// 3 -> 1
+}
+
+func ExampleOkLevelVisitor() {
+	//   0
+	//  / \
+	// 1-->2
+	// ^   |
+	// |   v
+	// \---3
+	g := graph.AdjacencyList{
+		0: {1, 2},
+		1: {2},
+		2: {3},
+		3: {1},
+	}
+	alt.BreadthFirst(g, 0, alt.OkLevelVisitor(func(l int, n []graph.NI) bool {
+		fmt.Println(l, n)
+		return l < 2
+	}))
+	// Output:
+	// 1 [0]
+	// 2 [1 2]
 }
 
 func ExampleOkNodeVisitor() {

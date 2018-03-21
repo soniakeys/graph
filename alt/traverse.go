@@ -11,16 +11,18 @@ import (
 )
 
 type config struct {
-	start         graph.NI
-	arcVisitor    func(n graph.NI, x int)
-	iterateFrom   func(n graph.NI)
-	nodeVisitor   func(n graph.NI)
-	okArcVisitor  func(n graph.NI, x int) bool
-	okNodeVisitor func(n graph.NI) bool
-	rand          *rand.Rand
-	visBits       *bits.Bits
-	pathBits      *bits.Bits
-	fromList      *graph.FromList
+	start          graph.NI
+	arcVisitor     func(n graph.NI, x int)
+	iterateFrom    func(n graph.NI)
+	levelVisitor   func(l int, n []graph.NI)
+	nodeVisitor    func(n graph.NI)
+	okArcVisitor   func(n graph.NI, x int) bool
+	okNodeVisitor  func(n graph.NI) bool
+	okLevelVisitor func(l int, n []graph.NI) bool
+	rand           *rand.Rand
+	visBits        *bits.Bits
+	pathBits       *bits.Bits
+	fromList       *graph.FromList
 }
 
 // A TraverseOption specifies an option for a breadth first or depth first
@@ -50,6 +52,18 @@ func From(f *graph.FromList) TraverseOption {
 	}
 }
 
+// LevelVisitor specifies a visitor function to call at each level or depth.
+//
+// The level visitor function is called before any node or arc visitor
+// functions.
+//
+// See also OkLevelVisitor.
+func LevelVisitor(v func(level int, nodes []graph.NI)) TraverseOption {
+	return func(c *config) {
+		c.levelVisitor = v
+	}
+}
+
 // NodeVisitor specifies a visitor function to call at each node.
 //
 // The node visitor function is called before any arc visitor functions.
@@ -73,6 +87,22 @@ func NodeVisitor(v func(graph.NI)) TraverseOption {
 func OkArcVisitor(v func(n graph.NI, x int) bool) TraverseOption {
 	return func(c *config) {
 		c.okArcVisitor = v
+	}
+}
+
+// OKLevelVisitor specifies a visitor function to call at each level or depth,
+// returning a boolean result
+//
+// As long as v returns a result of true, the traverse progresses to traverse
+// all nodes.  If v returns false, the traverse terminates immediately.
+//
+// The level visitor function is called before any node or arc visitor
+// functions.
+//
+// See also LevelVisitor.
+func OkLevelVisitor(v func(level int, nodes []graph.NI) bool) TraverseOption {
+	return func(c *config) {
+		c.okLevelVisitor = v
 	}
 }
 
@@ -128,7 +158,9 @@ func Visited(b *bits.Bits) TraverseOption {
 // Supported:
 //
 //   From
+//   LevelVisitor
 //   NodeVisitor
+//   OkLevelVisitor
 //   OkNodeVisitor
 //   Rand
 //
@@ -157,54 +189,53 @@ func BreadthFirst(g graph.AdjacencyList, start graph.NI, opt ...TraverseOption) 
 	// the frontier consists of nodes all at the same level
 	frontier := []graph.NI{cf.start}
 	level := 1
+	var next []graph.NI
 	// assign path when node is put on frontier
 	rp[cf.start] = graph.PathEnd{Len: level, From: -1}
+	visitNode := func(n graph.NI) bool {
+		// visit nodes as they come off frontier
+		if cf.nodeVisitor != nil {
+			cf.nodeVisitor(n)
+		}
+		if cf.okNodeVisitor != nil {
+			if !cf.okNodeVisitor(n) {
+				return false
+			}
+		}
+		for _, nb := range g[n] {
+			if rp[nb].Len == 0 {
+				next = append(next, nb)
+				rp[nb] = graph.PathEnd{From: n, Len: level}
+			}
+		}
+		return true
+	}
 	for {
+		if cf.levelVisitor != nil {
+			cf.levelVisitor(level, frontier)
+		}
+		if cf.okLevelVisitor != nil && !cf.okLevelVisitor(level, frontier) {
+			return
+		}
 		f.MaxLen = level
 		level++
-		var next []graph.NI
 		if cf.rand == nil {
 			for _, n := range frontier {
-				// visit nodes as they come off frontier
-				if cf.nodeVisitor != nil {
-					cf.nodeVisitor(n)
-				}
-				if cf.okNodeVisitor != nil {
-					if !cf.okNodeVisitor(n) {
-						return
-					}
-				}
-				for _, nb := range g[n] {
-					if rp[nb].Len == 0 {
-						next = append(next, nb)
-						rp[nb] = graph.PathEnd{From: n, Len: level}
-					}
+				if !visitNode(n) {
+					return
 				}
 			}
 		} else { // take nodes off frontier at random
 			for _, i := range cf.rand.Perm(len(frontier)) {
-				n := frontier[i]
-				// remainder of block same as above
-				if cf.nodeVisitor != nil {
-					cf.nodeVisitor(n)
-				}
-				if cf.okNodeVisitor != nil {
-					if !cf.okNodeVisitor(n) {
-						return
-					}
-				}
-				for _, nb := range g[n] {
-					if rp[nb].Len == 0 {
-						next = append(next, nb)
-						rp[nb] = graph.PathEnd{From: n, Len: level}
-					}
+				if !visitNode(frontier[i]) {
+					return
 				}
 			}
 		}
 		if len(next) == 0 {
 			break
 		}
-		frontier = next
+		frontier, next = next, nil
 	}
 }
 
@@ -226,6 +257,8 @@ func BreadthFirst(g graph.AdjacencyList, start graph.NI, opt ...TraverseOption) 
 // Unsupported:
 //
 //   From
+//   LevelVisitor
+//   OkLevelVisitor
 func DepthFirst(g graph.AdjacencyList, start graph.NI, options ...TraverseOption) {
 	cf := &config{start: start}
 	for _, o := range options {
