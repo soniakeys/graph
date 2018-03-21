@@ -163,12 +163,12 @@ func Visited(b *bits.Bits) TraverseOption {
 //   OkLevelVisitor
 //   OkNodeVisitor
 //   Rand
+//   Visited
 //
 // Unsupported:
 //
 //   ArcVisitor
 //   OkArcVisitor
-//   Visited
 //   PathBits
 //
 // See also alt.BreadthFirst2, a direction optimizing breadth first algorithm.
@@ -177,21 +177,37 @@ func BreadthFirst(g graph.AdjacencyList, start graph.NI, opt ...TraverseOption) 
 	for _, o := range opt {
 		o(cf)
 	}
-	f := cf.fromList
-	switch {
-	case f == nil:
-		e := graph.NewFromList(len(g))
-		f = &e
-	case f.Paths == nil:
-		*f = graph.NewFromList(len(g))
+	// either visBits or fromList are suitable for recording visited nodes.
+	// if neither is specified as an option, allocate bits.
+	b := cf.visBits
+	var rp []graph.PathEnd
+	if cf.fromList == nil {
+		if b == nil {
+			n := bits.New(len(g))
+			b = &n
+		}
+	} else {
+		if cf.fromList.Paths == nil {
+			*cf.fromList = graph.NewFromList(len(g))
+		}
+		rp = cf.fromList.Paths
 	}
-	rp := f.Paths
+	fillBits := b != nil
+	fillPath := rp != nil
 	// the frontier consists of nodes all at the same level
 	frontier := []graph.NI{cf.start}
 	level := 1
 	var next []graph.NI
-	// assign path when node is put on frontier
-	rp[cf.start] = graph.PathEnd{Len: level, From: -1}
+	// fill bits/path when node is put on frontier
+	if fillBits {
+		if b.Bit(int(cf.start)) == 1 {
+			return
+		}
+		b.SetBit(int(cf.start), 1)
+	}
+	if fillPath {
+		rp[cf.start] = graph.PathEnd{Len: level, From: -1}
+	}
 	visitNode := func(n graph.NI) bool {
 		// visit nodes as they come off frontier
 		if cf.nodeVisitor != nil {
@@ -202,10 +218,31 @@ func BreadthFirst(g graph.AdjacencyList, start graph.NI, opt ...TraverseOption) 
 				return false
 			}
 		}
-		for _, nb := range g[n] {
-			if rp[nb].Len == 0 {
-				next = append(next, nb)
-				rp[nb] = graph.PathEnd{From: n, Len: level}
+		switch {
+		case !fillBits:
+			// path only
+			for _, nb := range g[n] {
+				if rp[nb].Len == 0 {
+					next = append(next, nb)
+					rp[nb] = graph.PathEnd{From: n, Len: level}
+				}
+			}
+		case !fillPath:
+			// bits only
+			for _, nb := range g[n] {
+				if b.Bit(int(nb)) == 0 {
+					next = append(next, nb)
+					b.SetBit(int(nb), 1)
+				}
+			}
+		default:
+			// both
+			for _, nb := range g[n] {
+				if b.Bit(int(nb)) == 0 {
+					next = append(next, nb)
+					b.SetBit(int(nb), 1)
+					rp[nb] = graph.PathEnd{From: n, Len: level}
+				}
 			}
 		}
 		return true
@@ -217,7 +254,9 @@ func BreadthFirst(g graph.AdjacencyList, start graph.NI, opt ...TraverseOption) 
 		if cf.okLevelVisitor != nil && !cf.okLevelVisitor(level, frontier) {
 			return
 		}
-		f.MaxLen = level
+		if fillPath {
+			cf.fromList.MaxLen = level
+		}
 		level++
 		if cf.rand == nil {
 			for _, n := range frontier {
