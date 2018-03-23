@@ -11,6 +11,7 @@ import (
 )
 
 type config struct {
+	// values initialized directly from parameters
 	start          graph.NI
 	arcVisitor     func(n graph.NI, x int)
 	iterateFrom    func(n graph.NI)
@@ -23,6 +24,46 @@ type config struct {
 	visBits        *bits.Bits
 	pathBits       *bits.Bits
 	fromList       *graph.FromList
+
+	// other stuff initialized in constructor
+	rp   []graph.PathEnd     // fromList.Paths
+	nvis func(graph.NI) bool // not-visited test
+}
+
+func newConfig(g graph.AdjacencyList, start graph.NI, opt []TraverseOption) *config {
+	cf := &config{start: start}
+	for _, o := range opt {
+		o(cf)
+	}
+	// either visBits or fromList are suitable for recording visited nodes.
+	// if neither is specified as an option, allocate bits.
+	if cf.fromList == nil {
+		if cf.visBits == nil {
+			b := bits.New(len(g))
+			cf.visBits = &b
+		}
+	} else {
+		if cf.fromList.Paths == nil {
+			*cf.fromList = graph.NewFromList(len(g))
+		}
+		cf.rp = cf.fromList.Paths
+	}
+	if cf.visBits != nil {
+		if cf.visBits.Bit(int(cf.start)) == 1 {
+			return nil
+		}
+		cf.visBits.SetBit(int(cf.start), 1)
+		cf.nvis = func(n graph.NI) bool { return cf.visBits.Bit(int(n)) == 0 }
+	} else {
+		cf.nvis = func(n graph.NI) bool { return cf.rp[n].Len == 0 }
+	}
+	if cf.rp != nil {
+		if cf.rp[cf.start].Len > 0 {
+			return nil
+		}
+		cf.rp[cf.start] = graph.PathEnd{Len: 1, From: -1}
+	}
+	return cf
 }
 
 // A TraverseOption specifies an option for a breadth first or depth first
@@ -157,8 +198,8 @@ func Visited(b *bits.Bits) TraverseOption {
 //
 // Supported:
 //
-//   ArcVisitor
 //   From
+//   ArcVisitor
 //   LevelVisitor
 //   NodeVisitor
 //   OkArcVisitor
@@ -172,45 +213,15 @@ func Visited(b *bits.Bits) TraverseOption {
 //   PathBits
 //
 // See also alt.BreadthFirst2, a direction optimizing breadth first algorithm.
-func BreadthFirst(g graph.AdjacencyList, start graph.NI, opt ...TraverseOption) {
-	cf := &config{start: start}
-	for _, o := range opt {
-		o(cf)
+func BreadthFirst(g graph.AdjacencyList, start graph.NI, options ...TraverseOption) {
+	cf := newConfig(g, start, options)
+	if cf == nil {
+		return
 	}
-	// either visBits or fromList are suitable for recording visited nodes.
-	// if neither is specified as an option, allocate bits.
-	b := cf.visBits
-	var rp []graph.PathEnd
-	if cf.fromList == nil {
-		if b == nil {
-			n := bits.New(len(g))
-			b = &n
-		}
-	} else {
-		if cf.fromList.Paths == nil {
-			*cf.fromList = graph.NewFromList(len(g))
-		}
-		rp = cf.fromList.Paths
-	}
-	fillBits := b != nil
-	fillPath := rp != nil
-	// not-visited test
-	nvis := func(n graph.NI) bool { return rp[n].Len == 0 }
 	// the frontier consists of nodes all at the same level
 	frontier := []graph.NI{cf.start}
 	level := 1
 	var next []graph.NI
-	// fill bits/path when node is put on frontier
-	if fillBits {
-		if b.Bit(int(cf.start)) == 1 {
-			return
-		}
-		b.SetBit(int(cf.start), 1)
-		nvis = func(n graph.NI) bool { return b.Bit(int(n)) == 0 }
-	}
-	if fillPath {
-		rp[cf.start] = graph.PathEnd{Len: level, From: -1}
-	}
 	visitNode := func(n graph.NI) bool {
 		// visit nodes as they come off frontier
 		if cf.nodeVisitor != nil {
@@ -230,13 +241,13 @@ func BreadthFirst(g graph.AdjacencyList, start graph.NI, opt ...TraverseOption) 
 					return false
 				}
 			}
-			if nvis(nb) {
+			if cf.nvis(nb) {
 				next = append(next, nb)
-				if fillBits {
-					b.SetBit(int(nb), 1)
+				if cf.visBits != nil {
+					cf.visBits.SetBit(int(nb), 1)
 				}
-				if fillPath {
-					rp[nb] = graph.PathEnd{From: n, Len: level}
+				if cf.rp != nil {
+					cf.rp[nb] = graph.PathEnd{From: n, Len: level}
 				}
 			}
 		}
@@ -254,7 +265,7 @@ func BreadthFirst(g graph.AdjacencyList, start graph.NI, opt ...TraverseOption) 
 		if cf.okLevelVisitor != nil && !cf.okLevelVisitor(level, frontier) {
 			return
 		}
-		if fillPath {
+		if cf.fromList != nil {
 			cf.fromList.MaxLen = level
 		}
 		level++
@@ -277,41 +288,35 @@ func BreadthFirst(g graph.AdjacencyList, start graph.NI, opt ...TraverseOption) 
 //
 // Supported:
 //
-//   NodeVisitor
-//   OkNodeVisitor
+//   From
 //   ArcVisitor
+//   NodeVisitor
 //   OkArcVisitor
-//   Visited
+//   OkNodeVisitor
 //   PathBits
 //   Rand
+//   Visited
 //
 // Unsupported:
 //
-//   From
 //   LevelVisitor
 //   OkLevelVisitor
 func DepthFirst(g graph.AdjacencyList, start graph.NI, options ...TraverseOption) {
-	cf := &config{start: start}
-	for _, o := range options {
-		o(cf)
-	}
-	b := cf.visBits
-	if b == nil {
-		n := bits.New(len(g))
-		b = &n
-	} else if b.Bit(int(cf.start)) != 0 {
+	cf := newConfig(g, start, options)
+	if cf == nil {
 		return
 	}
 	if cf.pathBits != nil {
 		cf.pathBits.ClearAll()
 	}
-	var df func(graph.NI) bool
-	df = func(n graph.NI) bool {
-		b.SetBit(int(n), 1)
+	var dfArc func(graph.NI, graph.NI, int, int) bool
+	dfNode := func(n graph.NI, level int) bool {
+		if cf.visBits != nil {
+			cf.visBits.SetBit(int(n), 1)
+		}
 		if cf.pathBits != nil {
 			cf.pathBits.SetBit(int(n), 1)
 		}
-
 		if cf.nodeVisitor != nil {
 			cf.nodeVisitor(n)
 		}
@@ -320,39 +325,16 @@ func DepthFirst(g graph.AdjacencyList, start graph.NI, options ...TraverseOption
 				return false
 			}
 		}
-
 		if cf.rand == nil {
 			for x, to := range g[n] {
-				if cf.arcVisitor != nil {
-					cf.arcVisitor(n, x)
-				}
-				if cf.okArcVisitor != nil {
-					if !cf.okArcVisitor(n, x) {
-						return false
-					}
-				}
-				if b.Bit(int(to)) != 0 {
-					continue
-				}
-				if !df(to) {
+				if !dfArc(n, to, x, level) {
 					return false
 				}
 			}
 		} else {
 			to := g[n]
 			for _, x := range cf.rand.Perm(len(to)) {
-				if cf.arcVisitor != nil {
-					cf.arcVisitor(n, x)
-				}
-				if cf.okArcVisitor != nil {
-					if !cf.okArcVisitor(n, x) {
-						return false
-					}
-				}
-				if b.Bit(int(to[x])) != 0 {
-					continue
-				}
-				if !df(to[x]) {
+				if !dfArc(n, to[x], x, level) {
 					return false
 				}
 			}
@@ -362,5 +344,22 @@ func DepthFirst(g graph.AdjacencyList, start graph.NI, options ...TraverseOption
 		}
 		return true
 	}
-	df(cf.start)
+	dfArc = func(fr, to graph.NI, x, level int) bool {
+		if cf.arcVisitor != nil {
+			cf.arcVisitor(fr, x)
+		}
+		if cf.okArcVisitor != nil {
+			if !cf.okArcVisitor(fr, x) {
+				return false
+			}
+		}
+		if !cf.nvis(to) {
+			return true
+		}
+		if cf.rp != nil {
+			cf.rp[fr] = graph.PathEnd{From: fr, Len: level}
+		}
+		return dfNode(to, level+1)
+	}
+	dfNode(cf.start, 1)
 }
