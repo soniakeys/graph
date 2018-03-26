@@ -16,13 +16,6 @@ import (
 	"github.com/soniakeys/bits"
 )
 
-// NI is a "node int"
-//
-// It is a node number or node ID.  NIs are used extensively as slice indexes.
-// NIs typically account for a significant fraction of the memory footprint of
-// a graph.
-type NI int32
-
 // AnyParallel identifies if a graph contains parallel arcs, multiple arcs
 // that lead from a node to the same node.
 //

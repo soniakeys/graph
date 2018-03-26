@@ -70,6 +70,15 @@ import (
 //go:generate gofmt -r "n.To -> n" -w undir_RO.go
 //go:generate gofmt -r "Half -> NI" -w undir_RO.go
 
+// NI is a "node int"
+//
+// It is a node number or node ID.  NIs are used extensively as slice indexes.
+// NIs typically account for a significant fraction of the memory footprint of
+// a graph.
+type NI int32
+
+var NIBits = reflect.TypeOf(NI(0)).Bits()
+
 // An AdjacencyList represents a graph as a list of neighbors for each node.
 // The "node ID" of a node is simply it's slice index in the AdjacencyList.
 // For an AdjacencyList g, g[n] represents arcs going from node n to nodes
