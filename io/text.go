@@ -308,6 +308,120 @@ func ReadAdjacencyListOrderBase(r io.Reader, order, base int) (
 	return
 }
 
+func ReadArcNIs(r io.Reader, comment string) (graph.AdjacencyList, error) {
+	return ReadArcNIsBase(r, comment, 10)
+}
+
+func ReadArcNIsBase(r io.Reader, comment string, base int) (graph.AdjacencyList, error) {
+	var max int64
+	e := map[int][]graph.NI{}
+	for b := bufio.NewReader(r); ; {
+		s, err := b.ReadString('\n')
+		if err != nil {
+			if err != io.EOF {
+				return nil, err
+			}
+			if s == "" { // normal return
+				g := make(graph.AdjacencyList, max+1)
+				for fr := range g {
+					g[fr] = e[fr]
+				}
+				return g, nil
+			}
+			// allow last line without \n
+		}
+		if comment > "" {
+			if i := strings.Index(s, comment); i >= 0 {
+				s = s[:i]
+			}
+		}
+		s = strings.TrimSpace(s)
+		if s == "" {
+			continue // blank line
+		}
+		f := sep.Split(s, 2)
+		if len(f) != 2 {
+			return nil, fmt.Errorf("invalid: %q", s)
+		}
+		fr, err := strconv.ParseInt(strings.TrimSpace(f[0]), base, graph.NIBits)
+		if err != nil {
+			return nil, err
+		}
+		if fr < 0 {
+			return nil, fmt.Errorf("invalid: %q", s)
+		}
+		if fr > max {
+			max = fr
+		}
+		to, err := strconv.ParseInt(strings.TrimSpace(f[1]), base, graph.NIBits)
+		if err != nil {
+			return nil, err
+		}
+		if to > max {
+			max = to
+		}
+		e[int(fr)] = append(e[int(fr)], graph.NI(to))
+	}
+}
+
+func ReadArcNames(r io.Reader, delim, comment string) (g graph.AdjacencyList, name []string, ni map[string]graph.NI, err error) {
+	ni = map[string]graph.NI{}
+	getNI := func(s string) graph.NI {
+		n, ok := ni[s]
+		if !ok {
+			n = graph.NI(len(g))
+			g = append(g, nil)
+			name = append(name, s)
+			ni[s] = n
+		}
+		return n
+	}
+	if delim == "" {
+		delim = " "
+	}
+	b := bufio.NewReader(r)
+	s := ""
+	for line := 1; ; line++ {
+		s, err = b.ReadString('\n')
+		if err != nil {
+			if err != io.EOF {
+				return nil, nil, nil, fmt.Errorf("line %d: %v", line, err)
+			}
+			if s == "" {
+				err = nil
+				return
+			}
+			// allow last line without \n
+		}
+		if comment > "" {
+			if i := strings.Index(s, comment); i >= 0 {
+				s = s[:i]
+			}
+		}
+		s = strings.TrimSpace(s)
+		if s == "" {
+			continue // allow and ignore blank line
+		}
+		i := strings.Index(s, delim)
+		if i < 0 {
+			return nil, nil, nil,
+				fmt.Errorf("line %d: delimiter required", line)
+		}
+		fn := strings.TrimSpace(s[:i])
+		if fn == "" {
+			return nil, nil, nil,
+				fmt.Errorf("line %d: blank name not allowed", line)
+		}
+		tn := strings.TrimSpace(s[i+len(delim):])
+		if tn == "" {
+			return nil, nil, nil,
+				fmt.Errorf("line %d: blank name not allowed", line)
+		}
+		fr := getNI(fn)
+		g[fr] = append(g[fr], getNI(tn))
+	}
+}
+
 // WriteAdjacencyList writes an adjacency list in a simple text format.
 //
 // A line is written for each node, consisting of the to-list, the NIs

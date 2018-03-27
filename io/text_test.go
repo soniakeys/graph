@@ -89,7 +89,6 @@ d e
 	for n, to := range g {
 		fmt.Println(n, to)
 	}
-	fmt.Println("map:")
 	fmt.Println(graph.OrderMap(m))
 	fmt.Println("err:", err)
 	// Output:
@@ -105,9 +104,58 @@ d e
 	// 2 []
 	// 3 [4]
 	// 4 []
-	// map:
 	// map[a:0 b:1 c:2 d:3 e:4 ]
 	// err: <nil>
+}
+
+func ExampleReadArcNIs() {
+	r := bytes.NewBufferString(`
+0 2  
+0 1
+0 1 // parallel
+2 1
+`)
+	g, err := io.ReadArcNIs(r, "//")
+	for n, to := range g {
+		fmt.Println(n, to)
+	}
+	fmt.Println("err: ", err)
+	// Output:
+	// 0 [2 1 1]
+	// 1 []
+	// 2 [1]
+	// err:  <nil>
+}
+
+func ExampleReadArcNames() {
+	r := bytes.NewBufferString(`
+a b
+a b // parallel
+a c  
+c b
+`)
+	g, names, m, err := io.ReadArcNames(r, "", "//")
+	fmt.Println("names:")
+	for i, n := range names {
+		fmt.Println(i, n)
+	}
+	fmt.Println("graph:")
+	for n, to := range g {
+		fmt.Println(n, to)
+	}
+	fmt.Println(graph.OrderMap(m))
+	fmt.Println("err: ", err)
+	// Output:
+	// names:
+	// 0 a
+	// 1 b
+	// 2 c
+	// graph:
+	// 0 [1 1 2]
+	// 1 []
+	// 2 [1]
+	// map[a:0 b:1 c:2 ]
+	// err:  <nil>
 }
 
 func ExampleWriteAdjacencyList() {
