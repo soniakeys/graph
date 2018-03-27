@@ -11,29 +11,39 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/soniakeys/graph"
 )
 
-// ReadAdjacencyListBase reads a graph from the simple text format written
-// by WriteAdjacencyListBase.
+// Sep defines a separator string for functions ReadAdjacencyListNIs,
+// ReadAdjacencyListNIsBase, ReadArcNIs, and ReadArcNIsBase.
 //
-// It constructs a graph with a nodes for each line of input, reading to EOF.
-// A final newline is not required.
+// Graph.NIs are integers, so any non-empty string of charchters that cannot
+// be part of an integer serves as a separator between NIs.
+var Sep = regexp.MustCompile("[^0-9-+]+")
+
+// ReadAdjacencyList reads a graph from a simple text format.
 //
-// Node IDs read from the file are interpreted directly as graph.NIs.
-func ReadAdjacencyList(r io.Reader) (g graph.AdjacencyList, err error) {
+// The format has a line for each node of the graph, each line consisting of
+// whitespace delimited NIs of a node's to-list.  The from-node is implied by
+// the (0-based) line number of input text.  To-node IDs read from the
+// file are interpreted directly as graph.NIs.
+//
+// Note that for this function whitespace must separate NIs.  The more
+// flexible scheme using package variable Sep is not used here.
+//
+// ReadAdjacencyList reads to EOF.  A final newline is not required.
+//
+// ReadAdjacencyList will read text written by WriteAdjacencyList.
+func ReadAdjacencyList(r io.Reader) (graph.AdjacencyList, error) {
 	return ReadAdjacencyListBase(r, 10)
 }
 
-// ReadAdjacencyListBase reads a graph from the simple text format written
-// by WriteAdjacencyListBase.
+// ReadAdjacencyListBase reads a graph from a simple text format with NIs
+// in an arbitrary base.
 //
-// It constructs a graph with a nodes for each line of input, reading to EOF.
-// A final newline is not required.
-//
-// Node IDs read from the file are interpreted directly as graph.NIs.
-//
+// Like ReadAdjacencyList but parsing numbers in the given base.
 // Argument base is passed to strconv.ParseInt.
 func ReadAdjacencyListBase(r io.Reader, base int) (
 	g graph.AdjacencyList, err error) {
@@ -49,8 +59,9 @@ func ReadAdjacencyListBase(r io.Reader, base int) (
 	}
 }
 
-// read a parse a single line.  if the last line is missing the newline, it
-// returns the data and err == nil.  a subsequent call will return err=io.EOF.
+// read and parse a single line of a whitespace delimited to-list.  if the
+// last line is missing the newline, it returns the data and err == nil.
+// a subsequent call will return io.EOF.
 func readToBase(r *bufio.Reader, base int) (to []graph.NI, err error) {
 	s, err := r.ReadString('\n') // but allow last line without \n
 	if err != nil {
@@ -71,46 +82,30 @@ func readToBase(r *bufio.Reader, base int) (to []graph.NI, err error) {
 	return to, nil
 }
 
-// ReadAdjacencyListNIs reads a graph from the simple text format written by
-// WriteAdjacencyListNIs.
+// ReadAdjacencyListNIs reads a graph from a simple text format keyed by
+// node NI.
 //
-// It constructs a graph with at least "order" nodes, but reads from "r" until
-// EOF.  A graph of the specified order is allocated initially, but the graph
-// will be expaneded as needed.  Zero can be passed for order.
-//
-// The format is similar to Go keyed composite literals.  Each line must have
-// a from-NI as a "key" followed by a list of to-NIs.  Any string of characters
-// not in "-0123456789" functions as a delimiter between NIs.
-// A final newline is not required.
+// The format is similar to Go keyed composite literals in that each line has
+// a from-NI as a "key" followed by a list of to-NIs.  NIs are delimited by
+// the package variable Sep, which allows any non-empty string of characters
+// not in "+-0123456789" to delimit NIs.  A final newline is not required.
 //
 // If argument comment is non-empty, it specifies a string marking end-of-line
 // comments.
-func ReadAdjacencyListNIs(r io.Reader, order int, comment string) (
-	g graph.AdjacencyList, err error) {
-	return ReadAdjacencyListNIsBase(r, order, comment, 10)
+//
+// ReadAdjacencyListNIs will read text written by WriteAdjacencyListNIs.
+func ReadAdjacencyListNIs(r io.Reader, comment string) (
+	graph.AdjacencyList, error) {
+	return ReadAdjacencyListNIsBase(r, comment, 10)
 }
 
-var sep = regexp.MustCompile("[^-0123456789]+")
-
-// ReadAdjacencyListNIsBase reads a graph from the simple text format
-// written by WriteAdjacencyListNIsBase.
+// ReadAdjacencyListNIsBase reads a graph from the simple text format keyed by
+// node NI with NIs in an arbitrary base.
 //
-// It constructs a graph with at least "order" nodes, but reads from "r" until
-// EOF.  A graph of the specified order is allocated initially, but the graph
-// will be expaneded as needed.  Zero can be passed for order.
-//
-// The format is similar to Go keyed composite literals.  Each line must have
-// a from-NI as a "key" followed by a list of to-NIs.  Any string of characters
-// not in "-0123456789" functions as a delimiter between NIs.
-// A final newline is not required.
-//
-// Argument base is passed to strconv.ParseInt.
-//
-// If argument comment is non-empty, it specifies a string marking end-of-line
-// comments.
-func ReadAdjacencyListNIsBase(r io.Reader,
-	order int, comment string, base int) (g graph.AdjacencyList, err error) {
-	g = make(graph.AdjacencyList, order)
+// Like ReadAdjacencyListNIs but parsing numbers in the given base. Argument
+// base is passed to strconv.ParseInt.
+func ReadAdjacencyListNIsBase(r io.Reader, comment string, base int) (
+	g graph.AdjacencyList, err error) {
 	b := bufio.NewReader(r)
 	for {
 		s, err := b.ReadString('\n')
@@ -132,7 +127,7 @@ func ReadAdjacencyListNIsBase(r io.Reader,
 		if s == "" {
 			continue // allow and ignore blank line
 		}
-		f := sep.Split(s, -1)
+		f := Sep.Split(s, -1)
 		// non-blank line must start with valid from-NI, not delimiters
 		if f[0] == "" {
 			return nil, fmt.Errorf("invalid: %q", s)
@@ -168,13 +163,15 @@ func ReadAdjacencyListNIsBase(r io.Reader,
 	}
 }
 
-// ReadAdjacencyListNames reads a graph from the simple text format
-// written by WriteAdjacencyListNames.
+// ReadAdjacencyListNames reads a graph from a simple text format using
+// arbitrary node names.
 //
-// The format is similar to that of ReadAdjacencyListNIs but reads an input
-// graph of named nodes rather than NIs.  Unique node names are accumulated
-// in a list parallel to the returned graph, naming each node.  A map, with
-// the reverse mapping from name to NI is also accumulated.
+// The format is similar to that of ReadAdjacencyListNIs but represents an
+// input graph of named nodes rather than NIs.
+//
+// As data is read, unique node names are accumulatedin a list parallel to the
+// returned graph, naming each node.  A map, with the reverse mapping from name
+// to NI is also accumulated.
 //
 // Argument frDelim specifies a delimiter following the from-node.  If an
 // empty string is passed, a space character will delimit the from-node.
@@ -187,6 +184,8 @@ func ReadAdjacencyListNIsBase(r io.Reader,
 //
 // If argument comment is non-empty, it specifies a string marking end-of-line
 // comments.
+//
+// ReadAdjacencyListNames will read text written by WriteAdjacencyListNames.
 func ReadAdjacencyListNames(r io.Reader, frDelim, toDelim, comment string) (
 	g graph.AdjacencyList, name []string, ni map[string]graph.NI, err error) {
 	ni = map[string]graph.NI{}
@@ -202,8 +201,11 @@ func ReadAdjacencyListNames(r io.Reader, frDelim, toDelim, comment string) (
 	}
 	frSpace := strings.TrimSpace(frDelim) == ""
 	toSpace := strings.TrimSpace(toDelim) == ""
-	if frDelim == "" {
-		frDelim = " "
+	frIndex := func(s string) int { return strings.Index(s, frDelim) }
+	if frSpace {
+		frIndex = func(s string) int {
+			return strings.IndexFunc(s, unicode.IsSpace)
+		}
 	}
 	b := bufio.NewReader(r)
 	s := ""
@@ -229,7 +231,7 @@ func ReadAdjacencyListNames(r io.Reader, frDelim, toDelim, comment string) (
 			continue // allow and ignore blank line
 		}
 		f0 := s
-		switch i := strings.Index(s, frDelim); {
+		switch i := frIndex(s); {
 		case i >= 0:
 			f0 = strings.TrimSpace(s[:i])
 			if f0 == "" {
@@ -265,6 +267,9 @@ func ReadAdjacencyListNames(r io.Reader, frDelim, toDelim, comment string) (
 		g[fr] = to
 	}
 }
+
+/* order functions commented out for now.  the idea is that these would
+be useful as subroutines for more complex formats.  uncomment as needed...
 
 // ReadAdjacencyListOrder reads a graph from the simple text format written by
 // WriteAdjacencyList.
@@ -307,11 +312,29 @@ func ReadAdjacencyListOrderBase(r io.Reader, order, base int) (
 	}
 	return
 }
+*/
 
+// ReadArcNIs reads a graph from the simple text format written by WriteArcNIs.
+//
+// It constructs a graph with an arc for each line of input, where a line
+// has a from-NI and to-NI.
+//
+// If argument comment is non-empty, it specifies a string marking end-of-line
+// comments.
 func ReadArcNIs(r io.Reader, comment string) (graph.AdjacencyList, error) {
 	return ReadArcNIsBase(r, comment, 10)
 }
 
+// ReadArcNIsBase reads a graph from the simple text format written by
+// WriteArcNIsBase.
+//
+// It constructs a graph with an arc for each line of input, where a line
+// has a from-NI and to-NI.
+//
+// If argument comment is non-empty, it specifies a string marking end-of-line
+// comments.
+//
+// Argument base is passed to strconv.ParseInt.
 func ReadArcNIsBase(r io.Reader, comment string, base int) (graph.AdjacencyList, error) {
 	var max int64
 	e := map[int][]graph.NI{}
@@ -339,7 +362,7 @@ func ReadArcNIsBase(r io.Reader, comment string, base int) (graph.AdjacencyList,
 		if s == "" {
 			continue // blank line
 		}
-		f := sep.Split(s, 2)
+		f := Sep.Split(s, 2)
 		if len(f) != 2 {
 			return nil, fmt.Errorf("invalid: %q", s)
 		}
@@ -364,7 +387,21 @@ func ReadArcNIsBase(r io.Reader, comment string, base int) (graph.AdjacencyList,
 	}
 }
 
-func ReadArcNames(r io.Reader, delim, comment string) (g graph.AdjacencyList, name []string, ni map[string]graph.NI, err error) {
+// ReadArcNames reads a graph from the simple text format written by
+// WriteArcNames.
+//
+// The format is similar to that of ReadArcNIs but reads an input graph of
+// named nodes rather than NIs.  Unique node names are accumulated
+// in a list parallel to the returned graph, naming each node.  A map, with
+// the reverse mapping from name to NI is also accumulated.
+//
+// An empty string is not allowed as a node name. A final newline is not
+// required.
+//
+// If argument comment is non-empty, it specifies a string marking end-of-line
+// comments.
+func ReadArcNames(r io.Reader, delim, comment string) (
+	g graph.AdjacencyList, name []string, ni map[string]graph.NI, err error) {
 	ni = map[string]graph.NI{}
 	getNI := func(s string) graph.NI {
 		n, ok := ni[s]
@@ -484,7 +521,7 @@ func WriteAdjacencyListBase(g graph.AdjacencyList, w io.Writer, base int) (
 // Returned is number of bytes written and error.
 func WriteAdjacencyListNIs(g graph.AdjacencyList, w io.Writer) (
 	n int, err error) {
-	return WriteAdjacencyListNIsBase(g, w, 10, ": ", " ")
+	return WriteAdjacencyListNIsBase(g, w, ": ", " ", 10)
 }
 
 // WriteAdjacencyListNIsBase writes an adjacency list in a simple text format.
@@ -494,12 +531,12 @@ func WriteAdjacencyListNIs(g graph.AdjacencyList, w io.Writer) (
 // Nodes with no to-nodes generate no output, except a maximum NI with no
 // to-nodes will be written with an empty to-list.
 //
-// Argument base is passed to strconv.FormatInt.  Argument keyDelim is
+// Argument base is passed to strconv.FormatInt.  Argument frDelim is
 // written after the from-NI.  Argument toDelim is written separating to-NIs.
 //
 // Returned is number of bytes written and error.
 func WriteAdjacencyListNIsBase(g graph.AdjacencyList, w io.Writer,
-	base int, keyDelim, toDelim string) (n int, err error) {
+	frDelim, toDelim string, base int) (n int, err error) {
 	b := bufio.NewWriter(w)
 	var c int
 	last := len(g) - 1
@@ -512,7 +549,7 @@ func WriteAdjacencyListNIsBase(g graph.AdjacencyList, w io.Writer,
 		if err != nil {
 			return
 		}
-		c, err = b.WriteString(keyDelim)
+		c, err = b.WriteString(frDelim)
 		n += c
 		if err != nil {
 			return
@@ -604,6 +641,102 @@ func WriteAdjacencyListNames(g graph.AdjacencyList, w io.Writer,
 			return
 		}
 		n++
+	}
+	b.Flush()
+	return
+}
+
+// WriteArcNIs writes arcs of an adjacency list in a simple text format.
+//
+// Each line has an arc, a from-NI and to-NI, separated with a space.
+//
+// Returned is number of bytes written and error.
+func WriteArcNIs(g graph.AdjacencyList, w io.Writer) (
+	n int, err error) {
+	return WriteArcNIsBase(g, w, " ", 10)
+}
+
+// WriteArcNIsBase writes arcs of an adjacency list in a simple text format.
+//
+// Each line has a full arc, a from-NI and to-NI, separated with a delimiter.
+// If argument delim is the empty string, NIs will be separated with a space.
+//
+// Argument base is passed to strconv.FormatInt.
+//
+// Returned is number of bytes written and error.
+func WriteArcNIsBase(g graph.AdjacencyList, w io.Writer,
+	delim string, base int) (n int, err error) {
+	if delim == "" {
+		delim = " "
+	}
+	b := bufio.NewWriter(w)
+	var c int
+	for fr, to := range g {
+		for _, to := range to {
+			c, err = b.WriteString(strconv.FormatInt(int64(fr), base))
+			n += c
+			if err != nil {
+				return
+			}
+			c, err = b.WriteString(delim)
+			n += c
+			if err != nil {
+				return
+			}
+			c, err = b.WriteString(strconv.FormatInt(int64(to), base))
+			n += c
+			if err != nil {
+				return
+			}
+			if err = b.WriteByte('\n'); err != nil {
+				return
+			}
+			n++
+		}
+	}
+	b.Flush()
+	return
+}
+
+// WriteArcNames writes arcs of an adjacency list with named nodes.
+//
+// The format is similar to that of WriteArcNIs but allows nodes
+// to be written as names rather than NIs.
+//
+// If argument delim is the empty string, NIs will be separated with a space.
+//
+// Argument name is a function to translate NIs to names.
+//
+// Returned is number of bytes written and error.
+func WriteArcNames(g graph.AdjacencyList, w io.Writer,
+	delim string, name func(graph.NI) string) (n int, err error) {
+	if delim == "" {
+		delim = " "
+	}
+	b := bufio.NewWriter(w)
+	var c int
+	for fr, to := range g {
+		for _, to := range to {
+			c, err = b.WriteString(name(graph.NI(fr)))
+			n += c
+			if err != nil {
+				return
+			}
+			c, err = b.WriteString(delim)
+			n += c
+			if err != nil {
+				return
+			}
+			c, err = b.WriteString(name(to))
+			n += c
+			if err != nil {
+				return
+			}
+			if err = b.WriteByte('\n'); err != nil {
+				return
+			}
+			n++
+		}
 	}
 	b.Flush()
 	return

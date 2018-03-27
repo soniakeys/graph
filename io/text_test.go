@@ -26,7 +26,7 @@ func ExampleReadAdjacencyList() {
 	// err:  <nil>
 }
 
-func ExampleReadAdjacencyListOrder() {
+/* func ExampleReadAdjacencyListOrder() {
 	r := bytes.NewBufferString("2 1 1\n\n1")
 	g, err := io.ReadAdjacencyListOrder(r, 3)
 	for n, to := range g {
@@ -38,13 +38,13 @@ func ExampleReadAdjacencyListOrder() {
 	// 1 []
 	// 2 [1]
 	// err:  <nil>
-}
+} */
 
 func ExampleReadAdjacencyListNIs() {
 	r := bytes.NewBufferString(`
 0: 2 1 1
 2: 1`)
-	g, err := io.ReadAdjacencyListNIs(r, 0, "")
+	g, err := io.ReadAdjacencyListNIs(r, "")
 	for n, to := range g {
 		fmt.Println(n, to)
 	}
@@ -61,7 +61,7 @@ func ExampleReadAdjacencyListNIsBase() {
 1 2 3 // no 0
 4 5
 `)
-	g, err := io.ReadAdjacencyListNIsBase(r, 0, "//", 10)
+	g, err := io.ReadAdjacencyListNIsBase(r, "//", 10)
 	for n, to := range g {
 		fmt.Println(n, to)
 	}
@@ -208,4 +208,42 @@ func ExampleWriteAdjacencyListNames() {
 	// a: b c
 	// d: e
 	// bytes: 12, err: <nil>
+}
+
+func ExampleWriteArcNIs() {
+	//   0
+	//  / \\
+	// 2-->1
+	g := graph.AdjacencyList{
+		0: {2, 1, 1},
+		2: {1},
+	}
+	n, err := io.WriteArcNIs(g, os.Stdout)
+	fmt.Printf("bytes: %d, err: %v\n", n, err)
+	// Output:
+	// 0 2
+	// 0 1
+	// 0 1
+	// 2 1
+	// bytes: 16, err: <nil>
+}
+
+func ExampleWriteArcNames() {
+	//   a
+	//  / \\
+	// c-->b
+	g := graph.AdjacencyList{
+		0: {2, 1, 1},
+		2: {1},
+	}
+	names := []string{"a", "b", "c"}
+	n, err := io.WriteArcNames(g, os.Stdout, " ",
+		func(n graph.NI) string { return names[n] })
+	fmt.Printf("bytes: %d, err: %v\n", n, err)
+	// Output:
+	// a c
+	// a b
+	// a b
+	// c b
+	// bytes: 16, err: <nil>
 }
