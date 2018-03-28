@@ -2,6 +2,50 @@
 // License MIT: http://opensource.org/licenses/MIT
 
 // Package graph/io provides graph readers and writers.
+//
+// High-level "Names" functions:
+//
+//   ReadAdjacencyListNames
+//   ReadArcNames
+//   WriteAdjacencyListNames
+//   WriteArcNames
+//
+// These functions read and write graphs of named nodes, providing translation
+// to and from the integer NIs used by the graph algorithms.  The translation
+// might also be useful for data that has integer node IDs, but sparsely
+// assigned.  The functions have flexible delimiter options.  The readers
+// allow blank lines, whitespace, and have end-of-line comment options.
+//
+// High-level "NIs" functions:
+//
+//   ReadAdjacencyListNIs
+//   ReadArcNIs
+//   WriteAdjacencyListNIs
+//   WriteArcNIs
+//
+// These functions read and write formats similar to the "Names" functions
+// but with node NIs rather that arbitrary names.
+//
+// Lower-level "NIsBase" functions:
+//
+//   ReadAdjacencyListNIsBase
+//   ReadArcNIsBase
+//   WriteAdjacencyListNIsBase
+//   WriteArcNIsBase
+//
+// These functions are like the "NIs" functions but read and write NIs in a
+// specified base.  (Mostly just because the strconv functions do it, but
+// higher bases will represent data somewhat more compactly.)
+//
+// Lower-level node-implicit functions:
+//
+//   ReadAdjacencyList
+//   ReadAdjacencyListBase
+//   WriteAdjacencyList
+//   WriteAdjacencyListBase
+//
+// These functions read and write a more primitive format of to-lists, with
+// the from-NI implied, derived by counting input lines.
 package io
 
 import (
@@ -413,8 +457,11 @@ func ReadArcNames(r io.Reader, delim, comment string) (
 		}
 		return n
 	}
+	delIndex := func(s string) int { return strings.Index(s, delim) }
 	if delim == "" {
-		delim = " "
+		delIndex = func(s string) int {
+			return strings.IndexFunc(s, unicode.IsSpace)
+		}
 	}
 	b := bufio.NewReader(r)
 	s := ""
@@ -439,7 +486,7 @@ func ReadArcNames(r io.Reader, delim, comment string) (
 		if s == "" {
 			continue // allow and ignore blank line
 		}
-		i := strings.Index(s, delim)
+		i := delIndex(s)
 		if i < 0 {
 			return nil, nil, nil,
 				fmt.Errorf("line %d: delimiter required", line)
@@ -527,7 +574,7 @@ func WriteAdjacencyListNIs(g graph.AdjacencyList, w io.Writer) (
 // WriteAdjacencyListNIsBase writes an adjacency list in a simple text format.
 //
 // The format is similar to Go keyed composite literals.  Each line has a
-// from-NI as a "key" followed by ": " and a list of to-NIs.
+// from-NI as a "key" followed by a delimiter and a list of to-NIs.
 // Nodes with no to-nodes generate no output, except a maximum NI with no
 // to-nodes will be written with an empty to-list.
 //
@@ -732,6 +779,143 @@ func WriteArcNames(g graph.AdjacencyList, w io.Writer,
 			if err != nil {
 				return
 			}
+			if err = b.WriteByte('\n'); err != nil {
+				return
+			}
+			n++
+		}
+	}
+	b.Flush()
+	return
+}
+
+// WriteUpper writes the "upper triangle" of an adjacency list.
+//
+// For an adjacency list representing an undirected graph, this writes
+// an arc for each undirected edge but omits reciprocal arcs.
+//
+// A line is written for each node, consisting of to-NIs greater than or
+// equal to the from-NI.  The from-NI is not written but is implied by the
+// line number.
+//
+// Returned is number of bytes written and error.
+func WriteUpper(g graph.AdjacencyList, w io.Writer) (
+	n int, err error) {
+	return WriteUpperBase(g, w, 10)
+}
+
+// WriteUpperBase writes the "upper triangle" of an adjacency list.
+//
+// Like WriteUpper but formatting NIs in the given base.
+// Argument base is passed to strconv.FormatInt.
+//
+// Returned is number of bytes written and error.
+func WriteUpperBase(g graph.AdjacencyList, w io.Writer, base int) (
+	n int, err error) {
+	b := bufio.NewWriter(w)
+	var c int
+	for i, to := range g {
+		fr := graph.NI(i)
+		one := false
+		for _, to := range to {
+			if to >= fr {
+				if one {
+					if err = b.WriteByte(' '); err != nil {
+						return
+					}
+					n++
+				} else {
+					one = true
+				}
+				c, err = b.WriteString(strconv.FormatInt(int64(to), base))
+				n += c
+				if err != nil {
+					return
+				}
+			}
+		}
+		if err = b.WriteByte('\n'); err != nil {
+			return
+		}
+		n++
+	}
+	b.Flush()
+	return
+}
+
+// WriteUpperNIs writes the "upper triangle" of an adjacency list.
+//
+// For an adjacency list representing an undirected graph, this writes
+// an arc for each undirected edge but omits reciprocal arcs.
+//
+// A line is written for each from-node that has to-nodes >= the from-node.
+// The format is similar to Go keyed composite literals.  Each line has the
+// from-NI as a "key" followed by ": " and a list of to-NIs.  Nodes with no
+// to-nodes >= the from-node generate no output, except a maximum NI with no
+// to-nodes will be written with an empty to-list.
+//
+// Returned is number of bytes written and error.
+func WriteUpperNIs(g graph.AdjacencyList, w io.Writer) (
+	n int, err error) {
+	return WriteUpperNIsBase(g, w, ": ", " ", 10)
+}
+
+// WriteUpperNIsBase writes the "upper triangle" of an adjacency list.
+//
+// Like WriteUpperNis but formatting NIs in the given base.
+// Argument base is passed to strconv.FormatInt.
+//
+// Returned is number of bytes written and error.
+func WriteUpperNIsBase(g graph.AdjacencyList, w io.Writer,
+	frDelim, toDelim string, base int) (n int, err error) {
+	b := bufio.NewWriter(w)
+	var c int
+	last := len(g) - 1
+	for i, to := range g {
+		fr := graph.NI(i)
+		one := false
+		for _, to := range to {
+			if to >= fr {
+				if !one {
+					one = true
+					c, err = b.WriteString(strconv.FormatInt(int64(i), base))
+					n += c
+					if err != nil {
+						return
+					}
+					c, err = b.WriteString(frDelim)
+					n += c
+					if err != nil {
+						return
+					}
+				} else {
+					c, err = b.WriteString(toDelim)
+					n += c
+					if err != nil {
+						return
+					}
+				}
+				c, err = b.WriteString(strconv.FormatInt(int64(to), base))
+				n += c
+				if err != nil {
+					return
+				}
+			}
+		}
+		if i == last && !one {
+			one = true
+			c, err = b.WriteString(strconv.FormatInt(int64(i), base))
+			n += c
+			if err != nil {
+				return
+			}
+			c, err = b.WriteString(frDelim)
+			n += c
+			if err != nil {
+				return
+			}
+		}
+		if one {
 			if err = b.WriteByte('\n'); err != nil {
 				return
 			}

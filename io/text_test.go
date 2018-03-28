@@ -247,3 +247,40 @@ func ExampleWriteArcNames() {
 	// c b
 	// bytes: 16, err: <nil>
 }
+
+func ExampleWriteUpper() {
+	//   0
+	//  / \\
+	// 1---2--\
+	//      \-/
+	var g graph.Undirected
+	g.AddEdge(0, 1)
+	g.AddEdge(0, 2)
+	g.AddEdge(0, 2)
+	g.AddEdge(2, 2)
+	n, err := io.WriteUpper(g.AdjacencyList, os.Stdout)
+	fmt.Printf("bytes: %d, err: %v\n", n, err)
+	// Output:
+	// 1 2 2
+	//
+	// 2
+	// bytes: 9, err: <nil>
+}
+
+func ExampleWriteUpperNIs() {
+	//   0
+	//  / \\
+	// 1---2--\
+	//      \-/
+	var g graph.Undirected
+	g.AddEdge(0, 1)
+	g.AddEdge(0, 2)
+	g.AddEdge(0, 2)
+	g.AddEdge(2, 2)
+	n, err := io.WriteUpperNIs(g.AdjacencyList, os.Stdout)
+	fmt.Printf("bytes: %d, err: %v\n", n, err)
+	// Output:
+	// 0: 1 2 2
+	// 2: 2
+	// bytes: 14, err: <nil>
+}
