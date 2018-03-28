@@ -12,9 +12,11 @@ import (
 	"github.com/soniakeys/graph/io"
 )
 
-func ExampleReadAdjacencyList() {
-	r := bytes.NewBufferString("2 1 1\n\n1")
-	g, err := io.ReadAdjacencyList(r)
+func ExampleTextOptions_ReadAdjacencyList() {
+	r := bytes.NewBufferString(`2 1 1
+
+1`)
+	g, err := io.NewText().ReadAdjacencyList(r)
 	for n, to := range g {
 		fmt.Println(n, to)
 	}
@@ -25,20 +27,6 @@ func ExampleReadAdjacencyList() {
 	// 2 [1]
 	// err:  <nil>
 }
-
-/* func ExampleReadAdjacencyListOrder() {
-	r := bytes.NewBufferString("2 1 1\n\n1")
-	g, err := io.ReadAdjacencyListOrder(r, 3)
-	for n, to := range g {
-		fmt.Println(n, to)
-	}
-	fmt.Println("err: ", err)
-	// Output:
-	// 0 [2 1 1]
-	// 1 []
-	// 2 [1]
-	// err:  <nil>
-} */
 
 func ExampleReadAdjacencyListNIs() {
 	r := bytes.NewBufferString(`
@@ -61,7 +49,7 @@ func ExampleReadAdjacencyListNIsBase() {
 1 2 3 // no 0
 4 5
 `)
-	g, err := io.ReadAdjacencyListNIsBase(r, "//", 10)
+	g, err := io.ReadAdjacencyListNIsBase(r, "//", 16)
 	for n, to := range g {
 		fmt.Println(n, to)
 	}
@@ -78,7 +66,7 @@ func ExampleReadAdjacencyListNIsBase() {
 func ExampleReadAdjacencyListNames() {
 	r := bytes.NewBufferString(`
 a b c  # source target target
-d e 
+d e
 `)
 	g, names, m, err := io.ReadAdjacencyListNames(r, "", "", "#")
 	fmt.Println("names:")
@@ -155,6 +143,22 @@ c b
 	// 1 []
 	// 2 [1]
 	// map[a:0 b:1 c:2 ]
+	// err:  <nil>
+}
+
+func ExampleReadLabeledAdjacencyList() {
+	r := bytes.NewBufferString(`2 101 1 102 1 102
+
+1 103`)
+	g, err := io.ReadLabeledAdjacencyList(r)
+	for n, to := range g {
+		fmt.Println(n, to)
+	}
+	fmt.Println("err: ", err)
+	// Output:
+	// 0 [{2 101} {1 102} {1 102}]
+	// 1 []
+	// 2 [{1 103}]
 	// err:  <nil>
 }
 
@@ -248,6 +252,24 @@ func ExampleWriteArcNames() {
 	// bytes: 16, err: <nil>
 }
 
+func ExampleWriteLabeledAdjacencyList() {
+	//        0
+	// (101) / \\ (102)
+	//      2-->1
+	//      (103)
+	g := graph.LabeledAdjacencyList{
+		0: {{2, 101}, {1, 102}, {1, 102}},
+		2: {{1, 103}},
+	}
+	n, err := io.WriteLabeledAdjacencyList(g, os.Stdout)
+	fmt.Printf("bytes: %d, err: %v\n", n, err)
+	// Output:
+	// 2 101 1 102 1 102
+	//
+	// 1 103
+	// bytes: 25, err: <nil>
+}
+
 func ExampleWriteUpper() {
 	//   0
 	//  / \\
@@ -265,6 +287,30 @@ func ExampleWriteUpper() {
 	//
 	// 2
 	// bytes: 9, err: <nil>
+}
+
+func ExampleWriteUpperNames() {
+	//   a
+	//  / \\
+	// b---c--\
+	//      \-/
+	var g graph.Undirected
+	names := []string{"a", "b", "c"}
+	ni := map[string]graph.NI{}
+	for i, s := range names {
+		ni[s] = graph.NI(i)
+	}
+	g.AddEdge(ni["a"], ni["b"])
+	g.AddEdge(ni["a"], ni["c"])
+	g.AddEdge(ni["a"], ni["c"])
+	g.AddEdge(ni["c"], ni["c"])
+	n, err := io.WriteUpperNames(g.AdjacencyList, os.Stdout, "", "",
+		func(n graph.NI) string { return names[n] })
+	fmt.Printf("bytes: %d, err: %v\n", n, err)
+	// Output:
+	// a: b c c
+	// c: c
+	// bytes: 14, err: <nil>
 }
 
 func ExampleWriteUpperNIs() {
