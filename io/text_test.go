@@ -12,11 +12,11 @@ import (
 	"github.com/soniakeys/graph/io"
 )
 
-func ExampleTextOptions_ReadAdjacencyList() {
+func ExampleText_ReadAdjacencyList_dense() {
 	r := bytes.NewBufferString(`2 1 1
 
 1`)
-	g, err := io.NewText().ReadAdjacencyList(r)
+	g, _, _, err := io.Text{Format: io.Dense}.ReadAdjacencyList(r)
 	for n, to := range g {
 		fmt.Println(n, to)
 	}
@@ -28,11 +28,11 @@ func ExampleTextOptions_ReadAdjacencyList() {
 	// err:  <nil>
 }
 
-func ExampleReadAdjacencyListNIs() {
+func ExampleText_ReadAdjacencyList() {
 	r := bytes.NewBufferString(`
 0: 2 1 1
 2: 1`)
-	g, err := io.ReadAdjacencyListNIs(r, "")
+	g, _, _, err := io.Text{}.ReadAdjacencyList(r)
 	for n, to := range g {
 		fmt.Println(n, to)
 	}
@@ -44,31 +44,13 @@ func ExampleReadAdjacencyListNIs() {
 	// err:  <nil>
 }
 
-func ExampleReadAdjacencyListNIsBase() {
-	r := bytes.NewBufferString(`
-1 2 3 // no 0
-4 5
-`)
-	g, err := io.ReadAdjacencyListNIsBase(r, "//", 16)
-	for n, to := range g {
-		fmt.Println(n, to)
-	}
-	fmt.Println("err: ", err)
-	// Output:
-	// 0 []
-	// 1 [2 3]
-	// 2 []
-	// 3 []
-	// 4 [5]
-	// err:  <nil>
-}
-
-func ExampleReadAdjacencyListNames() {
+func ExampleText_ReadAdjacencyList_names() {
 	r := bytes.NewBufferString(`
 a b c  # source target target
 d e
 `)
-	g, names, m, err := io.ReadAdjacencyListNames(r, "", "", "#")
+	t := io.Text{ReadNames: true, Comment: "#"}
+	g, names, m, err := t.ReadAdjacencyList(r)
 	fmt.Println("names:")
 	for i, n := range names {
 		fmt.Println(i, n)
@@ -96,14 +78,15 @@ d e
 	// err: <nil>
 }
 
-func ExampleReadArcNIs() {
+func ExampleText_ReadAdjacencyList_arcs() {
 	r := bytes.NewBufferString(`
 0 2  
 0 1
 0 1 // parallel
 2 1
 `)
-	g, err := io.ReadArcNIs(r, "//")
+	t := io.Text{Format: io.Arcs, Comment: "//"}
+	g, _, _, err := t.ReadAdjacencyList(r)
 	for n, to := range g {
 		fmt.Println(n, to)
 	}
@@ -115,14 +98,15 @@ func ExampleReadArcNIs() {
 	// err:  <nil>
 }
 
-func ExampleReadArcNames() {
+func ExampleText_ReadAdjacencyList_arcNames() {
 	r := bytes.NewBufferString(`
 a b
 a b // parallel
 a c  
 c b
 `)
-	g, names, m, err := io.ReadArcNames(r, "", "//")
+	t := io.Text{Format: io.Arcs, ReadNames: true, Comment: "//"}
+	g, names, m, err := t.ReadAdjacencyList(r)
 	fmt.Println("names:")
 	for i, n := range names {
 		fmt.Println(i, n)
@@ -146,11 +130,11 @@ c b
 	// err:  <nil>
 }
 
-func ExampleReadLabeledAdjacencyList() {
+func ExampleText_ReadLabeledAdjacencyList() {
 	r := bytes.NewBufferString(`2 101 1 102 1 102
 
 1 103`)
-	g, err := io.ReadLabeledAdjacencyList(r)
+	g, err := io.Text{}.ReadLabeledAdjacencyList(r)
 	for n, to := range g {
 		fmt.Println(n, to)
 	}
@@ -162,7 +146,7 @@ func ExampleReadLabeledAdjacencyList() {
 	// err:  <nil>
 }
 
-func ExampleWriteAdjacencyList() {
+func ExampleText_WriteAdjacencyList_dense() {
 	//   0
 	//  / \\
 	// 2-->1
@@ -170,7 +154,7 @@ func ExampleWriteAdjacencyList() {
 		0: {2, 1, 1},
 		2: {1},
 	}
-	n, err := io.WriteAdjacencyList(g, os.Stdout)
+	n, err := io.Text{Format: io.Dense}.WriteAdjacencyList(g, os.Stdout)
 	fmt.Printf("bytes: %d, err: %v\n", n, err)
 	// Output:
 	// 2 1 1
@@ -179,7 +163,7 @@ func ExampleWriteAdjacencyList() {
 	// bytes: 9, err: <nil>
 }
 
-func ExampleWriteAdjacencyListNIs() {
+func ExampleText_WriteAdjacencyList() {
 	//   0
 	//  / \\
 	// 2-->1
@@ -187,7 +171,7 @@ func ExampleWriteAdjacencyListNIs() {
 		0: {2, 1, 1},
 		2: {1},
 	}
-	n, err := io.WriteAdjacencyListNIs(g, os.Stdout)
+	n, err := io.Text{}.WriteAdjacencyList(g, os.Stdout)
 	fmt.Printf("bytes: %d, err: %v\n", n, err)
 	// Output:
 	// 0: 2 1 1
@@ -195,7 +179,7 @@ func ExampleWriteAdjacencyListNIs() {
 	// bytes: 14, err: <nil>
 }
 
-func ExampleWriteAdjacencyListNames() {
+func ExampleText_WriteAdjacencyList_names() {
 	//   a   d
 	//  / \   \
 	// b   c   e
@@ -205,8 +189,8 @@ func ExampleWriteAdjacencyListNames() {
 		4: {},
 	}
 	names := []string{"a", "b", "c", "d", "e"}
-	n, err := io.WriteAdjacencyListNames(g, os.Stdout, ": ", " ",
-		func(n graph.NI) string { return names[n] })
+	t := io.Text{WriteName: func(n graph.NI) string { return names[n] }}
+	n, err := t.WriteAdjacencyList(g, os.Stdout)
 	fmt.Printf("bytes: %d, err: %v\n", n, err)
 	// Output:
 	// a: b c
@@ -214,7 +198,7 @@ func ExampleWriteAdjacencyListNames() {
 	// bytes: 12, err: <nil>
 }
 
-func ExampleWriteArcNIs() {
+func ExampleText_WriteAdjacencyList_arcs() {
 	//   0
 	//  / \\
 	// 2-->1
@@ -222,7 +206,7 @@ func ExampleWriteArcNIs() {
 		0: {2, 1, 1},
 		2: {1},
 	}
-	n, err := io.WriteArcNIs(g, os.Stdout)
+	n, err := io.Text{Format: io.Arcs}.WriteAdjacencyList(g, os.Stdout)
 	fmt.Printf("bytes: %d, err: %v\n", n, err)
 	// Output:
 	// 0 2
@@ -232,7 +216,7 @@ func ExampleWriteArcNIs() {
 	// bytes: 16, err: <nil>
 }
 
-func ExampleWriteArcNames() {
+func ExampleText_WriteAdjacencyList_arcNames() {
 	//   a
 	//  / \\
 	// c-->b
@@ -241,8 +225,11 @@ func ExampleWriteArcNames() {
 		2: {1},
 	}
 	names := []string{"a", "b", "c"}
-	n, err := io.WriteArcNames(g, os.Stdout, " ",
-		func(n graph.NI) string { return names[n] })
+	t := io.Text{
+		Format:    io.Arcs,
+		WriteName: func(n graph.NI) string { return names[n] },
+	}
+	n, err := t.WriteAdjacencyList(g, os.Stdout)
 	fmt.Printf("bytes: %d, err: %v\n", n, err)
 	// Output:
 	// a c
@@ -252,7 +239,7 @@ func ExampleWriteArcNames() {
 	// bytes: 16, err: <nil>
 }
 
-func ExampleWriteLabeledAdjacencyList() {
+func ExampleText_WriteLabeledAdjacencyList() {
 	//        0
 	// (101) / \\ (102)
 	//      2-->1
@@ -261,7 +248,7 @@ func ExampleWriteLabeledAdjacencyList() {
 		0: {{2, 101}, {1, 102}, {1, 102}},
 		2: {{1, 103}},
 	}
-	n, err := io.WriteLabeledAdjacencyList(g, os.Stdout)
+	n, err := io.Text{}.WriteLabeledAdjacencyList(g, os.Stdout)
 	fmt.Printf("bytes: %d, err: %v\n", n, err)
 	// Output:
 	// 2 101 1 102 1 102
@@ -270,7 +257,7 @@ func ExampleWriteLabeledAdjacencyList() {
 	// bytes: 25, err: <nil>
 }
 
-func ExampleWriteUpper() {
+func ExampleText_WriteAdjacencyList_undirectedDense() {
 	//   0
 	//  / \\
 	// 1---2--\
@@ -280,7 +267,8 @@ func ExampleWriteUpper() {
 	g.AddEdge(0, 2)
 	g.AddEdge(0, 2)
 	g.AddEdge(2, 2)
-	n, err := io.WriteUpper(g.AdjacencyList, os.Stdout)
+	t := io.Text{Format: io.Dense, WriteArcs: io.Upper}
+	n, err := t.WriteAdjacencyList(g.AdjacencyList, os.Stdout)
 	fmt.Printf("bytes: %d, err: %v\n", n, err)
 	// Output:
 	// 1 2 2
@@ -289,7 +277,7 @@ func ExampleWriteUpper() {
 	// bytes: 9, err: <nil>
 }
 
-func ExampleWriteUpperNames() {
+func ExampleText_WriteAdjacencyList_undirectedNames() {
 	//   a
 	//  / \\
 	// b---c--\
@@ -304,8 +292,11 @@ func ExampleWriteUpperNames() {
 	g.AddEdge(ni["a"], ni["c"])
 	g.AddEdge(ni["a"], ni["c"])
 	g.AddEdge(ni["c"], ni["c"])
-	n, err := io.WriteUpperNames(g.AdjacencyList, os.Stdout, "", "",
-		func(n graph.NI) string { return names[n] })
+	t := io.Text{
+		WriteArcs: io.Upper,
+		WriteName: func(n graph.NI) string { return names[n] },
+	}
+	n, err := t.WriteAdjacencyList(g.AdjacencyList, os.Stdout)
 	fmt.Printf("bytes: %d, err: %v\n", n, err)
 	// Output:
 	// a: b c c
@@ -313,7 +304,7 @@ func ExampleWriteUpperNames() {
 	// bytes: 14, err: <nil>
 }
 
-func ExampleWriteUpperNIs() {
+func ExampleText_WriteAdjacencyList_undirected() {
 	//   0
 	//  / \\
 	// 1---2--\
@@ -323,7 +314,8 @@ func ExampleWriteUpperNIs() {
 	g.AddEdge(0, 2)
 	g.AddEdge(0, 2)
 	g.AddEdge(2, 2)
-	n, err := io.WriteUpperNIs(g.AdjacencyList, os.Stdout)
+	t := io.Text{WriteArcs: io.Upper}
+	n, err := t.WriteAdjacencyList(g.AdjacencyList, os.Stdout)
 	fmt.Printf("bytes: %d, err: %v\n", n, err)
 	// Output:
 	// 0: 1 2 2
