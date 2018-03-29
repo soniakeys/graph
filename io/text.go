@@ -16,12 +16,14 @@ import (
 	"github.com/soniakeys/graph"
 )
 
+// ArcDir specifies whether to consider all arcs, or for the case of
+// undirected graphs, to consider only a single arc for each edge.
 type ArcDir int
 
 const (
-	All ArcDir = iota
-	Upper
-	Lower
+	All   ArcDir = iota // all directed arcs
+	Upper               // for undirected, only arcs where to >= from
+	Lower               // for undirected, only arcs where to <= from
 )
 
 // Format defines the fundamental format of text data.
@@ -44,44 +46,21 @@ const (
 	Arcs
 )
 
-//
-//
-// It is a struct defining options for
-// Method names indicate the graph type they read or write.  Type Text
-// is
-// High-level "Names" functions:
-//
-// These functions read and write graphs of named nodes, providing translation
-// to and from the integer NIs used by the graph algorithms.  The translation
-// might also be useful for data that has integer node IDs, but sparsely
-// assigned.  The functions have flexible t.FrDelimiter options.  The readers
-// allow blank lines, whitespace, and have end-of-line comment options.
-//
-// High-level "NIs" functions:
-//
-// These functions read and write formats similar to the "Names" functions
-// but with node NIs rather that arbitrary names.
-//
-// Lower-level node-implicit functions:
-//
-// These functions read and write a more primitive format of to-lists, with
-// the from-NI implied, derived by counting input lines.
-
 // Type Text defines options for reading and writing simple text formats.
 //
-// A zero value is valid and usable by all methods.  Writing a graph with
+// The zero value is valid and usable by all methods.  Writing a graph with
 // a zero value Text writes a default format that is readable with a zero
 // value Text.
 //
 // Read methods delimit text based on a combination of Text fields:
 //
-// When ReadNames is false, text data is parsed as numeric NIs and LIs in
+// When ReadNodeNames is false, text data is parsed as numeric NIs and LIs in
 // the numeric base of field Base, although using 10 if Base is 0.  In this
 // case, any non-empty string of characters that cannot be in an integer of
 // the specified base will delimit IDs.  For example in the case of base 10
 // IDs, any string of characters not in "+-0123456789" will delimit IDs.
 //
-// When ReadNames is true, delimiting depends on FrDelim and ToDelim.  If
+// When ReadNodeNames is true, delimiting depends on FrDelim and ToDelim.  If
 // the whitespace-trimmed value of FrDelim or ToDelim is non-empty, text data
 // is split on the trimmed value.  If the delimiter is non-empty but
 // all whitespace, text data is split on the untrimmed value.  In either
@@ -107,32 +86,48 @@ type Text struct {
 	// pass 10 to strconv functions when Base is 0.
 	Base int
 
-	// ReadNames true means
-	ReadNames bool
-	WriteName func(graph.NI) string
+	// ReadNodeNames true means to consider node text to be symbolic rather
+	// than numeric NIs.  Read methods assign numeric graph NIs as data is
+	// read, and return the mapping between node names and NIs.
+	ReadNodeNames bool
+
+	// A non-nil WriteNodeName is used by write methods to translate NIs to
+	// strings and write the strings as symbolic node names rather than numeric
+	// NIs.
+	WriteNodeName func(graph.NI) string
+
+	// WriteArcs can specify to write only a single arc of an undirected
+	// graph.  See definition of ArcDir.
 	WriteArcs ArcDir
 }
 
+// NewText is a small convenience constructor.
+//
+// It simply returns &Text{Comment: "//", Base: 10}.
+//
+// In many cases it will be simpler to just write a struct literal intiializing
+// fields as needed.
 func NewText() *Text {
 	return &Text{Comment: "//", Base: 10}
 }
 
+// call before any read or write
 func (t *Text) fixBase() {
 	if t.Base == 0 {
 		t.Base = 10
 	}
 }
 
-// ReadAdjacencyList reads a graph from a simple text format.
+// ReadAdjacencyList reads text data and returns an  AdjacencyList.
 //
-// The dense format has a line for each node of the graph, each line consisting of
-// NIs of a node's to-list.  The from-node is implied by the (0-based) line
-// number of input text.  To-node IDs read from the file are interpreted
-// directly as graph.NIs.
+// Fields of the receiver Text define how the text data is interpreted.
+// See documentation of the Text struct.
 //
 // ReadAdjacencyList reads to EOF.
 //
-// ReadAdjacencyList will read text written by WriteAdjacencyList.
+// On successful read, a valid AdjacencyList is returned with error = nil.
+// In addition, with Text.ReadNodeNames true, the method returns a list
+// of node names indexed by NI and the reverse mapping of NI by name.
 func (t Text) ReadAdjacencyList(r io.Reader) (
 	graph.AdjacencyList, []string, map[string]graph.NI, error) {
 	switch t.Format {
@@ -148,7 +143,7 @@ func (t Text) ReadAdjacencyList(r io.Reader) (
 
 func (t Text) readAdjacencyListDense(r io.Reader) (
 	g graph.AdjacencyList, name []string, ni map[string]graph.NI, err error) {
-	if t.ReadNames {
+	if t.ReadNodeNames {
 		return nil, nil, nil,
 			fmt.Errorf("name translation not supported reading dense format")
 	}
@@ -233,7 +228,7 @@ func (t *Text) sep() *regexp.Regexp {
 // ReadAdjacencyListNIs will read text written by WriteAdjacencyListNIs.
 func (t Text) readAdjacencyListSparse(r io.Reader) (
 	g graph.AdjacencyList, name []string, ni map[string]graph.NI, err error) {
-	if t.ReadNames {
+	if t.ReadNodeNames {
 		return t.readAdjacencyListNames(r)
 	}
 	t.fixBase()
@@ -456,7 +451,7 @@ func ReadAdjacencyListOrderBase(r io.Reader, order, base int) (
 // comments.
 func (t Text) readArcs(r io.Reader) (
 	g graph.AdjacencyList, name []string, ni map[string]graph.NI, err error) {
-	if t.ReadNames {
+	if t.ReadNodeNames {
 		return t.readArcNames(r)
 	}
 	t.fixBase()
@@ -587,17 +582,16 @@ func (t Text) readArcNames(r io.Reader) (
 	}
 }
 
-// ReadLabeledAdjacencyList reads a graph from a simple text format.
+// ReadLabeledAdjacencyList reads text data and returns a LabeledAdjacencyList.
 //
-// The format has a line for each node of the graph, each line consisting of
-// a list of pairs of numbers, each pair being the NI and LI of a graph.Half
-// of the node's to-list.  The from-node is implied by the (0-based) line
-// number of input text.  Graph.Half elements read from the file are
-// interpreted directly as graph.NIs and graph.LIs.
+// Fields of the receiver Text define how the text data is interpreted.
+// See documentation of the Text struct.
 //
 // ReadLabeledAdjacencyList reads to EOF.
 //
-// ReadLabeledAdjacencyList will read text written by WriteLabeledAdjacencyList.
+// On successful read, a valid AdjacencyList is returned with error = nil.
+// In addition, with Text.ReadNodeNames true, the method returns a list
+// of node names indexed by NI and the reverse mapping of NI by name.
 func (t Text) ReadLabeledAdjacencyList(r io.Reader) (g graph.LabeledAdjacencyList, err error) {
 	t.fixBase()
 	sep := t.sep()
@@ -659,7 +653,10 @@ func (t *Text) readHalf(r *bufio.Reader, sep *regexp.Regexp) (to []graph.Half, e
 	return to, nil
 }
 
-// WriteAdjacencyList writes an adjacency list in a simple text format.
+// WriteAdjacencyList writes an adjacency list as text.
+//
+// Fields of the receiver Text define how the text data is formatted.
+// See documentation of the Text struct.
 //
 // Returned is number of bytes written and error.
 func (t Text) WriteAdjacencyList(g graph.AdjacencyList, w io.Writer) (
@@ -736,10 +733,10 @@ func (t Text) writeAdjacencyListSparse(g graph.AdjacencyList, w io.Writer) (
 	if t.WriteArcs == Upper {
 		return t.writeUpperSparse(g, w)
 	}
-	writeLast := t.WriteName == nil
+	writeLast := t.WriteNodeName == nil
 	if writeLast {
 		t.fixBase()
-		t.WriteName = func(n graph.NI) string {
+		t.WriteNodeName = func(n graph.NI) string {
 			return strconv.FormatInt(int64(n), t.Base)
 		}
 	}
@@ -750,7 +747,7 @@ func (t Text) writeAdjacencyListSparse(g graph.AdjacencyList, w io.Writer) (
 		switch {
 		case len(to) > 0:
 			fr := graph.NI(i)
-			c, err = b.WriteString(t.WriteName(fr))
+			c, err = b.WriteString(t.WriteNodeName(fr))
 			n += c
 			if err != nil {
 				return
@@ -760,7 +757,7 @@ func (t Text) writeAdjacencyListSparse(g graph.AdjacencyList, w io.Writer) (
 			if err != nil {
 				return
 			}
-			c, err = b.WriteString(t.WriteName(to[0]))
+			c, err = b.WriteString(t.WriteNodeName(to[0]))
 			n += c
 			if err != nil {
 				return
@@ -771,7 +768,7 @@ func (t Text) writeAdjacencyListSparse(g graph.AdjacencyList, w io.Writer) (
 				if err != nil {
 					return
 				}
-				c, err = b.WriteString(t.WriteName(to))
+				c, err = b.WriteString(t.WriteNodeName(to))
 				n += c
 				if err != nil {
 					return
@@ -779,7 +776,7 @@ func (t Text) writeAdjacencyListSparse(g graph.AdjacencyList, w io.Writer) (
 			}
 		case i == last && writeLast:
 			fr := graph.NI(i)
-			c, err = b.WriteString(t.WriteName(fr))
+			c, err = b.WriteString(t.WriteNodeName(fr))
 			n += c
 			if err != nil {
 				return
@@ -813,8 +810,8 @@ func (t Text) writeArcs(g graph.AdjacencyList, w io.Writer) (
 	if t.FrDelim == "" {
 		t.FrDelim = " "
 	}
-	if t.WriteName == nil {
-		t.WriteName = func(n graph.NI) string {
+	if t.WriteNodeName == nil {
+		t.WriteNodeName = func(n graph.NI) string {
 			return strconv.FormatInt(int64(n), t.Base)
 		}
 	}
@@ -822,7 +819,7 @@ func (t Text) writeArcs(g graph.AdjacencyList, w io.Writer) (
 	var c int
 	for fr, to := range g {
 		for _, to := range to {
-			c, err = b.WriteString(t.WriteName(graph.NI(fr)))
+			c, err = b.WriteString(t.WriteNodeName(graph.NI(fr)))
 			n += c
 			if err != nil {
 				return
@@ -832,7 +829,7 @@ func (t Text) writeArcs(g graph.AdjacencyList, w io.Writer) (
 			if err != nil {
 				return
 			}
-			c, err = b.WriteString(t.WriteName(to))
+			c, err = b.WriteString(t.WriteNodeName(to))
 			n += c
 			if err != nil {
 				return
@@ -924,10 +921,10 @@ func (t Text) WriteUpperNIs(g graph.AdjacencyList, w io.Writer) (
 func (t Text) writeUpperSparse(g graph.AdjacencyList, w io.Writer) (
 	n int, err error) {
 	b := bufio.NewWriter(w)
-	writeLast := t.WriteName == nil
+	writeLast := t.WriteNodeName == nil
 	if writeLast {
 		t.fixBase()
-		t.WriteName = func(n graph.NI) string {
+		t.WriteNodeName = func(n graph.NI) string {
 			return strconv.FormatInt(int64(n), t.Base)
 		}
 	}
@@ -940,7 +937,7 @@ func (t Text) writeUpperSparse(g graph.AdjacencyList, w io.Writer) (
 			if to >= fr {
 				if !one {
 					one = true
-					c, err = b.WriteString(t.WriteName(fr))
+					c, err = b.WriteString(t.WriteNodeName(fr))
 					n += c
 					if err != nil {
 						return
@@ -957,7 +954,7 @@ func (t Text) writeUpperSparse(g graph.AdjacencyList, w io.Writer) (
 						return
 					}
 				}
-				c, err = b.WriteString(t.WriteName(to))
+				c, err = b.WriteString(t.WriteNodeName(to))
 				n += c
 				if err != nil {
 					return
@@ -966,7 +963,7 @@ func (t Text) writeUpperSparse(g graph.AdjacencyList, w io.Writer) (
 		}
 		if writeLast && i == last && !one {
 			one = true
-			c, err = b.WriteString(t.WriteName(fr))
+			c, err = b.WriteString(t.WriteNodeName(fr))
 			n += c
 			if err != nil {
 				return
@@ -989,11 +986,10 @@ func (t Text) writeUpperSparse(g graph.AdjacencyList, w io.Writer) (
 	return
 }
 
-// WriteLabeledAdjacencyList writes an adjacency list in a simple text format.
+// WriteLabeledAdjacencyList writes a lableed adjacency list as text.
 //
-// A line is written for each node, consisting of the to-list, the NIs
-// formatted as space separated base 10 numbers.  The NI of the from-node
-// is not written but is implied by the line number.
+// Fields of the receiver Text define how the text data is formatted.
+// See documentation of the Text struct.
 //
 // Returned is number of bytes written and error.
 func (t Text) WriteLabeledAdjacencyList(g graph.LabeledAdjacencyList,
