@@ -2,7 +2,53 @@
 // License MIT: http://opensource.org/licenses/MIT
 
 // Package graph/io provides graph readers and writers.
+package io
+
+import (
+	"bufio"
+	"fmt"
+	"io"
+	"regexp"
+	"strconv"
+	"strings"
+	"unicode"
+
+	"github.com/soniakeys/graph"
+)
+
+type ArcDir int
+
+const (
+	All ArcDir = iota
+	Upper
+	Lower
+)
+
+// Format defines the fundamental format of text data.
+type Format int
+
+const (
+	// Sparse is the default.  Each line has a from-node followed by to-nodes.
+	// A node with no to-nodes does not need to be listed unless nodes are
+	// being stored as NIs and it is the maximum value NI.  In this case it
+	// goes on a line by itself to preserve graph order (number of nodes.)
+	Sparse Format = iota
+
+	// Dense is only meaningful when nodes are being stored as NIs.  The node
+	// NI is implied by line number.  There is a line for each node, to-nodes
+	// or not.
+	Dense
+
+	// Arc format is not actually adjacency list, but arc list or edge list.
+	// There are exactly two nodes per line, a from-node and a to-node.
+	Arcs
+)
+
 //
+//
+// It is a struct defining options for
+// Method names indicate the graph type they read or write.  Type Text
+// is
 // High-level "Names" functions:
 //
 // These functions read and write graphs of named nodes, providing translation
@@ -20,43 +66,48 @@
 //
 // These functions read and write a more primitive format of to-lists, with
 // the from-NI implied, derived by counting input lines.
-package io
 
-import (
-	"bufio"
-	"fmt"
-	"io"
-	"regexp"
-	"strconv"
-	"strings"
-	"unicode"
-
-	"github.com/soniakeys/graph"
-)
-
-type TextFormat int
-
-const (
-	Sparse TextFormat = iota
-	Dense
-	Arcs
-	Edges
-)
-
-type ArcDir int
-
-const (
-	All ArcDir = iota
-	Upper
-	Lower
-)
-
+// Type Text defines options for reading and writing simple text formats.
+//
+// A zero value is valid and usable by all methods.  Writing a graph with
+// a zero value Text writes a default format that is readable with a zero
+// value Text.
+//
+// Read methods delimit text based on a combination of Text fields:
+//
+// When ReadNames is false, text data is parsed as numeric NIs and LIs in
+// the numeric base of field Base, although using 10 if Base is 0.  In this
+// case, any non-empty string of characters that cannot be in an integer of
+// the specified base will delimit IDs.  For example in the case of base 10
+// IDs, any string of characters not in "+-0123456789" will delimit IDs.
+//
+// When ReadNames is true, delimiting depends on FrDelim and ToDelim.  If
+// the whitespace-trimmed value of FrDelim or ToDelim is non-empty, text data
+// is split on the trimmed value.  If the delimiter is non-empty but
+// all whitespace, text data is split on the untrimmed value.  In either
+// of these cases, individual fields are then trimmed of leading and trailing
+// whitespace.  If FrDelim or ToDelim are empty strings, input text data is
+// delimited by non-empty strings of whitespace.
 type Text struct {
-	Format    TextFormat
-	Comment   string
-	FrDelim   string
-	ToDelim   string
-	Base      int
+	Format  Format // Fundamental format of text representation
+	Comment string // End of line comment delimiter
+
+	// FrDelim is a delimiter following from-node, for Sparse and Edge formats.
+	// Write methods write ": " if FrDelim is blank.  For read behavior
+	// see description at Type Text.
+	FrDelim string
+
+	// ToDelim separates nodes of to-list, for Sparse format.
+	// Write methods write " " if ToDelim is blank.  For read behavior see
+	// description at Type Text.
+	ToDelim string
+
+	// Base is the numeric base for NIs and LIs.  Methods pass this to strconv
+	// functions and so values should be in the range 2-36, although they will
+	// pass 10 to strconv functions when Base is 0.
+	Base int
+
+	// ReadNames true means
 	ReadNames bool
 	WriteName func(graph.NI) string
 	WriteArcs ArcDir
