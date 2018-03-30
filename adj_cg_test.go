@@ -150,6 +150,18 @@ func ExampleLabeledAdjacencyList_DepthFirst() {
 	// 4
 }
 
+func ExampleLabeledAdjacencyList_Equal() {
+	g := graph.LabeledAdjacencyList{
+		5: {{3, 30}, {1, 10}, {4, 40}, {1, 10}}, // {1, 10}
+	}
+	h := graph.LabeledAdjacencyList{
+		5: {{1, 10}, {1, 11}, {3, 30}, {4, 40}}, // {1, 11}: different LI
+	}
+	fmt.Println(g.Equal(h))
+	// Output:
+	// false
+}
+
 func ExampleLabeledAdjacencyList_HasArc() {
 	g := graph.LabeledAdjacencyList{
 		2: {{To: 0}, {To: 2}, {To: 0}, {To: 1}, {To: 1}},

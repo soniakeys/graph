@@ -130,6 +130,34 @@ func (g LabeledAdjacencyList) DepthFirst(start NI, visit func(NI)) {
 	f(start)
 }
 
+// Equal compares two graphs for equality.
+//
+// Note this is simple equality, not isomorphism.  Graphs are equal if
+// they have the same order and if corresponding nodes have the same
+// arcs, although they do not need to be in the same order.
+//
+// There are equivalent labeled and unlabeled versions of this method.
+func (g LabeledAdjacencyList) Equal(h LabeledAdjacencyList) bool {
+	if len(g) != len(h) {
+		return false
+	}
+	for n, gn := range g {
+		m := map[Half]int{}
+		for _, to := range gn {
+			m[to]++
+		}
+		for _, to := range h[n] {
+			m[to]--
+		}
+		for _, c := range m {
+			if c != 0 {
+				return false
+			}
+		}
+	}
+	return true
+}
+
 // HasArc returns true if g has any arc from node `fr` to node `to`.
 //
 // Also returned is the index within the slice of arcs from node `fr`.

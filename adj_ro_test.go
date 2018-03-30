@@ -154,6 +154,18 @@ func ExampleAdjacencyList_DepthFirst() {
 	// 4
 }
 
+func ExampleAdjacencyList_Equal() {
+	g := graph.AdjacencyList{
+		5: {3, 1, 4, 1},
+	}
+	h := graph.AdjacencyList{
+		5: {1, 1, 3, 4},
+	}
+	fmt.Println(g.Equal(h))
+	// Output:
+	// true
+}
+
 func ExampleAdjacencyList_HasArc() {
 	g := graph.AdjacencyList{
 		2: {0, 2, 0, 1, 1},
