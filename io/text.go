@@ -54,13 +54,13 @@ const (
 //
 // Read methods delimit text based on a combination of Text fields:
 //
-// When ReadNodeNames is false, text data is parsed as numeric NIs and LIs in
+// When MapNames is false, text data is parsed as numeric NIs and LIs in
 // the numeric base of field Base, although using 10 if Base is 0.  In this
 // case, any non-empty string of characters that cannot be in an integer of
 // the specified base will delimit IDs.  For example in the case of base 10
 // IDs, any string of characters not in "+-0123456789" will delimit IDs.
 //
-// When ReadNodeNames is true, delimiting depends on FrDelim and ToDelim.  If
+// When MapNames is true, delimiting depends on FrDelim and ToDelim.  If
 // the whitespace-trimmed value of FrDelim or ToDelim is non-empty, text data
 // is split on the trimmed value.  If the delimiter is non-empty but
 // all whitespace, text data is split on the untrimmed value.  In either
@@ -86,15 +86,15 @@ type Text struct {
 	// pass 10 to strconv functions when Base is 0.
 	Base int
 
-	// ReadNodeNames true means to consider node text to be symbolic rather
+	// MapNames true means to consider node text to be symbolic rather
 	// than numeric NIs.  Read methods assign numeric graph NIs as data is
 	// read, and return the mapping between node names and NIs.
-	ReadNodeNames bool
+	MapNames bool
 
-	// A non-nil WriteNodeName is used by write methods to translate NIs to
+	// A non-nil NodeName is used by write methods to translate NIs to
 	// strings and write the strings as symbolic node names rather than numeric
 	// NIs.
-	WriteNodeName func(graph.NI) string
+	NodeName func(graph.NI) string
 
 	// WriteArcs can specify to write only a single arc of an undirected
 	// graph.  See definition of ArcDir.
@@ -126,7 +126,7 @@ func (t *Text) fixBase() {
 // ReadAdjacencyList reads to EOF.
 //
 // On successful read, a valid AdjacencyList is returned with error = nil.
-// In addition, with Text.ReadNodeNames true, the method returns a list
+// In addition, with Text.MapNames true, the method returns a list
 // of node names indexed by NI and the reverse mapping of NI by name.
 func (t Text) ReadAdjacencyList(r io.Reader) (
 	graph.AdjacencyList, []string, map[string]graph.NI, error) {
@@ -143,29 +143,47 @@ func (t Text) ReadAdjacencyList(r io.Reader) (
 
 func (t Text) readAdjacencyListDense(r io.Reader) (
 	g graph.AdjacencyList, name []string, ni map[string]graph.NI, err error) {
-	if t.ReadNodeNames {
+	if t.MapNames {
 		return nil, nil, nil,
 			fmt.Errorf("name translation not supported reading dense format")
 	}
-	t.fixBase()
 	sep := t.sep()
 	for b := bufio.NewReader(r); ; {
-		to, err := t.readToSep(b, sep)
+		f, err := t.readSplit(b, sep)
 		if err != nil {
 			if err != io.EOF {
 				return nil, nil, nil, err
 			}
 			return g, nil, nil, nil
 		}
+		to, err := parseNIs(f, t.Base)
+		if err != nil {
+			return nil, nil, nil, err
+		}
 		g = append(g, to)
 	}
 }
 
-// read and parse a single line of a to-list.  if the last line is missing
-// the newline, it returns the data and err == nil.  a subsequent call will
-// return io.EOF.
-func (t *Text) readToSep(r *bufio.Reader, sep *regexp.Regexp) (
-	to []graph.NI, err error) {
+func parseNIs(f []string, base int) (n []graph.NI, err error) {
+	if len(f) > 0 {
+		n = make([]graph.NI, len(f))
+		for x, s := range f {
+			i, err := strconv.ParseInt(s, base, graph.NIBits)
+			if err != nil {
+				return nil, err
+			}
+			n[x] = graph.NI(i)
+		}
+	}
+	return
+}
+
+// read and split a single line of integers.  sep must be compiled based on
+// the integer base.
+// if the last line is missing the newline, it returns the data and err == nil.
+// a subsequent call will return io.EOF.
+func (t *Text) readSplit(r *bufio.Reader, sep *regexp.Regexp) (
+	f []string, err error) {
 	s, err := r.ReadString('\n') // but allow last line without \n
 	if err != nil {
 		if err != io.EOF || s == "" {
@@ -175,33 +193,35 @@ func (t *Text) readToSep(r *bufio.Reader, sep *regexp.Regexp) (
 	if s == "\n" { // fast path for blank line
 		return
 	}
+	if t.Comment > "" {
+		if i := strings.Index(s, t.Comment); i >= 0 {
+			s = s[:i]
+		}
+	}
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return // almost as fast
+	}
 	// s is non-empty at this point
-	f := sep.Split(s, -1)
+	f = sep.Split(s, -1)
 	// some minimal possibilities:
-	// single sep: "\n" -> ["", ""], the empty strings before and after sep
+	// single sep: ":" -> ["", ""], the empty strings before and after sep
 	// single non-sep: "0" -> ["0"], a non-empty string
 	if f[0] == "" {
-		f = f[1:] // toss "" before leading any separator
+		f = f[1:] // toss "" before any leading separator
 	}
 	last := len(f) - 1
 	if f[last] == "" {
-		f = f[:last] // toss "" after trailing separator, usually the \n
+		f = f[:last] // toss "" after any trailing separator, perhaps a ","
 	}
-	to = make([]graph.NI, len(f))
-	for x, s := range f {
-		i, err := strconv.ParseInt(s, t.Base, graph.NIBits)
-		if err != nil {
-			return nil, err
-		}
-		to[x] = graph.NI(i)
-	}
-	return to, nil
+	return
 }
 
 var bx10 = regexp.MustCompile("[^0-9-+]+")
 
 // return regular expression t.FrDelimiting numbers of given base.
 func (t *Text) sep() *regexp.Regexp {
+	t.fixBase()
 	if t.Base == 10 {
 		return bx10
 	}
@@ -228,36 +248,21 @@ func (t *Text) sep() *regexp.Regexp {
 // ReadAdjacencyListNIs will read text written by WriteAdjacencyListNIs.
 func (t Text) readAdjacencyListSparse(r io.Reader) (
 	g graph.AdjacencyList, name []string, ni map[string]graph.NI, err error) {
-	if t.ReadNodeNames {
+	if t.MapNames {
 		return t.readAdjacencyListNames(r)
 	}
-	t.fixBase()
 	sep := t.sep()
 	b := bufio.NewReader(r)
 	for {
-		s, err := b.ReadString('\n')
+		f, err := t.readSplit(b, sep)
 		if err != nil {
 			if err != io.EOF {
 				return nil, nil, nil, err
 			}
-			if s == "" {
-				return g, nil, nil, nil
-			}
-			// allow last line without \n
+			return g, nil, nil, nil
 		}
-		if t.Comment > "" {
-			if i := strings.Index(s, t.Comment); i >= 0 {
-				s = s[:i]
-			}
-		}
-		s = strings.TrimSpace(s)
-		if s == "" {
-			continue // allow and ignore blank line
-		}
-		f := sep.Split(s, -1)
-		// non-blank line must start with valid from-NI, not t.FrDelimiters
-		if f[0] == "" {
-			return nil, nil, nil, fmt.Errorf("invalid: %q", s)
+		if len(f) == 0 {
+			continue
 		}
 		fr, err := strconv.ParseInt(f[0], t.Base, graph.NIBits)
 		if err != nil {
@@ -269,18 +274,9 @@ func (t Text) readAdjacencyListSparse(r io.Reader) (
 		if len(f) == 1 {
 			continue // from-NI with no to-list is allowed.
 		}
-		f = f[1:]
-		last := len(f) - 1
-		if f[last] == "" {
-			f = f[:last] // allow line to end with t.FrDelimiters
-		}
-		to := make([]graph.NI, len(f))
-		for x, s := range f {
-			i, err := strconv.ParseInt(s, t.Base, graph.NIBits)
-			if err != nil {
-				return nil, nil, nil, err
-			}
-			to[x] = graph.NI(i)
+		to, err := parseNIs(f[1:], t.Base)
+		if err != nil {
+			return nil, nil, nil, err
 		}
 		if g[fr] == nil {
 			g[fr] = to
@@ -451,10 +447,9 @@ func ReadAdjacencyListOrderBase(r io.Reader, order, base int) (
 // comments.
 func (t Text) readArcs(r io.Reader) (
 	g graph.AdjacencyList, name []string, ni map[string]graph.NI, err error) {
-	if t.ReadNodeNames {
+	if t.MapNames {
 		return t.readArcNames(r)
 	}
-	t.fixBase()
 	sep := t.sep()
 	var max int64
 	e := map[int][]graph.NI{}
@@ -590,10 +585,9 @@ func (t Text) readArcNames(r io.Reader) (
 // ReadLabeledAdjacencyList reads to EOF.
 //
 // On successful read, a valid AdjacencyList is returned with error = nil.
-// In addition, with Text.ReadNodeNames true, the method returns a list
+// In addition, with Text.MapNames true, the method returns a list
 // of node names indexed by NI and the reverse mapping of NI by name.
 func (t Text) ReadLabeledAdjacencyList(r io.Reader) (g graph.LabeledAdjacencyList, err error) {
-	t.fixBase()
 	sep := t.sep()
 	for b := bufio.NewReader(r); ; {
 		to, err := t.readHalf(b, sep)
@@ -733,10 +727,10 @@ func (t Text) writeAdjacencyListSparse(g graph.AdjacencyList, w io.Writer) (
 	if t.WriteArcs == Upper {
 		return t.writeUpperSparse(g, w)
 	}
-	writeLast := t.WriteNodeName == nil
+	writeLast := t.NodeName == nil
 	if writeLast {
 		t.fixBase()
-		t.WriteNodeName = func(n graph.NI) string {
+		t.NodeName = func(n graph.NI) string {
 			return strconv.FormatInt(int64(n), t.Base)
 		}
 	}
@@ -747,7 +741,7 @@ func (t Text) writeAdjacencyListSparse(g graph.AdjacencyList, w io.Writer) (
 		switch {
 		case len(to) > 0:
 			fr := graph.NI(i)
-			c, err = b.WriteString(t.WriteNodeName(fr))
+			c, err = b.WriteString(t.NodeName(fr))
 			n += c
 			if err != nil {
 				return
@@ -757,7 +751,7 @@ func (t Text) writeAdjacencyListSparse(g graph.AdjacencyList, w io.Writer) (
 			if err != nil {
 				return
 			}
-			c, err = b.WriteString(t.WriteNodeName(to[0]))
+			c, err = b.WriteString(t.NodeName(to[0]))
 			n += c
 			if err != nil {
 				return
@@ -768,7 +762,7 @@ func (t Text) writeAdjacencyListSparse(g graph.AdjacencyList, w io.Writer) (
 				if err != nil {
 					return
 				}
-				c, err = b.WriteString(t.WriteNodeName(to))
+				c, err = b.WriteString(t.NodeName(to))
 				n += c
 				if err != nil {
 					return
@@ -776,7 +770,7 @@ func (t Text) writeAdjacencyListSparse(g graph.AdjacencyList, w io.Writer) (
 			}
 		case i == last && writeLast:
 			fr := graph.NI(i)
-			c, err = b.WriteString(t.WriteNodeName(fr))
+			c, err = b.WriteString(t.NodeName(fr))
 			n += c
 			if err != nil {
 				return
@@ -810,8 +804,8 @@ func (t Text) writeArcs(g graph.AdjacencyList, w io.Writer) (
 	if t.FrDelim == "" {
 		t.FrDelim = " "
 	}
-	if t.WriteNodeName == nil {
-		t.WriteNodeName = func(n graph.NI) string {
+	if t.NodeName == nil {
+		t.NodeName = func(n graph.NI) string {
 			return strconv.FormatInt(int64(n), t.Base)
 		}
 	}
@@ -819,7 +813,7 @@ func (t Text) writeArcs(g graph.AdjacencyList, w io.Writer) (
 	var c int
 	for fr, to := range g {
 		for _, to := range to {
-			c, err = b.WriteString(t.WriteNodeName(graph.NI(fr)))
+			c, err = b.WriteString(t.NodeName(graph.NI(fr)))
 			n += c
 			if err != nil {
 				return
@@ -829,7 +823,7 @@ func (t Text) writeArcs(g graph.AdjacencyList, w io.Writer) (
 			if err != nil {
 				return
 			}
-			c, err = b.WriteString(t.WriteNodeName(to))
+			c, err = b.WriteString(t.NodeName(to))
 			n += c
 			if err != nil {
 				return
@@ -921,10 +915,10 @@ func (t Text) WriteUpperNIs(g graph.AdjacencyList, w io.Writer) (
 func (t Text) writeUpperSparse(g graph.AdjacencyList, w io.Writer) (
 	n int, err error) {
 	b := bufio.NewWriter(w)
-	writeLast := t.WriteNodeName == nil
+	writeLast := t.NodeName == nil
 	if writeLast {
 		t.fixBase()
-		t.WriteNodeName = func(n graph.NI) string {
+		t.NodeName = func(n graph.NI) string {
 			return strconv.FormatInt(int64(n), t.Base)
 		}
 	}
@@ -937,7 +931,7 @@ func (t Text) writeUpperSparse(g graph.AdjacencyList, w io.Writer) (
 			if to >= fr {
 				if !one {
 					one = true
-					c, err = b.WriteString(t.WriteNodeName(fr))
+					c, err = b.WriteString(t.NodeName(fr))
 					n += c
 					if err != nil {
 						return
@@ -954,7 +948,7 @@ func (t Text) writeUpperSparse(g graph.AdjacencyList, w io.Writer) (
 						return
 					}
 				}
-				c, err = b.WriteString(t.WriteNodeName(to))
+				c, err = b.WriteString(t.NodeName(to))
 				n += c
 				if err != nil {
 					return
@@ -963,7 +957,7 @@ func (t Text) writeUpperSparse(g graph.AdjacencyList, w io.Writer) (
 		}
 		if writeLast && i == last && !one {
 			one = true
-			c, err = b.WriteString(t.WriteNodeName(fr))
+			c, err = b.WriteString(t.NodeName(fr))
 			n += c
 			if err != nil {
 				return

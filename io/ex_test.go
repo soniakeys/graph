@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"reflect"
 
 	"github.com/soniakeys/graph"
 	"github.com/soniakeys/graph/io"
@@ -101,7 +100,7 @@ d e
 `)
 	// For reading, default blank delimiter fields enable
 	// delimiting by whitespace.
-	t := io.Text{ReadNodeNames: true, Comment: "#"}
+	t := io.Text{MapNames: true, Comment: "#"}
 	g, names, m, err := t.ReadAdjacencyList(r)
 
 	fmt.Println("names:")
@@ -147,7 +146,7 @@ func ExampleText_zeroValue() {
 	fmt.Print(b.String())
 	// demonstrate round trip
 	rt, _, _, _ := t.ReadAdjacencyList(&b)
-	fmt.Println("Round trip:", reflect.DeepEqual(g, rt))
+	fmt.Println("Round trip:", g.Equal(rt))
 	// Output:
 	// Written:
 	// 0: 2 3 3
