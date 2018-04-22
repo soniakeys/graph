@@ -90,17 +90,57 @@ func ExampleFormat() {
 	// bytes: 16, err: <nil>
 }
 
-func ExampleText_readNodeNames() {
+func ExampleText_mapNames() {
 	//   a   d
 	//  / \   \
 	// b   c   e
 	r := bytes.NewBufferString(`
 a b c  # source target target
-d e
+d e   
 `)
 	// For reading, default blank delimiter fields enable
 	// delimiting by whitespace.
 	t := io.Text{MapNames: true, Comment: "#"}
+	g, names, m, err := t.ReadAdjacencyList(r)
+
+	fmt.Println("names:")
+	for i, n := range names {
+		fmt.Println(i, n)
+	}
+	fmt.Println("graph:")
+	for n, to := range g {
+		fmt.Println(n, to)
+	}
+	fmt.Println(graph.OrderMap(m))
+	fmt.Println("err:", err)
+	// Output:
+	// names:
+	// 0 a
+	// 1 b
+	// 2 c
+	// 3 d
+	// 4 e
+	// graph:
+	// 0 [1 2]
+	// 1 []
+	// 2 []
+	// 3 [4]
+	// 4 []
+	// map[a:0 b:1 c:2 d:3 e:4 ]
+	// err: <nil>
+}
+
+func ExampleText_mapNamesTab() {
+	//   a   d
+	//  / \   \
+	// b   c   e
+	r := bytes.NewBufferString(`
+a	b c  # source target target
+d e   
+`)
+	// For reading, default blank delimiter fields enable
+	// delimiting by whitespace.
+	t := io.Text{MapNames: true, FrDelim: "\t", Comment: "#"}
 	g, names, m, err := t.ReadAdjacencyList(r)
 
 	fmt.Println("names:")
