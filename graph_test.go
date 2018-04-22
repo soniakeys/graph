@@ -204,7 +204,7 @@ func ExampleOrderMap() {
 	m := map[int]string{3: "three", 1: "one", 4: "four"}
 	fmt.Println(graph.OrderMap(m))
 	// Output:
-	// map[1:one 3:three 4:four ]
+	// map[1:one 3:three 4:four]
 }
 
 func ExampleUndirectedSubgraph_AddEdge() {
@@ -240,7 +240,7 @@ func ExampleUndirectedSubgraph_AddEdge() {
 	// 1: [0 0]
 	// Mappings:
 	// [0 2]
-	// map[0:0 2:1 ]
+	// map[0:0 2:1]
 }
 
 func ExampleUndirectedSubgraph_AddEdge_panic() {
@@ -302,7 +302,7 @@ func ExampleLabeledUndirectedSubgraph_AddEdge() {
 	// 1: {0, x}
 	// Mappings:
 	// [0 1]
-	// map[0:0 1:1 ]
+	// map[0:0 1:1]
 }
 
 func ExampleLabeledUndirectedSubgraph_AddEdge_panic() {

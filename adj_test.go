@@ -265,7 +265,7 @@ func ExampleLabeledAdjacencyList_ArcLabels() {
 		`{{range $k, $v := .}}{{printf "%c" $k}}: {{$v}}
 {{end}}`)).Execute(os.Stdout, l)
 	// Output:
-	// map[120:2 121:1 122:1 ]
+	// map[120:2 121:1 122:1]
 	// x: 2
 	// y: 1
 	// z: 1
@@ -280,7 +280,7 @@ func ExampleLabeledAdjacencyList_ArcLabels_undirected() {
 	g.AddEdge(graph.Edge{1, 1}, 2089) // loop has just one arc
 	fmt.Println(graph.OrderMap(g.ArcLabels()))
 	// Output:
-	// map[2089:1 3772:2 ]
+	// map[2089:1 3772:2]
 }
 
 func ExampleLabeledAdjacencyList_NegativeArc() {

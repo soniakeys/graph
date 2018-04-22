@@ -772,5 +772,9 @@ func OrderMap(m interface{}) string {
 	if err := t.Execute(&b, m); err != nil {
 		panic(err)
 	}
+	if bytes.HasSuffix(b.Bytes(), []byte(" ]")) {
+		b.Truncate(b.Len() - 2)
+		b.WriteByte(']')
+	}
 	return b.String()
 }

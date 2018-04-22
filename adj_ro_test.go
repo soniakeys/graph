@@ -424,7 +424,7 @@ func ExampleSubgraph_AddNode() {
 	// 1: []
 	// Mappings:
 	// [2 1]
-	// map[1:1 2:0 ]
+	// map[1:1 2:0]
 }
 
 func ExampleSubgraph_AddNode_panic() {
@@ -486,7 +486,7 @@ func ExampleSubgraph_AddArc() {
 	// 1: []
 	// Mappings:
 	// [0 2]
-	// map[0:0 2:1 ]
+	// map[0:0 2:1]
 }
 
 func ExampleSubgraph_AddArc_panic() {

@@ -764,7 +764,7 @@ func ExampleUndirectedSubgraph_AddNode() {
 	// 1: []
 	// Mappings:
 	// [2 1]
-	// map[1:1 2:0 ]
+	// map[1:1 2:0]
 }
 
 func ExampleUndirectedSubgraph_AddNode_panic() {
