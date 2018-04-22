@@ -14,8 +14,13 @@ import (
 	"github.com/soniakeys/graph/io"
 )
 
-/* bleh.  too many examples here.  select examples for documentation.
-do exhaustive tests as Test functions
+/* consider:
+should read with arcDir != All reconstruct undirected graphs?
+graph.Directed.Undirected will do it, but it would be more efficient to do it
+here.
+*/
+
+/* removed examples:
 
 func ExampleText_base36() {
 	//      100000
@@ -250,5 +255,81 @@ func ExampleText_WriteAdjacencyList_undirectedNames() {
 	// a: b c c
 	// c: c
 	// bytes: 14, err: <nil>
+}
+
+func ExampleText_mapNamesTab() {
+	//   a   d
+	//  / \   \
+	// b   c   e
+	r := bytes.NewBufferString(`
+a	b c  # source target target
+d e
+`)
+	// For reading, default blank delimiter fields enable
+	// delimiting by whitespace.
+	t := io.Text{MapNames: true, FrDelim: "\t", Comment: "#"}
+	g, names, m, err := t.ReadAdjacencyList(r)
+
+	fmt.Println("names:")
+	for i, n := range names {
+		fmt.Println(i, n)
+	}
+	fmt.Println("graph:")
+	for n, to := range g {
+		fmt.Println(n, to)
+	}
+	fmt.Println(graph.OrderMap(m))
+	fmt.Println("err:", err)
+	// Output:
+	// names:
+	// 0 a
+	// 1 b
+	// 2 c
+	// 3 d
+	// 4 e
+	// graph:
+	// 0 [1 2]
+	// 1 []
+	// 2 []
+	// 3 [4]
+	// 4 []
+	// map[a:0 b:1 c:2 d:3 e:4]
+	// err: <nil>
+}
+
+/* commented out:  these examples show dense format, all that is currently
+implemented, but default for zero value Text should be sparse.
+func ExampleText_ReadLabeledAdjacencyList() {
+	r := bytes.NewBufferString(`2 101 1 102 1 102
+
+1 103`)
+	g, err := io.Text{}.ReadLabeledAdjacencyList(r)
+	for n, to := range g {
+		fmt.Println(n, to)
+	}
+	fmt.Println("err: ", err)
+	// Output:
+	// 0 [{2 101} {1 102} {1 102}]
+	// 1 []
+	// 2 [{1 103}]
+	// err:  <nil>
+}
+
+func ExampleText_WriteLabeledAdjacencyList() {
+	//        0
+	// (101) / \\ (102)
+	//      2-->1
+	//      (103)
+	g := graph.LabeledAdjacencyList{
+		0: {{2, 101}, {1, 102}, {1, 102}},
+		2: {{1, 103}},
+	}
+	n, err := io.Text{}.WriteLabeledAdjacencyList(g, os.Stdout)
+	fmt.Printf("bytes: %d, err: %v\n", n, err)
+	// Output:
+	// 2 101 1 102 1 102
+	//
+	// 1 103
+	// bytes: 25, err: <nil>
 }
 */

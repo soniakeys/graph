@@ -16,14 +16,18 @@ import (
 	"github.com/soniakeys/graph"
 )
 
-// ArcDir specifies whether to consider all arcs, or for the case of
-// undirected graphs, to consider only a single arc for each edge.
+// ArcDir specifies whether to consider all arcs, or only arcs that would
+// be in the upper or lower triangle of an adjacency matrix representation.
+//
+// For the case of undirected graphs, the effect of Upper or Lower is to
+// specify that the text representation does not contain reciprocal arcs
+// but contains only a single arc for each undirected edge.
 type ArcDir int
 
 const (
 	All   ArcDir = iota // all directed arcs
-	Upper               // for undirected, only arcs where to >= from
-	Lower               // for undirected, only arcs where to <= from
+	Upper               // only arcs where to >= from
+	Lower               // only arcs where to <= from
 )
 
 // Format defines the fundamental format of text data.
@@ -106,9 +110,6 @@ type Text struct {
 // NewText is a small convenience constructor.
 //
 // It simply returns &Text{Comment: "//"}.
-//
-// In many cases it will be simpler to just write a struct literal intiializing
-// fields as needed.
 func NewText() *Text {
 	return &Text{Comment: "//"}
 }
@@ -607,9 +608,9 @@ func (t Text) WriteAdjacencyList(g graph.AdjacencyList, w io.Writer) (
 	int, error) {
 	switch t.Format {
 	case Dense:
-		return t.writeAdjacencyListDense(g, w)
+		return t.writeALDense(g, w)
 	case Sparse:
-		return t.writeAdjacencyListSparse(g, w)
+		return t.writeALSparse(g, w)
 	case Arcs:
 		return t.writeArcs(g, w)
 	}
@@ -623,10 +624,10 @@ func (t Text) WriteAdjacencyList(g graph.AdjacencyList, w io.Writer) (
 // is not written but is implied by the line number.
 //
 // Returned is number of bytes written and error.
-func (t Text) writeAdjacencyListDense(g graph.AdjacencyList, w io.Writer) (
+func (t Text) writeALDense(g graph.AdjacencyList, w io.Writer) (
 	n int, err error) {
-	if t.WriteArcs == Upper {
-		return t.writeUpperDense(g, w)
+	if t.WriteArcs != All {
+		return t.writeALDenseTriangle(g, w)
 	}
 	t.fixBase()
 	b := bufio.NewWriter(w)
@@ -658,15 +659,7 @@ func (t Text) writeAdjacencyListDense(g graph.AdjacencyList, w io.Writer) (
 	return
 }
 
-// WriteAdjacencyListNIs writes an adjacency list in a simple text format.
-//
-// The format is similar to Go keyed composite literals.  Each line has a
-// from-NI as a "key" followed by ": " and a list of to-NIs.
-// Nodes with no to-nodes generate no output, except a maximum NI with no
-// to-nodes will be written with an empty to-list.
-//
-// Returned is number of bytes written and error.
-func (t Text) writeAdjacencyListSparse(g graph.AdjacencyList, w io.Writer) (
+func (t Text) writeALSparse(g graph.AdjacencyList, w io.Writer) (
 	n int, err error) {
 	if t.FrDelim == "" {
 		t.FrDelim = ": "
@@ -674,15 +667,15 @@ func (t Text) writeAdjacencyListSparse(g graph.AdjacencyList, w io.Writer) (
 	if t.ToDelim == "" {
 		t.ToDelim = " "
 	}
-	if t.WriteArcs == Upper {
-		return t.writeUpperSparse(g, w)
-	}
 	writeLast := t.NodeName == nil
 	if writeLast {
 		t.fixBase()
 		t.NodeName = func(n graph.NI) string {
 			return strconv.FormatInt(int64(n), t.Base)
 		}
+	}
+	if t.WriteArcs != All {
+		return t.writeALSparseTriangle(g, w, writeLast)
 	}
 	b := bufio.NewWriter(w)
 	var c int
@@ -788,26 +781,20 @@ func (t Text) writeArcs(g graph.AdjacencyList, w io.Writer) (
 	return
 }
 
-// WriteUpper writes the "upper triangle" of an adjacency list.
-//
-// For an adjacency list representing an undirected graph, this writes
-// an arc for each undirected edge but omits reciprocal arcs.
-//
-// A line is written for each node, consisting of to-NIs greater than or
-// equal to the from-NI.  The from-NI is not written but is implied by the
-// line number.
-//
-// Returned is number of bytes written and error.
-func (t Text) writeUpperDense(g graph.AdjacencyList, w io.Writer) (
+func (t Text) writeALDenseTriangle(g graph.AdjacencyList, w io.Writer) (
 	n int, err error) {
 	t.fixBase()
 	b := bufio.NewWriter(w)
 	var c int
+	p := func(fr, to graph.NI) bool { return to >= fr }
+	if t.WriteArcs == Lower {
+		p = func(fr, to graph.NI) bool { return to <= fr }
+	}
 	for i, to := range g {
 		fr := graph.NI(i)
 		one := false
 		for _, to := range to {
-			if to >= fr {
+			if p(to, fr) {
 				if one {
 					if err = b.WriteByte(' '); err != nil {
 						return
@@ -832,53 +819,20 @@ func (t Text) writeUpperDense(g graph.AdjacencyList, w io.Writer) (
 	return
 }
 
-// WriteUpperNames writes the "upper triangle" of an adjacency list.
-//
-// Returned is number of bytes written and error.
-/*
-func (t Text) WriteUpperNames(g graph.AdjacencyList, w io.Writer,
-	format func(graph.NI) string) (n int, err error) {
-	return t.writeUpper(g, w, format, false)
-}
-
-// WriteUpperNIs writes the "upper triangle" of an adjacency list.
-//
-// For an adjacency list representing an undirected graph, this writes
-// an arc for each undirected edge but omits reciprocal arcs.
-//
-// A line is written for each from-node that has to-nodes >= the from-node.
-// The format is similar to Go keyed composite literals.  Each line has the
-// from-NI as a "key" followed by ": " and a list of to-NIs.  Nodes with no
-// to-nodes >= the from-node generate no output, except a maximum NI with no
-// to-nodes will be written with an empty to-list.
-//
-// Returned is number of bytes written and error.
-func (t Text) WriteUpperNIs(g graph.AdjacencyList, w io.Writer) (
-	n int, err error) {
-	t.fixBase()
-	return t.writeUpper(g, w, func(n graph.NI) string {
-		return strconv.FormatInt(int64(n), t.Base)
-	}, true)
-}
-*/
-
-func (t Text) writeUpperSparse(g graph.AdjacencyList, w io.Writer) (
+func (t Text) writeALSparseTriangle(g graph.AdjacencyList, w io.Writer, writeLast bool) (
 	n int, err error) {
 	b := bufio.NewWriter(w)
-	writeLast := t.NodeName == nil
-	if writeLast {
-		t.fixBase()
-		t.NodeName = func(n graph.NI) string {
-			return strconv.FormatInt(int64(n), t.Base)
-		}
-	}
 	var c int
+	p := func(fr, to graph.NI) bool { return to >= fr }
+	if t.WriteArcs == Lower {
+		p = func(fr, to graph.NI) bool { return to <= fr }
+	}
 	last := len(g) - 1
 	for i, to := range g {
 		fr := graph.NI(i)
 		one := false
 		for _, to := range to {
-			if to >= fr {
+			if p(fr, to) {
 				if !one {
 					one = true
 					c, err = b.WriteString(t.NodeName(fr))
