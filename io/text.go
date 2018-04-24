@@ -183,11 +183,7 @@ func (t Text) readALDense(r io.Reader) (
 			}
 			return g, nil, nil, nil
 		}
-		to, err := parseNIs(f, t.Base)
-		if err != nil {
-			return nil, nil, nil, err
-		}
-		g = append(g, to)
+		g = append(g, parseNIs(f, t.Base))
 	}
 }
 
@@ -227,17 +223,18 @@ func (t *Text) readSplitInts(r *bufio.Reader, sep *regexp.Regexp) (
 	if f[last] == "" {
 		f = f[:last] // toss "" after any trailing separator, perhaps a ","
 	}
-	return
+	return f, nil
 }
 
 // parse a slice of strings expected to contain valid NIs.
-func parseNIs(f []string, base int) (n []graph.NI, err error) {
+// an error from ParseInt cannot be a user error, it must be bug, so panic
+func parseNIs(f []string, base int) (n []graph.NI) {
 	if len(f) > 0 {
 		n = make([]graph.NI, len(f))
 		for x, s := range f {
 			i, err := strconv.ParseInt(s, base, graph.NIBits)
 			if err != nil {
-				return nil, err
+				panic(err)
 			}
 			n[x] = graph.NI(i)
 		}
@@ -273,10 +270,7 @@ func (t Text) readALSparse(r io.Reader) (
 		if len(f) == 1 {
 			continue // from-NI with no to-list is allowed.
 		}
-		to, err := parseNIs(f[1:], t.Base)
-		if err != nil {
-			return nil, nil, nil, err
-		}
+		to := parseNIs(f[1:], t.Base)
 		if g[fr] == nil {
 			g[fr] = to
 		} else {
@@ -435,10 +429,7 @@ func (t Text) readALArcs(r io.Reader) (
 		if len(f) != 2 {
 			return nil, nil, nil, fmt.Errorf("Arc must have two nodes")
 		}
-		a, err := parseNIs(f, t.Base)
-		if err != nil {
-			return nil, nil, nil, err
-		}
+		a := parseNIs(f, t.Base)
 		fr, to := a[0], a[1]
 		if fr < 0 {
 			return nil, nil, nil, fmt.Errorf("invalid from: %d", fr)

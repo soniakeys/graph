@@ -3,12 +3,10 @@
 
 package io_test
 
-/*
 import (
 	"bytes"
-	"fmt"
-	"os"
-	"reflect"
+	"errors"
+	"testing"
 
 	"github.com/soniakeys/graph"
 	"github.com/soniakeys/graph/io"
@@ -19,6 +17,131 @@ should read with arcDir != All reconstruct undirected graphs?
 graph.Directed.Undirected will do it, but it would be more efficient to do it
 here.
 */
+
+type allErr struct{}
+
+func (allErr) Read([]byte) (int, error) {
+	return 0, errors.New("always error")
+}
+
+func TestReadALDense(t *testing.T) {
+	// test normal operation
+	want := graph.AdjacencyList{
+		0: {2, 1, 1},
+		2: {1},
+	}
+	r := bytes.NewBufferString(`2 1 1
+
+1`)
+	got, _, _, err := io.Text{Format: io.Dense}.ReadAdjacencyList(r)
+	if err != nil {
+		t.Fatal("readALDense: ", err)
+	}
+	if !got.Equal(want) {
+		for fr, to := range got {
+			t.Log(fr, " ", to)
+		}
+		t.Fail()
+	}
+	// test MapNames invalid
+	tx := io.Text{Format: io.Dense, MapNames: true}
+	if _, _, _, err := tx.ReadAdjacencyList(nil); err == nil {
+		t.Fatal("readALDense allowed MapNames")
+	}
+	// test a read error
+	_, _, _, err = io.Text{Format: io.Dense}.ReadAdjacencyList(allErr{})
+	if err == nil {
+		t.Fatal("readALDense allowed read error")
+	}
+}
+
+func TestReadALArcs(t *testing.T) {
+	want := graph.AdjacencyList{
+		0: {2, 1, 1},
+		2: {1},
+	}
+	r := bytes.NewBufferString(`
+0 2
+0 1
+0 1
+2 1`)
+	got, _, _, err := io.Text{Format: io.Arcs}.ReadAdjacencyList(r)
+	if err != nil {
+		t.Fatal("readALArcs: ", err)
+	}
+	if !got.Equal(want) {
+		for fr, to := range got {
+			t.Log(fr, " ", to)
+		}
+		t.Fail()
+	}
+}
+
+func TestBadFormat(t *testing.T) {
+	_, _, _, err := io.Text{Format: -1}.ReadAdjacencyList(nil)
+	if err == nil {
+		t.Fatal("ReadAdacencyList no err from bad Format")
+	}
+}
+
+func TestSep(t *testing.T) {
+	// test a base < 10
+	want := graph.AdjacencyList{
+		0: {2, 1, 1},
+		2: {1},
+	}
+	r := bytes.NewBufferString(`
+0:829181
+2:91`)
+	got, _, _, err := io.Text{Base: 8}.ReadAdjacencyList(r)
+	if err != nil {
+		t.Fatal("sep: ", err)
+	}
+	if !got.Equal(want) {
+		for fr, to := range got {
+			t.Log(fr, " ", to)
+		}
+		t.Fail()
+	}
+	// test a base > 10
+	const zz = 36*36 - 1
+	want = graph.AdjacencyList{
+		zz: {0},
+	}
+	r = bytes.NewBufferString(`zz: 0`)
+	got, _, _, err = io.Text{Base: 36}.ReadAdjacencyList(r)
+	if err != nil {
+		t.Fatal("sep: ", err)
+	}
+	if !got.Equal(want) {
+		for fr, to := range got {
+			t.Log(fr, " ", to)
+		}
+		t.Fail()
+	}
+}
+
+func TestReadSplitInts(t *testing.T) {
+	// a couple of cases for test coverage
+	want := graph.AdjacencyList{
+		0: {2, 1, 1},
+		2: {1},
+	}
+	r := bytes.NewBufferString(` 
+:
+0: 2 1 1
+2: 1`)
+	got, _, _, err := io.Text{FrDelim: ":"}.ReadAdjacencyList(r)
+	if err != nil {
+		t.Fatal("readSplitInts test: ", err)
+	}
+	if !got.Equal(want) {
+		for fr, to := range got {
+			t.Log(fr, " ", to)
+		}
+		t.Fail()
+	}
+}
 
 /* removed examples:
 
