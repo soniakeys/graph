@@ -6,6 +6,7 @@ package io_test
 import (
 	"bytes"
 	"errors"
+	"reflect"
 	"testing"
 
 	"github.com/soniakeys/graph"
@@ -22,6 +23,141 @@ type allErr struct{}
 
 func (allErr) Read([]byte) (int, error) {
 	return 0, errors.New("always error")
+}
+
+func TestReadALSparseNames(t *testing.T) {
+	// test a read error
+	tx := io.Text{MapNames: true}
+	if _, _, _, err := tx.ReadAdjacencyList(allErr{}); err == nil {
+		t.Fatal("readALSparse allowed read error")
+	}
+
+	// test empty to-list, additional arcs from a node
+	r := bytes.NewBufferString(`
+a b c
+a c
+b
+d e`)
+	g, names, m, err := tx.ReadAdjacencyList(r)
+	// result should be same as example without the b line,
+	// tediously checked here
+	if err != nil {
+		t.Fatalf("no error expected.  got %v", err)
+	}
+	if !reflect.DeepEqual(names, []string{"a", "b", "c", "d", "e"}) {
+		t.Fatal("names: ", names)
+	}
+	if graph.OrderMap(m) != "map[a:0 b:1 c:2 d:3 e:4]" {
+		t.Fatal("map: ", m)
+	}
+	want := graph.AdjacencyList{
+		0: {1, 2, 2},
+		3: {4},
+		4: {},
+	}
+	if !g.Equal(want) {
+		t.Fatal("g wrong")
+	}
+
+	// test delimiters.  setting both hits most code in splitALSparseNames
+	tx.FrDelim = "->"
+	tx.ToDelim = ":"
+	r = bytes.NewBufferString(`
+a->b:c
+d->e`)
+	g, names, m, err = tx.ReadAdjacencyList(r)
+	if err != nil {
+		t.Fatalf("delims. no error expected.  got %v", err)
+	}
+	if !reflect.DeepEqual(names, []string{"a", "b", "c", "d", "e"}) {
+		t.Fatal("delims. names: ", names)
+	}
+	if graph.OrderMap(m) != "map[a:0 b:1 c:2 d:3 e:4]" {
+		t.Fatal("delims. map: ", m)
+	}
+	want[0] = []graph.NI{1, 2}
+	if !g.Equal(want) {
+		t.Fatal("delims. g wrong")
+	}
+
+	// setting just ToDelim exercises default for FrDelim
+	tx.FrDelim = ""
+	r = bytes.NewBufferString(`
+a  b : c
+d	e`)
+	g, names, m, err = tx.ReadAdjacencyList(r)
+	if err != nil {
+		t.Fatalf("ToDelim. no error expected.  got %v", err)
+	}
+	if !reflect.DeepEqual(names, []string{"a", "b", "c", "d", "e"}) {
+		t.Fatal("ToDelim names: ", names)
+	}
+	if graph.OrderMap(m) != "map[a:0 b:1 c:2 d:3 e:4]" {
+		t.Fatal("ToDelim map: ", m)
+	}
+	if !g.Equal(want) {
+		t.Fatal("ToDelimn g wrong")
+	}
+
+	// set both to whitespace
+	tx.FrDelim = "	"  // tab
+	tx.ToDelim = "  " // two spaces
+	r = bytes.NewBufferString(`
+a	b   c
+d	    e f`)
+	g, names, m, err = tx.ReadAdjacencyList(r)
+	if err != nil {
+		t.Fatalf("ToDelim. no error expected.  got %v", err)
+	}
+	if !reflect.DeepEqual(names, []string{"a", "b", "c", "d", "e f"}) {
+		t.Fatal("ToDelim names: ", names)
+	}
+	if graph.OrderMap(m) != "map[a:0 b:1 c:2 d:3 e f:4]" {
+		t.Fatal("ToDelim map: ", m)
+	}
+	if !g.Equal(want) {
+		t.Fatal("ToDelimn g wrong")
+	}
+
+	// only whitespace in front of ToDelim is error
+	r = bytes.NewBufferString(`  	b`)
+	_, _, _, err = tx.ReadAdjacencyList(r)
+	if err == nil {
+		t.Fatalf("just ws error expected")
+	}
+}
+
+func TestReadALSparse(t *testing.T) {
+	// a few more tests for coverage:
+	// test invalid base
+	_, _, _, err := io.Text{Base: 1}.ReadAdjacencyList(nil)
+	if err == nil {
+		t.Fatal("readALSparse allowed invalid base")
+	}
+	// test a read error
+	_, _, _, err = io.Text{}.ReadAdjacencyList(allErr{})
+	if err == nil {
+		t.Fatal("readALSparse allowed read error")
+	}
+	// additional arcs on a node
+	want := graph.AdjacencyList{
+		0: {2, 1, 1},
+		2: {1},
+	}
+	r := bytes.NewBufferString(`
+0: 2 1
+0: 1
+2: 1`)
+	got, _, _, err := io.Text{FrDelim: ":"}.ReadAdjacencyList(r)
+	if err != nil {
+		t.Fatal("readSplitInts test: ", err)
+	}
+	if !got.Equal(want) {
+		for fr, to := range got {
+			t.Log(fr, " ", to)
+		}
+		t.Fail()
+	}
 }
 
 func TestReadALDense(t *testing.T) {
@@ -43,8 +179,13 @@ func TestReadALDense(t *testing.T) {
 		}
 		t.Fail()
 	}
+	// test invalid base
+	tx := io.Text{Format: io.Dense, Base: 1}
+	if _, _, _, err = tx.ReadAdjacencyList(nil); err == nil {
+		t.Fatal("readALDense allowed invalid base")
+	}
 	// test MapNames invalid
-	tx := io.Text{Format: io.Dense, MapNames: true}
+	tx = io.Text{Format: io.Dense, MapNames: true}
 	if _, _, _, err := tx.ReadAdjacencyList(nil); err == nil {
 		t.Fatal("readALDense allowed MapNames")
 	}

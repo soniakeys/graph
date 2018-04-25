@@ -6,6 +6,7 @@ package io
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"regexp"
@@ -142,10 +143,15 @@ func (t Text) ReadAdjacencyList(r io.Reader) (
 // operations like this do not modify the caller's struct, they just supply
 // a default over the zero value of the struct field.  Note also it's called
 // inside of sep() so methods that call sep don't need to call it.
-func (t *Text) fixBase() {
+func (t *Text) fixBase() error {
 	if t.Base == 0 {
 		t.Base = 10
+		return nil
 	}
+	if t.Base < 2 || t.Base > 36 {
+		return errors.New("invalid Text.Base")
+	}
+	return nil
 }
 
 // package var for most common case of base 10 delimiter.
@@ -154,10 +160,12 @@ var bx10 = regexp.MustCompile("[^0-9-+]+")
 // return regular expression delimiting numbers of given base.
 // This supports the behavior documented "When MapNames is false..."
 // for type Text above.
-func (t *Text) sep() *regexp.Regexp {
-	t.fixBase()
+func (t *Text) sep() (*regexp.Regexp, error) {
+	if err := t.fixBase(); err != nil {
+		return nil, err
+	}
 	if t.Base == 10 {
-		return bx10
+		return bx10, nil
 	}
 	expr := ""
 	if t.Base <= 10 {
@@ -165,7 +173,7 @@ func (t *Text) sep() *regexp.Regexp {
 	} else {
 		expr = fmt.Sprintf("[^0-9a-%c-+]+", 'a'+t.Base-11)
 	}
-	return regexp.MustCompile(expr)
+	return regexp.MustCompile(expr), nil
 }
 
 func (t Text) readALDense(r io.Reader) (
@@ -174,7 +182,10 @@ func (t Text) readALDense(r io.Reader) (
 		return nil, nil, nil,
 			fmt.Errorf("name translation not valid for dense format")
 	}
-	sep := t.sep()
+	sep, err := t.sep()
+	if err != nil {
+		return nil, nil, nil, err
+	}
 	for b := bufio.NewReader(r); ; {
 		f, err := t.readSplitInts(b, sep)
 		if err != nil {
@@ -226,7 +237,9 @@ func (t *Text) readSplitInts(r *bufio.Reader, sep *regexp.Regexp) (
 	return f, nil
 }
 
-// parse a slice of strings expected to contain valid NIs.
+// parse a slice of strings expected to contain valid NIs.  The slice can be
+// empty, but any strings present must parse by strconv in the specified base.
+// This is a "MustParse" function.
 // an error from ParseInt cannot be a user error, it must be bug, so panic
 func parseNIs(f []string, base int) (n []graph.NI) {
 	if len(f) > 0 {
@@ -247,7 +260,10 @@ func (t Text) readALSparse(r io.Reader) (
 	if t.MapNames {
 		return t.readALSparseNames(r)
 	}
-	sep := t.sep()
+	sep, err := t.sep()
+	if err != nil {
+		return nil, nil, nil, err
+	}
 	b := bufio.NewReader(r)
 	for {
 		f, err := t.readSplitInts(b, sep)
@@ -262,7 +278,7 @@ func (t Text) readALSparse(r io.Reader) (
 		}
 		fr, err := strconv.ParseInt(f[0], t.Base, graph.NIBits)
 		if err != nil {
-			return nil, nil, nil, err
+			panic(fmt.Sprintf("in readALSparse: %v", err))
 		}
 		for int(fr) >= len(g) {
 			g = append(g, nil)
@@ -292,7 +308,7 @@ func (t Text) readALSparseNames(r io.Reader) (
 		}
 		return n
 	}
-	split := t.splitALSparseNames()
+	split := t.nameSplitter()
 	s := ""
 	b := bufio.NewReader(r)
 	for line := 1; ; line++ {
@@ -306,6 +322,9 @@ func (t Text) readALSparseNames(r io.Reader) (
 		}
 		fs, ts := split(s)
 		if fs == "" {
+			if len(ts) > 0 {
+				return nil, nil, nil, errors.New("blank node name")
+			}
 			continue
 		}
 		fr := getNI(fs)
@@ -326,9 +345,9 @@ func (t Text) readALSparseNames(r io.Reader) (
 	}
 }
 
-func (t *Text) splitALSparseNames() func(string) (string, []string) {
+func (t *Text) nameSplitter() func(string) (string, []string) {
 	// simplest case, no delimiters, fields can be split all at once
-	if t.FrDelim > "" || t.ToDelim > "" {
+	if t.FrDelim == "" && t.ToDelim == "" {
 		return func(s string) (string, []string) {
 			f := strings.Fields(s)
 			if len(f) == 0 {
@@ -360,17 +379,21 @@ func (t *Text) splitALSparseNames() func(string) (string, []string) {
 		}
 		toSplit = func(s string) []string {
 			to := strings.Split(s, td)
-			for i, ti := range to {
-				to[i] = strings.TrimSpace(ti)
+			nb := 0
+			for _, ti := range to {
+				if ti = strings.TrimSpace(ti); ti > "" {
+					to[nb] = ti
+					nb++
+				}
 			}
-			return to
+			return to[:nb]
 		}
 	}
 	return func(s string) (string, []string) {
 		s = strings.TrimLeftFunc(s, unicode.IsSpace)
 		x := frIndex(s)
 		if x < 0 {
-			return "", nil
+			return "", toSplit(s)
 		}
 		return s[:x], toSplit(s[x+fdLen:])
 	}
@@ -391,7 +414,7 @@ func (t *Text) readStripComment(r *bufio.Reader) (s string, err error) {
 			s = s[:i]
 		}
 	}
-	return
+	return s, nil
 }
 
 func (t *Text) readSplitFields(r *bufio.Reader) (f []string, err error) {
@@ -407,7 +430,10 @@ func (t Text) readALArcs(r io.Reader) (
 	if t.MapNames {
 		return t.readALArcNames(r)
 	}
-	sep := t.sep()
+	sep, err := t.sep()
+	if err != nil {
+		return nil, nil, nil, err
+	}
 	var max graph.NI
 	e := map[int][]graph.NI{} // full graph with to-lists as multisets.
 	for b := bufio.NewReader(r); ; {
@@ -530,7 +556,10 @@ func (t Text) readALArcNames(r io.Reader) (
 // In addition, with Text.MapNames true, the method returns a list
 // of node names indexed by NI and the reverse mapping of NI by name.
 func (t Text) ReadLabeledAdjacencyList(r io.Reader) (g graph.LabeledAdjacencyList, err error) {
-	sep := t.sep()
+	sep, err := t.sep()
+	if err != nil {
+		return nil, err
+	}
 	for b := bufio.NewReader(r); ; {
 		to, err := t.readHalf(b, sep)
 		if err != nil {
