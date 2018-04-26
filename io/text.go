@@ -308,7 +308,7 @@ func (t Text) readALSparseNames(r io.Reader) (
 		}
 		return n
 	}
-	split := t.nameSplitter()
+	split := t.sparseNameSplitter()
 	s := ""
 	b := bufio.NewReader(r)
 	for line := 1; ; line++ {
@@ -345,7 +345,7 @@ func (t Text) readALSparseNames(r io.Reader) (
 	}
 }
 
-func (t *Text) nameSplitter() func(string) (string, []string) {
+func (t *Text) sparseNameSplitter() func(string) (string, []string) {
 	// simplest case, no delimiters, fields can be split all at once
 	if t.FrDelim == "" && t.ToDelim == "" {
 		return func(s string) (string, []string) {
@@ -395,7 +395,37 @@ func (t *Text) nameSplitter() func(string) (string, []string) {
 		if x < 0 {
 			return "", toSplit(s)
 		}
-		return s[:x], toSplit(s[x+fdLen:])
+		return strings.TrimRightFunc(s[:x], unicode.IsSpace),
+			toSplit(s[x+fdLen:])
+	}
+}
+
+// normal return: two non-empty strings.
+// second string empty is okay, means just define node name.
+// empty first and non-empty second should be considered an error.
+func (t *Text) arcNameSplitter() func(string) (string, string) {
+	index := func(s string) int {
+		return strings.IndexFunc(s, unicode.IsSpace)
+	}
+	fdLen := 0
+	if t.FrDelim > "" {
+		fd := strings.TrimSpace(t.FrDelim)
+		if fd == "" {
+			fd = t.FrDelim
+		}
+		fdLen = len(fd)
+		index = func(s string) int {
+			return strings.Index(s, fd)
+		}
+	}
+	return func(s string) (string, string) {
+		s = strings.TrimLeftFunc(s, unicode.IsSpace)
+		x := index(s)
+		if x < 0 {
+			return strings.TrimRightFunc(s, unicode.IsSpace), ""
+		}
+		return strings.TrimRightFunc(s[:x], unicode.IsSpace),
+			strings.TrimSpace(s[x+fdLen:])
 	}
 }
 
@@ -415,14 +445,6 @@ func (t *Text) readStripComment(r *bufio.Reader) (s string, err error) {
 		}
 	}
 	return s, nil
-}
-
-func (t *Text) readSplitFields(r *bufio.Reader) (f []string, err error) {
-	s, err := t.readStripComment(r)
-	if err == nil && s > "" {
-		f = strings.Fields(s)
-	}
-	return
 }
 
 func (t Text) readALArcs(r io.Reader) (
@@ -452,37 +474,27 @@ func (t Text) readALArcs(r io.Reader) (
 		if len(f) == 0 {
 			continue
 		}
-		if len(f) != 2 {
-			return nil, nil, nil, fmt.Errorf("Arc must have two nodes")
+		if len(f) > 2 {
+			return nil, nil, nil, fmt.Errorf("Arc can only have two nodes")
 		}
 		a := parseNIs(f, t.Base)
-		fr, to := a[0], a[1]
+		fr := a[0]
 		if fr < 0 {
 			return nil, nil, nil, fmt.Errorf("invalid from: %d", fr)
 		}
 		if fr > max {
 			max = fr
 		}
-		if to > max {
-			max = to
+		if len(f) == 2 {
+			to := a[1]
+			if to > max {
+				max = to
+			}
+			e[int(fr)] = append(e[int(fr)], graph.NI(to))
 		}
-		e[int(fr)] = append(e[int(fr)], graph.NI(to))
 	}
 }
 
-// ReadArcNames reads a graph from the simple text format written by
-// WriteArcNames.
-//
-// The format is similar to that of ReadArcNIs but reads an input graph of
-// named nodes rather than NIs.  Unique node names are accumulated
-// in a list parallel to the returned graph, naming each node.  A map, with
-// the reverse mapping from name to NI is also accumulated.
-//
-// An empty string is not allowed as a node name. A final newline is not
-// required.
-//
-// If argument comment is non-empty, it specifies a string marking end-of-line
-// comments.
 func (t Text) readALArcNames(r io.Reader) (
 	g graph.AdjacencyList, name []string, ni map[string]graph.NI, err error) {
 	ni = map[string]graph.NI{}
@@ -496,52 +508,29 @@ func (t Text) readALArcNames(r io.Reader) (
 		}
 		return n
 	}
-	delIndex := func(s string) int { return strings.Index(s, t.FrDelim) }
-	if t.FrDelim == "" {
-		delIndex = func(s string) int {
-			return strings.IndexFunc(s, unicode.IsSpace)
-		}
-	}
+	split := t.arcNameSplitter()
 	b := bufio.NewReader(r)
 	s := ""
 	for line := 1; ; line++ {
-		s, err = b.ReadString('\n')
+		s, err = t.readStripComment(b)
 		if err != nil {
 			if err != io.EOF {
-				return nil, nil, nil, fmt.Errorf("line %d: %v", line, err)
+				return nil, nil, nil, err
 			}
-			if s == "" {
-				err = nil
-				return
+			err = nil
+			return
+		}
+		fs, ts := split(s)
+		if fs == "" {
+			if len(ts) > 0 {
+				return nil, nil, nil, errors.New("blank from-node")
 			}
-			// allow last line without \n
+			continue
 		}
-		if t.Comment > "" {
-			if i := strings.Index(s, t.Comment); i >= 0 {
-				s = s[:i]
-			}
+		fr := getNI(fs)
+		if len(ts) > 0 {
+			g[fr] = append(g[fr], getNI(ts))
 		}
-		s = strings.TrimSpace(s)
-		if s == "" {
-			continue // allow and ignore blank line
-		}
-		i := delIndex(s)
-		if i < 0 {
-			return nil, nil, nil,
-				fmt.Errorf("line %d: t.FrDelimiter required", line)
-		}
-		fn := strings.TrimSpace(s[:i])
-		if fn == "" {
-			return nil, nil, nil,
-				fmt.Errorf("line %d: blank name not allowed", line)
-		}
-		tn := strings.TrimSpace(s[i+len(t.FrDelim):])
-		if tn == "" {
-			return nil, nil, nil,
-				fmt.Errorf("line %d: blank name not allowed", line)
-		}
-		fr := getNI(fn)
-		g[fr] = append(g[fr], getNI(tn))
 	}
 }
 
@@ -627,23 +616,16 @@ func (t *Text) readHalf(r *bufio.Reader, sep *regexp.Regexp) (to []graph.Half, e
 func (t Text) WriteAdjacencyList(g graph.AdjacencyList, w io.Writer) (
 	int, error) {
 	switch t.Format {
-	case Dense:
-		return t.writeALDense(g, w)
 	case Sparse:
 		return t.writeALSparse(g, w)
+	case Dense:
+		return t.writeALDense(g, w)
 	case Arcs:
-		return t.writeArcs(g, w)
+		return t.writeALArcs(g, w)
 	}
-	return 0, fmt.Errorf("format %d unimplemente", t.Format)
+	return 0, fmt.Errorf("format %d invalid", t.Format)
 }
 
-// WriteAdjacencyList writes an adjacency list in a simple text format.
-//
-// A line is written for each node, consisting of the to-list, the NIs
-// formatted as space separated base 10 numbers.  The NI of the from-node
-// is not written but is implied by the line number.
-//
-// Returned is number of bytes written and error.
 func (t Text) writeALDense(g graph.AdjacencyList, w io.Writer) (
 	n int, err error) {
 	if t.WriteArcs != All {
@@ -756,12 +738,7 @@ func (t Text) writeALSparse(g graph.AdjacencyList, w io.Writer) (
 	return
 }
 
-// WriteArcNIs writes arcs of an adjacency list in a simple text format.
-//
-// Each line has an arc, a from-NI and to-NI, separated with a space.
-//
-// Returned is number of bytes written and error.
-func (t Text) writeArcs(g graph.AdjacencyList, w io.Writer) (
+func (t Text) writeALArcs(g graph.AdjacencyList, w io.Writer) (
 	n int, err error) {
 	t.fixBase()
 	if t.FrDelim == "" {
