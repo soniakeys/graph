@@ -253,3 +253,25 @@ func ExampleText_nodeName() {
 	// d: e
 	// bytes: 12, err: <nil>
 }
+/*
+func ExampleText_WriteLabeledAdjacencyList() {
+	//     0
+	//    / \\
+	// a /  b\\c
+	//  /     \\
+	// 2------->3
+	//     d
+	g := graph.LabeledAdjacencyList{
+		0: {{2, 'a'}, {3, 'b'}, {3, 'c'}},
+		2: {{3, 'd'}},
+		3: {},
+	}
+	n, err := io.Text{}.WriteLabeledAdjacencyList(g, os.Stdout)
+	fmt.Printf("bytes: %d, err: %v\n\n", n, err)
+	// Output:
+	// 0: (2 96) (3 97) (3 98)
+	// 2: (3 99)
+	// 3:
+	// bytes: 17, err: <nil>
+}
+*/
