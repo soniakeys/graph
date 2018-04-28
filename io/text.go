@@ -17,6 +17,12 @@ import (
 	"github.com/soniakeys/graph"
 )
 
+/* consider:
+should read with arcDir != All reconstruct undirected graphs?
+graph.Directed.Undirected will do it, but it would be more efficient to do it
+here.
+*/
+
 // ArcDir specifies whether to consider all arcs, or only arcs that would
 // be in the upper or lower triangle of an adjacency matrix representation.
 //
@@ -791,7 +797,7 @@ func (t Text) writeALDenseTriangle(g graph.AdjacencyList, w io.Writer) (
 		fr := graph.NI(i)
 		one := false
 		for _, to := range to {
-			if p(to, fr) {
+			if p(fr, to) {
 				if one {
 					if err = b.WriteByte(' '); err != nil {
 						return

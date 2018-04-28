@@ -13,12 +13,6 @@ import (
 	"github.com/soniakeys/graph/io"
 )
 
-/* consider:
-should read with arcDir != All reconstruct undirected graphs?
-graph.Directed.Undirected will do it, but it would be more efficient to do it
-here.
-*/
-
 type allErr struct{}
 
 func (allErr) Read([]byte) (int, error) {
@@ -420,3 +414,45 @@ func TestReadSplitInts(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestWriteALDenseTriangle(t *testing.T) {
+        //   0
+        //  / \\
+        // 1   2--\
+        //      \-/
+        var g graph.Undirected
+        g.AddEdge(0, 1)
+        g.AddEdge(0, 2)
+        g.AddEdge(0, 2)
+        g.AddEdge(2, 2)
+
+	// test upper
+	var b bytes.Buffer
+        tx := io.Text{Format: io.Dense, WriteArcs: io.Upper}
+        n, err := tx.WriteAdjacencyList(g.AdjacencyList, &b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if n != 9 {
+		t.Fatal("got", n, "bytes")
+	}
+	got := b.String()
+	if got != "1 2 2\n\n2\n" {
+		t.Fatalf("got %q", got)
+	}
+	// test lower
+	b.Reset()
+	tx.WriteArcs = io.Lower
+        n, err = tx.WriteAdjacencyList(g.AdjacencyList, &b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if n != 9 {
+		t.Fatal("got", n, "bytes")
+	}
+	got = b.String()
+	if got != "\n0\n0 0 2\n" {
+		t.Fatalf("got %q", got)
+	}
+}
+
