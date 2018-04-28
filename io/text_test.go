@@ -416,20 +416,20 @@ func TestReadSplitInts(t *testing.T) {
 }
 
 func TestWriteALDenseTriangle(t *testing.T) {
-        //   0
-        //  / \\
-        // 1   2--\
-        //      \-/
-        var g graph.Undirected
-        g.AddEdge(0, 1)
-        g.AddEdge(0, 2)
-        g.AddEdge(0, 2)
-        g.AddEdge(2, 2)
+	//   0
+	//  / \\
+	// 1   2--\
+	//      \-/
+	var g graph.Undirected
+	g.AddEdge(0, 1)
+	g.AddEdge(0, 2)
+	g.AddEdge(0, 2)
+	g.AddEdge(2, 2)
 
 	// test upper
 	var b bytes.Buffer
-        tx := io.Text{Format: io.Dense, WriteArcs: io.Upper}
-        n, err := tx.WriteAdjacencyList(g.AdjacencyList, &b)
+	tx := io.Text{Format: io.Dense, WriteArcs: io.Upper}
+	n, err := tx.WriteAdjacencyList(g.AdjacencyList, &b)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -443,7 +443,7 @@ func TestWriteALDenseTriangle(t *testing.T) {
 	// test lower
 	b.Reset()
 	tx.WriteArcs = io.Lower
-        n, err = tx.WriteAdjacencyList(g.AdjacencyList, &b)
+	n, err = tx.WriteAdjacencyList(g.AdjacencyList, &b)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -455,4 +455,3 @@ func TestWriteALDenseTriangle(t *testing.T) {
 		t.Fatalf("got %q", got)
 	}
 }
-
