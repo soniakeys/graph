@@ -685,9 +685,14 @@ func (nc *negCyc) restore(c []arc) {
 		r := c[i]
 		toList := nc.a[r.n]
 		last := len(toList)
-		toList = toList[:last+1]
-		toList[r.x], toList[last] = toList[last], toList[r.x]
-		nc.a[r.n] = toList
+		if last > 0 {
+			toList = toList[:last+1]
+			if r.x <= last {
+				toList[r.x], toList[last] = toList[last], toList[r.x]
+				nc.a[r.n] = toList
+			}
+
+		}
 	}
 }
 
