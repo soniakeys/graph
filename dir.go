@@ -641,12 +641,14 @@ func (nc *negCyc) step5(F LabeledPath, fEnd NI) (ok bool) {
 		// new end node.  make recursive call, then restore saved
 		// inbound arcs for the node.
 		F.Path[last] = h
-		nc.a[fEnd][0] = h
-		save := nc.cutTo(h.To)
-		ok = nc.all_nc(F)
-		nc.restore(save)
-		if !ok {
-			break
+		if len(nc.a[fEnd]) > 0 {
+			nc.a[fEnd][0] = h
+			save := nc.cutTo(h.To)
+			ok = nc.all_nc(F)
+			nc.restore(save)
+			if !ok {
+				break
+			}
 		}
 	}
 	// after loop, restore saved outgoing arcs in g.
